@@ -161,7 +161,11 @@ export const adminMethods = {
                         retryOnInvalidJwt: false
                     });
 
-                    grouped.push(...asArray(result).map((item) => ({
+                    const rawItems = asArray(result);
+                    if (rawItems.length > 0) {
+                        console.log('[admin] supervisor_presence raw item sample:', JSON.stringify(rawItems[0], null, 2));
+                    }
+                    grouped.push(...rawItems.map((item) => ({
                         ...item,
                         restaurant_name: getRestaurantDisplayName(item, getRestaurantDisplayName(restaurant)),
                         restaurant: item.restaurant || {
@@ -191,8 +195,8 @@ export const adminMethods = {
             }
 
             const sorted = grouped.sort((left, right) => {
-                const leftTime = new Date(left.created_at || left.observed_at || 0).getTime();
-                const rightTime = new Date(right.created_at || right.observed_at || 0).getTime();
+                const leftTime = new Date(left.observed_at || left.created_at || left.registered_at || 0).getTime();
+                const rightTime = new Date(right.observed_at || right.created_at || right.registered_at || 0).getTime();
                 return rightTime - leftTime;
             });
 
@@ -344,8 +348,9 @@ export const adminMethods = {
                         item,
                         getRestaurantDisplayName(item.restaurant || null, 'Restaurante sin nombre visible')
                     );
-                    const observedAt = item.created_at || item.observed_at || '';
-                    const observationCount = Number(item.photo_count || item.evidence_count || item.photos_count || 0);
+                    const observedAt = item.observed_at || item.created_at || item.registered_at || '';
+                    const observationCount = asArray(item.evidences).length
+                        || Number(item.photo_count || item.evidence_count || item.photos_count || 0);
 
                     return `
                         <article class="admin-supervision-card">
@@ -407,7 +412,8 @@ export const adminMethods = {
             if (restaurantKey) {
                 uniqueRestaurants.add(restaurantKey);
             }
-            totalEvidences += Number(item.photo_count || item.evidence_count || item.photos_count || 0);
+            totalEvidences += asArray(item.evidences).length
+                || Number(item.photo_count || item.evidence_count || item.photos_count || 0);
         });
 
         container.innerHTML = `

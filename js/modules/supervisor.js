@@ -5484,30 +5484,6 @@ export const supervisorMethods = {
         }
     },
 
-    async ensureAdminRestaurants(force = false) {
-        if (force) {
-            this.invalidateCache('adminRestaurants', 'adminMetrics', 'adminSupervisors');
-        }
-
-        if (
-            force
-            || this.data.admin.restaurants.length === 0
-            || !this.isCacheFresh('adminRestaurants', CACHE_TTLS.adminRestaurants)
-        ) {
-            this.data.admin.restaurants = await this.runPending(`adminRestaurants:${force ? 'force' : 'default'}`, async () => {
-                const restaurantsResult = await apiClient.adminRestaurantsManage('list', {
-                    is_active: true,
-                    limit: 200
-                });
-                const restaurants = asArray(restaurantsResult);
-                this.touchCache('adminRestaurants');
-                return restaurants;
-            });
-        }
-
-        return this.data.admin.restaurants;
-    },
-
     openScheduleShiftModal() {
         this.schedShiftRows = [];
         this.schedShiftSelectedEmployees = [];
