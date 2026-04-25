@@ -1,0 +1,52 @@
+import js from '@eslint/js';
+import prettierConfig from 'eslint-config-prettier';
+import prettierPlugin from 'eslint-plugin-prettier';
+
+export default [
+    js.configs.recommended,
+    prettierConfig,
+    {
+        plugins: { prettier: prettierPlugin },
+        languageOptions: {
+            ecmaVersion: 2022,
+            sourceType: 'module',
+            globals: {
+                window: 'readonly',
+                document: 'readonly',
+                navigator: 'readonly',
+                location: 'readonly',
+                history: 'readonly',
+                fetch: 'readonly',
+                FormData: 'readonly',
+                FileReader: 'readonly',
+                URL: 'readonly',
+                URLSearchParams: 'readonly',
+                Promise: 'readonly',
+                Map: 'readonly',
+                Set: 'readonly',
+                WeakMap: 'readonly',
+                setTimeout: 'readonly',
+                clearTimeout: 'readonly',
+                setInterval: 'readonly',
+                clearInterval: 'readonly',
+                requestAnimationFrame: 'readonly',
+                cancelAnimationFrame: 'readonly',
+                MutationObserver: 'readonly',
+                IntersectionObserver: 'readonly',
+                app: 'readonly',
+                __dirname: 'readonly',
+            },
+        },
+        rules: {
+            'prettier/prettier': 'warn',
+            'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+            'no-console': 'off',
+            'no-undef': 'warn',
+            'no-var': 'error',
+            'prefer-const': 'warn',
+            'eqeqeq': ['error', 'smart'],
+            'no-implicit-coercion': 'warn',
+        },
+        ignores: ['dist/**', 'node_modules/**'],
+    },
+];

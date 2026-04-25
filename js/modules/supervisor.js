@@ -3023,6 +3023,33 @@ export const supervisorMethods = {
         setStatEl('sws-restaurants', String(rests));
     },
 
+    buildWeekShiftMap(weekShifts) {
+        const map = new Map();
+        weekShifts.forEach((shift) => {
+            const empId = String(shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '').trim();
+            const startValue = shift?.scheduled_start || shift?.start_time;
+            if (!empId || !startValue) return;
+            const key = `${empId}|${toLocalDateKey(new Date(startValue))}`;
+            if (!map.has(key)) map.set(key, []);
+            map.get(key).push(shift);
+        });
+        return map;
+    },
+
+    renderSsgShiftCell(cellShifts) {
+        const entries = cellShifts.map((shift) => {
+            const restName = escapeHtml(this.getResolvedShiftRestaurantName(shift, ''));
+            const timeRange = escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end));
+            const shiftId = escapeHtml(String(shift.id || shift.scheduled_shift_id || ''));
+            return `<div class="ssg-shift-entry">
+                <div class="ssg-shift-rest">${restName}</div>
+                <div class="ssg-shift-time">${timeRange}</div>
+                ${shiftId ? `<button class="ssg-del-btn" onclick="event.stopPropagation();app.confirmCancelScheduledShift('${shiftId}')" title="Eliminar"><i class="fas fa-times"></i></button>` : ''}
+            </div>`;
+        }).join('');
+        return `<div class="ssg-shift-cell ssg-has-shift">${entries}</div>`;
+    },
+
     renderSupervisorShiftGrid(weekShifts = []) {
         const container = document.getElementById('supervisor-shifts-grid');
         if (!container) return;
@@ -3056,16 +3083,7 @@ export const supervisorMethods = {
             return;
         }
 
-        const shiftsByKey = new Map();
-        weekShifts.forEach((shift) => {
-            const empId = String(shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '').trim();
-            const startValue = shift?.scheduled_start || shift?.start_time;
-            if (!empId || !startValue) return;
-            const dateKey = toLocalDateKey(new Date(startValue));
-            const key = `${empId}|${dateKey}`;
-            if (!shiftsByKey.has(key)) shiftsByKey.set(key, []);
-            shiftsByKey.get(key).push(shift);
-        });
+        const shiftsByKey = this.buildWeekShiftMap(weekShifts);
 
         let html = '<div class="ssg-grid">';
         html += `<div class="ssg-header-cell ssg-employee-header">Empleado</div>`;
@@ -3076,29 +3094,12 @@ export const supervisorMethods = {
 
         displayEmployees.forEach((emp) => {
             const empId = String(emp.id || '');
-            const empName = escapeHtml(getEmployeeDisplayName(emp, 'Empleado'));
-            html += `<div class="ssg-employee-cell">${empName}</div>`;
-
+            html += `<div class="ssg-employee-cell">${escapeHtml(getEmployeeDisplayName(emp, 'Empleado'))}</div>`;
             weekDays.forEach(({ key }) => {
                 const cellShifts = shiftsByKey.get(`${empId}|${key}`) || [];
-                const dateTimeLocal = `${key}T08:00`;
-
-                if (cellShifts.length === 0) {
-                    html += `<div class="ssg-shift-cell ssg-empty-cell"></div>`;
-                } else {
-                    let entries = '';
-                    cellShifts.forEach((shift) => {
-                        const restName = escapeHtml(this.getResolvedShiftRestaurantName(shift, ''));
-                        const timeRange = escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end));
-                        const shiftId = escapeHtml(String(shift.id || shift.scheduled_shift_id || ''));
-                        entries += `<div class="ssg-shift-entry">
-                            <div class="ssg-shift-rest">${restName}</div>
-                            <div class="ssg-shift-time">${timeRange}</div>
-                            ${shiftId ? `<button class="ssg-del-btn" onclick="event.stopPropagation();app.confirmCancelScheduledShift('${shiftId}')" title="Eliminar"><i class="fas fa-times"></i></button>` : ''}
-                        </div>`;
-                    });
-                    html += `<div class="ssg-shift-cell ssg-has-shift">${entries}</div>`;
-                }
+                html += cellShifts.length === 0
+                    ? `<div class="ssg-shift-cell ssg-empty-cell"></div>`
+                    : this.renderSsgShiftCell(cellShifts);
             });
         });
 
@@ -3989,6 +3990,52 @@ export const supervisorMethods = {
         return String(shift?.early_end_reason || shift?.ended_early_reason || '').trim();
     },
 
+    buildEvidenceItemKey(item = {}, index = 0) {
+        const areaToken = normalizeAreaToken(item.area_label || '');
+        const subareaToken = normalizeAreaToken(item.subarea_label || '');
+        const titleToken = normalizeAreaToken(this.getShiftEvidenceDisplayTitle(item));
+        const key = `${areaToken}__${subareaToken}__${titleToken}`.replace(/^_+|_+$/g, '');
+        return key || `item_${index + 1}`;
+    },
+
+    renderReportEvidenceTile(phaseLabel, item, index) {
+        if (!item?.url) {
+            return `<div class="report-day-photo report-day-photo-empty">
+                <div class="report-day-photo-copy">
+                    <span class="report-day-photo-phase">${escapeHtml(phaseLabel)}</span>
+                    <span class="report-day-photo-meta">Sin foto correspondiente</span>
+                </div>
+            </div>`;
+        }
+        return `<a class="report-day-photo" href="${escapeHtml(item.url)}" aria-label="${escapeHtml(`${phaseLabel} ${index + 1}`)}">
+            <span class="report-day-photo-thumb">
+                <img src="${escapeHtml(item.url)}" alt="${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}" loading="lazy">
+            </span>
+            <span class="report-day-photo-copy">
+                <span class="report-day-photo-phase">${escapeHtml(phaseLabel)}</span>
+                <span class="report-day-photo-label">${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}</span>
+                ${this.getShiftEvidenceDisplayMeta(item)
+                    ? `<span class="report-day-photo-meta">${escapeHtml(this.getShiftEvidenceDisplayMeta(item))}</span>`
+                    : ''}
+            </span>
+        </a>`;
+    },
+
+    renderReportEvidencePairs(startMap, endMap, startItems, endItems, orderedKeys) {
+        const rows = orderedKeys.map((key, index) => {
+            const startItem = startMap.get(key) || startItems[index] || null;
+            const endItem = endMap.get(key) || endItems[index] || null;
+            if (!startItem && !endItem) return '';
+            return `<div class="report-day-pair-row">
+                ${this.renderReportEvidenceTile('Antes', startItem, index)}
+                ${this.renderReportEvidenceTile('Después', endItem, index)}
+            </div>`;
+        }).filter(Boolean);
+        return rows.length === 0
+            ? '<div class="report-day-phase-empty">No se recibieron fotos para este turno.</div>'
+            : `<div class="report-day-pairs">${rows.join('')}</div>`;
+    },
+
     renderReportDayEvidence(shiftItems, { isSingleDay = false } = {}) {
         const wrapper = document.getElementById('report-day-evidence');
         const list = document.getElementById('report-day-evidence-list');
@@ -4028,134 +4075,53 @@ export const supervisorMethods = {
             const endItems = this.extractShiftEvidenceItems(shift, 'end');
             foundEvidence = foundEvidence || startItems.length > 0 || endItems.length > 0;
 
-            const toEvidenceKey = (item = {}, index = 0) => {
-                const areaToken = normalizeAreaToken(item.area_label || '');
-                const subareaToken = normalizeAreaToken(item.subarea_label || '');
-                const titleToken = normalizeAreaToken(this.getShiftEvidenceDisplayTitle(item));
-                const key = `${areaToken}__${subareaToken}__${titleToken}`.replace(/^_+|_+$/g, '');
-                return key || `item_${index + 1}`;
-            };
-
             const startMap = new Map();
-            startItems.forEach((item, index) => {
-                const key = toEvidenceKey(item, index);
-                if (!startMap.has(key)) {
-                    startMap.set(key, item);
-                }
-            });
-
+            startItems.forEach((item, i) => { const k = this.buildEvidenceItemKey(item, i); if (!startMap.has(k)) startMap.set(k, item); });
             const endMap = new Map();
-            endItems.forEach((item, index) => {
-                const key = toEvidenceKey(item, index);
-                if (!endMap.has(key)) {
-                    endMap.set(key, item);
-                }
-            });
+            endItems.forEach((item, i) => { const k = this.buildEvidenceItemKey(item, i); if (!endMap.has(k)) endMap.set(k, item); });
 
             const orderedKeys = [];
-            startMap.forEach((_, key) => orderedKeys.push(key));
-            endMap.forEach((_, key) => {
-                if (!orderedKeys.includes(key)) {
-                    orderedKeys.push(key);
-                }
-            });
-
+            startMap.forEach((_, k) => orderedKeys.push(k));
+            endMap.forEach((_, k) => { if (!orderedKeys.includes(k)) orderedKeys.push(k); });
             const maxLength = Math.max(startItems.length, endItems.length);
-            for (let index = 0; index < maxLength; index += 1) {
-                const fallbackKey = `index_${index + 1}`;
-                if (!orderedKeys.includes(fallbackKey)) {
-                    orderedKeys.push(fallbackKey);
-                }
+            for (let i = 0; i < maxLength; i++) {
+                const fb = `index_${i + 1}`;
+                if (!orderedKeys.includes(fb)) orderedKeys.push(fb);
             }
 
-            const renderEvidenceTile = (phaseLabel, item, index) => {
-                if (!item?.url) {
-                    return `
-                        <div class="report-day-photo report-day-photo-empty">
-                            <div class="report-day-photo-copy">
-                                <span class="report-day-photo-phase">${escapeHtml(phaseLabel)}</span>
-                                <span class="report-day-photo-meta">Sin foto correspondiente</span>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                return `
-                    <a class="report-day-photo" href="${escapeHtml(item.url)}" aria-label="${escapeHtml(`${phaseLabel} ${index + 1}`)}">
-                        <span class="report-day-photo-thumb">
-                            <img src="${escapeHtml(item.url)}" alt="${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}">
-                        </span>
-                        <span class="report-day-photo-copy">
-                            <span class="report-day-photo-phase">${escapeHtml(phaseLabel)}</span>
-                            <span class="report-day-photo-label">${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}</span>
-                            ${this.getShiftEvidenceDisplayMeta(item)
-                                ? `<span class="report-day-photo-meta">${escapeHtml(this.getShiftEvidenceDisplayMeta(item))}</span>`
-                                : ''}
-                        </span>
-                    </a>
-                `;
-            };
-
-            const renderPairs = () => {
-                const rows = orderedKeys.map((key, index) => {
-                    const startItem = startMap.get(key) || startItems[index] || null;
-                    const endItem = endMap.get(key) || endItems[index] || null;
-
-                    if (!startItem && !endItem) {
-                        return '';
-                    }
-
-                    return `
-                        <div class="report-day-pair-row">
-                            ${renderEvidenceTile('Antes', startItem, index)}
-                            ${renderEvidenceTile('Después', endItem, index)}
-                        </div>
-                    `;
-                }).filter(Boolean);
-
-                if (rows.length === 0) {
-                    return '<div class="report-day-phase-empty">No se recibieron fotos para este turno.</div>';
-                }
-
-                return `<div class="report-day-pairs">${rows.join('')}</div>`;
-            };
-
-            return `
-                <article class="report-day-shift-card">
-                    <div class="report-day-shift-top">
-                        <div>
-                            <div class="report-day-shift-title">${escapeHtml(employeeName)}</div>
-                            <div class="report-day-shift-subtitle">${escapeHtml(restaurantName)} • ${escapeHtml(scheduleText)}</div>
-                        </div>
-                        <div class="report-day-shift-statuses">
-                            <span class="badge ${getBadgeClass(getShiftStatusLabel(shift))}">${escapeHtml(getShiftStatusLabel(shift))}</span>
-                            ${endedEarly ? '<span class="badge badge-warning">Salida anticipada</span>' : ''}
-                        </div>
+            const statusLabel = getShiftStatusLabel(shift);
+            return `<article class="report-day-shift-card">
+                <div class="report-day-shift-top">
+                    <div>
+                        <div class="report-day-shift-title">${escapeHtml(employeeName)}</div>
+                        <div class="report-day-shift-subtitle">${escapeHtml(restaurantName)} • ${escapeHtml(scheduleText)}</div>
                     </div>
-                    <div class="report-day-shift-metrics">
-                        <div class="report-day-shift-metric">
-                            <span>Horas trabajadas</span>
-                            <strong>${escapeHtml(workedHours)}</strong>
-                        </div>
-                        <div class="report-day-shift-metric">
-                            <span>Horas programadas</span>
-                            <strong>${escapeHtml(scheduledHours)}</strong>
-                        </div>
+                    <div class="report-day-shift-statuses">
+                        <span class="badge ${getBadgeClass(statusLabel)}">${escapeHtml(statusLabel)}</span>
+                        ${endedEarly ? '<span class="badge badge-warning">Salida anticipada</span>' : ''}
                     </div>
-                    ${endedEarly && earlyEndReason ? `
-                        <div class="report-day-shift-metric">
-                            <span>Motivo de salida anticipada</span>
-                            <strong>${escapeHtml(earlyEndReason)}</strong>
-                        </div>
-                    ` : ''}
-                    ${renderPairs()}
-                </article>
-            `;
+                </div>
+                <div class="report-day-shift-metrics">
+                    <div class="report-day-shift-metric"><span>Horas trabajadas</span><strong>${escapeHtml(workedHours)}</strong></div>
+                    <div class="report-day-shift-metric"><span>Horas programadas</span><strong>${escapeHtml(scheduledHours)}</strong></div>
+                </div>
+                ${endedEarly && earlyEndReason ? `<div class="report-day-shift-metric"><span>Motivo de salida anticipada</span><strong>${escapeHtml(earlyEndReason)}</strong></div>` : ''}
+                ${this.renderReportEvidencePairs(startMap, endMap, startItems, endItems, orderedKeys)}
+            </article>`;
         }).join('');
 
         if (!foundEvidence) {
             copy.textContent = 'Ese día sí tiene turnos, pero no se recibieron fotos de inicio y fin en este listado.';
         }
+    },
+
+    normalizeReportFilterValue(rawValue, { numeric = false } = {}) {
+        const normalized = String(rawValue || '').trim();
+        if (!normalized) return undefined;
+        if (normalized.toLowerCase() === 'all') return 'all';
+        if (!numeric) return normalized;
+        const asNumber = Number(normalized);
+        return Number.isFinite(asNumber) ? asNumber : normalized;
     },
 
     async generateReport() {
@@ -4188,26 +4154,8 @@ export const supervisorMethods = {
             apiClient.setAccessToken(accessToken);
             const isSingleDay = startDate === endDate;
 
-            const normalizeReportFilterValue = (rawValue, { numeric = false } = {}) => {
-                const normalized = String(rawValue || '').trim();
-                if (!normalized) {
-                    return undefined;
-                }
-
-                if (normalized.toLowerCase() === 'all') {
-                    return 'all';
-                }
-
-                if (!numeric) {
-                    return normalized;
-                }
-
-                const asNumber = Number(normalized);
-                return Number.isFinite(asNumber) ? asNumber : normalized;
-            };
-
-            const normalizedRestaurantFilter = normalizeReportFilterValue(restaurantId, { numeric: true });
-            const normalizedEmployeeFilter = normalizeReportFilterValue(employeeId, { numeric: false });
+            const normalizedRestaurantFilter = this.normalizeReportFilterValue(restaurantId, { numeric: true });
+            const normalizedEmployeeFilter = this.normalizeReportFilterValue(employeeId, { numeric: false });
 
             const payload = {
                 restaurant_id: normalizedRestaurantFilter,
@@ -4348,24 +4296,8 @@ export const supervisorMethods = {
             this.updateReportSupportCard(null);
         } catch (error) {
             this.registerReportGenerateDebug({
-                restaurant_id: (() => {
-                    const normalized = String(restaurantId || '').trim();
-                    if (!normalized) {
-                        return undefined;
-                    }
-                    if (normalized.toLowerCase() === 'all') {
-                        return 'all';
-                    }
-                    const asNumber = Number(normalized);
-                    return Number.isFinite(asNumber) ? asNumber : normalized;
-                })(),
-                employee_id: (() => {
-                    const normalized = String(employeeId || '').trim();
-                    if (!normalized) {
-                        return undefined;
-                    }
-                    return normalized.toLowerCase() === 'all' ? 'all' : normalized;
-                })(),
+                restaurant_id: this.normalizeReportFilterValue(restaurantId, { numeric: true }),
+                employee_id: this.normalizeReportFilterValue(employeeId, { numeric: false }),
                 period_start: startDate,
                 period_end: endDate,
                 export_format: 'both',

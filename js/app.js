@@ -2,10 +2,6 @@
 import { createClient } from '@supabase/supabase-js';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { apiClient, buildIdempotencyKey } from './api.js';
-import { employeeMethods } from './modules/employee.js';
-import { adminMethods } from './modules/admin.js';
-import { supervisorMethods } from './modules/supervisor.js';
-import { adminModalMethods } from './modules/adminModals.js';
 import {
     STORAGE_KEYS, ROLE_ROUTES, ROLE_LABELS, REPORT_COLUMNS,
     AREA_META, AREA_SUBAREAS, AREA_GROUP_ALIASES,
@@ -1614,6 +1610,30 @@ const app = {
         }
     },
 
+    async loadRoleModule(role) {
+        if (this._roleModuleLoaded) return;
+        try {
+            const route = ROLE_ROUTES[role] || '';
+            if (route.startsWith('employee')) {
+                const { employeeMethods } = await import('./modules/employee.js');
+                Object.assign(this, employeeMethods);
+            } else if (route.startsWith('supervisor')) {
+                const { supervisorMethods } = await import('./modules/supervisor.js');
+                Object.assign(this, supervisorMethods);
+            } else if (route.startsWith('admin')) {
+                const [{ adminMethods }, { adminModalMethods }] = await Promise.all([
+                    import('./modules/admin.js'),
+                    import('./modules/adminModals.js')
+                ]);
+                Object.assign(this, adminMethods, adminModalMethods);
+            }
+            this._roleModuleLoaded = true;
+        } catch (error) {
+            console.error('No fue posible cargar el módulo del rol.', error);
+            throw error;
+        }
+    },
+
     async bootstrapAuthenticatedUser({ silent = false, session: incomingSession = null, restoredSession = false } = {}) {
         if (this.authBootstrapPromise) {
             return this.authBootstrapPromise;
@@ -1639,6 +1659,8 @@ const app = {
                 this.currentUser = this.normalizeCurrentUser(me);
                 apiClient.setCurrentRole(this.currentUser?.role || '');
                 localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(this.currentUser));
+
+                await this.loadRoleModule(this.currentUser?.role || '');
 
                 if (this.currentUser.isActive === false) {
                     throw new Error('Tu usuario está inactivo. Contacta al administrador.');
@@ -5394,7 +5416,6 @@ const app = {
 
 };
 
-Object.assign(app, employeeMethods, supervisorMethods, adminModalMethods, adminMethods);
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {

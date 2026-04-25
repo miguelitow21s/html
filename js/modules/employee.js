@@ -1238,13 +1238,66 @@ export const employeeMethods = {
         return null;
     },
 
+    buildRestaurantTaskCardHtml(task, dashboard) {
+        const taskId = escapeHtml(String(task.task_id || task.id || ''));
+        const status = task.status || 'pending';
+        const requiresEvidence = task.requires_evidence === true;
+        const restaurantName = this.getEmployeeTaskRestaurantName(task, dashboard);
+        const dueText = task.due_at ? formatDateTime(task.due_at) : '';
+        const isDone = status === 'completed' || status === 'cancelled' || status === 'closed';
+
+        const metaParts = [
+            restaurantName ? `Restaurante: ${escapeHtml(restaurantName)}` : '',
+            dueText ? `Vence: ${escapeHtml(dueText)}` : '',
+            requiresEvidence ? 'Requiere foto de evidencia.' : ''
+        ].filter(Boolean);
+
+        const actionsHtml = isDone ? '' : requiresEvidence ? `
+            <div class="rtask-actions">
+                <button type="button" class="btn btn-primary btn-sm" data-rtask-action="show-evidence" data-task-id="${taskId}">Completar tarea</button>
+                <div class="rtask-evidence-wrap hidden" id="rtask-evidence-wrap-${taskId}">
+                    <input type="file" accept="image/*" capture="environment" class="rtask-file-input" id="rtask-file-${taskId}">
+                    <input type="text" placeholder="Observaciones (opcional)" class="rtask-notes-input dark-control" id="rtask-notes-${taskId}">
+                    <button type="button" class="btn btn-primary btn-sm" data-rtask-action="submit-evidence" data-task-id="${taskId}">Enviar evidencia</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-rtask-action="cancel-evidence" data-task-id="${taskId}">Cancelar</button>
+                </div>
+            </div>` : `
+            <div class="rtask-actions">
+                <button type="button" class="btn btn-success btn-sm" data-rtask-action="close" data-task-id="${taskId}">Marcar completada</button>
+            </div>`;
+
+        return `<div class="rtask-card" data-task-id="${taskId}">
+            <div class="rtask-header">
+                <span class="rtask-title">${escapeHtml(task.title || 'Tarea de restaurante')}</span>
+                <span class="badge ${getBadgeClass(status)}">${escapeHtml(status)}</span>
+            </div>
+            ${task.description ? `<p class="rtask-desc">${escapeHtml(task.description)}</p>` : ''}
+            <p class="rtask-meta">${metaParts.join(' · ')}</p>
+            ${actionsHtml}
+        </div>`;
+    },
+
+    initRestaurantTaskDelegation() {
+        const list = document.getElementById('employee-restaurant-tasks-list');
+        if (!list || list.dataset.delegationReady) return;
+        list.dataset.delegationReady = '1';
+        list.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-rtask-action]');
+            if (!btn) return;
+            const taskId = btn.dataset.taskId;
+            const action = btn.dataset.rtaskAction;
+            if (action === 'close') void this.employeeCloseRestaurantTask(taskId);
+            else if (action === 'submit-evidence') void this.employeeCompleteRestaurantTask(taskId);
+            else if (action === 'show-evidence') document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.remove('hidden');
+            else if (action === 'cancel-evidence') document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.add('hidden');
+        });
+    },
+
     renderEmployeeRestaurantTasks() {
         const section = document.getElementById('employee-restaurant-tasks-section');
         if (!section) return;
 
         const tasks = this.getEmployeeRestaurantOpenTasks();
-        const dashboard = this.data.employee.dashboard || {};
-
         if (tasks.length === 0) {
             section.classList.add('hidden');
             return;
@@ -1254,113 +1307,9 @@ export const employeeMethods = {
         const list = document.getElementById('employee-restaurant-tasks-list');
         if (!list) return;
 
-        const fragment = document.createDocumentFragment();
-        tasks.forEach((task) => {
-            const taskId = task.task_id || task.id;
-            const status = task.status || 'pending';
-            const requiresEvidence = task.requires_evidence === true;
-            const restaurantName = this.getEmployeeTaskRestaurantName(task, dashboard);
-            const dueText = task.due_at ? formatDateTime(task.due_at) : '';
-            const isDone = status === 'completed' || status === 'cancelled' || status === 'closed';
-
-            const card = document.createElement('div');
-            card.className = 'rtask-card';
-            card.dataset.taskId = String(taskId);
-
-            const header = document.createElement('div');
-            header.className = 'rtask-header';
-
-            const titleEl = document.createElement('span');
-            titleEl.className = 'rtask-title';
-            titleEl.textContent = task.title || 'Tarea de restaurante';
-
-            const badge = document.createElement('span');
-            badge.className = `badge ${getBadgeClass(status)}`;
-            badge.textContent = status;
-
-            header.append(titleEl, badge);
-
-            const metaParts = [
-                restaurantName ? `Restaurante: ${restaurantName}` : '',
-                dueText ? `Vence: ${dueText}` : '',
-                requiresEvidence ? 'Requiere foto de evidencia.' : ''
-            ].filter(Boolean);
-
-            const meta = document.createElement('p');
-            meta.className = 'rtask-meta';
-            meta.textContent = metaParts.join(' · ');
-
-            card.append(header);
-
-            if (task.description) {
-                const desc = document.createElement('p');
-                desc.className = 'rtask-desc';
-                desc.textContent = task.description;
-                card.appendChild(desc);
-            }
-
-            card.appendChild(meta);
-
-            if (!isDone) {
-                const actions = document.createElement('div');
-                actions.className = 'rtask-actions';
-
-                if (requiresEvidence) {
-                    const uploadWrap = document.createElement('div');
-                    uploadWrap.className = 'rtask-evidence-wrap hidden';
-                    uploadWrap.id = `rtask-evidence-wrap-${taskId}`;
-
-                    const fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.accept = 'image/*';
-                    fileInput.capture = 'environment';
-                    fileInput.className = 'rtask-file-input';
-                    fileInput.id = `rtask-file-${taskId}`;
-
-                    const notesInput = document.createElement('input');
-                    notesInput.type = 'text';
-                    notesInput.placeholder = 'Observaciones (opcional)';
-                    notesInput.className = 'rtask-notes-input dark-control';
-                    notesInput.id = `rtask-notes-${taskId}`;
-
-                    const submitBtn = document.createElement('button');
-                    submitBtn.type = 'button';
-                    submitBtn.className = 'btn btn-primary btn-sm';
-                    submitBtn.textContent = 'Enviar evidencia';
-                    submitBtn.onclick = () => void this.employeeCompleteRestaurantTask(taskId);
-
-                    const cancelBtn = document.createElement('button');
-                    cancelBtn.type = 'button';
-                    cancelBtn.className = 'btn btn-secondary btn-sm';
-                    cancelBtn.textContent = 'Cancelar';
-                    cancelBtn.onclick = () => uploadWrap.classList.add('hidden');
-
-                    uploadWrap.append(fileInput, notesInput, submitBtn, cancelBtn);
-
-                    const triggerBtn = document.createElement('button');
-                    triggerBtn.type = 'button';
-                    triggerBtn.className = 'btn btn-primary btn-sm';
-                    triggerBtn.textContent = 'Completar tarea';
-                    triggerBtn.onclick = () => uploadWrap.classList.remove('hidden');
-
-                    actions.append(triggerBtn, uploadWrap);
-                } else {
-                    const closeBtn = document.createElement('button');
-                    closeBtn.type = 'button';
-                    closeBtn.className = 'btn btn-success btn-sm';
-                    closeBtn.textContent = 'Marcar completada';
-                    closeBtn.onclick = () => void this.employeeCloseRestaurantTask(taskId);
-
-                    actions.appendChild(closeBtn);
-                }
-
-                card.appendChild(actions);
-            }
-
-            fragment.appendChild(card);
-        });
-
-        list.replaceChildren(fragment);
+        this.initRestaurantTaskDelegation();
+        const dashboard = this.data.employee.dashboard || {};
+        list.innerHTML = tasks.map((task) => this.buildRestaurantTaskCardHtml(task, dashboard)).join('');
     },
 
     async employeeCloseRestaurantTask(taskId) {
