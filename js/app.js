@@ -312,6 +312,29 @@ const app = {
         return this.store.ui.pageNodes;
     },
 
+    updateDebugInfo() {
+        const debugStatus = document.getElementById('debug-status');
+        const debugPage = document.getElementById('debug-page');
+        const debugUser = document.getElementById('debug-user');
+        const debugBackend = document.getElementById('debug-backend');
+
+        if (debugStatus) {
+            debugStatus.textContent = this.backend.connected ? 'OK' : 'APP';
+        }
+
+        if (debugPage) {
+            debugPage.textContent = this.currentPage;
+        }
+
+        if (debugUser) {
+            debugUser.textContent = this.currentUser?.email || 'none';
+        }
+
+        if (debugBackend) {
+            debugBackend.textContent = this.backend.statusText;
+        }
+    },
+
     async init() {
         console.log('WorkTrace App Initializing...');
         this.showLoading('Iniciando sesión...', 'Espera un momento.');
@@ -2737,6 +2760,72 @@ const app = {
         });
 
         return mergedGroups;
+    },
+
+    getSupervisorSelectedRestaurant() {
+        const selectedRestaurantId = document.getElementById('supervision-restaurant-select')?.value;
+        const restaurants = this.data.supervisor.restaurants || [];
+        return restaurants.find((restaurant) => String(getRestaurantRecordId(restaurant)) === String(selectedRestaurantId))
+            || restaurants[0]
+            || null;
+    },
+
+    getSupervisorCleaningAreaGroups() {
+        const restaurant = this.getSupervisorSelectedRestaurant();
+        return this.resolveCleaningAreaGroups(
+            restaurant,
+            restaurant?.raw?.restaurant,
+            restaurant?.raw
+        );
+    },
+
+    getSupervisorAvailableAreas() {
+        const restaurant = this.getSupervisorSelectedRestaurant();
+        this.cleaningAreaGroups = this.getSupervisorCleaningAreaGroups();
+        return this.resolveCleaningAreas(
+            restaurant,
+            restaurant?.raw?.restaurant,
+            restaurant?.raw
+        );
+    },
+
+    getSupervisorSelectedAreas() {
+        return this.getSupervisorAvailableAreas();
+    },
+
+    populateSupervisorAreaOptions() {
+        const select = document.getElementById('supervision-area-select');
+        if (!select) {
+            return;
+        }
+
+        const availableAreas = this.getSupervisorAvailableAreas();
+        const hasCurrentSelection = availableAreas.some((areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.selectedSupervisorArea));
+        if (!hasCurrentSelection) {
+            this.selectedSupervisorArea = availableAreas[0] || '';
+        }
+
+        const selectedKey = normalizeAreaToken(this.selectedSupervisorArea);
+        select.innerHTML = `
+            <option value="">Selecciona un área</option>
+            ${availableAreas.map((areaLabel) => {
+                const optionKey = normalizeAreaToken(areaLabel);
+                return `
+                    <option value="${escapeHtml(areaLabel)}" ${optionKey === selectedKey ? 'selected' : ''}>
+                        ${escapeHtml(areaLabel)}
+                    </option>
+                `;
+            }).join('')}
+        `;
+    },
+
+    setSupervisorSelectedArea(areaLabel = '') {
+        this.selectedSupervisorArea = areaLabel || '';
+        const select = document.getElementById('supervision-area-select');
+        if (select && select.value !== this.selectedSupervisorArea) {
+            select.value = this.selectedSupervisorArea;
+        }
+        this.renderSupervisorPhotoGrid();
     },
 
     setCleaningAreas(areas = [], areaGroups = null) {
