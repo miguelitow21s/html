@@ -44,7 +44,7 @@ export default [
             'no-undef': 'warn',
             'no-var': 'error',
             'prefer-const': 'warn',
-            'eqeqeq': ['error', 'smart'],
+            eqeqeq: ['error', 'smart'],
             'no-implicit-coercion': 'warn',
         },
         ignores: ['dist/**', 'node_modules/**'],
