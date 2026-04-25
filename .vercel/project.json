@@ -1,5 +1,16 @@
 {
   "projectId": "prj_TEDo71vJv243x5WGufOVvO0KtDs0",
   "orgId": "team_Pp3Nymru4K5r6OvpYamYWgwk",
-  "projectName": "turnos-front"
+  "projectName": "turnos-front",
+  "settings": {
+    "createdAt": 1774410008958,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": "npm install",
+    "buildCommand": "npm run build",
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
 }
