@@ -1,0 +1,30 @@
+{
+  "shift_start_response": {
+    "success": false,
+    "data": null,
+    "error": {
+      "code": 422,
+      "message": "Payload invalido: lat Number must be less than or equal to 90",
+      "category": "VALIDATION",
+      "details": {
+        "formErrors": [],
+        "fieldErrors": {
+          "lat": [
+            "Number must be less than or equal to 90"
+          ],
+          "lng": [
+            "Number must be greater than or equal to -180"
+          ]
+        }
+      },
+      "request_id": "0fb7b985-0eb9-422c-adf6-a7134373bb9d"
+    },
+    "request_id": "0fb7b985-0eb9-422c-adf6-a7134373bb9d"
+  },
+  "active_shift_response": {
+    "success": true,
+    "data": null,
+    "error": null,
+    "request_id": "1d432d36-aac5-4027-80a2-47c3f5e04314"
+  }
+}

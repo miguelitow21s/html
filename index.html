@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WorkTrace - Sistema de Gestión de Limpieza</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Cpath d='M18 44l18-18 10 10-18 18H18z' fill='%230ea5e9'/%3E%3Cpath d='M33 17l4-4 14 14-4 4z' fill='%23f8fafc'/%3E%3C/svg%3E">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body class="app-booting">
+    <!-- DEBUG INFO -->
+    <div id="debug-info" class="debug-panel" style="display: none;">
+        <div>Status: <span id="debug-status">Loading...</span></div>
+        <div>Page: <span id="debug-page">-</span></div>
+        <div>User: <span id="debug-user">-</span></div>
+        <div>Servicio: <span id="debug-backend">Pendiente</span></div>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <h3 id="loading-title">Procesando...</h3>
+        <p id="loading-message">Un momento por favor.</p>
+    </div>
+
+    <div id="app-toast-stack" class="app-toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ============================================================
+         MODALES COMPARTIDOS (todos los roles)
+         ============================================================ -->
+    <div id="modal-pin-change" class="modal" data-locked="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cambiar Contraseña</h3>
+            </div>
+            <form id="change-pin-form">
+                <input type="text" name="username" autocomplete="username" style="display:none" aria-hidden="true">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-shield-alt"></i>
+                        <div>
+                            <strong>Debe cambiar su contraseña temporal.</strong><br>
+                            <small id="change-pin-helper">Por seguridad, debe cambiar su contraseña temporal en el primer ingreso.</small>
+                        </div>
+                    </div>
+                    <div id="change-pin-error" class="error-message hidden"></div>
+                    <div class="form-group">
+                        <label>Nueva Contraseña Numérica</label>
+                        <input type="password" id="change-pin-new" class="dark-control" inputmode="numeric" autocomplete="new-password" placeholder="Mínimo 6 dígitos" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Contraseña</label>
+                        <input type="password" id="change-pin-confirm" class="dark-control" inputmode="numeric" autocomplete="new-password" placeholder="Repita la contraseña" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="change-pin-submit-btn">
+                        <i class="fas fa-save"></i>
+                        Guardar Contraseña
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-otp" class="modal" data-locked="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Verificación de seguridad</h3>
+            </div>
+            <form id="otp-form">
+                <div class="modal-body">
+                    <div class="alert alert-success">
+                        <i class="fas fa-shield-alt"></i>
+                        <div>
+                            <strong id="otp-context-message">Ingresa el código OTP para continuar.</strong>
+                        </div>
+                    </div>
+                    <div id="otp-debug-box" class="otp-debug-box hidden">
+                        <span class="info-item-label">Código mostrado en pantalla</span>
+                        <strong id="otp-debug-code">------</strong>
+                    </div>
+                    <div id="otp-error" class="error-message hidden"></div>
+                    <div class="form-group">
+                        <label for="otp-code">Código OTP</label>
+                        <input type="password" id="otp-code" class="dark-control otp-code-input" inputmode="numeric" autocomplete="one-time-code" placeholder="Ingresa el código" required>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-stack-sm">
+                    <button type="submit" id="otp-submit-btn" class="btn btn-primary">
+                        <i class="fas fa-key"></i>
+                        Verificar código
+                    </button>
+                    <button type="button" id="otp-resend-btn" class="btn btn-secondary">
+                        <i class="fas fa-rotate-right"></i>
+                        Reenviar
+                    </button>
+                    <button type="button" id="otp-cancel-btn" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-camera-capture" class="modal camera-modal" data-locked="true">
+        <div class="modal-content camera-modal-content">
+            <div class="modal-header">
+                <h3 id="camera-capture-title">Capturar evidencia</h3>
+                <button class="btn-close" id="camera-close-btn" type="button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="camera-capture-helper" class="muted-copy">Usa la cámara del dispositivo para registrar la foto requerida.</p>
+                <div class="camera-capture-frame">
+                    <video id="camera-capture-video" autoplay playsinline muted></video>
+                    <canvas id="camera-capture-canvas" class="hidden"></canvas>
+                </div>
+                <div id="camera-capture-error" class="error-message hidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="camera-cancel-btn" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+                <button type="button" id="camera-capture-btn" class="btn btn-primary" disabled>
+                    <i class="fas fa-camera"></i>
+                    Tomar Foto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-scheduled-shift-cancel" class="modal" data-locked="true">
+        <div class="modal-content confirm-modal-content">
+            <div class="modal-header">
+                <h3>Eliminar turno programado</h3>
+                <button class="btn-close" type="button" onclick="app.closeCancelScheduledShiftModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <div>
+                        <strong>Esta acción cancela la programación.</strong><br>
+                        <small>El turno dejará de estar disponible para el empleado.</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="scheduled-shift-cancel-reason">Motivo (opcional)</label>
+                    <textarea id="scheduled-shift-cancel-reason" class="dark-control" placeholder="Ej: cambio de operación, cierre temporal, ajuste de agenda..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="app.closeCancelScheduledShiftModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="app.submitCancelScheduledShiftModal()">
+                    Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-restaurant-deactivate" class="modal" data-locked="true">
+        <div class="modal-content confirm-modal-content">
+            <div class="modal-header">
+                <h3>Eliminar restaurante</h3>
+                <button class="btn-close" type="button" onclick="app.closeDeactivateRestaurantModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-store-slash"></i>
+                    <div>
+                        <strong>Se desactivará este restaurante.</strong><br>
+                        <small>No aparecerá en nuevas programaciones ni en vistas operativas activas.</small>
+                    </div>
+                </div>
+                <p id="restaurant-deactivate-copy" class="muted-copy">Confirma la eliminación del restaurante seleccionado.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="app.closeDeactivateRestaurantModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="app.submitDeactivateRestaurantModal()">
+                    Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-user-deactivate" class="modal" data-locked="true">
+        <div class="modal-content confirm-modal-content">
+            <div class="modal-header">
+                <h3>Eliminar usuario</h3>
+                <button class="btn-close" type="button" onclick="app.closeDeactivateUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-user-slash"></i>
+                    <div>
+                        <strong>Se desactivará el acceso del usuario.</strong><br>
+                        <small>Eliminación lógica (no se borra físicamente del sistema).</small>
+                    </div>
+                </div>
+                <p id="user-deactivate-copy" class="muted-copy">Confirma la eliminación del usuario seleccionado.</p>
+                <div class="form-group">
+                    <label for="user-deactivate-reason">Motivo (opcional)</label>
+                    <textarea id="user-deactivate-reason" class="dark-control" placeholder="Ej: baja operativa, duplicado, retiro del equipo..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="app.closeDeactivateUserModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="app.submitDeactivateUserModal()">
+                    Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         LOGIN
+         ============================================================ -->
+    <div id="page-login" class="login-container">
+        <div class="login-box">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="css/logos/R3%20logo%20gris%20sobre%20negro%20%20(2).svg" alt="Logo WorkTrace">
+                </div>
+                <h1>WorkTrace</h1>
+                <p>Gestión Profesional de Limpieza</p>
+            </div>
+
+            <form id="login-form">
+                <div class="consent-box">
+                    <label>
+                        <input type="checkbox" id="login-consent" required>
+                        <span>
+                            Autorizo el uso de mis datos personales, ubicación GPS y cámara 
+                            para fines de verificación de turnos laborales. Acepto los términos y condiciones del servicio.
+                        </span>
+                    </label>
+                </div>
+                
+                <div id="login-notice" class="login-message login-message-success hidden"></div>
+                <div id="login-error" class="error-message hidden"></div>
+                
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="login-email" class="form-control" placeholder="usuario@worktrace.com" autocomplete="username" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Contraseña Numérica</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="login-password" class="form-control pin-input" placeholder="••••••" inputmode="numeric" autocomplete="current-password" minlength="6" maxlength="6" pattern="[0-9]{6}" required>
+                    </div>
+                    <p class="input-helper">Solo números. Debe tener exactamente 6 dígitos.</p>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Iniciar Sesión</span>
+                </button>
+            </form>
+            
+            <div class="forgot-password">
+                <a href="#" onclick="app.requestPasswordReset(); return false;">¿Olvidé mi contraseña?</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         PÁGINAS EMPLEADO
+         pages: employee-dashboard, employee-profile, employee-shift-start,
+                employee-shift-photos, employee-shift-cleaning,
+                employee-shift-complete, employee-shift-summary, success
+         ============================================================ -->
+    <div id="page-employee-dashboard" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <img class="header-brand-logo" src="css/logos/R3%20logo%20gris%20sobre%20negro%20%20(2).svg" alt="Logo WorkTrace">
+                <span>WorkTrace</span>
+            </div>
+            <div class="header-actions">
+                <div class="header-btn" style="background: 'linear-gradient(135deg, #0ea5e9 0%, #10b981 100%)'">
+                    <span id="user-initial">U</span>
+                </div>
+            </div>
+        </header>
+        
+        <main class="content employee-dashboard-content">
+            <div class="welcome-banner">
+                <h2 id="employee-welcome">¡Hola! 👋</h2>
+                <p id="current-date">Cargando fecha...</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title" id="employee-shift-title">Turno de Hoy</div>
+                    <span class="badge badge-warning" id="employee-shift-status">Programado</span>
+                </div>
+                <p class="employee-shift-helper" id="employee-shift-helper">Aquí verás el estado real de tu turno y cuándo puedes iniciarlo o continuarlo.</p>
+
+                <div id="shiftInfo" class="shift-info">
+                    <div class="info-item">
+                        <i class="fas fa-store"></i>
+                        <div class="info-item-content">
+                            <span class="info-item-label">Restaurante</span>
+                            <span class="info-item-value" id="employee-shift-restaurant">Sin turno programado</span>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div class="info-item-content">
+                            <span class="info-item-label">Fecha</span>
+                            <span class="info-item-value" id="employee-shift-date">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="fas fa-clock"></i>
+                        <div class="info-item-content">
+                            <span class="info-item-label">Horario</span>
+                            <span class="info-item-value" id="employee-shift-schedule">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div class="info-item-content">
+                            <span class="info-item-label">Ubicación</span>
+                            <span class="info-item-value" id="employee-shift-location">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-card" id="employee-task-card">
+                <h4><i class="fas fa-star"></i> <span id="employee-task-heading">Tarea Especial Asignada</span></h4>
+                <p id="employee-task-title">No hay tareas pendientes.</p>
+                <div class="task-observations">
+                    <strong>Observaciones previas:</strong>
+                    <p id="employee-task-observations" class="task-observations-copy">Sin observaciones.</p>
+                </div>
+            </div>
+
+            <div id="employee-restaurant-tasks-section" class="hidden">
+                <h3 class="section-heading"><i class="fas fa-store"></i> Tareas del Restaurante</h3>
+                <div id="employee-restaurant-tasks-list"></div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-large btn-success" id="employee-start-shift-btn" onclick="app.openEmployeeShiftStart()">
+                    <i class="fas fa-play-circle"></i> <span id="employee-start-shift-label">Iniciar Turno</span>
+                </button>
+            </div>
+        </main>
+        
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="app.navigate('employee-dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </button>
+            <button class="nav-item" onclick="app.navigate('employee-profile')">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </button>
+            <button class="nav-item" onclick="app.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Salir</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- EMPLOYEE PROFILE -->
+    <div id="page-employee-profile" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('employee-dashboard')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Mi Perfil</span>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div id="profile-name" class="profile-name">Usuario</div>
+                <div id="profile-role-label" class="profile-role">Empleado de Limpieza</div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="profile-hours-worked">0h</div>
+                    <div class="stat-label">Horas este mes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="profile-total-shifts">0</div>
+                    <div class="stat-label">Turnos realizados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="profile-upcoming-shifts">0</div>
+                    <div class="stat-label">Turnos próximos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="profile-pending-tasks">0</div>
+                    <div class="stat-label">Tareas especiales</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Información de Contacto</div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-envelope"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Correo</span>
+                        <span class="info-item-value" id="profile-email">-</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-phone"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Teléfono</span>
+                        <span class="info-item-value" id="profile-phone">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Tareas Especiales</div>
+                </div>
+                <div id="profile-special-tasks-list">
+                    <div class="task-card">
+                        <p>No hay tareas especiales pendientes.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <nav class="bottom-nav">
+            <button class="nav-item" onclick="app.navigate('employee-dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </button>
+            <button class="nav-item active" onclick="app.navigate('employee-profile')">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </button>
+            <button class="nav-item" onclick="app.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Salir</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- SHIFT START -->
+    <div id="page-employee-shift-start" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('employee-dashboard')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Iniciar Turno</span>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="gps-verification">
+                <i class="fas fa-map-marker-alt"></i>
+                <h4 style="color: white; margin-bottom: 10px;">Verificación de Ubicación</h4>
+                <div id="gps-status" class="gps-status invalid">
+                    <i class="fas fa-location-crosshairs"></i>
+                    <span>Ubicación lista para verificar</span>
+                </div>
+                <div class="gps-actions">
+                    <button class="btn btn-secondary" onclick="app.verifyGPS()" id="gps-btn">
+                        <i class="fas fa-location-crosshairs"></i> Verificar ubicación
+                    </button>
+                </div>
+            </div>
+            
+            <label class="checkbox-wrapper" onclick="app.toggleHealthCert()">
+                <input type="checkbox" id="health-cert">
+                <div class="checkbox-content">
+                    <span class="checkbox-title">Certificado de Actitud</span>
+                    <span class="checkbox-desc">Confirmo que me encuentro en perfecto estado de salud para iniciar mis labores.</span>
+                </div>
+            </label>
+            
+            <div class="card">
+                <h4 style="color: var(--gray); font-size: 12px; text-transform: uppercase; margin-bottom: 15px;">Información del Turno</h4>
+                <div class="info-item">
+                    <i class="fas fa-store"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Restaurante</span>
+                        <span class="info-item-value" id="shift-start-restaurant">Sin turno programado</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Horario</span>
+                        <span class="info-item-value" id="shift-start-schedule">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="app.startShiftFlow()" id="continue-btn" disabled>
+                Continuar a Fotos <i class="fas fa-arrow-right"></i>
+            </button>
+        </main>
+    </div>
+
+    <!-- SHIFT PHOTOS -->
+    <div id="page-employee-shift-photos" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('employee-shift-start')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Fotos de Inicio</span>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Áreas a Fotografiar</div>
+                        <p class="card-subtitle">Tome fotos del estado inicial de cada área</p>
+                    </div>
+                </div>
+
+                <div class="area-selection-panel">
+                    <div class="area-selection-header">
+                        <strong>Selecciona las áreas trabajadas hoy</strong>
+                        <p>Puedes elegir una o varias áreas. Solo se mostrarán sus subáreas para tomar evidencia.</p>
+                    </div>
+                    <div id="employee-area-selector" class="area-selector-chips">
+                        <!-- Generated by JS -->
+                    </div>
+                    <div id="employee-area-focus-panel" class="area-focus-panel">
+                        <div class="area-selection-header">
+                            <strong>Área que vas a fotografiar ahora</strong>
+                            <p>Elige una de las áreas seleccionadas para ver solo sus subáreas y evitar una vista cargada.</p>
+                        </div>
+                        <div id="employee-area-focus" class="area-selector-chips">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="file" id="photo-input" accept="image/*" capture="environment" style="display: none;" onchange="app.handlePhotoUpload(event)">
+                
+                <div class="photo-grid" id="photo-grid">
+                    <!-- Generated by JS -->
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="photo-progress" style="width: 0%"></div>
+                    </div>
+                    <p style="text-align: center; margin-top: 10px; font-size: 14px; color: var(--gray);">
+                        <span id="photos-count">0</span> de <span id="total-photos">5</span> fotos completadas
+                    </p>
+                </div>
+            </div>
+            
+            <button class="btn-large btn-success" onclick="app.completeShiftStartPhotos()" id="start-cleaning-btn" disabled>
+                <i class="fas fa-broom"></i> Iniciar Limpieza
+            </button>
+        </main>
+    </div>
+
+    <!-- SHIFT CLEANING -->
+    <div id="page-employee-shift-cleaning" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <span>Turno en Progreso</span>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="card" style="text-align: center; padding: 40px 20px;">
+                <div class="shift-active-indicator">
+                    <div class="pulse-dot"></div>
+                    <span>TURNO ACTIVO</span>
+                </div>
+                
+                <div class="timer-display" id="cleaning-timer">00:00:00</div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>No cierre la aplicación</strong><br>
+                        <small>Mantenga la app abierta mientras realiza la limpieza.</small>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="fas fa-store"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Restaurante</span>
+                        <span class="info-item-value" id="cleaning-restaurant">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-large btn-success" onclick="app.navigateToShiftCompletion()">
+                <i class="fas fa-check-circle"></i> He Terminado la Limpieza
+            </button>
+        </main>
+    </div>
+
+    <!-- SHIFT COMPLETE -->
+    <div id="page-employee-shift-complete" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('employee-shift-cleaning')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Finalizar Turno</span>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Fotos de Finalización</div>
+                        <p class="card-subtitle">Tome fotos del estado final de cada área</p>
+                    </div>
+                </div>
+
+                <div class="area-selection-panel area-selection-panel-readonly">
+                    <div class="area-selection-header">
+                        <strong>Mismas áreas seleccionadas al inicio</strong>
+                        <p>Debes registrar la evidencia final de las mismas áreas que trabajaste al comenzar el turno.</p>
+                    </div>
+                    <div id="employee-end-area-summary" class="area-selector-chips area-selector-chips-readonly">
+                        <!-- Generated by JS -->
+                    </div>
+                    <div id="employee-end-area-focus-panel" class="area-focus-panel">
+                        <div class="area-selection-header">
+                            <strong>Área que vas a fotografiar ahora</strong>
+                            <p>Selecciona una de las áreas trabajadas para registrar sus evidencias finales.</p>
+                        </div>
+                        <div id="employee-end-area-focus" class="area-selector-chips">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="file" id="end-photo-input" accept="image/*" capture="environment" style="display: none;" onchange="app.handleEndPhotoUpload(event)">
+                
+                <div class="photo-grid" id="end-photo-grid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+            
+            <div class="card hidden shift-complete-special-task" id="shift-special-task-card">
+                <div class="card-header">
+                    <div class="shift-complete-special-task-head">
+                        <div class="shift-complete-special-task-icon" aria-hidden="true">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="shift-complete-special-task-copy">
+                            <div class="card-title" id="shift-special-task-title">Tarea Especial</div>
+                            <p id="shift-special-task-detail" class="muted-copy">Describe el avance o estado final de la tarea asignada.</p>
+                        </div>
+                    </div>
+                </div>
+                <label class="checkbox-wrapper shift-complete-special-task-toggle" onclick="app.toggleSpecialTask()">
+                    <input type="checkbox" id="special-task-done">
+                    <span>¿Completó la tarea especial asignada?</span>
+                </label>
+                <p id="shift-special-task-requirement" class="muted-copy">Marca la casilla cuando la tarea esté completada.</p>
+                <div id="special-task-evidence-section" class="shift-complete-task-evidence hidden">
+                    <div class="shift-complete-task-evidence-row">
+                        <strong>Evidencia de tarea</strong>
+                        <span id="special-task-evidence-status" class="badge badge-warning">Sin foto</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-inline" onclick="app.triggerSpecialTaskEvidenceCapture()">
+                        <i class="fas fa-camera"></i> Tomar foto de evidencia
+                    </button>
+                    <img id="special-task-evidence-preview" class="shift-complete-task-evidence-preview hidden" alt="Evidencia de tarea especial">
+                    <input
+                        type="file"
+                        id="special-task-evidence-input"
+                        accept="image/*"
+                        capture="environment"
+                        style="display: none;"
+                        onchange="app.handleSpecialTaskEvidenceUpload(event)"
+                    >
+                </div>
+                <div class="form-group shift-complete-special-task-note-group">
+                    <label for="special-task-notes">Observaciones de avance</label>
+                    <textarea id="special-task-notes" class="dark-control" placeholder="Describe el avance o estado de la tarea..."></textarea>
+                </div>
+            </div>
+            
+            <button class="btn-large btn-success" onclick="app.prepareShiftSummary()">
+                <i class="fas fa-clipboard-check"></i> Ver Resumen y Finalizar
+            </button>
+        </main>
+    </div>
+
+    <!-- SHIFT SUMMARY -->
+    <div id="page-employee-shift-summary" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('employee-shift-complete')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Resumen del Turno</span>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="card">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                        <div class="stat-value" id="summary-duration">0h</div>
+                        <div class="stat-label">Duración</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="summary-photos">0</div>
+                        <div class="stat-label">Fotos</div>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="fas fa-store"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Restaurante</span>
+                        <span class="info-item-value" id="summary-restaurant">-</span>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Horario</span>
+                        <span class="info-item-value" id="summary-schedule">-</span>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="fas fa-calendar"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Fecha</span>
+                        <span class="info-item-value" id="summary-date">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card hidden" id="shift-early-end-card">
+                <div class="form-group">
+                    <textarea id="early-end-reason" placeholder="Motivo de salida anticipada"></textarea>
+                </div>
+            </div>
+            
+            <button class="btn-large btn-success" onclick="app.finalizeShift()">
+                <i class="fas fa-check"></i> Confirmar y Finalizar Turno
+            </button>
+        </main>
+    </div>
+
+    <!-- SUCCESS SCREEN -->
+    <div id="page-success" class="success-screen hidden">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        <h2>¡Turno Completado!</h2>
+        <p style="color: var(--gray); margin-bottom: 30px; max-width: 400px;">
+            Su turno ha sido finalizado exitosamente. Todas las evidencias han sido guardadas.
+        </p>
+        <div style="display: flex; gap: 15px;">
+            <button class="btn btn-secondary" onclick="app.navigate('employee-dashboard')">
+                <i class="fas fa-home"></i> Ir al Inicio
+            </button>
+            <button class="btn btn-primary" onclick="app.navigate('employee-profile')">
+                <i class="fas fa-user"></i> Ver Perfil
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         PÁGINAS SUPERVISORA
+         pages: supervisor-dashboard, supervisor-restaurants,
+                supervisor-employees, supervisor-shifts,
+                supervisor-reports, supervisor-supervision
+         ============================================================ -->
+    <div id="page-supervisor-dashboard" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <img class="header-brand-logo" src="css/logos/R3%20logo%20gris%20sobre%20negro%20%20(2).svg" alt="Logo WorkTrace">
+                <span>WorkTrace Supervisor</span>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                    <i class="fas fa-house"></i>
+                    <span>Inicio Admin</span>
+                </button>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="page-title">Panel de Control</div>
+
+            <div class="welcome-banner">
+                <h2 id="supervisor-welcome-title">¡Bienvenido, Supervisor!</h2>
+                <p id="supervisor-welcome-subtitle">Gestión de equipos de limpieza</p>
+            </div>
+            
+            <div class="quick-actions">
+                <button class="quick-action-btn" onclick="app.navigate('supervisor-restaurants')">
+                    <i class="fas fa-store"></i>
+                    <span>Restaurantes</span>
+                </button>
+                <button class="quick-action-btn" onclick="app.navigate('supervisor-employees')">
+                    <i class="fas fa-users"></i>
+                    <span>Empleados</span>
+                </button>
+                <button class="quick-action-btn" onclick="app.navigate('supervisor-shifts')">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Turnos</span>
+                </button>
+                <button class="quick-action-btn" onclick="app.navigate('supervisor-reports')">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Informes</span>
+                </button>
+                <button class="quick-action-btn" onclick="app.navigate('supervisor-supervision')">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>Supervisar</span>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Alertas Recientes</div>
+                </div>
+                <div id="supervisor-alerts-container">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>Sin alertas críticas</strong><br>
+                            <small>Cuando haya novedades operativas aparecerán aquí.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <nav class="bottom-nav">
+            <button class="nav-item" onclick="app.navigate('supervisor-dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </button>
+            <button class="nav-item" onclick="app.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Salir</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- SUPERVISOR RESTAURANTS -->
+    <div id="page-supervisor-restaurants" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Gestión de Restaurantes</span>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                    <i class="fas fa-house"></i>
+                    <span>Inicio Admin</span>
+                </button>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="toolbar-actions" style="margin-bottom: 20px;">
+                <button class="btn btn-primary btn-inline hidden" id="supervisor-create-restaurant-btn" onclick="app.openModal('modal-admin-restaurant')">
+                    <i class="fas fa-plus"></i> Nuevo Restaurante
+                </button>
+            </div>
+            
+            <div id="supervisor-restaurants-list"></div>
+        </main>
+    </div>
+
+    <!-- SUPERVISOR EMPLOYEES -->
+    <div id="page-supervisor-employees" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Gestión de Empleados</span>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                    <i class="fas fa-house"></i>
+                    <span>Inicio Admin</span>
+                </button>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="employee-directory-filters hidden" id="supervisor-employees-filters">
+                <label for="supervisor-employees-status-filter">Estado</label>
+                <select id="supervisor-employees-status-filter" onchange="app.setSupervisorEmployeesStatusFilter(this.value)">
+                    <option value="all">Todos</option>
+                    <option value="active">Activos</option>
+                    <option value="inactive">Inactivos</option>
+                </select>
+            </div>
+            <div class="toolbar-actions" style="margin-bottom: 20px;">
+                <button class="btn btn-primary btn-inline hidden" id="supervisor-create-employee-btn" onclick="app.openModal('modal-admin-employee')">
+                    <i class="fas fa-user-plus"></i> Nuevo Empleado
+                </button>
+            </div>
+            <div id="supervisor-employees-list"></div>
+        </main>
+    </div>
+
+    <!-- SUPERVISOR SHIFTS -->
+    <div id="page-supervisor-shifts" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Programación de Turnos</span>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                    <i class="fas fa-house"></i>
+                    <span>Inicio Admin</span>
+                </button>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="card shift-board-card">
+                <!-- Navegación de semana + acciones -->
+                <div class="supervisor-week-toolbar">
+                    <div class="supervisor-week-nav">
+                        <button class="btn btn-secondary btn-inline" onclick="app.changeSupervisorWeek(-1)" aria-label="Semana anterior">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="supervisor-week-label" id="supervisor-week-label">Cargando...</span>
+                        <button class="btn btn-secondary btn-inline" onclick="app.changeSupervisorWeek(1)" aria-label="Semana siguiente">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="supervisor-week-actions">
+                        <button class="btn btn-secondary btn-inline" onclick="app.replicateSupervisorLastWeek()">
+                            <i class="fas fa-copy"></i> Replicar semana anterior
+                        </button>
+                        <button class="btn btn-primary btn-inline" onclick="app.openScheduleShiftModal()">
+                            <i class="fas fa-plus"></i> Programar Turnos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="supervisor-week-filters">
+                    <select id="supervisor-shifts-filter-restaurant" class="dark-control">
+                        <option value="">Todos los restaurantes</option>
+                    </select>
+                    <select id="supervisor-shifts-filter-employee" class="dark-control">
+                        <option value="">Todos los empleados</option>
+                    </select>
+                    <input type="text" id="supervisor-shifts-filter-search" class="dark-control" placeholder="Buscar empleado...">
+                    <button type="button" class="btn btn-secondary btn-inline" onclick="app.clearSupervisorShiftFilters()">
+                        Limpiar
+                    </button>
+                </div>
+
+                <!-- Grid semanal -->
+                <div style="overflow-x: auto;">
+                    <div id="supervisor-shifts-grid">
+                        <div class="empty-state">Cargando turnos programados...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SUPERVISOR REPORTS -->
+    <div id="page-supervisor-reports" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Informes y Reportes</span>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                    <i class="fas fa-house"></i>
+                    <span>Inicio Admin</span>
+                </button>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="report-shell">
+            <div class="card report-filters-card">
+                <div class="card-header">
+                    <div class="card-title">Filtros del Informe</div>
+                </div>
+
+                <div class="report-filters">
+                    <div class="report-date-row" role="group" aria-label="Rango de fechas del informe">
+                        <div class="form-group report-filter-field report-date-field">
+                        <label for="report-start-date">Fecha Inicio</label>
+                        <div class="date-control">
+                            <input type="date" id="report-start-date" class="dark-control compact-picker" value="2026-03-01" inputmode="none" lang="en-GB">
+                            <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('report-start-date')" aria-label="Abrir selector de fecha de inicio">
+                                <i class="fas fa-calendar-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group report-filter-field report-date-field">
+                        <label for="report-end-date">Fecha Fin</label>
+                        <div class="date-control">
+                            <input type="date" id="report-end-date" class="dark-control compact-picker" value="2026-03-24" inputmode="none" lang="en-GB">
+                            <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('report-end-date')" aria-label="Abrir selector de fecha fin">
+                                <i class="fas fa-calendar-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    </div>
+
+                    <div class="form-group report-filter-field">
+                        <label for="report-restaurant-select">Restaurante</label>
+                        <select id="report-restaurant-select" class="dark-control">
+                            <option value="">Cargando restaurantes...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group report-filter-field">
+                        <label for="report-employee-select">Empleado</label>
+                        <select id="report-employee-select" class="dark-control">
+                            <option value="">Todos los empleados</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="toolbar-actions report-actions-row">
+                    <button class="btn btn-primary" onclick="app.generateReport()">
+                        <i class="fas fa-sync-alt"></i> Generar Informe
+                    </button>
+                </div>
+
+                <div id="report-support-card" class="card report-support-card hidden">
+                    <div class="report-support-copy">Si el informe falla, toca aquí para copiar el detalle y compartirlo con soporte.</div>
+                    <button type="button" class="btn btn-secondary btn-inline" onclick="app.copyLatestReportDebug()">
+                        <i class="fas fa-copy"></i> Copiar detalle del error
+                    </button>
+                </div>
+            </div>
+            
+            <div id="report-result" class="card report-result-card hidden">
+                <div class="card-header">
+                    <div class="card-title">Resumen del Período</div>
+                </div>
+
+                <p class="muted-copy" id="report-result-description">Genera el período para ver el resumen operativo y las descargas disponibles.</p>
+
+                <div class="chart-placeholder">
+                    <i class="fas fa-chart-pie" style="font-size: 48px;"></i>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="report-summary-worked-hours">0h</div>
+                        <div class="stat-label">Horas trabajadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="report-summary-scheduled-hours">0h</div>
+                        <div class="stat-label">Horas programadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="report-summary-shifts">0</div>
+                        <div class="stat-label">Turnos del informe</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="report-summary-ended-early">0</div>
+                        <div class="stat-label">Salidas anticipadas</div>
+                    </div>
+                </div>
+
+                <div class="report-inline-summary-grid">
+                    <div class="report-inline-summary-card">
+                        <strong>Horas del restaurante</strong>
+                        <p id="report-restaurant-totals-copy">Aquí verás cuánto se trabajó y cuánto se programó en el restaurante consultado.</p>
+                    </div>
+                    <div class="report-inline-summary-card">
+                        <strong>Estados del período</strong>
+                        <div id="report-status-breakdown" class="report-pill-list">
+                            <span class="report-pill report-pill-empty">Genera el informe para ver el estado de los turnos.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="report-day-evidence" class="report-day-evidence hidden">
+                    <div class="report-day-evidence-header">
+                        <h4>Fotos del Antes y Después</h4>
+                        <p id="report-day-evidence-copy">Cuando el informe corresponde a un solo día, aquí verás las evidencias del turno.</p>
+                    </div>
+                    <div id="report-day-evidence-list" class="report-day-evidence-list"></div>
+                </div>
+                
+                <div class="report-downloads">
+                    <button class="btn btn-secondary btn-inline" id="report-preview-html" onclick="app.openGeneratedReportPreview()">
+                        <i class="fas fa-eye"></i> Visualizar
+                    </button>
+                    <div class="report-download-menu">
+                        <button class="btn btn-secondary btn-inline" id="report-download-trigger" type="button" onclick="app.toggleReportDownloadMenu()">
+                            <i class="fas fa-download"></i> Descargar
+                        </button>
+                        <div id="report-download-options" class="report-download-options hidden">
+                            <button class="btn btn-secondary btn-inline" type="button" onclick="app.downloadGeneratedReport('pdf')">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                            <button class="btn btn-secondary btn-inline" type="button" onclick="app.downloadGeneratedReport('excel')">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SUPERVISOR SUPERVISION -->
+    <div id="page-supervisor-supervision" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Supervisión en Sitio</span>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                    <i class="fas fa-house"></i>
+                    <span>Inicio Admin</span>
+                </button>
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="gps-verification">
+                <i class="fas fa-map-marker-alt"></i>
+                <h4 style="color: white; margin-bottom: 10px;">Verificación de Ubicación</h4>
+                <div class="gps-status invalid" id="supervision-location-status-shell">
+                    <i class="fas fa-location-crosshairs" id="supervision-location-status-icon"></i>
+                    <span id="supervision-location-status">Ubicación lista para verificar en sitio</span>
+                </div>
+                <div class="gps-actions">
+                    <button type="button" class="btn btn-secondary" id="supervision-verify-location-btn" onclick="app.verifySupervisorSupervisionLocation()">
+                        <i class="fas fa-location-crosshairs"></i> Verificar en sitio
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group supervision-restaurant-picker">
+                <label>Restaurante</label>
+                <select id="supervision-restaurant-select">
+                    <option value="">Cargando restaurantes...</option>
+                </select>
+            </div>
+
+            <div class="card supervision-task-card">
+                <div class="card-header">
+                    <div class="card-title">Tarea Especial del Restaurante</div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-inline" id="supervision-create-restaurant-task-btn" onclick="app.openSupervisorRestaurantTaskModalFromSupervision()">
+                    <i class="fas fa-star"></i> Crear tarea especial
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Fotos de Supervisión</div>
+                </div>
+
+                <div class="area-selection-panel" style="margin-top: 0;">
+                    <div class="area-selection-header">
+                        <strong>Área</strong>
+                    </div>
+                    <div class="area-selection-select-wrap">
+                        <span class="area-selection-select-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </span>
+                        <select id="supervision-area-select" class="dark-control area-selection-select">
+                            <option value="">Selecciona un área</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <input type="file" id="supervision-photo-input" accept="image/*" capture="environment" style="display: none;">
+                
+                <div class="photo-grid" id="supervision-photo-grid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+            
+            <div class="form-group supervision-notes-group">
+                <label for="supervision-observations">Observaciones</label>
+                <textarea id="supervision-observations" placeholder="Registre sus observaciones de la supervisión..."></textarea>
+            </div>
+            
+            <button id="supervision-save-button" class="btn btn-success" onclick="app.saveSupervision()">
+                <i class="fas fa-save"></i> Guardar Supervisión
+            </button>
+
+            <div id="supervision-support-card" class="card supervision-support-card hidden">
+                <div class="supervision-support-copy">Si vuelve a fallar, toca aquí para copiar el detalle y compartirlo con soporte.</div>
+                <button type="button" class="btn btn-secondary" onclick="app.copyLatestSupervisionDebug()">
+                    <i class="fas fa-copy"></i> Copiar detalle del error
+                </button>
+            </div>
+        </main>
+        
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="app.navigate('supervisor-dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </button>
+            <button class="nav-item" onclick="app.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Salir</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- MODAL SUPERVISORA: Programar Turno -->
+    <div id="modal-supervisor-schedule-shift" class="modal">
+        <div class="modal-content shift-scheduler-modal-content">
+            <div class="modal-header">
+                <h3>Programar Turnos</h3>
+                <button class="btn-close" onclick="app.closeModal('modal-supervisor-schedule-shift')">&times;</button>
+            </div>
+            <form id="supervisor-shift-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="sched-shift-restaurant">Restaurante</label>
+                        <select id="sched-shift-restaurant" class="dark-control" required>
+                            <option value="">Selecciona un restaurante</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Empleados</label>
+                        <div id="sched-shift-employee-picker" class="shift-batch-picker"></div>
+                    </div>
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="sched-shift-start-date">Fecha inicio</label>
+                            <div class="date-control">
+                                <input type="date" id="sched-shift-start-date" class="compact-picker" required inputmode="none" lang="en-GB">
+                                <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('sched-shift-start-date')" aria-label="Abrir selector de fecha inicio">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="sched-shift-end-date">Fecha fin</label>
+                            <div class="date-control">
+                                <input type="date" id="sched-shift-end-date" class="compact-picker" required inputmode="none" lang="en-GB">
+                                <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('sched-shift-end-date')" aria-label="Abrir selector de fecha fin">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="sched-shift-default-start">Hora entrada</label>
+                            <input type="time" id="sched-shift-default-start" class="dark-control" value="08:00">
+                        </div>
+                        <div class="form-group">
+                            <label for="sched-shift-default-end">Hora salida</label>
+                            <input type="time" id="sched-shift-default-end" class="dark-control" value="16:00">
+                        </div>
+                    </div>
+                    <div id="sched-shift-day-rows" class="shift-plan-rows"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-supervisor-schedule-shift')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calendar-check"></i> Guardar Programación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-supervisor-restaurant-task" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nueva Tarea Especial</h3>
+                <button class="btn-close" onclick="app.closeModal('modal-supervisor-restaurant-task')">&times;</button>
+            </div>
+            <form id="supervisor-restaurant-task-form">
+                <div class="modal-body">
+                    <div class="shift-special-task-builder">
+                        <div class="shift-special-task-header">
+                            <div class="shift-special-task-icon">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <div class="shift-special-task-copy">
+                                <strong>Tarea especial</strong>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supervisor-restaurant-task-restaurant">Restaurante</label>
+                            <select id="supervisor-restaurant-task-restaurant" class="dark-control" required>
+                                <option value="">Selecciona un restaurante</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supervisor-restaurant-task-title">Título de la tarea</label>
+                            <input type="text" id="supervisor-restaurant-task-title" placeholder="Ej: Limpieza profunda de campana" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supervisor-restaurant-task-description">Descripción</label>
+                            <textarea id="supervisor-restaurant-task-description" placeholder="Explica qué debe revisar o completar el equipo en ese restaurante..." required></textarea>
+                        </div>
+
+                        <div class="shift-special-task-options">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="supervisor-restaurant-task-requires-evidence">
+                                <span>Solicitar evidencia fotográfica</span>
+                            </label>
+                            <div class="form-group">
+                                <label for="supervisor-restaurant-task-priority">Prioridad</label>
+                                <select id="supervisor-restaurant-task-priority" class="dark-control">
+                                    <option value="high">Alta</option>
+                                    <option value="low">Baja</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-supervisor-restaurant-task')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="supervisor-restaurant-task-submit-btn">
+                        <i class="fas fa-paper-plane"></i> Crear tarea
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MODALES ADMIN
+         ============================================================ -->
+    <!-- MODAL ADMIN: Restaurante -->
+    <div id="modal-admin-restaurant" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nuevo Restaurante</h3>
+                <button class="btn-close" onclick="app.closeModal('modal-admin-restaurant')">&times;</button>
+            </div>
+            <form id="admin-restaurant-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nombre del Restaurante</label>
+                        <input type="text" id="admin-restaurant-name" placeholder="Ej: Restaurant Don Juan" required>
+                    </div>
+                    <div class="restaurant-location-builder">
+                        <div class="form-group">
+                            <div class="restaurant-search-row">
+                                <input type="text" id="admin-restaurant-address-query" class="dark-control" placeholder="Dirección del restaurante o ubicación actual" aria-label="Dirección del restaurante" required>
+                                <div class="restaurant-search-actions">
+                                    <button type="button" class="btn btn-secondary btn-inline restaurant-search-btn" id="admin-restaurant-search-btn">
+                                        <i class="fas fa-magnifying-glass"></i> Buscar ubicación
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-inline restaurant-search-btn" id="admin-restaurant-current-location-btn">
+                                        <i class="fas fa-location-crosshairs"></i> Usar ubicación actual
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="admin-restaurant-search-feedback" class="restaurant-location-feedback hidden"></div>
+
+                        <div id="admin-restaurant-search-results" class="restaurant-search-results hidden"></div>
+
+                        <div class="restaurant-map-shell">
+                            <div class="restaurant-map-header">
+                                <strong>Verifica la ubicación</strong>
+                                <span class="restaurant-map-badge" id="admin-restaurant-map-badge">Pendiente</span>
+                            </div>
+                            <div id="admin-restaurant-map" class="restaurant-map"></div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="admin-restaurant-address">
+                    <input type="hidden" id="admin-restaurant-city">
+                    <input type="hidden" id="admin-restaurant-state">
+                    <input type="hidden" id="admin-restaurant-country">
+                    <input type="hidden" id="admin-restaurant-lat">
+                    <input type="hidden" id="admin-restaurant-lng">
+
+                    <div class="form-group">
+                        <label>Radio de verificación (m)</label>
+                        <input type="number" id="admin-restaurant-radius" value="100" min="10" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-admin-restaurant')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL ADMIN: Empleado -->
+    <div id="modal-admin-employee" class="modal">
+        <div class="modal-content admin-employee-modal-content">
+            <div class="modal-header">
+                <h3>Nuevo Empleado</h3>
+                <button class="btn-close" onclick="app.closeModal('modal-admin-employee')">&times;</button>
+            </div>
+            <form id="admin-employee-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="admin-employee-name" placeholder="Nombre del empleado" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="admin-employee-email" placeholder="empleado@worktrace.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="admin-employee-phone" placeholder="+573001112233" required>
+                    </div>
+                    <div class="alert alert-warning admin-employee-credential-note">
+                        <i class="fas fa-key"></i>
+                        <div class="admin-employee-credential-copy">
+                            <strong>PIN inicial: 123456</strong>
+                            <span>El empleado deberá cambiarlo en su primer ingreso.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-admin-employee')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         PÁGINAS ADMIN
+         pages: admin-dashboard, admin-supervision-monitor, admin-supervisors
+         ============================================================ -->
+    <!-- ADMIN DASHBOARD -->
+    <div id="page-admin-dashboard" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <img class="header-brand-logo" src="css/logos/R3%20logo%20gris%20sobre%20negro%20%20(2).svg" alt="Logo WorkTrace">
+                <span>WorkTrace Admin</span>
+            </div>
+            <div class="header-actions">
+            </div>
+        </header>
+        
+        <main class="content">
+            <div class="page-title">Panel de Superusuario</div>
+
+            <div class="welcome-banner" style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);">
+                <h2>Control Total del Sistema</h2>
+                <p>Administración y supervisión</p>
+            </div>
+            
+            <div class="quick-actions">
+                <button class="quick-action-btn" onclick="app.navigate('supervisor-dashboard')">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Funciones Supervisor</span>
+                </button>
+                <button class="quick-action-btn" onclick="app.adminAction('monitoreo-supervisoras')">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>Monitorear Supervisoras</span>
+                </button>
+                <button class="quick-action-btn" onclick="app.adminAction('supervisores')">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Gestionar Supervisores</span>
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Supervisiones Realizadas Hoy</div>
+                </div>
+                <div id="admin-supervisions-list"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Resumen Ejecutivo</div>
+                </div>
+                <div class="stats-grid" id="admin-metrics-summary">
+                    <div class="stat-card">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Restaurantes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Turnos</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="app.navigate('admin-dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </button>
+            <button class="nav-item" onclick="app.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Salir</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ADMIN SUPERVISION MONITOR -->
+    <div id="page-admin-supervision-monitor" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('admin-dashboard')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Monitoreo de Supervisoras</span>
+            </div>
+        </header>
+
+        <main class="content admin-section-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Seguimiento de Hoy</div>
+                </div>
+                <div class="form-group admin-supervision-monitor-filter">
+                    <label for="admin-supervision-supervisor-filter">Supervisora</label>
+                    <select id="admin-supervision-supervisor-filter" class="dark-control" onchange="app.applyAdminSupervisionMonitorFilter()">
+                        <option value="">Todas las supervisoras</option>
+                    </select>
+                </div>
+                <div class="stats-grid" id="admin-supervision-monitor-summary">
+                    <div class="stat-card">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Supervisiones</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Actividad de Supervisoras</div>
+                </div>
+                <div id="admin-supervision-monitor-list"></div>
+            </div>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-item" onclick="app.navigate('admin-dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </button>
+            <button class="nav-item active" onclick="app.navigate('admin-supervision-monitor')">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Supervisar</span>
+            </button>
+            <button class="nav-item" onclick="app.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Salir</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ADMIN SUPERVISORS -->
+    <div id="page-admin-supervisors" class="app-container hidden">
+        <header class="header">
+            <div class="header-brand">
+                <button class="header-btn" onclick="app.navigate('admin-dashboard')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <span>Gestionar Supervisores</span>
+            </div>
+        </header>
+
+        <main class="content admin-section-grid admin-supervisors-page">
+            <div class="card admin-supervisor-form-card">
+                <div class="card-header">
+                    <div class="card-title" id="admin-supervisor-form-title">Nueva Supervisora</div>
+                </div>
+                <form id="admin-supervisor-form">
+                    <input type="hidden" id="admin-supervisor-edit-id">
+                    <div class="toolbar-row two-col">
+                        <div class="form-group admin-panel-field">
+                            <label>Nombre completo</label>
+                            <input type="text" id="admin-supervisor-full-name" class="dark-control" placeholder="Ana Martínez" required>
+                        </div>
+                        <div class="form-group admin-panel-field">
+                            <label>Correo electrónico</label>
+                            <input type="email" id="admin-supervisor-email" class="dark-control" placeholder="supervisora@worktrace.com" required>
+                        </div>
+                    </div>
+                    <div class="toolbar-row two-col">
+                        <div class="form-group admin-panel-field">
+                            <label>Teléfono E.164</label>
+                            <input type="tel" id="admin-supervisor-phone" class="dark-control" placeholder="+573001112233" required>
+                        </div>
+                        <div class="admin-toggle-panel">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="admin-supervisor-active" checked>
+                                <div class="checkbox-content">
+                                    <span class="checkbox-title">Cuenta activa</span>
+                                    <span class="checkbox-desc">Permite que la supervisora inicie sesión al crearse o actualizarse.</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button type="submit" class="btn btn-primary btn-inline">
+                            <i class="fas fa-save"></i>
+                            <span id="admin-supervisor-submit-label">Guardar Supervisora</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-inline hidden" id="admin-supervisor-cancel-btn" onclick="app.resetAdminSupervisorForm()">
+                            <i class="fas fa-times"></i>
+                            <span>Cancelar edición</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card admin-supervisor-filters-card">
+                <div class="card-header">
+                    <div class="card-title">Filtros y Asignación</div>
+                </div>
+                <form id="admin-supervisor-filters-form">
+                    <div class="toolbar-row three-col">
+                        <div class="form-group admin-panel-field">
+                            <label>Buscar</label>
+                            <input type="text" id="admin-supervisor-search" class="dark-control" placeholder="Nombre o correo">
+                        </div>
+                        <div class="form-group admin-panel-field">
+                            <label>Estado</label>
+                            <select id="admin-supervisor-status-filter" class="dark-control">
+                                <option value="all">Todas</option>
+                                <option value="active">Activas</option>
+                                <option value="inactive">Inactivas</option>
+                            </select>
+                        </div>
+                        <div class="form-group admin-panel-field">
+                            <label>Restaurante</label>
+                            <select id="admin-supervisor-restaurant-filter" class="dark-control">
+                                <option value="">Todos los restaurantes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button type="submit" class="btn btn-primary btn-inline">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Actualizar listado</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card admin-supervisor-list-card">
+                <div class="card-header">
+                    <div class="card-title">Supervisoras Registradas</div>
+                </div>
+                <div id="admin-supervisors-list" class="admin-section-grid">
+                    <div class="empty-state">Cargando supervisoras...</div>
+                </div>
+            </div>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-item" onclick="app.navigate('admin-dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </button>
+            <button class="nav-item active" onclick="app.navigate('admin-supervisors')">
+                <i class="fas fa-user-shield"></i>
+                <span>Supervisoras</span>
+            </button>
+            <button class="nav-item" onclick="app.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Salir</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        window.WORKTRACE_CONFIG = window.WORKTRACE_CONFIG || {
+            supabaseUrl: 'https://orwingqtwoqfhcogggac.supabase.co',
+            apiBaseUrl: 'https://orwingqtwoqfhcogggac.supabase.co/functions/v1',
+            supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yd2luZ3F0d29xZmhjb2dnZ2FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NzEyMzcsImV4cCI6MjA4NjI0NzIzN30.QA86sHHsgN2K96YetNnafJdKWZffT1FugDTRB7E_drA',
+            googleMapsApiKey: 'AIzaSyAugcqnN-QxUH2mRmgPH_hA5zo-5_RBtX0',
+            accessToken: '',
+            shiftOtpToken: '',
+            timeoutMs: 15000
+        };
+    </script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

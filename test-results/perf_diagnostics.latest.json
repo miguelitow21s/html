@@ -1,0 +1,2805 @@
+{
+  "generated_at": "2026-04-18T22:16:55.5251298-05:00",
+  "overall_ok": true,
+  "records": [
+    {
+      "group": "auth",
+      "step": "login_admin",
+      "duration_ms": 827.98,
+      "status": 200,
+      "ok": true,
+      "request_id": "",
+      "note": "",
+      "extra": null
+    },
+    {
+      "group": "auth",
+      "step": "login_supervisor",
+      "duration_ms": 339.38,
+      "status": 200,
+      "ok": true,
+      "request_id": "",
+      "note": "",
+      "extra": null
+    },
+    {
+      "group": "auth",
+      "step": "login_employee",
+      "duration_ms": 483.44,
+      "status": 200,
+      "ok": true,
+      "request_id": "",
+      "note": "",
+      "extra": null
+    },
+    {
+      "group": "auth",
+      "step": "employee_legal_consent",
+      "duration_ms": 1395.27,
+      "status": 200,
+      "ok": true,
+      "request_id": "c623d10f-1c84-4d3e-994a-7d2a98155fc9",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "accepted": true,
+          "accepted_at": "2026-04-11T15:06:46.771-05:00",
+          "active_term": {
+            "id": 1,
+            "code": "legal",
+            "title": "Tratamiento de datos",
+            "version": "v1",
+            "content": "Al continuar, aceptas el tratamiento de datos personales conforme a la politica vigente."
+          }
+        },
+        "error": null,
+        "request_id": "c623d10f-1c84-4d3e-994a-7d2a98155fc9"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "list_my_restaurants",
+      "duration_ms": 1184.7,
+      "status": 200,
+      "ok": true,
+      "request_id": "5bdb0247-1d87-4d50-ac7d-a3aa5ad07071",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 16,
+              "name": "Cabañas",
+              "address_line": "5793 Calle 27A",
+              "lat": 6.3163648,
+              "lng": -75.5628464,
+              "geofence_radius_m": 100,
+              "is_active": true,
+              "cleaning_areas": [
+                "Cocina",
+                "Comedor",
+                "Baños",
+                "Patio"
+              ]
+            },
+            {
+              "id": 7,
+              "name": "El ingenio",
+              "address_line": "G64Q+97 Maceo, Antioquia, Colombia",
+              "lat": 6.5059924,
+              "lng": -74.7618561,
+              "geofence_radius_m": 100,
+              "is_active": true,
+              "cleaning_areas": [
+                "Cocina",
+                "Comedor",
+                "Baños",
+                "Patio"
+              ]
+            },
+            {
+              "id": 11,
+              "name": "Luna del bosque",
+              "address_line": "97ae-20 Calle 65",
+              "lat": 6.2847229,
+              "lng": -75.6095229,
+              "geofence_radius_m": 100,
+              "is_active": true,
+              "cleaning_areas": [
+                "Cocina",
+                "Comedor",
+                "Baños",
+                "Patio"
+              ]
+            },
+            {
+              "id": 10,
+              "name": "Metro progreso",
+              "address_line": "# 101D-13 Carrera 83a",
+              "lat": 6.303223,
+              "lng": -75.582354,
+              "geofence_radius_m": 100,
+              "is_active": true,
+              "cleaning_areas": [
+                "Cocina",
+                "Comedor",
+                "Baños",
+                "Patio"
+              ]
+            },
+            {
+              "id": 5,
+              "name": "MotoSmart",
+              "address_line": "74-84 Calle 80B",
+              "lat": 6.2822255,
+              "lng": -75.580807,
+              "geofence_radius_m": 100,
+              "is_active": true,
+              "cleaning_areas": [
+                "Cocina",
+                "Comedor",
+                "Baños",
+                "Patio"
+              ]
+            },
+            {
+              "id": 4,
+              "name": "Parrillas y sabor",
+              "address_line": "97 Glendale Avenue",
+              "lat": 41.7509719,
+              "lng": -72.6975359,
+              "geofence_radius_m": 100,
+              "is_active": true,
+              "cleaning_areas": [
+                "Cocina",
+                "Comedor",
+                "Baños",
+                "Patio"
+              ]
+            },
+            {
+              "id": 9,
+              "name": "Sandra",
+              "address_line": "941 Calle 44",
+              "lat": 6.2542362,
+              "lng": -75.6107915,
+              "geofence_radius_m": 100,
+              "is_active": true,
+              "cleaning_areas": [
+                "Cocina",
+                "Comedor",
+                "Baños",
+                "Patio"
+              ]
+            },
+            {
+              "id": 8,
+              "name": "TdeA",
+              "address_line": "72A-220 Calle 78B",
+              "lat": 6.2794088,
+              "lng": -75.5834971,
+              "geofence_radius_m": 100,
+              "is_active": true,
+              "cleaning_areas": [
+                "Cocina",
+                "Comedor",
+                "Baños",
+                "Patio"
+              ]
+            }
+          ]
+        },
+        "error": null,
+        "request_id": "5bdb0247-1d87-4d50-ac7d-a3aa5ad07071"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_dashboard#1",
+      "duration_ms": 1113.01,
+      "status": 200,
+      "ok": true,
+      "request_id": "45502e4b-8c37-4a97-8646-3a6bfbdc7f5c",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "active_shift": null,
+          "can_start_shift": true,
+          "assigned_restaurants": [
+            {
+              "restaurant_id": 22,
+              "assigned_at": "2026-04-18T21:39:58.434917-05:00",
+              "restaurant": {
+                "id": 22,
+                "name": "QA E2E Restaurant 20260418213938",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 21,
+              "assigned_at": "2026-04-18T21:38:59.520427-05:00",
+              "restaurant": {
+                "id": 21,
+                "name": "QA E2E Restaurant 20260418213836",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 19,
+              "assigned_at": "2026-04-18T21:30:26.64929-05:00",
+              "restaurant": {
+                "id": 19,
+                "name": "QA Seed A 20260418213010",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 17,
+              "assigned_at": "2026-04-18T21:25:36.196181-05:00",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            }
+          ],
+          "scheduled_shifts": [
+            {
+              "id": 81,
+              "restaurant_id": 17,
+              "scheduled_start": "2026-04-20T05:00:00-05:00",
+              "scheduled_end": "2026-04-20T07:00:00-05:00",
+              "status": "scheduled",
+              "notes": "qa duplicate submit repro",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              },
+              "start_window": {
+                "earliest": "2026-04-20T09:00:00Z",
+                "latest": "2026-04-20T13:00:00Z",
+                "server_now": "2026-04-19T03:15:58.186Z",
+                "can_start_now": false
+              }
+            }
+          ],
+          "pending_tasks_count": 2,
+          "pending_tasks_preview": [
+            {
+              "id": 100,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-19T04:00:00-05:00",
+              "restaurant_id": 16
+            },
+            {
+              "id": 96,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-16T05:00:00-05:00",
+              "restaurant_id": 16
+            }
+          ],
+          "worked_hours_last_30d": 1.43
+        },
+        "error": null,
+        "request_id": "45502e4b-8c37-4a97-8646-3a6bfbdc7f5c"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_dashboard#2",
+      "duration_ms": 1018.72,
+      "status": 200,
+      "ok": true,
+      "request_id": "5b8b6711-644b-4160-9371-193d3a8c275d",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "active_shift": null,
+          "can_start_shift": true,
+          "assigned_restaurants": [
+            {
+              "restaurant_id": 22,
+              "assigned_at": "2026-04-18T21:39:58.434917-05:00",
+              "restaurant": {
+                "id": 22,
+                "name": "QA E2E Restaurant 20260418213938",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 21,
+              "assigned_at": "2026-04-18T21:38:59.520427-05:00",
+              "restaurant": {
+                "id": 21,
+                "name": "QA E2E Restaurant 20260418213836",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 19,
+              "assigned_at": "2026-04-18T21:30:26.64929-05:00",
+              "restaurant": {
+                "id": 19,
+                "name": "QA Seed A 20260418213010",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 17,
+              "assigned_at": "2026-04-18T21:25:36.196181-05:00",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            }
+          ],
+          "scheduled_shifts": [
+            {
+              "id": 81,
+              "restaurant_id": 17,
+              "scheduled_start": "2026-04-20T05:00:00-05:00",
+              "scheduled_end": "2026-04-20T07:00:00-05:00",
+              "status": "scheduled",
+              "notes": "qa duplicate submit repro",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              },
+              "start_window": {
+                "earliest": "2026-04-20T09:00:00Z",
+                "latest": "2026-04-20T13:00:00Z",
+                "server_now": "2026-04-19T03:15:59.273Z",
+                "can_start_now": false
+              }
+            }
+          ],
+          "pending_tasks_count": 2,
+          "pending_tasks_preview": [
+            {
+              "id": 100,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-19T04:00:00-05:00",
+              "restaurant_id": 16
+            },
+            {
+              "id": 96,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-16T05:00:00-05:00",
+              "restaurant_id": 16
+            }
+          ],
+          "worked_hours_last_30d": 1.43
+        },
+        "error": null,
+        "request_id": "5b8b6711-644b-4160-9371-193d3a8c275d"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_dashboard#3",
+      "duration_ms": 1126.14,
+      "status": 200,
+      "ok": true,
+      "request_id": "20ad7b90-fd49-41fb-91d9-ab99713b895e",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "active_shift": null,
+          "can_start_shift": true,
+          "assigned_restaurants": [
+            {
+              "restaurant_id": 22,
+              "assigned_at": "2026-04-18T21:39:58.434917-05:00",
+              "restaurant": {
+                "id": 22,
+                "name": "QA E2E Restaurant 20260418213938",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 21,
+              "assigned_at": "2026-04-18T21:38:59.520427-05:00",
+              "restaurant": {
+                "id": 21,
+                "name": "QA E2E Restaurant 20260418213836",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 19,
+              "assigned_at": "2026-04-18T21:30:26.64929-05:00",
+              "restaurant": {
+                "id": 19,
+                "name": "QA Seed A 20260418213010",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 17,
+              "assigned_at": "2026-04-18T21:25:36.196181-05:00",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            }
+          ],
+          "scheduled_shifts": [
+            {
+              "id": 81,
+              "restaurant_id": 17,
+              "scheduled_start": "2026-04-20T05:00:00-05:00",
+              "scheduled_end": "2026-04-20T07:00:00-05:00",
+              "status": "scheduled",
+              "notes": "qa duplicate submit repro",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              },
+              "start_window": {
+                "earliest": "2026-04-20T09:00:00Z",
+                "latest": "2026-04-20T13:00:00Z",
+                "server_now": "2026-04-19T03:16:00.342Z",
+                "can_start_now": false
+              }
+            }
+          ],
+          "pending_tasks_count": 2,
+          "pending_tasks_preview": [
+            {
+              "id": 100,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-19T04:00:00-05:00",
+              "restaurant_id": 16
+            },
+            {
+              "id": 96,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-16T05:00:00-05:00",
+              "restaurant_id": 16
+            }
+          ],
+          "worked_hours_last_30d": 1.43
+        },
+        "error": null,
+        "request_id": "20ad7b90-fd49-41fb-91d9-ab99713b895e"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_dashboard#4",
+      "duration_ms": 1232.19,
+      "status": 200,
+      "ok": true,
+      "request_id": "b254a8fb-b6fe-47a7-879a-7ef9d14cfb93",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "active_shift": null,
+          "can_start_shift": true,
+          "assigned_restaurants": [
+            {
+              "restaurant_id": 22,
+              "assigned_at": "2026-04-18T21:39:58.434917-05:00",
+              "restaurant": {
+                "id": 22,
+                "name": "QA E2E Restaurant 20260418213938",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 21,
+              "assigned_at": "2026-04-18T21:38:59.520427-05:00",
+              "restaurant": {
+                "id": 21,
+                "name": "QA E2E Restaurant 20260418213836",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 19,
+              "assigned_at": "2026-04-18T21:30:26.64929-05:00",
+              "restaurant": {
+                "id": 19,
+                "name": "QA Seed A 20260418213010",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 17,
+              "assigned_at": "2026-04-18T21:25:36.196181-05:00",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            }
+          ],
+          "scheduled_shifts": [
+            {
+              "id": 81,
+              "restaurant_id": 17,
+              "scheduled_start": "2026-04-20T05:00:00-05:00",
+              "scheduled_end": "2026-04-20T07:00:00-05:00",
+              "status": "scheduled",
+              "notes": "qa duplicate submit repro",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              },
+              "start_window": {
+                "earliest": "2026-04-20T09:00:00Z",
+                "latest": "2026-04-20T13:00:00Z",
+                "server_now": "2026-04-19T03:16:01.604Z",
+                "can_start_now": false
+              }
+            }
+          ],
+          "pending_tasks_count": 2,
+          "pending_tasks_preview": [
+            {
+              "id": 100,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-19T04:00:00-05:00",
+              "restaurant_id": 16
+            },
+            {
+              "id": 96,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-16T05:00:00-05:00",
+              "restaurant_id": 16
+            }
+          ],
+          "worked_hours_last_30d": 1.43
+        },
+        "error": null,
+        "request_id": "b254a8fb-b6fe-47a7-879a-7ef9d14cfb93"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_dashboard#5",
+      "duration_ms": 2079.1,
+      "status": 200,
+      "ok": true,
+      "request_id": "10c5569d-789e-4300-9277-e180a023ed07",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "active_shift": null,
+          "can_start_shift": true,
+          "assigned_restaurants": [
+            {
+              "restaurant_id": 22,
+              "assigned_at": "2026-04-18T21:39:58.434917-05:00",
+              "restaurant": {
+                "id": 22,
+                "name": "QA E2E Restaurant 20260418213938",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 21,
+              "assigned_at": "2026-04-18T21:38:59.520427-05:00",
+              "restaurant": {
+                "id": 21,
+                "name": "QA E2E Restaurant 20260418213836",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 19,
+              "assigned_at": "2026-04-18T21:30:26.64929-05:00",
+              "restaurant": {
+                "id": 19,
+                "name": "QA Seed A 20260418213010",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            },
+            {
+              "restaurant_id": 17,
+              "assigned_at": "2026-04-18T21:25:36.196181-05:00",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              }
+            }
+          ],
+          "scheduled_shifts": [
+            {
+              "id": 81,
+              "restaurant_id": 17,
+              "scheduled_start": "2026-04-20T05:00:00-05:00",
+              "scheduled_end": "2026-04-20T07:00:00-05:00",
+              "status": "scheduled",
+              "notes": "qa duplicate submit repro",
+              "restaurant": {
+                "id": 17,
+                "name": "QA Seed A 20260418212520",
+                "is_active": false,
+                "city": "Bogota",
+                "state": "Cundinamarca",
+                "address_line": "Cra 7 # 32-16",
+                "cleaning_areas": [
+                  "Cocina",
+                  "Comedor",
+                  "Baños",
+                  "Patio"
+                ]
+              },
+              "start_window": {
+                "earliest": "2026-04-20T09:00:00Z",
+                "latest": "2026-04-20T13:00:00Z",
+                "server_now": "2026-04-19T03:16:02.876Z",
+                "can_start_now": false
+              }
+            }
+          ],
+          "pending_tasks_count": 2,
+          "pending_tasks_preview": [
+            {
+              "id": 100,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-19T04:00:00-05:00",
+              "restaurant_id": 16
+            },
+            {
+              "id": 96,
+              "title": "limpieza a la campana",
+              "priority": "high",
+              "status": "pending",
+              "due_at": "2026-04-16T05:00:00-05:00",
+              "restaurant_id": 16
+            }
+          ],
+          "worked_hours_last_30d": 1.43
+        },
+        "error": null,
+        "request_id": "10c5569d-789e-4300-9277-e180a023ed07"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_active_shift#1",
+      "duration_ms": 1554.13,
+      "status": 200,
+      "ok": true,
+      "request_id": "1c691e4a-e5dc-4ac3-955c-4277f140b599",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": null,
+        "error": null,
+        "request_id": "1c691e4a-e5dc-4ac3-955c-4277f140b599"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_active_shift#2",
+      "duration_ms": 1090.66,
+      "status": 200,
+      "ok": true,
+      "request_id": "23a15477-482e-4bd5-9aa0-1e74a3c39517",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": null,
+        "error": null,
+        "request_id": "23a15477-482e-4bd5-9aa0-1e74a3c39517"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_active_shift#3",
+      "duration_ms": 979.34,
+      "status": 200,
+      "ok": true,
+      "request_id": "49b2ffd7-fbb0-429b-90d5-d4a9a11beb8e",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": null,
+        "error": null,
+        "request_id": "49b2ffd7-fbb0-429b-90d5-d4a9a11beb8e"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_active_shift#4",
+      "duration_ms": 1074.03,
+      "status": 200,
+      "ok": true,
+      "request_id": "c0163a68-71b2-4be3-916e-57ce99c191a7",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": null,
+        "error": null,
+        "request_id": "c0163a68-71b2-4be3-916e-57ce99c191a7"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "employee_active_shift#5",
+      "duration_ms": 1017.92,
+      "status": 200,
+      "ok": true,
+      "request_id": "8e3e8255-cbf6-4af8-965e-ae6f1ddc7bd8",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": null,
+        "error": null,
+        "request_id": "8e3e8255-cbf6-4af8-965e-ae6f1ddc7bd8"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "supervisor_shift_list#1",
+      "duration_ms": 927.59,
+      "status": 200,
+      "ok": true,
+      "request_id": "0228b5fe-34f2-4837-b648-20f7e5aee98f",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 95,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 23,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:13:02.593942-05:00",
+              "updated_at": "2026-04-18T22:13:21.707-05:00"
+            },
+            {
+              "id": 94,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 22,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:10:47.174254-05:00",
+              "updated_at": "2026-04-18T22:11:07.263-05:00"
+            },
+            {
+              "id": 93,
+              "employee_id": "38959949-6de1-4194-95a8-a7c7c7534a5c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:11:11-05:00",
+              "scheduled_end": "2026-04-19T02:11:11-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:09:13.822561-05:00",
+              "updated_at": "2026-04-18T22:09:13.822561-05:00"
+            },
+            {
+              "id": 92,
+              "employee_id": "658d263d-f47a-4489-a105-950d054d3e1c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:09:39-05:00",
+              "scheduled_end": "2026-04-19T02:09:39-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:07:41.243779-05:00",
+              "updated_at": "2026-04-18T22:07:41.243779-05:00"
+            },
+            {
+              "id": 91,
+              "employee_id": "15fc74e4-22d2-4c75-8348-68b5aa2e7ccc",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:08:30-05:00",
+              "scheduled_end": "2026-04-19T02:08:30-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:06:32.702836-05:00",
+              "updated_at": "2026-04-18T22:06:32.702836-05:00"
+            },
+            {
+              "id": 90,
+              "employee_id": "6a1aa5b9-b077-4924-81ca-cd6430dcf7f7",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:07:37-05:00",
+              "scheduled_end": "2026-04-19T02:07:37-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:05:39.298176-05:00",
+              "updated_at": "2026-04-18T22:05:39.298176-05:00"
+            },
+            {
+              "id": 89,
+              "employee_id": "50bc27de-dee7-4533-ab9a-1dc648513fa2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:06:31-05:00",
+              "scheduled_end": "2026-04-19T02:06:31-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:04:33.599927-05:00",
+              "updated_at": "2026-04-18T22:04:33.599927-05:00"
+            },
+            {
+              "id": 77,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": null,
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:19:25.550713-05:00",
+              "updated_at": "2026-04-18T21:19:38.045-05:00"
+            },
+            {
+              "id": 78,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": "limpiar bien",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:20:38.918898-05:00",
+              "updated_at": "2026-04-18T21:21:59.794-05:00"
+            }
+          ]
+        },
+        "error": null,
+        "request_id": "0228b5fe-34f2-4837-b648-20f7e5aee98f"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "supervisor_shift_list#2",
+      "duration_ms": 954.54,
+      "status": 200,
+      "ok": true,
+      "request_id": "c759b7b9-3e90-4985-89aa-170c5d2aabcf",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 95,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 23,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:13:02.593942-05:00",
+              "updated_at": "2026-04-18T22:13:21.707-05:00"
+            },
+            {
+              "id": 94,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 22,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:10:47.174254-05:00",
+              "updated_at": "2026-04-18T22:11:07.263-05:00"
+            },
+            {
+              "id": 93,
+              "employee_id": "38959949-6de1-4194-95a8-a7c7c7534a5c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:11:11-05:00",
+              "scheduled_end": "2026-04-19T02:11:11-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:09:13.822561-05:00",
+              "updated_at": "2026-04-18T22:09:13.822561-05:00"
+            },
+            {
+              "id": 92,
+              "employee_id": "658d263d-f47a-4489-a105-950d054d3e1c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:09:39-05:00",
+              "scheduled_end": "2026-04-19T02:09:39-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:07:41.243779-05:00",
+              "updated_at": "2026-04-18T22:07:41.243779-05:00"
+            },
+            {
+              "id": 91,
+              "employee_id": "15fc74e4-22d2-4c75-8348-68b5aa2e7ccc",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:08:30-05:00",
+              "scheduled_end": "2026-04-19T02:08:30-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:06:32.702836-05:00",
+              "updated_at": "2026-04-18T22:06:32.702836-05:00"
+            },
+            {
+              "id": 90,
+              "employee_id": "6a1aa5b9-b077-4924-81ca-cd6430dcf7f7",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:07:37-05:00",
+              "scheduled_end": "2026-04-19T02:07:37-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:05:39.298176-05:00",
+              "updated_at": "2026-04-18T22:05:39.298176-05:00"
+            },
+            {
+              "id": 89,
+              "employee_id": "50bc27de-dee7-4533-ab9a-1dc648513fa2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:06:31-05:00",
+              "scheduled_end": "2026-04-19T02:06:31-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:04:33.599927-05:00",
+              "updated_at": "2026-04-18T22:04:33.599927-05:00"
+            },
+            {
+              "id": 77,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": null,
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:19:25.550713-05:00",
+              "updated_at": "2026-04-18T21:19:38.045-05:00"
+            },
+            {
+              "id": 78,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": "limpiar bien",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:20:38.918898-05:00",
+              "updated_at": "2026-04-18T21:21:59.794-05:00"
+            }
+          ]
+        },
+        "error": null,
+        "request_id": "c759b7b9-3e90-4985-89aa-170c5d2aabcf"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "supervisor_shift_list#3",
+      "duration_ms": 1028.98,
+      "status": 200,
+      "ok": true,
+      "request_id": "27d9ea2d-3f63-439b-a827-5597406ce86f",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 95,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 23,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:13:02.593942-05:00",
+              "updated_at": "2026-04-18T22:13:21.707-05:00"
+            },
+            {
+              "id": 94,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 22,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:10:47.174254-05:00",
+              "updated_at": "2026-04-18T22:11:07.263-05:00"
+            },
+            {
+              "id": 93,
+              "employee_id": "38959949-6de1-4194-95a8-a7c7c7534a5c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:11:11-05:00",
+              "scheduled_end": "2026-04-19T02:11:11-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:09:13.822561-05:00",
+              "updated_at": "2026-04-18T22:09:13.822561-05:00"
+            },
+            {
+              "id": 92,
+              "employee_id": "658d263d-f47a-4489-a105-950d054d3e1c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:09:39-05:00",
+              "scheduled_end": "2026-04-19T02:09:39-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:07:41.243779-05:00",
+              "updated_at": "2026-04-18T22:07:41.243779-05:00"
+            },
+            {
+              "id": 91,
+              "employee_id": "15fc74e4-22d2-4c75-8348-68b5aa2e7ccc",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:08:30-05:00",
+              "scheduled_end": "2026-04-19T02:08:30-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:06:32.702836-05:00",
+              "updated_at": "2026-04-18T22:06:32.702836-05:00"
+            },
+            {
+              "id": 90,
+              "employee_id": "6a1aa5b9-b077-4924-81ca-cd6430dcf7f7",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:07:37-05:00",
+              "scheduled_end": "2026-04-19T02:07:37-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:05:39.298176-05:00",
+              "updated_at": "2026-04-18T22:05:39.298176-05:00"
+            },
+            {
+              "id": 89,
+              "employee_id": "50bc27de-dee7-4533-ab9a-1dc648513fa2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:06:31-05:00",
+              "scheduled_end": "2026-04-19T02:06:31-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:04:33.599927-05:00",
+              "updated_at": "2026-04-18T22:04:33.599927-05:00"
+            },
+            {
+              "id": 77,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": null,
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:19:25.550713-05:00",
+              "updated_at": "2026-04-18T21:19:38.045-05:00"
+            },
+            {
+              "id": 78,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": "limpiar bien",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:20:38.918898-05:00",
+              "updated_at": "2026-04-18T21:21:59.794-05:00"
+            }
+          ]
+        },
+        "error": null,
+        "request_id": "27d9ea2d-3f63-439b-a827-5597406ce86f"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "supervisor_shift_list#4",
+      "duration_ms": 938.53,
+      "status": 200,
+      "ok": true,
+      "request_id": "48b97ce9-58f4-4547-83fc-892640f16a89",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 95,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 23,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:13:02.593942-05:00",
+              "updated_at": "2026-04-18T22:13:21.707-05:00"
+            },
+            {
+              "id": 94,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 22,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:10:47.174254-05:00",
+              "updated_at": "2026-04-18T22:11:07.263-05:00"
+            },
+            {
+              "id": 93,
+              "employee_id": "38959949-6de1-4194-95a8-a7c7c7534a5c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:11:11-05:00",
+              "scheduled_end": "2026-04-19T02:11:11-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:09:13.822561-05:00",
+              "updated_at": "2026-04-18T22:09:13.822561-05:00"
+            },
+            {
+              "id": 92,
+              "employee_id": "658d263d-f47a-4489-a105-950d054d3e1c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:09:39-05:00",
+              "scheduled_end": "2026-04-19T02:09:39-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:07:41.243779-05:00",
+              "updated_at": "2026-04-18T22:07:41.243779-05:00"
+            },
+            {
+              "id": 91,
+              "employee_id": "15fc74e4-22d2-4c75-8348-68b5aa2e7ccc",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:08:30-05:00",
+              "scheduled_end": "2026-04-19T02:08:30-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:06:32.702836-05:00",
+              "updated_at": "2026-04-18T22:06:32.702836-05:00"
+            },
+            {
+              "id": 90,
+              "employee_id": "6a1aa5b9-b077-4924-81ca-cd6430dcf7f7",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:07:37-05:00",
+              "scheduled_end": "2026-04-19T02:07:37-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:05:39.298176-05:00",
+              "updated_at": "2026-04-18T22:05:39.298176-05:00"
+            },
+            {
+              "id": 89,
+              "employee_id": "50bc27de-dee7-4533-ab9a-1dc648513fa2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:06:31-05:00",
+              "scheduled_end": "2026-04-19T02:06:31-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:04:33.599927-05:00",
+              "updated_at": "2026-04-18T22:04:33.599927-05:00"
+            },
+            {
+              "id": 77,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": null,
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:19:25.550713-05:00",
+              "updated_at": "2026-04-18T21:19:38.045-05:00"
+            },
+            {
+              "id": 78,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": "limpiar bien",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:20:38.918898-05:00",
+              "updated_at": "2026-04-18T21:21:59.794-05:00"
+            }
+          ]
+        },
+        "error": null,
+        "request_id": "48b97ce9-58f4-4547-83fc-892640f16a89"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "supervisor_shift_list#5",
+      "duration_ms": 1027.72,
+      "status": 200,
+      "ok": true,
+      "request_id": "3cc0bbdb-4a62-46a6-84c6-ffbf60c79584",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 95,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 23,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:13:02.593942-05:00",
+              "updated_at": "2026-04-18T22:13:21.707-05:00"
+            },
+            {
+              "id": 94,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "status": "completed",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": 22,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:10:47.174254-05:00",
+              "updated_at": "2026-04-18T22:11:07.263-05:00"
+            },
+            {
+              "id": 93,
+              "employee_id": "38959949-6de1-4194-95a8-a7c7c7534a5c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:11:11-05:00",
+              "scheduled_end": "2026-04-19T02:11:11-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:09:13.822561-05:00",
+              "updated_at": "2026-04-18T22:09:13.822561-05:00"
+            },
+            {
+              "id": 92,
+              "employee_id": "658d263d-f47a-4489-a105-950d054d3e1c",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:09:39-05:00",
+              "scheduled_end": "2026-04-19T02:09:39-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:07:41.243779-05:00",
+              "updated_at": "2026-04-18T22:07:41.243779-05:00"
+            },
+            {
+              "id": 91,
+              "employee_id": "15fc74e4-22d2-4c75-8348-68b5aa2e7ccc",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:08:30-05:00",
+              "scheduled_end": "2026-04-19T02:08:30-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:06:32.702836-05:00",
+              "updated_at": "2026-04-18T22:06:32.702836-05:00"
+            },
+            {
+              "id": 90,
+              "employee_id": "6a1aa5b9-b077-4924-81ca-cd6430dcf7f7",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:07:37-05:00",
+              "scheduled_end": "2026-04-19T02:07:37-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:05:39.298176-05:00",
+              "updated_at": "2026-04-18T22:05:39.298176-05:00"
+            },
+            {
+              "id": 89,
+              "employee_id": "50bc27de-dee7-4533-ab9a-1dc648513fa2",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:06:31-05:00",
+              "scheduled_end": "2026-04-19T02:06:31-05:00",
+              "status": "scheduled",
+              "notes": "QA PERF synthetic shift",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T22:04:33.599927-05:00",
+              "updated_at": "2026-04-18T22:04:33.599927-05:00"
+            },
+            {
+              "id": 77,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": null,
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:19:25.550713-05:00",
+              "updated_at": "2026-04-18T21:19:38.045-05:00"
+            },
+            {
+              "id": 78,
+              "employee_id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "restaurant_id": 16,
+              "scheduled_start": "2026-04-18T22:00:00-05:00",
+              "scheduled_end": "2026-04-19T04:00:00-05:00",
+              "status": "cancelled",
+              "notes": "limpiar bien",
+              "started_shift_id": null,
+              "created_by": "45bc2f5b-d610-467a-b19a-d36573a0dfb1",
+              "created_at": "2026-04-18T21:20:38.918898-05:00",
+              "updated_at": "2026-04-18T21:21:59.794-05:00"
+            }
+          ]
+        },
+        "error": null,
+        "request_id": "3cc0bbdb-4a62-46a6-84c6-ffbf60c79584"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "reports_list_shifts#1",
+      "duration_ms": 1095.95,
+      "status": 200,
+      "ok": true,
+      "request_id": "6a8ea609-35ba-418b-b054-f433826d9548",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 23,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:13:06.401-05:00",
+              "end_time": "2026-04-18T22:13:21.592-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            },
+            {
+              "id": 22,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:10:51.204-05:00",
+              "end_time": "2026-04-18T22:11:07.145-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            }
+          ],
+          "total_worked_hours": 0,
+          "total_scheduled_hours": 8,
+          "restaurant_worked_hours_total": 0,
+          "restaurant_scheduled_hours_total": 8
+        },
+        "error": null,
+        "request_id": "6a8ea609-35ba-418b-b054-f433826d9548"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "reports_list_shifts#2",
+      "duration_ms": 1147.29,
+      "status": 200,
+      "ok": true,
+      "request_id": "0fc932a6-1268-4739-83bf-91b6ec0688ca",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 23,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:13:06.401-05:00",
+              "end_time": "2026-04-18T22:13:21.592-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            },
+            {
+              "id": 22,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:10:51.204-05:00",
+              "end_time": "2026-04-18T22:11:07.145-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            }
+          ],
+          "total_worked_hours": 0,
+          "total_scheduled_hours": 8,
+          "restaurant_worked_hours_total": 0,
+          "restaurant_scheduled_hours_total": 8
+        },
+        "error": null,
+        "request_id": "0fc932a6-1268-4739-83bf-91b6ec0688ca"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "reports_list_shifts#3",
+      "duration_ms": 987.67,
+      "status": 200,
+      "ok": true,
+      "request_id": "cfa4d3c9-7a48-4b5d-abbe-eece70c8a10c",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 23,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:13:06.401-05:00",
+              "end_time": "2026-04-18T22:13:21.592-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            },
+            {
+              "id": 22,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:10:51.204-05:00",
+              "end_time": "2026-04-18T22:11:07.145-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            }
+          ],
+          "total_worked_hours": 0,
+          "total_scheduled_hours": 8,
+          "restaurant_worked_hours_total": 0,
+          "restaurant_scheduled_hours_total": 8
+        },
+        "error": null,
+        "request_id": "cfa4d3c9-7a48-4b5d-abbe-eece70c8a10c"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "reports_list_shifts#4",
+      "duration_ms": 978.49,
+      "status": 200,
+      "ok": true,
+      "request_id": "19cb9e48-56ce-4b61-a3d6-68202afda442",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 23,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:13:06.401-05:00",
+              "end_time": "2026-04-18T22:13:21.592-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            },
+            {
+              "id": 22,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:10:51.204-05:00",
+              "end_time": "2026-04-18T22:11:07.145-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            }
+          ],
+          "total_worked_hours": 0,
+          "total_scheduled_hours": 8,
+          "restaurant_worked_hours_total": 0,
+          "restaurant_scheduled_hours_total": 8
+        },
+        "error": null,
+        "request_id": "19cb9e48-56ce-4b61-a3d6-68202afda442"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "reports_list_shifts#5",
+      "duration_ms": 980.32,
+      "status": 200,
+      "ok": true,
+      "request_id": "0e68a7b9-ded0-4372-a63c-2732f6587d59",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": 23,
+              "employee_id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:13:06.401-05:00",
+              "end_time": "2026-04-18T22:13:21.592-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:15:00-05:00",
+              "scheduled_end": "2026-04-19T02:15:00-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            },
+            {
+              "id": 22,
+              "employee_id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "restaurant_id": 16,
+              "start_time": "2026-04-18T22:10:51.204-05:00",
+              "end_time": "2026-04-18T22:11:07.145-05:00",
+              "state": "finalizado",
+              "status": "completed",
+              "approved_by": null,
+              "rejected_by": null,
+              "early_end_reason": "Cierre anticipado de prueba tecnica",
+              "scheduled_start": "2026-04-18T22:12:45-05:00",
+              "scheduled_end": "2026-04-19T02:12:45-05:00",
+              "scheduled_hours": 4,
+              "hours_worked": 0,
+              "worked_hours": 0,
+              "ended_early": true,
+              "start_evidence_urls": [],
+              "end_evidence_urls": [],
+              "start_evidences": [],
+              "end_evidences": []
+            }
+          ],
+          "total_worked_hours": 0,
+          "total_scheduled_hours": 8,
+          "restaurant_worked_hours_total": 0,
+          "restaurant_scheduled_hours_total": 8
+        },
+        "error": null,
+        "request_id": "0e68a7b9-ded0-4372-a63c-2732f6587d59"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "reports_generate#1",
+      "duration_ms": 2069.64,
+      "status": 200,
+      "ok": true,
+      "request_id": "819bb11b-a6a0-48da-93d1-32cf3098a38f",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "report_id": 44,
+          "generated_at": "2026-04-18T22:16:20.826-05:00",
+          "file_path": "reports/16/all/2026-04-19_2026-04-20/819bb11b-a6a0-48da-93d1-32cf3098a38f.json",
+          "hash_documento": "c52b651c838f4252365b79d3670dcdb52d5cdb36636673cd5685e1096aa2fa33",
+          "url_pdf": "https://orwingqtwoqfhcogggac.supabase.co/storage/v1/object/sign/reports/reports/16/all/2026-04-19_2026-04-20/819bb11b-a6a0-48da-93d1-32cf3098a38f.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJyZXBvcnRzL3JlcG9ydHMvMTYvYWxsLzIwMjYtMDQtMTlfMjAyNi0wNC0yMC84MTliYjExYi1hNmEwLTQ4ZGEtOTNkMS0zMmNmMzA5OGEzOGYucGRmIiwiaWF0IjoxNzc2NTY4NTgxLCJleHAiOjE3NzcxNzMzODF9.KFqEcHaN9ri8AW1UmY4-AhkhZixAYRn5czotyzN_nHs",
+          "url_excel": "https://orwingqtwoqfhcogggac.supabase.co/storage/v1/object/sign/reports/reports/16/all/2026-04-19_2026-04-20/819bb11b-a6a0-48da-93d1-32cf3098a38f.xlsx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJyZXBvcnRzL3JlcG9ydHMvMTYvYWxsLzIwMjYtMDQtMTlfMjAyNi0wNC0yMC84MTliYjExYi1hNmEwLTQ4ZGEtOTNkMS0zMmNmMzA5OGEzOGYueGxzeCIsImlhdCI6MTc3NjU2ODU4MSwiZXhwIjoxNzc3MTczMzgxfQ.DoduOEflAGincUtmCO7KlHTITaxVi2J6DLx71aKa43g",
+          "totals": {
+            "shifts": 2,
+            "hours_worked": 0,
+            "total_scheduled_hours": 8,
+            "total_worked_hours": 0,
+            "restaurant_worked_hours_total": 0,
+            "restaurant_scheduled_hours_total": 8
+          }
+        },
+        "error": null,
+        "request_id": "819bb11b-a6a0-48da-93d1-32cf3098a38f"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "reports_generate#2",
+      "duration_ms": 1582.73,
+      "status": 200,
+      "ok": true,
+      "request_id": "2a410d18-960e-4b72-9bc1-d68b0bacaf94",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "report_id": 45,
+          "generated_at": "2026-04-18T22:16:22.796-05:00",
+          "file_path": "reports/16/all/2026-04-19_2026-04-20/2a410d18-960e-4b72-9bc1-d68b0bacaf94.json",
+          "hash_documento": "c52b651c838f4252365b79d3670dcdb52d5cdb36636673cd5685e1096aa2fa33",
+          "url_pdf": "https://orwingqtwoqfhcogggac.supabase.co/storage/v1/object/sign/reports/reports/16/all/2026-04-19_2026-04-20/2a410d18-960e-4b72-9bc1-d68b0bacaf94.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJyZXBvcnRzL3JlcG9ydHMvMTYvYWxsLzIwMjYtMDQtMTlfMjAyNi0wNC0yMC8yYTQxMGQxOC05NjBlLTRiNzItOWJjMS1kNjhiMGJhY2FmOTQucGRmIiwiaWF0IjoxNzc2NTY4NTgzLCJleHAiOjE3NzcxNzMzODN9.pkALUsWWjrL2Q0txx-cATWXcHabTDt14cPrg0PgHomw",
+          "url_excel": "https://orwingqtwoqfhcogggac.supabase.co/storage/v1/object/sign/reports/reports/16/all/2026-04-19_2026-04-20/2a410d18-960e-4b72-9bc1-d68b0bacaf94.xlsx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJyZXBvcnRzL3JlcG9ydHMvMTYvYWxsLzIwMjYtMDQtMTlfMjAyNi0wNC0yMC8yYTQxMGQxOC05NjBlLTRiNzItOWJjMS1kNjhiMGJhY2FmOTQueGxzeCIsImlhdCI6MTc3NjU2ODU4MywiZXhwIjoxNzc3MTczMzgzfQ.nhJo0S8qBnvnlqH7umFDusluVNF9edPvVJjAvIjAy08",
+          "totals": {
+            "shifts": 2,
+            "hours_worked": 0,
+            "total_scheduled_hours": 8,
+            "total_worked_hours": 0,
+            "restaurant_worked_hours_total": 0,
+            "restaurant_scheduled_hours_total": 8
+          }
+        },
+        "error": null,
+        "request_id": "2a410d18-960e-4b72-9bc1-d68b0bacaf94"
+      }
+    },
+    {
+      "group": "read_paths",
+      "step": "reports_generate#3",
+      "duration_ms": 1559.15,
+      "status": 200,
+      "ok": true,
+      "request_id": "b747803d-d0a5-44a1-8ae4-6dfa64b94d0c",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "report_id": 46,
+          "generated_at": "2026-04-18T22:16:24.382-05:00",
+          "file_path": "reports/16/all/2026-04-19_2026-04-20/b747803d-d0a5-44a1-8ae4-6dfa64b94d0c.json",
+          "hash_documento": "c52b651c838f4252365b79d3670dcdb52d5cdb36636673cd5685e1096aa2fa33",
+          "url_pdf": "https://orwingqtwoqfhcogggac.supabase.co/storage/v1/object/sign/reports/reports/16/all/2026-04-19_2026-04-20/b747803d-d0a5-44a1-8ae4-6dfa64b94d0c.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJyZXBvcnRzL3JlcG9ydHMvMTYvYWxsLzIwMjYtMDQtMTlfMjAyNi0wNC0yMC9iNzQ3ODAzZC1kMGE1LTQ0YTEtOGFlNC02ZGZhNjRiOTRkMGMucGRmIiwiaWF0IjoxNzc2NTY4NTg0LCJleHAiOjE3NzcxNzMzODR9.ihmiP92W-CbCBCoat2T9UOB8QclD0ygJyXFKyNpV3Q8",
+          "url_excel": "https://orwingqtwoqfhcogggac.supabase.co/storage/v1/object/sign/reports/reports/16/all/2026-04-19_2026-04-20/b747803d-d0a5-44a1-8ae4-6dfa64b94d0c.xlsx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJyZXBvcnRzL3JlcG9ydHMvMTYvYWxsLzIwMjYtMDQtMTlfMjAyNi0wNC0yMC9iNzQ3ODAzZC1kMGE1LTQ0YTEtOGFlNC02ZGZhNjRiOTRkMGMueGxzeCIsImlhdCI6MTc3NjU2ODU4NCwiZXhwIjoxNzc3MTczMzg0fQ.ZGLy-ByEQgcHJq94cNgvz8g5DCNFRkNB7a6P0z6AUrc",
+          "totals": {
+            "shifts": 2,
+            "hours_worked": 0,
+            "total_scheduled_hours": 8,
+            "total_worked_hours": 0,
+            "restaurant_worked_hours_total": 0,
+            "restaurant_scheduled_hours_total": 8
+          }
+        },
+        "error": null,
+        "request_id": "b747803d-d0a5-44a1-8ae4-6dfa64b94d0c"
+      }
+    },
+    {
+      "group": "auth",
+      "step": "refresh_employee_session",
+      "duration_ms": 314.82,
+      "status": 200,
+      "ok": true,
+      "request_id": "",
+      "note": "",
+      "extra": null
+    },
+    {
+      "group": "start_end_flow",
+      "step": "admin_create_perf_employee",
+      "duration_ms": 1480.39,
+      "status": 200,
+      "ok": true,
+      "request_id": "74fa130d-1a45-43e1-ab2a-d53ad88ab5c3",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "user": {
+            "id": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4",
+            "first_name": null,
+            "last_name": null,
+            "full_name": "Empleado QA Performance",
+            "email": "qa.perf.20260418221551@gmail.com",
+            "phone_number": "+573004168799",
+            "role": "empleado",
+            "is_active": true
+          }
+        },
+        "error": null,
+        "request_id": "74fa130d-1a45-43e1-ab2a-d53ad88ab5c3"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "admin_list_employees_for_seed_lookup",
+      "duration_ms": 918.8,
+      "status": 200,
+      "ok": true,
+      "request_id": "6bfc8a84-f701-4c7c-8874-99e1e2b65579",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "11c2a686-283a-4a8b-b89a-86062fe0cc96",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Alejandra Cardona",
+              "email": "aleja@gmail.com",
+              "phone_number": "+573005679960",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "92fdb150-8a24-4795-993f-4f137fab8157",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Alejandra Cardona",
+              "email": "alejac@gmail.com",
+              "phone_number": "+573005679960",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "3a3b2954-19ef-4b29-8a69-db32ebcb2f5d",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Danny Ismale",
+              "email": "danny@gmail.com",
+              "phone_number": "+573005679960",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "e969bbf9-cdd5-4299-8cd5-26676001941b",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado",
+              "email": "empleado@gmail.com",
+              "phone_number": null,
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "937ca66a-133c-4c09-b126-5418c130c291",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Grecia Medina",
+              "email": "Grecia@gmail.com",
+              "phone_number": "+573005679960",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "01e54c71-7b63-4064-aa54-372e6cce94ed",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Hanna Rodriguez",
+              "email": "hanna@gmail.com",
+              "phone_number": "+573005679930",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "028b58d7-82b0-4167-93d0-8238072d0620",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Hanna Rodriguez",
+              "email": "hannaR@gmail.com",
+              "phone_number": "+573005679960",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "c70b5dce-0846-4388-b53e-004826dc749a",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Henry Medina",
+              "email": "henrymedina8@gmail.com",
+              "phone_number": "+573005679960",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "6ac341b6-62f3-45b7-9fc7-f8d6ffb8cbf9",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Henry Medina Maceo",
+              "email": "hmedina@gmail.com",
+              "phone_number": "+573005679960",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "64eedae0-fa97-4863-91af-8dc1d477fba6",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Miguel López",
+              "email": "miguel@gmail.com",
+              "phone_number": "+573146249096",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "955d64b4-2f66-4af7-bd5b-2666230802c6",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Device Policy",
+              "email": "qa.device.20260413232531@gmail.com",
+              "phone_number": "+573009990011",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "130ac6a8-35c3-47a9-aead-1e4f41caae39",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Device Policy",
+              "email": "qa.device.20260413232605@gmail.com",
+              "phone_number": "+573009990011",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "5d98ff47-b29a-4c96-8385-710f9b01558f",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Device Policy",
+              "email": "qa.device.20260418213036@gmail.com",
+              "phone_number": "+573009990011",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "e24f3078-25cd-419e-a8f3-6eec4316f4d9",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Device Policy",
+              "email": "qa.device.20260418214239@gmail.com",
+              "phone_number": "+573009990011",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "b8d190e6-0358-4fdb-9fc1-9851cc4b6657",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Device Policy",
+              "email": "qa.device.20260418220013@gmail.com",
+              "phone_number": "+573009990011",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "1774cf9e-6907-4c28-8157-62d4eb11faa2",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA E2E",
+              "email": "qa.e2e.20260418213836@gmail.com",
+              "phone_number": "+573001112233",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "905195e7-ba54-4dac-88ee-9b9131b320ed",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA E2E",
+              "email": "qa.e2e.20260418213938@gmail.com",
+              "phone_number": "+573001112233",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "a31b05fe-1267-4921-9680-f73d2cf80e07",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Seed",
+              "email": "qa.empleado.20260418212520@gmail.com",
+              "phone_number": "+573001112233",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "570e146a-1c71-40a1-88ec-493a5bd56728",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Seed",
+              "email": "qa.empleado.20260418213010@gmail.com",
+              "phone_number": "+573001112233",
+              "role": "empleado",
+              "is_active": false
+            },
+            {
+              "id": "50bc27de-dee7-4533-ab9a-1dc648513fa2",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Performance",
+              "email": "qa.perf.20260418220354@gmail.com",
+              "phone_number": "+573008355053",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "6a1aa5b9-b077-4924-81ca-cd6430dcf7f7",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Performance",
+              "email": "qa.perf.20260418220458@gmail.com",
+              "phone_number": "+573001686514",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "15fc74e4-22d2-4c75-8348-68b5aa2e7ccc",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Performance",
+              "email": "qa.perf.20260418220554@gmail.com",
+              "phone_number": "+573005209198",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "658d263d-f47a-4489-a105-950d054d3e1c",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Performance",
+              "email": "qa.perf.20260418220704@gmail.com",
+              "phone_number": "+573005874305",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "38959949-6de1-4194-95a8-a7c7c7534a5c",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Performance",
+              "email": "qa.perf.20260418220836@gmail.com",
+              "phone_number": "+573004630739",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "b350e8b3-f92b-432f-bb01-93870f2d144d",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Performance",
+              "email": "qa.perf.20260418221006@gmail.com",
+              "phone_number": "+573001838351",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "d69b0eb6-0555-4ef6-b274-ce9e0b4df5a2",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Performance",
+              "email": "qa.perf.20260418221218@gmail.com",
+              "phone_number": "+573006434471",
+              "role": "empleado",
+              "is_active": true
+            },
+            {
+              "id": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4",
+              "first_name": null,
+              "last_name": null,
+              "full_name": "Empleado QA Performance",
+              "email": "qa.perf.20260418221551@gmail.com",
+              "phone_number": "+573004168799",
+              "role": "empleado",
+              "is_active": true
+            }
+          ]
+        },
+        "error": null,
+        "request_id": "6bfc8a84-f701-4c7c-8874-99e1e2b65579"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "assign_perf_employee_to_restaurant",
+      "duration_ms": 1542.4,
+      "status": 200,
+      "ok": true,
+      "request_id": "172755fd-c761-4329-abbf-011913a920f1",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "assignment": {
+            "employee_id": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4",
+            "restaurant_id": 16
+          }
+        },
+        "error": null,
+        "request_id": "172755fd-c761-4329-abbf-011913a920f1"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "login_perf_employee",
+      "duration_ms": 310.48,
+      "status": 200,
+      "ok": true,
+      "request_id": "",
+      "note": "",
+      "extra": null
+    },
+    {
+      "group": "start_end_flow",
+      "step": "perf_employee_legal_consent",
+      "duration_ms": 2293.32,
+      "status": 200,
+      "ok": true,
+      "request_id": "614e5ae0-bd0d-4257-9e1b-4ab4e8c80117",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "accepted": true,
+          "accepted_at": "2026-04-18T22:16:30.917-05:00",
+          "active_term": {
+            "id": 1,
+            "code": "legal",
+            "title": "Tratamiento de datos",
+            "version": "v1",
+            "content": "Al continuar, aceptas el tratamiento de datos personales conforme a la politica vigente."
+          }
+        },
+        "error": null,
+        "request_id": "614e5ae0-bd0d-4257-9e1b-4ab4e8c80117"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "trusted_device_register_perf_employee",
+      "duration_ms": 966.42,
+      "status": 200,
+      "ok": true,
+      "request_id": "50737fa0-02c8-48c3-a74e-103c901d42b5",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "device_id": 51,
+          "trusted_at": "2026-04-18T22:16:32.576-05:00",
+          "last_seen_at": "2026-04-18T22:16:32.576-05:00",
+          "first_login_binding": true,
+          "device_name": "QA Perf Device",
+          "platform": "web"
+        },
+        "error": null,
+        "request_id": "50737fa0-02c8-48c3-a74e-103c901d42b5"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "schedule_shift_for_perf_employee",
+      "duration_ms": 972.6,
+      "status": 200,
+      "ok": true,
+      "request_id": "5e42b36b-d93a-4273-873b-3fb01ce2841d",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "scheduled_shift_id": 96
+        },
+        "error": null,
+        "request_id": "5e42b36b-d93a-4273-873b-3fb01ce2841d"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "otp_send_before_start",
+      "duration_ms": 1052.54,
+      "status": 200,
+      "ok": true,
+      "request_id": "0ebd3920-8dda-4df2-bca2-cb8a477c5a56",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "trusted_device_id": 51,
+          "otp_id": 176,
+          "expires_at": "2026-04-19T03:21:34.581Z",
+          "masked_phone": "+57***799",
+          "delivery_status": "screen",
+          "debug_code": "109905"
+        },
+        "error": null,
+        "request_id": "0ebd3920-8dda-4df2-bca2-cb8a477c5a56"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "otp_verify_before_start",
+      "duration_ms": 1175.23,
+      "status": 200,
+      "ok": true,
+      "request_id": "1f6e0d66-6f46-4732-a6d2-4895f708b9a9",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "trusted_device_id": 51,
+          "verification_token": "4013f30d8f647f48d88706c2e00d22260ad8a7f09066ecd43164d57e9a1bebfc",
+          "expires_at": "2026-04-19T15:16:35.747Z"
+        },
+        "error": null,
+        "request_id": "1f6e0d66-6f46-4732-a6d2-4895f708b9a9"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "shifts_start",
+      "duration_ms": 5192.75,
+      "status": 200,
+      "ok": true,
+      "request_id": "0b67b10e-cf8b-4dd1-ada7-d59f31112c72",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "shift_id": 24,
+          "pending_tasks_count": 0,
+          "pending_tasks_preview": []
+        },
+        "error": null,
+        "request_id": "0b67b10e-cf8b-4dd1-ada7-d59f31112c72"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "my_active_shift_after_start",
+      "duration_ms": 1202.65,
+      "status": 200,
+      "ok": true,
+      "request_id": "eb62f92d-e86f-4ba9-809b-181bd9eefa30",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "id": 24,
+          "restaurant_id": 16,
+          "start_time": "2026-04-18T22:16:37.251-05:00",
+          "end_time": null,
+          "state": "activo",
+          "has_start_evidence": false,
+          "start_evidence_count": 0,
+          "has_end_evidence": false,
+          "end_evidence_count": 0,
+          "required_start_evidence_count": 1,
+          "required_end_evidence_count": 1
+        },
+        "error": null,
+        "request_id": "eb62f92d-e86f-4ba9-809b-181bd9eefa30"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "summary_by_shift_before_upload",
+      "duration_ms": 976.1,
+      "status": 200,
+      "ok": true,
+      "request_id": "25c4a56c-b059-4535-a221-7d3036dd27b5",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "shift_id": 24,
+          "counts": {
+            "inicio": 0,
+            "fin": 0,
+            "supervision": 0
+          },
+          "has_start": false,
+          "has_end": false,
+          "has_supervision": false,
+          "has_start_evidence": false,
+          "has_end_evidence": false,
+          "start_evidence_count": 0,
+          "end_evidence_count": 0,
+          "supervision_evidence_count": 0
+        },
+        "error": null,
+        "request_id": "25c4a56c-b059-4535-a221-7d3036dd27b5"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "request_upload_inicio",
+      "duration_ms": 1547.1,
+      "status": 200,
+      "ok": true,
+      "request_id": "a70d9595-2b9f-42b2-a402-b38db2df3368",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "upload": {
+            "signedUrl": "https://orwingqtwoqfhcogggac.supabase.co/storage/v1/object/upload/sign/shift-evidence/b1f5c269-cf07-44ac-adf3-2bc8ce5905f4/24/inicio/a70d9595-2b9f-42b2-a402-b38db2df3368.bin?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzaGlmdC1ldmlkZW5jZS9iMWY1YzI2OS1jZjA3LTQ0YWMtYWRmMy0yYmM4Y2U1OTA1ZjQvMjQvaW5pY2lvL2E3MGQ5NTk1LTJiOWYtNDJiMi1hNDAyLWIzOGRiMmRmMzM2OC5iaW4iLCJ1cHNlcnQiOmZhbHNlLCJpYXQiOjE3NzY1Njg2MDQsImV4cCI6MTc3NjU3NTgwNH0.5_Iao_JpM6HryJHXG34X3L-BS9gCATJX0MC8WpCziVI",
+            "path": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4/24/inicio/a70d9595-2b9f-42b2-a402-b38db2df3368.bin",
+            "token": "eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzaGlmdC1ldmlkZW5jZS9iMWY1YzI2OS1jZjA3LTQ0YWMtYWRmMy0yYmM4Y2U1OTA1ZjQvMjQvaW5pY2lvL2E3MGQ5NTk1LTJiOWYtNDJiMi1hNDAyLWIzOGRiMmRmMzM2OC5iaW4iLCJ1cHNlcnQiOmZhbHNlLCJpYXQiOjE3NzY1Njg2MDQsImV4cCI6MTc3NjU3NTgwNH0.5_Iao_JpM6HryJHXG34X3L-BS9gCATJX0MC8WpCziVI"
+          },
+          "bucket": "shift-evidence",
+          "path": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4/24/inicio/a70d9595-2b9f-42b2-a402-b38db2df3368.bin",
+          "max_bytes": 8388608,
+          "allowed_mime": [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ]
+        },
+        "error": null,
+        "request_id": "a70d9595-2b9f-42b2-a402-b38db2df3368"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "upload_signed_inicio_put",
+      "duration_ms": 507.15,
+      "status": 200,
+      "ok": true,
+      "request_id": "",
+      "note": "",
+      "extra": null
+    },
+    {
+      "group": "start_end_flow",
+      "step": "finalize_upload_inicio",
+      "duration_ms": 1535.29,
+      "status": 200,
+      "ok": true,
+      "request_id": "92282151-3671-462d-bd59-5af7eb528947",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "shift_id": 24,
+          "type": "inicio",
+          "storage_path": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4/24/inicio/a70d9595-2b9f-42b2-a402-b38db2df3368.bin",
+          "sha256": "318baabc322a6764c750f215f9a7d062719b32a0295196e286c1be46be3ebf25"
+        },
+        "error": null,
+        "request_id": "92282151-3671-462d-bd59-5af7eb528947"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "request_upload_fin",
+      "duration_ms": 1649.39,
+      "status": 200,
+      "ok": true,
+      "request_id": "c84da0d5-cebd-4b8b-a9b8-5723dad2ea0f",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "upload": {
+            "signedUrl": "https://orwingqtwoqfhcogggac.supabase.co/storage/v1/object/upload/sign/shift-evidence/b1f5c269-cf07-44ac-adf3-2bc8ce5905f4/24/fin/c84da0d5-cebd-4b8b-a9b8-5723dad2ea0f.bin?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzaGlmdC1ldmlkZW5jZS9iMWY1YzI2OS1jZjA3LTQ0YWMtYWRmMy0yYmM4Y2U1OTA1ZjQvMjQvZmluL2M4NGRhMGQ1LWNlYmQtNGI4Yi1hOWI4LTU3MjNkYWQyZWEwZi5iaW4iLCJ1cHNlcnQiOmZhbHNlLCJpYXQiOjE3NzY1Njg2MDgsImV4cCI6MTc3NjU3NTgwOH0.oLWFAKiTh2o-zQuWUNpbjMkp_TiWSD_FDqxsyg41Rlg",
+            "path": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4/24/fin/c84da0d5-cebd-4b8b-a9b8-5723dad2ea0f.bin",
+            "token": "eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmQwNGYyZS02YTU5LTRkYzctODc4ZS1iZDk3ZDljMGEzNjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzaGlmdC1ldmlkZW5jZS9iMWY1YzI2OS1jZjA3LTQ0YWMtYWRmMy0yYmM4Y2U1OTA1ZjQvMjQvZmluL2M4NGRhMGQ1LWNlYmQtNGI4Yi1hOWI4LTU3MjNkYWQyZWEwZi5iaW4iLCJ1cHNlcnQiOmZhbHNlLCJpYXQiOjE3NzY1Njg2MDgsImV4cCI6MTc3NjU3NTgwOH0.oLWFAKiTh2o-zQuWUNpbjMkp_TiWSD_FDqxsyg41Rlg"
+          },
+          "bucket": "shift-evidence",
+          "path": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4/24/fin/c84da0d5-cebd-4b8b-a9b8-5723dad2ea0f.bin",
+          "max_bytes": 8388608,
+          "allowed_mime": [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ]
+        },
+        "error": null,
+        "request_id": "c84da0d5-cebd-4b8b-a9b8-5723dad2ea0f"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "upload_signed_fin_put",
+      "duration_ms": 515.17,
+      "status": 200,
+      "ok": true,
+      "request_id": "",
+      "note": "",
+      "extra": null
+    },
+    {
+      "group": "start_end_flow",
+      "step": "finalize_upload_fin",
+      "duration_ms": 1507.41,
+      "status": 200,
+      "ok": true,
+      "request_id": "15cb09fc-1d72-436e-a446-89c6bf5b97d3",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {
+          "shift_id": 24,
+          "type": "fin",
+          "storage_path": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4/24/fin/c84da0d5-cebd-4b8b-a9b8-5723dad2ea0f.bin",
+          "sha256": "318baabc322a6764c750f215f9a7d062719b32a0295196e286c1be46be3ebf25"
+        },
+        "error": null,
+        "request_id": "15cb09fc-1d72-436e-a446-89c6bf5b97d3"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "shifts_end",
+      "duration_ms": 5152.0,
+      "status": 200,
+      "ok": true,
+      "request_id": "9dc1d884-a58f-4b22-95aa-8959f1ac6ade",
+      "note": "",
+      "extra": {
+        "success": true,
+        "data": {},
+        "error": null,
+        "request_id": "9dc1d884-a58f-4b22-95aa-8959f1ac6ade"
+      }
+    },
+    {
+      "group": "start_end_flow",
+      "step": "cancel_scheduled_shift_cleanup",
+      "duration_ms": 879.21,
+      "status": 409,
+      "ok": true,
+      "request_id": "264a12a9-bd21-4c9c-887a-9ee9357266f9",
+      "note": "",
+      "extra": {
+        "success": false,
+        "data": null,
+        "error": {
+          "code": 409,
+          "message": "Solo se pueden cancelar turnos scheduled o started",
+          "category": "BUSINESS",
+          "request_id": "264a12a9-bd21-4c9c-887a-9ee9357266f9"
+        },
+        "request_id": "264a12a9-bd21-4c9c-887a-9ee9357266f9"
+      }
+    }
+  ],
+  "summaries": [
+    {
+      "group": "auth",
+      "count": 5,
+      "avg_ms": 672.18,
+      "p50_ms": 483.44,
+      "p90_ms": 1395.27,
+      "max_ms": 1395.27,
+      "failed_steps": 0
+    },
+    {
+      "group": "read_paths",
+      "count": 24,
+      "avg_ms": 1197.86,
+      "p50_ms": 1074.03,
+      "p90_ms": 1582.73,
+      "max_ms": 2079.1,
+      "failed_steps": 0
+    },
+    {
+      "group": "start_end_flow",
+      "count": 20,
+      "avg_ms": 1568.82,
+      "p50_ms": 1175.23,
+      "p90_ms": 2293.32,
+      "max_ms": 5192.75,
+      "failed_steps": 0
+    }
+  ],
+  "metadata": {
+    "seed_email": "qa.perf.20260418221551@gmail.com",
+    "seed_employee_id": "b1f5c269-cf07-44ac-adf3-2bc8ce5905f4",
+    "probe_restaurant_id": 16,
+    "probe_lat": 6.3163648,
+    "probe_lng": -75.5628464,
+    "scheduled_shift_id": 96,
+    "active_shift_id": 24
+  }
+}

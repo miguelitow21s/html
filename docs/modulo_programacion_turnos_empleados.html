@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Programación de Turnos</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+    select, input { width: 100%; }
+    button { margin: 5px; padding: 8px; }
+  </style>
+</head>
+<body>
+
+<h2>Programación de Turnos Semanales</h2>
+
+<label>Empleado:</label>
+<select id="empleado"></select>
+
+<label>Restaurante:</label>
+<select id="restaurante"></select>
+
+<button onclick="agregarTurno()">Agregar Turno</button>
+<button onclick="replicarSemana()">Replicar Semana Anterior</button>
+<input type="file" id="excelFile" accept=".xlsx" />
+<button onclick="cargarExcel()">Cargar desde Excel</button>
+
+<table id="tablaTurnos">
+  <thead>
+    <tr>
+      <th>Día</th>
+      <th>Hora Entrada</th>
+      <th>Hora Salida</th>
+      <th>Eliminar</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+// Simulación de bases de datos
+const empleados = [
+  { id: 1, nombre: "Juan Pérez" },
+  { id: 2, nombre: "Ana Gómez" }
+];
+
+const restaurantes = [
+  { id: 1, nombre: "Restaurante Centro" },
+  { id: 2, nombre: "Restaurante Norte" }
+];
+
+const dias = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+
+let turnos = [];
+let turnosSemanaAnterior = [];
+
+function cargarSelects() {
+  const empSelect = document.getElementById("empleado");
+  empleados.forEach(e => {
+    let opt = document.createElement("option");
+    opt.value = e.id;
+    opt.text = e.nombre;
+    empSelect.add(opt);
+  });
+
+  const restSelect = document.getElementById("restaurante");
+  restaurantes.forEach(r => {
+    let opt = document.createElement("option");
+    opt.value = r.id;
+    opt.text = r.nombre;
+    restSelect.add(opt);
+  });
+}
+
+function agregarTurno() {
+  const tbody = document.querySelector("#tablaTurnos tbody");
+
+  dias.forEach(dia => {
+    let row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${dia}</td>
+      <td><input type="time"></td>
+      <td><input type="time"></td>
+      <td><button onclick="eliminarFila(this)">X</button></td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+function eliminarFila(btn) {
+  btn.parentElement.parentElement.remove();
+}
+
+function replicarSemana() {
+  const tbody = document.querySelector("#tablaTurnos tbody");
+  tbody.innerHTML = "";
+
+  turnosSemanaAnterior.forEach(t => {
+    let row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${t.dia}</td>
+      <td><input type="time" value="${t.entrada}"></td>
+      <td><input type="time" value="${t.salida}"></td>
+      <td><button onclick="eliminarFila(this)">X</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function guardarSemanaActual() {
+  turnosSemanaAnterior = [];
+  document.querySelectorAll("#tablaTurnos tbody tr").forEach(row => {
+    const celdas = row.children;
+    turnosSemanaAnterior.push({
+      dia: celdas[0].innerText,
+      entrada: celdas[1].children[0].value,
+      salida: celdas[2].children[0].value
+    });
+  });
+}
+
+function cargarExcel() {
+  const file = document.getElementById("excelFile").files[0];
+  if (!file) return alert("Selecciona un archivo");
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet);
+
+    const tbody = document.querySelector("#tablaTurnos tbody");
+    tbody.innerHTML = "";
+
+    json.forEach(row => {
+      let tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row.Dia}</td>
+        <td><input type="time" value="${row.Entrada}"></td>
+        <td><input type="time" value="${row.Salida}"></td>
+        <td><button onclick="eliminarFila(this)">X</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+cargarSelects();
+</script>
+
+</body>
+</html>

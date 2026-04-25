@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programación de Turnos - WorkTrace</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            background: var(--card);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .nav-tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            color: var(--secondary);
+        }
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        .nav-tab:hover:not(.active) { background: #f1f5f9; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .btn-outline:hover { background: #f8fafc; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .filters {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        select, input[type="text"], input[type="time"], input[type="date"] {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: var(--card);
+            min-width: 180px;
+        }
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 250px repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .grid-header {
+            background: #f8fafc;
+            padding: 14px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+        .grid-header:first-child { text-align: left; padding-left: 16px; }
+        .employee-cell {
+            background: var(--card);
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            justify-content: center;
+        }
+        .employee-name { font-weight: 600; font-size: 0.9rem; }
+        .employee-role { font-size: 0.75rem; color: var(--secondary); }
+        .shift-cell {
+            background: var(--card);
+            padding: 8px;
+            min-height: 80px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .shift-cell:hover { background: #f8fafc; }
+        .shift-cell.has-shift {
+            background: #eff6ff;
+            border-left: 3px solid var(--primary);
+        }
+        .shift-cell.has-shift:hover { background: #dbeafe; }
+        .shift-info {
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+        .shift-restaurant {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.8rem;
+        }
+        .shift-time { color: var(--secondary); }
+        .shift-actions {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            display: none;
+            gap: 2px;
+        }
+        .shift-cell:hover .shift-actions { display: flex; }
+        .icon-btn {
+            width: 22px; height: 22px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+        .icon-btn.edit { background: var(--warning); color: white; }
+        .icon-btn.delete { background: var(--danger); color: white; }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title { font-size: 1.2rem; font-weight: 700; }
+        .modal-close {
+            width: 32px; height: 32px;
+            border-radius: 10px;
+            border: none;
+            background: #f1f5f9;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--secondary);
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--secondary);
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .table-container { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--secondary);
+        }
+        tr:hover td { background: #f8fafc; }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge-blue { background: #dbeafe; color: #1d4ed8; }
+        .badge-green { background: #d1fae5; color: #047857; }
+        .badge-purple { background: #ede9fe; color: #6d28d9; }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary);
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+        .week-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .week-nav {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .week-nav:hover { background: #f8fafc; }
+        .week-label {
+            font-weight: 600;
+            min-width: 200px;
+            text-align: center;
+        }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            background: var(--text);
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2000;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 0.85rem; color: var(--secondary); margin-top: 4px; }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        .drag-drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        .drag-drop-zone:hover, .drag-drop-zone.dragover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+        .drag-drop-zone i { font-size: 2.5rem; color: var(--primary); margin-bottom: 12px; }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .checkbox-pill {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .checkbox-pill.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .checkbox-pill:hover:not(.selected) { background: #f8fafc; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo"><i class="fas fa-calendar-alt"></i> WorkTrace - Programación de Turnos</div>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <span id="currentDate" style="color:var(--secondary);font-size:0.9rem;"></span>
+                <div style="width:36px;height:36px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;">AD</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('schedule')">
+                <i class="fas fa-calendar-week"></i> Programar Turnos
+            </button>
+            <button class="nav-tab" onclick="switchTab('employees')">
+                <i class="fas fa-users"></i> Empleados
+            </button>
+            <button class="nav-tab" onclick="switchTab('restaurants')">
+                <i class="fas fa-utensils"></i> Restaurantes
+            </button>
+            <button class="nav-tab" onclick="switchTab('import')">
+                <i class="fas fa-file-excel"></i> Importar Excel
+            </button>
+        </div>
+
+        <!-- PANEL: PROGRAMAR TURNOS -->
+        <div id="panel-schedule" class="panel active">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotalShifts">0</div>
+                    <div class="stat-label">Turnos programados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotalHours">0</div>
+                    <div class="stat-label">Horas totales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statActiveEmployees">0</div>
+                    <div class="stat-label">Empleados activos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statRestaurantsUsed">0</div>
+                    <div class="stat-label">Restaurantes en uso</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="toolbar">
+                    <div class="week-selector">
+                        <button class="week-nav" onclick="changeWeek(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <span class="week-label" id="weekLabel">Semana del 21 al 27 de Abril, 2026</span>
+                        <button class="week-nav" onclick="changeWeek(1)"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-outline btn-sm" onclick="replicateLastWeek()">
+                            <i class="fas fa-copy"></i> Replicar semana anterior
+                        </button>
+                        <button class="btn btn-primary" onclick="openShiftModal()">
+                            <i class="fas fa-plus"></i> Nuevo Turno
+                        </button>
+                    </div>
+                </div>
+
+                <div class="filters">
+                    <select id="filterRestaurant" onchange="renderSchedule()">
+                        <option value="">Todos los restaurantes</option>
+                    </select>
+                    <select id="filterEmployee" onchange="renderSchedule()">
+                        <option value="">Todos los empleados</option>
+                    </select>
+                    <input type="text" id="searchEmployee" placeholder="Buscar empleado..." oninput="renderSchedule()">
+                </div>
+
+                <div id="scheduleContainer" style="margin-top:20px;">
+                    <!-- Grid se renderiza aquí -->
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL: EMPLEADOS -->
+        <div id="panel-employees" class="panel">
+            <div class="card">
+                <div class="toolbar">
+                    <div class="card-title"><i class="fas fa-users"></i> Base de Datos de Empleados</div>
+                    <button class="btn btn-primary" onclick="openEmployeeModal()">
+                        <i class="fas fa-plus"></i> Agregar Empleado
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Cargo</th>
+                                <th>Teléfono</th>
+                                <th>Email</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeesTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL: RESTAURANTES -->
+        <div id="panel-restaurants" class="panel">
+            <div class="card">
+                <div class="toolbar">
+                    <div class="card-title"><i class="fas fa-utensils"></i> Base de Datos de Restaurantes</div>
+                    <button class="btn btn-primary" onclick="openRestaurantModal()">
+                        <i class="fas fa-plus"></i> Agregar Restaurante
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Dirección</th>
+                                <th>Ciudad</th>
+                                <th>Teléfono</th>
+                                <th>Capacidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="restaurantsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL: IMPORTAR EXCEL -->
+        <div id="panel-import" class="panel">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-file-excel"></i> Importar Turnos desde Excel</div>
+                <p style="color:var(--secondary);margin-bottom:20px;font-size:0.9rem;">
+                    Sube un archivo Excel con las columnas: Empleado, Restaurante, Día, Hora Entrada, Hora Salida.
+                    También puedes arrastrar y soltar el archivo.
+                </p>
+                <div class="drag-drop-zone" id="dropZone" onclick="document.getElementById('excelInput').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <div style="font-weight:600;margin-bottom:4px;">Arrastra tu archivo Excel aquí</div>
+                    <div style="font-size:0.85rem;color:var(--secondary);">o haz clic para seleccionar (.xlsx, .xls, .csv)</div>
+                    <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleFileSelect(event)">
+                </div>
+                <div id="importPreview" style="margin-top:20px;display:none;">
+                    <div class="card-title"><i class="fas fa-eye"></i> Vista previa de importación</div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Empleado</th>
+                                    <th>Restaurante</th>
+                                    <th>Día</th>
+                                    <th>Hora Entrada</th>
+                                    <th>Hora Salida</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewTable"></tbody>
+                        </table>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:16px;">
+                        <button class="btn btn-outline" onclick="cancelImport()">Cancelar</button>
+                        <button class="btn btn-success" onclick="confirmImport()">
+                            <i class="fas fa-check"></i> Confirmar Importación
+                        </button>
+                    </div>
+                </div>
+                <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:12px;">
+                    <div style="font-weight:600;margin-bottom:8px;"><i class="fas fa-info-circle"></i> Formato esperado del Excel</div>
+                    <div style="font-size:0.85rem;color:var(--secondary);line-height:1.6;">
+                        La primera fila debe contener los encabezados. Los días deben escribirse como: Lunes, Martes, Miércoles, Jueves, Viernes, Sábado, Domingo.<br>
+                        Las horas en formato 24h (ej: 08:00, 14:30, 22:00).
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: TURNO -->
+    <div class="modal-overlay" id="shiftModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="shiftModalTitle">Nuevo Turno</div>
+                <button class="modal-close" onclick="closeModal('shiftModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="shiftForm" onsubmit="saveShift(event)">
+                <input type="hidden" id="shiftId">
+                <div class="form-group">
+                    <label class="form-label">Empleado</label>
+                    <select id="shiftEmployee" required></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Restaurante</label>
+                    <select id="shiftRestaurant" required></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Días de la semana</label>
+                    <div class="checkbox-group" id="shiftDays">
+                        <div class="checkbox-pill" data-day="0" onclick="toggleDay(this)">Lun</div>
+                        <div class="checkbox-pill" data-day="1" onclick="toggleDay(this)">Mar</div>
+                        <div class="checkbox-pill" data-day="2" onclick="toggleDay(this)">Mié</div>
+                        <div class="checkbox-pill" data-day="3" onclick="toggleDay(this)">Jue</div>
+                        <div class="checkbox-pill" data-day="4" onclick="toggleDay(this)">Vie</div>
+                        <div class="checkbox-pill" data-day="5" onclick="toggleDay(this)">Sáb</div>
+                        <div class="checkbox-pill" data-day="6" onclick="toggleDay(this)">Dom</div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Hora Entrada</label>
+                        <input type="time" id="shiftStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hora Salida</label>
+                        <input type="time" id="shiftEnd" required>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:8px;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('shiftModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Turno</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EMPLEADO -->
+    <div class="modal-overlay" id="employeeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="employeeModalTitle">Nuevo Empleado</div>
+                <button class="modal-close" onclick="closeModal('employeeModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="employeeForm" onsubmit="saveEmployee(event)">
+                <input type="hidden" id="employeeId">
+                <div class="form-group">
+                    <label class="form-label">Nombre completo</label>
+                    <input type="text" id="empName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Cargo</label>
+                        <select id="empRole">
+                            <option value="Cocinero">Cocinero</option>
+                            <option value="Mesero">Mesero</option>
+                            <option value="Cajero">Cajero</option>
+                            <option value="Supervisor">Supervisor</option>
+                            <option value="Limpieza">Limpieza</option>
+                            <option value="Gerente">Gerente</option>
+                            <option value="Ayudante de cocina">Ayudante de cocina</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" id="empPhone">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="text" id="empEmail">
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:8px;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('employeeModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Empleado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: RESTAURANTE -->
+    <div class="modal-overlay" id="restaurantModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="restaurantModalTitle">Nuevo Restaurante</div>
+                <button class="modal-close" onclick="closeModal('restaurantModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="restaurantForm" onsubmit="saveRestaurant(event)">
+                <input type="hidden" id="restaurantId">
+                <div class="form-group">
+                    <label class="form-label">Nombre del restaurante</label>
+                    <input type="text" id="restName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" id="restAddress">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Ciudad</label>
+                        <input type="text" id="restCity">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" id="restPhone">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Capacidad (comensales)</label>
+                    <input type="text" id="restCapacity">
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:8px;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('restaurantModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Restaurante</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ==================== DATOS ====================
+        const DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+        let currentWeekStart = getWeekStart(new Date());
+        let employees = JSON.parse(localStorage.getItem('wt_employees')) || [
+            { id: 1, name: 'Carlos Rodríguez', role: 'Cocinero', phone: '3001234567', email: 'carlos@email.com', active: true },
+            { id: 2, name: 'María López', role: 'Mesero', phone: '3009876543', email: 'maria@email.com', active: true },
+            { id: 3, name: 'Juan Pérez', role: 'Cajero', phone: '3012345678', email: 'juan@email.com', active: true },
+            { id: 4, name: 'Ana García', role: 'Supervisor', phone: '3023456789', email: 'ana@email.com', active: true },
+            { id: 5, name: 'Luis Martínez', role: 'Limpieza', phone: '3034567890', email: 'luis@email.com', active: true },
+            { id: 6, name: 'Pedro Sánchez', role: 'Ayudante de cocina', phone: '3045678901', email: 'pedro@email.com', active: true },
+        ];
+        let restaurants = JSON.parse(localStorage.getItem('wt_restaurants')) || [
+            { id: 1, name: 'Restaurante Centro', address: 'Calle 50 #45-67', city: 'Medellín', phone: '6041234567', capacity: 80 },
+            { id: 2, name: 'Restaurante Norte', address: 'Carrera 65 #34-12', city: 'Medellín', phone: '6049876543', capacity: 60 },
+            { id: 3, name: 'Restaurante Sur', address: 'Avenida El Poblado #12-34', city: 'Medellín', phone: '6044567890', capacity: 100 },
+        ];
+        let shifts = JSON.parse(localStorage.getItem('wt_shifts')) || [];
+        let pendingImport = [];
+
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+        function formatDate(d) {
+            return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+        function formatShortDate(d) {
+            return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+        }
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+        function getWeekKey(start) {
+            return start.toISOString().split('T')[0];
+        }
+
+        // ==================== PERSISTENCIA ====================
+        function saveData() {
+            localStorage.setItem('wt_employees', JSON.stringify(employees));
+            localStorage.setItem('wt_restaurants', JSON.stringify(restaurants));
+            localStorage.setItem('wt_shifts', JSON.stringify(shifts));
+        }
+
+        // ==================== UI ====================
+        function switchTab(tab) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('panel-' + tab).classList.add('active');
+            if (tab === 'employees') renderEmployees();
+            if (tab === 'restaurants') renderRestaurants();
+        }
+        function showToast(msg, type='success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = type === 'error' ? 'var(--danger)' : 'var(--text)';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // ==================== PROGRAMACIÓN ====================
+        function changeWeek(dir) {
+            currentWeekStart.setDate(currentWeekStart.getDate() + (dir * 7));
+            renderSchedule();
+        }
+        function updateWeekLabel() {
+            const end = addDays(currentWeekStart, 6);
+            document.getElementById('weekLabel').textContent = 
+                `Semana del ${formatShortDate(currentWeekStart)} al ${formatShortDate(end)}, ${end.getFullYear()}`;
+        }
+        function populateFilters() {
+            const rSel = document.getElementById('filterRestaurant');
+            rSel.innerHTML = '<option value="">Todos los restaurantes</option>' +
+                restaurants.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            const eSel = document.getElementById('filterEmployee');
+            eSel.innerHTML = '<option value="">Todos los empleados</option>' +
+                employees.filter(e => e.active).map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+        }
+        function renderSchedule() {
+            updateWeekLabel();
+            populateFilters();
+            const weekKey = getWeekKey(currentWeekStart);
+            const filterRest = document.getElementById('filterRestaurant').value;
+            const filterEmp = document.getElementById('filterEmployee').value;
+            const search = document.getElementById('searchEmployee').value.toLowerCase();
+
+            let displayEmployees = employees.filter(e => e.active);
+            if (filterEmp) displayEmployees = displayEmployees.filter(e => e.id == filterEmp);
+            if (search) displayEmployees = displayEmployees.filter(e => e.name.toLowerCase().includes(search));
+
+            const weekShifts = shifts.filter(s => s.weekKey === weekKey);
+            let html = '<div class="schedule-grid">';
+            html += '<div class="grid-header">Empleado</div>';
+            for (let i = 0; i < 7; i++) {
+                const d = addDays(currentWeekStart, i);
+                html += `<div class="grid-header">${DAYS[i]}<br><small style="font-weight:400">${formatShortDate(d)}</small></div>`;
+            }
+
+            displayEmployees.forEach(emp => {
+                html += `<div class="employee-cell"><div class="employee-name">${emp.name}</div><div class="employee-role">${emp.role}</div></div>`;
+                for (let day = 0; day < 7; day++) {
+                    const dayShifts = weekShifts.filter(s => s.employeeId === emp.id && s.day === day);
+                    if (filterRest) {
+                        const filtered = dayShifts.filter(s => s.restaurantId == filterRest);
+                        html += renderShiftCell(emp.id, day, filtered);
+                    } else {
+                        html += renderShiftCell(emp.id, day, dayShifts);
+                    }
+                }
+            });
+            html += '</div>';
+            document.getElementById('scheduleContainer').innerHTML = html;
+            updateStats(weekShifts);
+        }
+        function renderShiftCell(empId, day, dayShifts) {
+            if (dayShifts.length === 0) {
+                return `<div class="shift-cell" onclick="openShiftModal(${empId}, ${day})"></div>`;
+            }
+            let content = '';
+            dayShifts.forEach(s => {
+                const rest = restaurants.find(r => r.id === s.restaurantId);
+                content += `<div class="shift-info">
+                    <div class="shift-restaurant">${rest ? rest.name : '?'}</div>
+                    <div class="shift-time">${s.start} - ${s.end}</div>
+                </div>`;
+            });
+            return `<div class="shift-cell has-shift" onclick="openShiftModal(${empId}, ${day})">
+                ${content}
+                <div class="shift-actions">
+                    <button class="icon-btn edit" onclick="event.stopPropagation();editShift(${dayShifts[0].id})"><i class="fas fa-pen"></i></button>
+                    <button class="icon-btn delete" onclick="event.stopPropagation();deleteShift(${dayShifts[0].id})"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`;
+        }
+        function updateStats(weekShifts) {
+            document.getElementById('statTotalShifts').textContent = weekShifts.length;
+            let totalHours = 0;
+            weekShifts.forEach(s => {
+                const [sh, sm] = s.start.split(':').map(Number);
+                const [eh, em] = s.end.split(':').map(Number);
+                totalHours += (eh * 60 + em - sh * 60 - sm) / 60;
+            });
+            document.getElementById('statTotalHours').textContent = totalHours.toFixed(1);
+            const activeEmps = new Set(weekShifts.map(s => s.employeeId)).size;
+            document.getElementById('statActiveEmployees').textContent = activeEmps;
+            const rests = new Set(weekShifts.map(s => s.restaurantId)).size;
+            document.getElementById('statRestaurantsUsed').textContent = rests;
+        }
+
+        // ==================== TURNOS CRUD ====================
+        function openShiftModal(empId, day) {
+            document.getElementById('shiftModalTitle').textContent = 'Nuevo Turno';
+            document.getElementById('shiftId').value = '';
+            document.getElementById('shiftForm').reset();
+            document.querySelectorAll('#shiftDays .checkbox-pill').forEach(p => p.classList.remove('selected'));
+
+            const eSel = document.getElementById('shiftEmployee');
+            eSel.innerHTML = employees.filter(e => e.active).map(e => 
+                `<option value="${e.id}" ${e.id === empId ? 'selected' : ''}>${e.name}</option>`
+            ).join('');
+            const rSel = document.getElementById('shiftRestaurant');
+            rSel.innerHTML = restaurants.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+
+            if (day !== undefined) {
+                document.querySelector(`#shiftDays .checkbox-pill[data-day="${day}"]`).classList.add('selected');
+            }
+            document.getElementById('shiftModal').classList.add('active');
+        }
+        function toggleDay(el) {
+            el.classList.toggle('selected');
+        }
+        function editShift(id) {
+            const s = shifts.find(x => x.id === id);
+            if (!s) return;
+            document.getElementById('shiftModalTitle').textContent = 'Editar Turno';
+            document.getElementById('shiftId').value = s.id;
+            document.getElementById('shiftEmployee').innerHTML = employees.filter(e => e.active).map(e => 
+                `<option value="${e.id}" ${e.id === s.employeeId ? 'selected' : ''}>${e.name}</option>`
+            ).join('');
+            document.getElementById('shiftRestaurant').innerHTML = restaurants.map(r => 
+                `<option value="${r.id}" ${r.id === s.restaurantId ? 'selected' : ''}>${r.name}</option>`
+            ).join('');
+            document.querySelectorAll('#shiftDays .checkbox-pill').forEach(p => {
+                p.classList.toggle('selected', parseInt(p.dataset.day) === s.day);
+            });
+            document.getElementById('shiftStart').value = s.start;
+            document.getElementById('shiftEnd').value = s.end;
+            document.getElementById('shiftModal').classList.add('active');
+        }
+        function deleteShift(id) {
+            if (!confirm('¿Eliminar este turno?')) return;
+            shifts = shifts.filter(s => s.id !== id);
+            saveData();
+            renderSchedule();
+            showToast('Turno eliminado');
+        }
+        function saveShift(e) {
+            e.preventDefault();
+            const id = document.getElementById('shiftId').value;
+            const empId = parseInt(document.getElementById('shiftEmployee').value);
+            const restId = parseInt(document.getElementById('shiftRestaurant').value);
+            const start = document.getElementById('shiftStart').value;
+            const end = document.getElementById('shiftEnd').value;
+            const selectedDays = [...document.querySelectorAll('#shiftDays .checkbox-pill.selected')].map(p => parseInt(p.dataset.day));
+            if (selectedDays.length === 0) { showToast('Selecciona al menos un día', 'error'); return; }
+
+            const weekKey = getWeekKey(currentWeekStart);
+            if (id) {
+                const idx = shifts.findIndex(s => s.id === parseInt(id));
+                if (idx >= 0) shifts[idx] = { ...shifts[idx], employeeId: empId, restaurantId: restId, day: selectedDays[0], start, end };
+            } else {
+                selectedDays.forEach(day => {
+                    shifts.push({
+                        id: Date.now() + Math.random(),
+                        weekKey,
+                        employeeId: empId,
+                        restaurantId: restId,
+                        day,
+                        start,
+                        end
+                    });
+                });
+            }
+            saveData();
+            closeModal('shiftModal');
+            renderSchedule();
+            showToast(id ? 'Turno actualizado' : 'Turno(s) creado(s)');
+        }
+        function replicateLastWeek() {
+            const lastWeek = new Date(currentWeekStart);
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            const lastKey = getWeekKey(lastWeek);
+            const currentKey = getWeekKey(currentWeekStart);
+            const lastShifts = shifts.filter(s => s.weekKey === lastKey);
+            if (lastShifts.length === 0) { showToast('No hay turnos en la semana anterior', 'error'); return; }
+            if (!confirm(`Replicar ${lastShifts.length} turnos de la semana anterior?`)) return;
+            lastShifts.forEach(s => {
+                shifts.push({
+                    id: Date.now() + Math.random(),
+                    weekKey: currentKey,
+                    employeeId: s.employeeId,
+                    restaurantId: s.restaurantId,
+                    day: s.day,
+                    start: s.start,
+                    end: s.end
+                });
+            });
+            saveData();
+            renderSchedule();
+            showToast(`${lastShifts.length} turnos replicados`);
+        }
+
+        // ==================== EMPLEADOS CRUD ====================
+        function renderEmployees() {
+            const tbody = document.getElementById('employeesTable');
+            tbody.innerHTML = employees.map(e => `
+                <tr>
+                    <td>#${e.id}</td>
+                    <td><strong>${e.name}</strong></td>
+                    <td><span class="badge badge-blue">${e.role}</span></td>
+                    <td>${e.phone || '-'}</td>
+                    <td>${e.email || '-'}</td>
+                    <td><span class="badge ${e.active ? 'badge-green' : 'badge-purple'}">${e.active ? 'Activo' : 'Inactivo'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="editEmployee(${e.id})"><i class="fas fa-pen"></i></button>
+                        <button class="btn btn-sm btn-outline" onclick="toggleEmployee(${e.id})" style="margin-left:4px">
+                            <i class="fas ${e.active ? 'fa-user-slash' : 'fa-user-check'}"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        function openEmployeeModal() {
+            document.getElementById('employeeModalTitle').textContent = 'Nuevo Empleado';
+            document.getElementById('employeeId').value = '';
+            document.getElementById('employeeForm').reset();
+            document.getElementById('employeeModal').classList.add('active');
+        }
+        function editEmployee(id) {
+            const e = employees.find(x => x.id === id);
+            if (!e) return;
+            document.getElementById('employeeModalTitle').textContent = 'Editar Empleado';
+            document.getElementById('employeeId').value = e.id;
+            document.getElementById('empName').value = e.name;
+            document.getElementById('empRole').value = e.role;
+            document.getElementById('empPhone').value = e.phone || '';
+            document.getElementById('empEmail').value = e.email || '';
+            document.getElementById('employeeModal').classList.add('active');
+        }
+        function saveEmployee(e) {
+            e.preventDefault();
+            const id = document.getElementById('employeeId').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('empName').value,
+                role: document.getElementById('empRole').value,
+                phone: document.getElementById('empPhone').value,
+                email: document.getElementById('empEmail').value,
+                active: true
+            };
+            if (id) {
+                const idx = employees.findIndex(x => x.id === parseInt(id));
+                if (idx >= 0) employees[idx] = { ...employees[idx], ...data };
+            } else {
+                employees.push(data);
+            }
+            saveData();
+            closeModal('employeeModal');
+            renderEmployees();
+            showToast(id ? 'Empleado actualizado' : 'Empleado creado');
+        }
+        function toggleEmployee(id) {
+            const e = employees.find(x => x.id === id);
+            if (e) { e.active = !e.active; saveData(); renderEmployees(); showToast(e.active ? 'Empleado activado' : 'Empleado desactivado'); }
+        }
+
+        // ==================== RESTAURANTES CRUD ====================
+        function renderRestaurants() {
+            const tbody = document.getElementById('restaurantsTable');
+            tbody.innerHTML = restaurants.map(r => `
+                <tr>
+                    <td>#${r.id}</td>
+                    <td><strong>${r.name}</strong></td>
+                    <td>${r.address || '-'}</td>
+                    <td>${r.city || '-'}</td>
+                    <td>${r.phone || '-'}</td>
+                    <td>${r.capacity || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="editRestaurant(${r.id})"><i class="fas fa-pen"></i></button>
+                        <button class="btn btn-sm btn-outline" onclick="deleteRestaurant(${r.id})" style="margin-left:4px"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        function openRestaurantModal() {
+            document.getElementById('restaurantModalTitle').textContent = 'Nuevo Restaurante';
+            document.getElementById('restaurantId').value = '';
+            document.getElementById('restaurantForm').reset();
+            document.getElementById('restaurantModal').classList.add('active');
+        }
+        function editRestaurant(id) {
+            const r = restaurants.find(x => x.id === id);
+            if (!r) return;
+            document.getElementById('restaurantModalTitle').textContent = 'Editar Restaurante';
+            document.getElementById('restaurantId').value = r.id;
+            document.getElementById('restName').value = r.name;
+            document.getElementById('restAddress').value = r.address || '';
+            document.getElementById('restCity').value = r.city || '';
+            document.getElementById('restPhone').value = r.phone || '';
+            document.getElementById('restCapacity').value = r.capacity || '';
+            document.getElementById('restaurantModal').classList.add('active');
+        }
+        function saveRestaurant(e) {
+            e.preventDefault();
+            const id = document.getElementById('restaurantId').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('restName').value,
+                address: document.getElementById('restAddress').value,
+                city: document.getElementById('restCity').value,
+                phone: document.getElementById('restPhone').value,
+                capacity: document.getElementById('restCapacity').value
+            };
+            if (id) {
+                const idx = restaurants.findIndex(x => x.id === parseInt(id));
+                if (idx >= 0) restaurants[idx] = { ...restaurants[idx], ...data };
+            } else {
+                restaurants.push(data);
+            }
+            saveData();
+            closeModal('restaurantModal');
+            renderRestaurants();
+            showToast(id ? 'Restaurante actualizado' : 'Restaurante creado');
+        }
+        function deleteRestaurant(id) {
+            if (!confirm('¿Eliminar este restaurante?')) return;
+            restaurants = restaurants.filter(r => r.id !== id);
+            saveData();
+            renderRestaurants();
+            showToast('Restaurante eliminado');
+        }
+
+        // ==================== IMPORTAR EXCEL ====================
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            parseExcel(file);
+        }
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) parseExcel(file);
+        });
+        function parseExcel(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                processImportData(jsonData);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        function processImportData(rows) {
+            if (rows.length < 2) { showToast('El archivo está vacío', 'error'); return; }
+            const headers = rows[0].map(h => String(h).toLowerCase().trim());
+            const idxEmp = headers.findIndex(h => h.includes('empleado') || h.includes('nombre'));
+            const idxRest = headers.findIndex(h => h.includes('restaurante') || h.includes('sede'));
+            const idxDay = headers.findIndex(h => h.includes('día') || h.includes('dia') || h.includes('day'));
+            const idxStart = headers.findIndex(h => h.includes('entrada') || h.includes('inicio') || h.includes('start'));
+            const idxEnd = headers.findIndex(h => h.includes('salida') || h.includes('fin') || h.includes('end'));
+
+            if (idxEmp < 0 || idxRest < 0 || idxDay < 0 || idxStart < 0 || idxEnd < 0) {
+                showToast('Formato de Excel no reconocido. Revisa los encabezados.', 'error');
+                return;
+            }
+
+            pendingImport = [];
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row[idxEmp]) continue;
+                const empName = String(row[idxEmp]).trim();
+                const restName = String(row[idxRest] || '').trim();
+                const dayStr = String(row[idxDay] || '').trim();
+                const start = String(row[idxStart] || '').trim();
+                const end = String(row[idxEnd] || '').trim();
+
+                const emp = employees.find(e => e.name.toLowerCase() === empName.toLowerCase());
+                const rest = restaurants.find(r => r.name.toLowerCase() === restName.toLowerCase());
+                const dayIdx = DAYS.findIndex(d => d.toLowerCase() === dayStr.toLowerCase());
+
+                pendingImport.push({
+                    empName, restName, dayStr, start, end,
+                    empId: emp ? emp.id : null,
+                    restId: rest ? rest.id : null,
+                    day: dayIdx >= 0 ? dayIdx : null,
+                    valid: emp && rest && dayIdx >= 0 && start && end
+                });
+            }
+            renderPreview();
+        }
+        function renderPreview() {
+            const tbody = document.getElementById('previewTable');
+            tbody.innerHTML = pendingImport.map((item, i) => `
+                <tr style="${!item.valid ? 'background:#fef2f2' : ''}">
+                    <td>${item.empName} ${!item.empId ? '<span style="color:var(--danger);font-size:0.75rem">(No encontrado)</span>' : ''}</td>
+                    <td>${item.restName} ${!item.restId ? '<span style="color:var(--danger);font-size:0.75rem">(No encontrado)</span>' : ''}</td>
+                    <td>${item.dayStr} ${item.day === null ? '<span style="color:var(--danger);font-size:0.75rem">(Inválido)</span>' : ''}</td>
+                    <td>${item.start}</td>
+                    <td>${item.end}</td>
+                    <td>${item.valid ? '<span class="badge badge-green">Válido</span>' : '<span class="badge" style="background:#fee2e2;color:#991b1b">Error</span>'}</td>
+                </tr>
+            `).join('');
+            document.getElementById('importPreview').style.display = 'block';
+        }
+        function cancelImport() {
+            pendingImport = [];
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('excelInput').value = '';
+        }
+        function confirmImport() {
+            const valid = pendingImport.filter(i => i.valid);
+            if (valid.length === 0) { showToast('No hay registros válidos para importar', 'error'); return; }
+            const weekKey = getWeekKey(currentWeekStart);
+            valid.forEach(item => {
+                shifts.push({
+                    id: Date.now() + Math.random(),
+                    weekKey,
+                    employeeId: item.empId,
+                    restaurantId: item.restId,
+                    day: item.day,
+                    start: item.start,
+                    end: item.end
+                });
+            });
+            saveData();
+            cancelImport();
+            switchTab('schedule');
+            renderSchedule();
+            showToast(`${valid.length} turnos importados correctamente`);
+        }
+
+        // ==================== INICIALIZACIÓN ====================
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        renderSchedule();
+    </script>
+</body>
+</html>
