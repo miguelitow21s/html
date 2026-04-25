@@ -1741,36 +1741,25 @@ const app = {
 
     async loadRoleModule(role) {
         const route = ROLE_ROUTES[role] || '';
-        window.console.log('[loadRoleModule] role:', role, 'route:', route, '_loadedModuleRole:', this._loadedModuleRole);
-        if (!route || this._loadedModuleRole === role) {
-            window.console.log('[loadRoleModule] early return — route empty or already loaded');
-            return;
-        }
+        if (!route || this._loadedModuleRole === role) return;
         try {
             if (route.startsWith('employee')) {
                 const { employeeMethods } = await import('./modules/employee.js');
                 Object.assign(this, employeeMethods);
-                window.console.log('[loadRoleModule] employee module assigned, keys:', Object.keys(employeeMethods).length);
             } else if (route.startsWith('supervisor')) {
-                window.console.log('[loadRoleModule] starting supervisor import...');
-                const mod = await import('./modules/supervisor.js');
-                window.console.log('[loadRoleModule] supervisor import done, exports:', Object.keys(mod));
-                const { supervisorMethods } = mod;
-                window.console.log('[loadRoleModule] supervisorMethods type:', typeof supervisorMethods, 'keys:', supervisorMethods ? Object.keys(supervisorMethods).length : 'N/A');
+                const { supervisorMethods } = await import('./modules/supervisor.js');
                 Object.assign(this, supervisorMethods);
-                window.console.log('[loadRoleModule] loadSupervisorDashboard after assign:', typeof this.loadSupervisorDashboard);
             } else if (route.startsWith('admin')) {
-                const [{ adminMethods }, { adminModalMethods }] = await Promise.all([
+                const [{ adminMethods }, { adminModalMethods }, { supervisorMethods }] = await Promise.all([
                     import('./modules/admin.js'),
-                    import('./modules/adminModals.js')
+                    import('./modules/adminModals.js'),
+                    import('./modules/supervisor.js')
                 ]);
-                Object.assign(this, adminMethods, adminModalMethods);
-                window.console.log('[loadRoleModule] admin modules assigned');
+                Object.assign(this, supervisorMethods, adminMethods, adminModalMethods);
             }
             this._loadedModuleRole = role;
-            window.console.log('[loadRoleModule] _loadedModuleRole set to:', role);
         } catch (error) {
-            window.console.error('[loadRoleModule] FAILED:', error);
+            console.error('No fue posible cargar el módulo del rol.', error);
             throw error;
         }
     },
