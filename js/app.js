@@ -1740,9 +1740,9 @@ const app = {
     },
 
     async loadRoleModule(role) {
-        if (this._roleModuleLoaded) return;
+        const route = ROLE_ROUTES[role] || '';
+        if (!route || this._loadedModuleRole === role) return;
         try {
-            const route = ROLE_ROUTES[role] || '';
             if (route.startsWith('employee')) {
                 const { employeeMethods } = await import('./modules/employee.js');
                 Object.assign(this, employeeMethods);
@@ -1756,7 +1756,7 @@ const app = {
                 ]);
                 Object.assign(this, adminMethods, adminModalMethods);
             }
-            this._roleModuleLoaded = true;
+            this._loadedModuleRole = role;
         } catch (error) {
             console.error('No fue posible cargar el módulo del rol.', error);
             throw error;
@@ -2446,6 +2446,7 @@ const app = {
         this.data.currentShift = null;
         this.data.currentScheduledShift = null;
         this.data.lastGeneratedReport = null;
+        this._loadedModuleRole = null;
         this.cache.timestamps = {};
         this.cache.pending = {};
         this.cache.supervisorRestaurantStaff = {};
@@ -2533,6 +2534,8 @@ const app = {
         if (!this.currentUser) {
             return;
         }
+
+        await this.loadRoleModule(this.currentUser.role);
 
         try {
             switch (page) {
