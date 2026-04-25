@@ -1741,24 +1741,36 @@ const app = {
 
     async loadRoleModule(role) {
         const route = ROLE_ROUTES[role] || '';
-        if (!route || this._loadedModuleRole === role) return;
+        window.console.log('[loadRoleModule] role:', role, 'route:', route, '_loadedModuleRole:', this._loadedModuleRole);
+        if (!route || this._loadedModuleRole === role) {
+            window.console.log('[loadRoleModule] early return — route empty or already loaded');
+            return;
+        }
         try {
             if (route.startsWith('employee')) {
                 const { employeeMethods } = await import('./modules/employee.js');
                 Object.assign(this, employeeMethods);
+                window.console.log('[loadRoleModule] employee module assigned, keys:', Object.keys(employeeMethods).length);
             } else if (route.startsWith('supervisor')) {
-                const { supervisorMethods } = await import('./modules/supervisor.js');
+                window.console.log('[loadRoleModule] starting supervisor import...');
+                const mod = await import('./modules/supervisor.js');
+                window.console.log('[loadRoleModule] supervisor import done, exports:', Object.keys(mod));
+                const { supervisorMethods } = mod;
+                window.console.log('[loadRoleModule] supervisorMethods type:', typeof supervisorMethods, 'keys:', supervisorMethods ? Object.keys(supervisorMethods).length : 'N/A');
                 Object.assign(this, supervisorMethods);
+                window.console.log('[loadRoleModule] loadSupervisorDashboard after assign:', typeof this.loadSupervisorDashboard);
             } else if (route.startsWith('admin')) {
                 const [{ adminMethods }, { adminModalMethods }] = await Promise.all([
                     import('./modules/admin.js'),
                     import('./modules/adminModals.js')
                 ]);
                 Object.assign(this, adminMethods, adminModalMethods);
+                window.console.log('[loadRoleModule] admin modules assigned');
             }
             this._loadedModuleRole = role;
+            window.console.log('[loadRoleModule] _loadedModuleRole set to:', role);
         } catch (error) {
-            console.error('No fue posible cargar el módulo del rol.', error);
+            window.console.error('[loadRoleModule] FAILED:', error);
             throw error;
         }
     },
