@@ -26,6 +26,8 @@ import {
     getRestaurantDisplayName,
     getRestaurantRecordId,
     getScheduledHours,
+    getShiftEmployeeName,
+    getShiftRestaurantName,
     getShiftStatusLabel,
     getWorkedHours,
     initials,
@@ -2157,6 +2159,252 @@ export const supervisorMethods = {
         }
 
         return { created, failed, errors };
+    },
+
+    getKnownSupervisorEmployeeRecord(employeeId) {
+        const normalizedEmployeeId = String(employeeId || '').trim();
+        if (!normalizedEmployeeId) {
+            return null;
+        }
+        return (
+            asArray(this.data.supervisor.employees).find(
+                (employee) => String(employee?.id || '').trim() === normalizedEmployeeId
+            ) || null
+        );
+    },
+
+    getKnownSupervisorRestaurantRecord(restaurantId) {
+        const normalizedRestaurantId = String(restaurantId || '').trim();
+        if (!normalizedRestaurantId) {
+            return null;
+        }
+        return (
+            asArray(this.data.supervisor.restaurants).find(
+                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
+            ) || null
+        );
+    },
+
+    getKnownAdminRestaurantRecord(restaurantId) {
+        const normalizedRestaurantId = String(restaurantId || '').trim();
+        if (!normalizedRestaurantId) {
+            return null;
+        }
+        return (
+            asArray(this.data.admin.restaurants).find(
+                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
+            ) || null
+        );
+    },
+
+    getKnownEmployeeRestaurantRecord(restaurantId) {
+        const normalizedRestaurantId = String(restaurantId || '').trim();
+        if (!normalizedRestaurantId) {
+            return null;
+        }
+        return this.resolveEmployeeRestaurantRecord(normalizedRestaurantId, this.data.employee.dashboard || {});
+    },
+
+    getKnownRestaurantRecord(restaurantId) {
+        return (
+            this.getKnownEmployeeRestaurantRecord(restaurantId) ||
+            this.getKnownSupervisorRestaurantRecord(restaurantId) ||
+            this.getKnownAdminRestaurantRecord(restaurantId) ||
+            null
+        );
+    },
+
+    getKnownEmployeeRecord(employeeId) {
+        const normalizedEmployeeId = String(employeeId || '').trim();
+        if (!normalizedEmployeeId) {
+            return null;
+        }
+
+        if (String(this.currentUser?.id || '').trim() === normalizedEmployeeId) {
+            return this.currentUser;
+        }
+
+        const supervisorEmployee = this.getKnownSupervisorEmployeeRecord(normalizedEmployeeId);
+        if (supervisorEmployee) {
+            return supervisorEmployee;
+        }
+
+        const dashboardEmployee = asArray(this.data.employee.dashboard?.scheduled_shifts)
+            .map((item) => item?.employee || item?.user || item?.staff || item?.worker || null)
+            .find((employee) => String(employee?.id || '').trim() === normalizedEmployeeId);
+        if (dashboardEmployee) {
+            return dashboardEmployee;
+        }
+
+        const activeShiftEmployee = this.data.currentShift?.employee || this.data.currentShift?.user || null;
+        if (String(activeShiftEmployee?.id || '').trim() === normalizedEmployeeId) {
+            return activeShiftEmployee;
+        }
+
+        const scheduledShiftEmployee =
+            this.data.currentScheduledShift?.employee || this.data.currentScheduledShift?.user || null;
+        if (String(scheduledShiftEmployee?.id || '').trim() === normalizedEmployeeId) {
+            return scheduledShiftEmployee;
+        }
+
+        return null;
+    },
+
+    getKnownEmployeeRecordByAlias(aliasCandidates = []) {
+        const normalizedAliases = new Set(
+            asArray(aliasCandidates)
+                .map((value) =>
+                    String(value || '')
+                        .trim()
+                        .toLowerCase()
+                )
+                .filter(Boolean)
+        );
+
+        if (normalizedAliases.size === 0) {
+            return null;
+        }
+
+        const matchesAlias = (record) => {
+            if (!record || typeof record !== 'object') {
+                return false;
+            }
+            const candidateValues = [
+                record.id,
+                record.username,
+                record.user_name,
+                record.employee_username,
+                record.employee_code,
+                record.code,
+                record.email,
+                record.employee_email,
+                record.user?.id,
+                record.user?.username,
+                record.user?.user_name,
+                record.user?.email,
+                record.auth_user?.id,
+                record.auth_user?.email,
+                record.raw?.id,
+                record.raw?.username,
+                record.raw?.email,
+            ];
+            return candidateValues.some((value) =>
+                normalizedAliases.has(
+                    String(value || '')
+                        .trim()
+                        .toLowerCase()
+                )
+            );
+        };
+
+        if (matchesAlias(this.currentUser)) {
+            return this.currentUser;
+        }
+
+        const supervisorMatch = asArray(this.data.supervisor.employees).find(matchesAlias);
+        if (supervisorMatch) {
+            return supervisorMatch;
+        }
+
+        const dashboardMatch = asArray(this.data.employee.dashboard?.scheduled_shifts)
+            .map((item) => item?.employee || item?.user || item?.staff || item?.worker || null)
+            .find(matchesAlias);
+        if (dashboardMatch) {
+            return dashboardMatch;
+        }
+
+        const activeShiftEmployee = this.data.currentShift?.employee || this.data.currentShift?.user || null;
+        if (matchesAlias(activeShiftEmployee)) {
+            return activeShiftEmployee;
+        }
+
+        const scheduledShiftEmployee =
+            this.data.currentScheduledShift?.employee || this.data.currentScheduledShift?.user || null;
+        if (matchesAlias(scheduledShiftEmployee)) {
+            return scheduledShiftEmployee;
+        }
+
+        return null;
+    },
+
+    getResolvedShiftEmployeeName(shift, fallback = 'Empleado') {
+        const employeeId =
+            shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '';
+        const employeeAliasCandidates = [
+            shift?.employee,
+            shift?.employee_username,
+            shift?.employee_email,
+            shift?.employee_code,
+            shift?.username,
+            shift?.user_name,
+            shift?.email,
+            shift?.employee?.username,
+            shift?.employee?.email,
+            shift?.employee?.id,
+            shift?.user?.username,
+            shift?.user?.email,
+            shift?.user?.id,
+        ];
+        const employeeRecord =
+            this.getKnownEmployeeRecord(employeeId) ||
+            this.getKnownEmployeeRecordByAlias(employeeAliasCandidates) ||
+            null;
+        return (
+            getShiftEmployeeName(shift, {
+                employeeRecord,
+            }) || fallback
+        );
+    },
+
+    getResolvedShiftRestaurantName(shift, fallback = 'Restaurante') {
+        const restaurantId =
+            shift?.restaurant_id ||
+            shift?.restaurant?.restaurant_id ||
+            shift?.restaurant?.id ||
+            shift?.location_id ||
+            shift?.location?.id ||
+            shift?.site_id ||
+            shift?.site?.id ||
+            '';
+        return (
+            getShiftRestaurantName(shift, {
+                restaurantRecord: this.getKnownRestaurantRecord(restaurantId),
+            }) || fallback
+        );
+    },
+
+    getSupervisorRestaurantShifts() {
+        const restaurant = this.getSupervisorSelectedRestaurant();
+        const restaurantId = restaurant ? String(getRestaurantRecordId(restaurant) || '') : '';
+        if (!restaurantId) {
+            return [];
+        }
+        return asArray(this.data.supervisor.shifts)
+            .filter((shift) => {
+                const shiftRestaurantId = String(
+                    shift?.restaurant_id ||
+                        shift?.restaurant?.restaurant_id ||
+                        shift?.restaurant?.id ||
+                        shift?.location_id ||
+                        shift?.location?.id ||
+                        shift?.site_id ||
+                        shift?.site?.id ||
+                        ''
+                );
+                return shiftRestaurantId === restaurantId;
+            })
+            .sort((left, right) => {
+                const leftTime = new Date(
+                    left?.scheduled_start || left?.start_time || left?.created_at || ''
+                ).getTime();
+                const rightTime = new Date(
+                    right?.scheduled_start || right?.start_time || right?.created_at || ''
+                ).getTime();
+                return (
+                    (Number.isFinite(leftTime) ? leftTime : Number.MAX_SAFE_INTEGER) -
+                    (Number.isFinite(rightTime) ? rightTime : Number.MAX_SAFE_INTEGER)
+                );
+            });
     },
 
     getPhoneBindingActionState(record) {
