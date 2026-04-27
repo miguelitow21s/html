@@ -31,6 +31,7 @@ import {
     initials,
     isShiftEndedEarly,
     normalizeAreaToken,
+    normalizeLinkedPhoneValue,
     normalizeRestaurantId,
     pickMeaningfulRestaurantName,
     sumHours,
@@ -2156,6 +2157,39 @@ export const supervisorMethods = {
         }
 
         return { created, failed, errors };
+    },
+
+    getPhoneBindingActionState(record) {
+        const userId = String(record?.id || record?.user_id || record?.raw?.id || record?.raw?.user_id || '').trim();
+        const phoneNumber = normalizeLinkedPhoneValue(
+            record?.phone_e164 ||
+                record?.phone_number ||
+                record?.raw?.phone_e164 ||
+                record?.raw?.phone_number ||
+                record?.raw?.phone
+        );
+        return {
+            userId,
+            phoneNumber,
+            enabled: Boolean(userId && phoneNumber),
+            visible: Boolean(userId && phoneNumber),
+        };
+    },
+
+    resetSupervisorSupervisionState() {
+        this.services.images.clearMap(this.supervisionPhotos);
+        this.supervisionPhotos = {};
+        this.supervisionPhotoFiles = {};
+        this.selectedSupervisorArea = '';
+        this.supervisionPhotoCatalog = [];
+        this.clearSupervisionRegisterRetryState();
+        if (this.currentPhotoType === 'supervision') {
+            this.currentPhotoArea = null;
+            this.currentPhotoContext = null;
+        }
+        this.populateSupervisorAreaOptions();
+        this.renderSupervisorPhotoGrid();
+        this.hideSupervisionSupportCard();
     },
 
     getShiftReferenceDate(shift) {
