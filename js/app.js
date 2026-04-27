@@ -2233,7 +2233,8 @@ const app = {
 
             if (devicePolicyConflict) {
                 throw new Error(
-                    'Esta cuenta ya está vinculada a otro dispositivo. Debes revocar el dispositivo actual antes de registrar uno nuevo.'
+                    'Esta cuenta ya está vinculada a otro dispositivo. Debes revocar el dispositivo actual antes de registrar uno nuevo.',
+                    { cause: error }
                 );
             }
 
@@ -5758,9 +5759,9 @@ const app = {
             fallbackToAllAvailable: hasActiveShift,
         });
 
-        let shiftTitle = 'Turno de Hoy';
-        let shiftHelper = 'Aquí verás el estado real de tu turno y cuándo puedes iniciarlo o continuarlo.';
-        let shiftStatus = 'Programado';
+        let shiftTitle;
+        let shiftHelper;
+        let shiftStatus;
         let restaurantName = 'No tienes turnos pendientes';
         const restaurantAddress = this.getEmployeeCurrentLocationText();
         let scheduleText = 'No hay horario pendiente';
