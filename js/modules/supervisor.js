@@ -32,12 +32,15 @@ import {
     isShiftEndedEarly,
     normalizeAreaToken,
     normalizeRestaurantId,
+    pickMeaningfulRestaurantName,
     sumHours,
     sumWorkedHours,
     summarizeShiftStatuses,
     toDateTimeLocalInput,
     toIsoDate,
     toLocalDateKey,
+    getTodayStart,
+    getTodayEnd,
 } from '../utils.js';
 
 const SUPERVISOR_SHIFT_WEEK_TEMPLATE_STORAGE_KEY = 'worktrace_supervisor_shift_week_template_v1';
@@ -2153,6 +2156,264 @@ export const supervisorMethods = {
         }
 
         return { created, failed, errors };
+    },
+
+    getShiftReferenceDate(shift) {
+        const value = shift?.scheduled_start || shift?.start_time || shift?.scheduled_end || shift?.end_time || null;
+        if (!value) {
+            return null;
+        }
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    },
+
+    isShiftFromToday(shift, baseDate = new Date()) {
+        const shiftDate = this.getShiftReferenceDate(shift);
+        return Boolean(shiftDate && shiftDate.toDateString() === baseDate.toDateString());
+    },
+
+    getTodayShifts(shifts = []) {
+        const now = new Date();
+        return asArray(shifts).filter((shift) => this.isShiftFromToday(shift, now));
+    },
+
+    async getSupervisorRestaurants(force = false) {
+        if (
+            !force &&
+            this.data.supervisor.restaurants.length > 0 &&
+            this.isCacheFresh('supervisorRestaurants', CACHE_TTLS.supervisorRestaurants)
+        ) {
+            return this.data.supervisor.restaurants;
+        }
+
+        return this.runPending(
+            `supervisorRestaurants:${this.currentUser?.role || 'unknown'}:${force ? 'force' : 'default'}`,
+            async () => {
+                let restaurants = [];
+                const mapRestaurantList = (result) =>
+                    asArray(result)
+                        .map((item) => ({
+                            ...item,
+                            id: getRestaurantRecordId(item),
+                            restaurant_id: getRestaurantRecordId(item),
+                            is_active: item.is_active !== false,
+                            name:
+                                pickMeaningfulRestaurantName(
+                                    [
+                                        item.restaurant_name,
+                                        item.restaurant_visible_name,
+                                        item.restaurant_label,
+                                        item.restaurant?.restaurant_name,
+                                        item.restaurant?.restaurant_visible_name,
+                                        item.restaurant?.restaurant_label,
+                                        item.name,
+                                        item.display_name,
+                                        item.label,
+                                        item.title,
+                                        item.restaurant?.name,
+                                        item.restaurant?.display_name,
+                                        item.restaurant?.label,
+                                        item.restaurant?.title,
+                                    ],
+                                    item
+                                ) || '',
+                            address_line: item.address_line || item.restaurant?.address_line,
+                            city: item.city || item.restaurant?.city,
+                            state: item.state || item.restaurant?.state,
+                            country: item.country || item.restaurant?.country,
+                            cleaning_areas: item.cleaning_areas || item.restaurant?.cleaning_areas,
+                            effective_cleaning_areas:
+                                item.effective_cleaning_areas ||
+                                item.restaurant?.effective_cleaning_areas ||
+                                item.cleaning_areas ||
+                                item.restaurant?.cleaning_areas,
+                            raw: item,
+                        }))
+                        .filter((item) => item.is_active !== false && getRestaurantRecordId(item) != null);
+
+                if (this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser') {
+                    const result = await apiClient.adminRestaurantsManage('list', {
+                        is_active: true,
+                        limit: 200,
+                    });
+                    restaurants = mapRestaurantList(result);
+                } else {
+                    try {
+                        const result = await apiClient.adminRestaurantsManage('list', {
+                            is_active: true,
+                            limit: 200,
+                        });
+                        restaurants = mapRestaurantList(result);
+                    } catch (error) {
+                        console.warn(
+                            'No fue posible cargar todos los restaurantes para supervisora. Se usará el listado disponible como respaldo.',
+                            error
+                        );
+                        const assignments = await apiClient.restaurantStaffManage('list_my_restaurants');
+                        const items = asArray(assignments);
+                        restaurants = items
+                            .map((item) => ({
+                                id: getRestaurantRecordId(item),
+                                restaurant_id: getRestaurantRecordId(item),
+                                name:
+                                    pickMeaningfulRestaurantName(
+                                        [
+                                            item.restaurant_name,
+                                            item.restaurant_visible_name,
+                                            item.restaurant_label,
+                                            item.restaurant?.restaurant_name,
+                                            item.restaurant?.restaurant_visible_name,
+                                            item.restaurant?.restaurant_label,
+                                            item.name,
+                                            item.display_name,
+                                            item.label,
+                                            item.title,
+                                            item.restaurant?.name,
+                                            item.restaurant?.display_name,
+                                            item.restaurant?.label,
+                                            item.restaurant?.title,
+                                        ],
+                                        item
+                                    ) || '',
+                                address_line: item.restaurant?.address_line || item.address_line,
+                                city: item.restaurant?.city || item.city,
+                                state: item.restaurant?.state || item.state,
+                                country: item.restaurant?.country || item.country,
+                                is_active: item.is_active !== false && item.restaurant?.is_active !== false,
+                                cleaning_areas: item.restaurant?.cleaning_areas || item.cleaning_areas,
+                                effective_cleaning_areas:
+                                    item.restaurant?.effective_cleaning_areas ||
+                                    item.effective_cleaning_areas ||
+                                    item.restaurant?.cleaning_areas ||
+                                    item.cleaning_areas,
+                                assigned_at: item.assigned_at,
+                                raw: item,
+                            }))
+                            .filter((item) => item.is_active !== false && getRestaurantRecordId(item) != null);
+                    }
+                }
+
+                this.data.supervisor.restaurants = restaurants;
+                this.touchCache('supervisorRestaurants');
+                return restaurants;
+            }
+        );
+    },
+
+    async getSupervisorShiftList(options = {}) {
+        const todayStart = getTodayStart();
+        const todayEnd = getTodayEnd();
+        const defaultFrom = toIsoDate(new Date(todayStart.getTime() - 12 * 60 * 60 * 1000));
+        const defaultTo = toIsoDate(new Date(todayEnd.getTime() + 12 * 60 * 60 * 1000));
+
+        const {
+            forceRestaurants = false,
+            restaurantId,
+            from = defaultFrom,
+            to = defaultTo,
+            status,
+            employeeId,
+            limit = 100,
+        } = options;
+
+        const usesDefaultQuery =
+            !restaurantId && !status && !employeeId && from === defaultFrom && to === defaultTo && limit === 100;
+
+        if (
+            !forceRestaurants &&
+            usesDefaultQuery &&
+            this.data.supervisor.shifts.length > 0 &&
+            this.isCacheFresh('supervisorShifts', CACHE_TTLS.supervisorShifts)
+        ) {
+            return this.data.supervisor.shifts;
+        }
+
+        if (forceRestaurants || this.data.supervisor.restaurants.length === 0) {
+            this.data.supervisor.restaurants = await this.getSupervisorRestaurants(forceRestaurants);
+        }
+
+        const payload = { from, to, limit };
+
+        if (status) {
+            payload.status = status;
+        }
+
+        if (employeeId) {
+            payload.employee_id = employeeId;
+        }
+
+        const requestKey = `supervisorShifts:${JSON.stringify({ restaurantId: restaurantId || '', from, to, status: status || '', employeeId: employeeId || '', limit, role: this.currentUser?.role || '' })}`;
+        const fetchShiftList = async () => {
+            const isAdminScope = this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser';
+            if (restaurantId || isAdminScope) {
+                if (restaurantId) {
+                    payload.restaurant_id = Number.isFinite(Number(restaurantId)) ? Number(restaurantId) : restaurantId;
+                }
+
+                const result = await apiClient.scheduledShiftsManage('list', payload);
+                const shifts = asArray(result).filter((shift) => {
+                    const shiftStatus = String(shift?.status || shift?.state || '')
+                        .trim()
+                        .toLowerCase();
+                    return !['cancelado', 'cancelled', 'anulado', 'deleted'].includes(shiftStatus);
+                });
+
+                const normalizedShifts = usesDefaultQuery ? this.getTodayShifts(shifts) : shifts;
+
+                if (usesDefaultQuery) {
+                    this.data.supervisor.shifts = normalizedShifts;
+                    this.touchCache('supervisorShifts');
+                }
+
+                return normalizedShifts;
+            }
+
+            const restaurants = this.data.supervisor.restaurants;
+            if (restaurants.length === 0) {
+                return [];
+            }
+
+            const grouped = await Promise.all(
+                restaurants.map(async (restaurant) => {
+                    try {
+                        const result = await apiClient.scheduledShiftsManage('list', {
+                            ...payload,
+                            restaurant_id: getRestaurantRecordId(restaurant),
+                        });
+                        return asArray(result);
+                    } catch (error) {
+                        console.warn(`No fue posible listar turnos para ${restaurant.name || restaurant.id}.`, error);
+                        return [];
+                    }
+                })
+            );
+
+            const dedupe = new Map();
+            grouped.flat().forEach((shift) => {
+                const key =
+                    shift.id ||
+                    shift.scheduled_shift_id ||
+                    `${shift.employee_id}-${shift.scheduled_start}-${shift.restaurant_id}`;
+                dedupe.set(key, shift);
+            });
+            const shifts = Array.from(dedupe.values()).filter((shift) => {
+                const shiftStatus = String(shift?.status || shift?.state || '')
+                    .trim()
+                    .toLowerCase();
+                return !['cancelado', 'cancelled', 'anulado', 'deleted'].includes(shiftStatus);
+            });
+
+            const normalizedShifts = usesDefaultQuery ? this.getTodayShifts(shifts) : shifts;
+
+            if (usesDefaultQuery) {
+                this.data.supervisor.shifts = normalizedShifts;
+                this.touchCache('supervisorShifts');
+            }
+
+            return normalizedShifts;
+        };
+
+        return this.runPending(requestKey, fetchShiftList);
     },
 
     async loadSupervisorDashboard() {
