@@ -3,43 +3,102 @@ import { createClient } from '@supabase/supabase-js';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { apiClient, buildIdempotencyKey } from './api.js';
 import {
-    STORAGE_KEYS, ROLE_ROUTES, ROLE_LABELS, REPORT_COLUMNS,
-    AREA_META, AREA_SUBAREAS, AREA_GROUP_ALIASES,
-    DEFAULT_SYSTEM_SETTINGS, CACHE_TTLS, SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES,
-    createScopedConsole
+    STORAGE_KEYS,
+    ROLE_ROUTES,
+    ROLE_LABELS,
+    REPORT_COLUMNS,
+    AREA_META,
+    AREA_SUBAREAS,
+    AREA_GROUP_ALIASES,
+    DEFAULT_SYSTEM_SETTINGS,
+    CACHE_TTLS,
+    SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES,
+    createScopedConsole,
 } from './constants.js';
 import {
-    getMonthStart, getTodayStart, getTodayEnd, getDaysAgo,
-    toInputDate, toLocalDateKey, toIsoDate,
-    decodeJwtPart, decodeJwtHeader, decodeJwtPayload,
-    buildJwtFullDebugSummary, buildJwtDebugSummary,
-    toDateTimeLocalInput, formatDate, formatTime, formatDateTime,
-    formatShiftRange, formatHours, isHttpUrl, collectEvidenceUrls,
-    escapeHtml, normalizeAreaToken, extractCleaningAreas,
-    extractCleaningAreaSubareas, extractCleaningAreaGroups, uniqueCleaningAreas,
-    buildAreaMeta, formatEntityReference, getDisplayTextCandidate,
-    normalizeComparableText, pickMeaningfulDisplayValue,
-    getRestaurantAddressFallback, collectRestaurantAddressCandidates,
-    isLikelyAddressDisplayValue, isLikelyIdentifierDisplayValue,
-    pickMeaningfulRestaurantName, getEmployeeDisplayName, getRestaurantDisplayName,
-    isRestaurantReferenceLabel, getShiftEmployeeName, getShiftRestaurantName,
-    normalizeAreaGroupLabel, buildPhotoSlotKey, areaDomId,
-    getRestaurantRecordId, normalizeRestaurantId, deepMergeSettings,
-    initials, delay, isGenericNamedPlaceholder, getBadgeClass, asArray,
-    normalizeLinkedPhoneValue, getHoursFromRange, getScheduledHours, getWorkedHours,
-    getShiftStatusLabel, isShiftEndedEarly, sumHours, sumWorkedHours,
-    countEndedEarlyShifts, summarizeShiftStatuses
+    getMonthStart,
+    getTodayStart,
+    getTodayEnd,
+    getDaysAgo,
+    toInputDate,
+    toLocalDateKey,
+    toIsoDate,
+    decodeJwtPart,
+    decodeJwtHeader,
+    decodeJwtPayload,
+    buildJwtFullDebugSummary,
+    buildJwtDebugSummary,
+    toDateTimeLocalInput,
+    formatDate,
+    formatTime,
+    formatDateTime,
+    formatShiftRange,
+    formatHours,
+    isHttpUrl,
+    collectEvidenceUrls,
+    escapeHtml,
+    normalizeAreaToken,
+    extractCleaningAreas,
+    extractCleaningAreaSubareas,
+    extractCleaningAreaGroups,
+    uniqueCleaningAreas,
+    buildAreaMeta,
+    formatEntityReference,
+    getDisplayTextCandidate,
+    normalizeComparableText,
+    pickMeaningfulDisplayValue,
+    getRestaurantAddressFallback,
+    collectRestaurantAddressCandidates,
+    isLikelyAddressDisplayValue,
+    isLikelyIdentifierDisplayValue,
+    pickMeaningfulRestaurantName,
+    getEmployeeDisplayName,
+    getRestaurantDisplayName,
+    isRestaurantReferenceLabel,
+    getShiftEmployeeName,
+    getShiftRestaurantName,
+    normalizeAreaGroupLabel,
+    buildPhotoSlotKey,
+    areaDomId,
+    getRestaurantRecordId,
+    normalizeRestaurantId,
+    deepMergeSettings,
+    initials,
+    delay,
+    isGenericNamedPlaceholder,
+    getBadgeClass,
+    asArray,
+    normalizeLinkedPhoneValue,
+    getHoursFromRange,
+    getScheduledHours,
+    getWorkedHours,
+    getShiftStatusLabel,
+    isShiftEndedEarly,
+    sumHours,
+    sumWorkedHours,
+    countEndedEarlyShifts,
+    summarizeShiftStatuses,
 } from './utils.js';
 
 const console = createScopedConsole();
 
 if (typeof window !== 'undefined') {
-    window.__worktraceBulkAssignDebug = Array.isArray(window.__worktraceBulkAssignDebug) ? window.__worktraceBulkAssignDebug : [];
+    window.__worktraceBulkAssignDebug = Array.isArray(window.__worktraceBulkAssignDebug)
+        ? window.__worktraceBulkAssignDebug
+        : [];
     window.__worktraceReportDebug = Array.isArray(window.__worktraceReportDebug) ? window.__worktraceReportDebug : [];
-    window.__worktraceTaskCreateDebug = Array.isArray(window.__worktraceTaskCreateDebug) ? window.__worktraceTaskCreateDebug : [];
-    window.__worktraceTaskAuthDebug = Array.isArray(window.__worktraceTaskAuthDebug) ? window.__worktraceTaskAuthDebug : [];
-    window.__worktraceShiftAssignDebug = Array.isArray(window.__worktraceShiftAssignDebug) ? window.__worktraceShiftAssignDebug : [];
-    window.__worktraceSupervisionDebug = Array.isArray(window.__worktraceSupervisionDebug) ? window.__worktraceSupervisionDebug : [];
+    window.__worktraceTaskCreateDebug = Array.isArray(window.__worktraceTaskCreateDebug)
+        ? window.__worktraceTaskCreateDebug
+        : [];
+    window.__worktraceTaskAuthDebug = Array.isArray(window.__worktraceTaskAuthDebug)
+        ? window.__worktraceTaskAuthDebug
+        : [];
+    window.__worktraceShiftAssignDebug = Array.isArray(window.__worktraceShiftAssignDebug)
+        ? window.__worktraceShiftAssignDebug
+        : [];
+    window.__worktraceSupervisionDebug = Array.isArray(window.__worktraceSupervisionDebug)
+        ? window.__worktraceSupervisionDebug
+        : [];
 }
 
 const app = {
@@ -97,7 +156,7 @@ const app = {
         employeeId: '',
         date: '',
         restaurantId: '',
-        search: ''
+        search: '',
     },
     supervisorEmployeesStatusFilter: 'all',
     selectedSupervisorArea: '',
@@ -134,8 +193,8 @@ const app = {
             frameId: 0,
             signatures: Object.create(null),
             pageNodes: null,
-            legacyUiArtifactsRemoved: false
-        }
+            legacyUiArtifactsRemoved: false,
+        },
     },
     services: {
         images: {
@@ -147,7 +206,12 @@ const app = {
                 return URL.createObjectURL(file);
             },
             revokeObjectUrl(url) {
-                if (!url || typeof url !== 'string' || !url.startsWith('blob:') || typeof URL?.revokeObjectURL !== 'function') {
+                if (
+                    !url ||
+                    typeof url !== 'string' ||
+                    !url.startsWith('blob:') ||
+                    typeof URL?.revokeObjectURL !== 'function'
+                ) {
                     return;
                 }
 
@@ -193,34 +257,34 @@ const app = {
                     }
                     delete targetMap[key];
                 });
-            }
-        }
+            },
+        },
     },
     data: {
         employee: {
             dashboard: null,
             hoursHistory: null,
             openTasks: [],
-            lastCompletedShift: null
+            lastCompletedShift: null,
         },
         supervisor: {
             restaurants: [],
             employees: [],
             shifts: [],
             report: null,
-            assignableEmployees: []
+            assignableEmployees: [],
         },
         admin: {
             restaurants: [],
             metrics: null,
             supervisors: [],
             supervisions: [],
-            supervisionSupervisorOptions: []
+            supervisionSupervisorOptions: [],
         },
         systemSettings: deepMergeSettings(DEFAULT_SYSTEM_SETTINGS, {}),
         currentShift: null,
         currentScheduledShift: null,
-        lastGeneratedReport: null
+        lastGeneratedReport: null,
     },
     cache: {
         timestamps: {},
@@ -231,19 +295,19 @@ const app = {
         adminSupervisionsUnavailable: false,
         adminSupervisionsQuery: '',
         adminSupervisionsRateLimitedUntil: 0,
-        adminSupervisorsQuery: ''
+        adminSupervisorsQuery: '',
     },
     backend: {
         configured: false,
         connected: false,
         statusText: 'Pendiente',
         health: null,
-        lastError: null
+        lastError: null,
     },
     loadingState: {
         visible: false,
         title: 'Procesando...',
-        message: 'Un momento por favor.'
+        message: 'Un momento por favor.',
     },
 
     getUiSignature(key) {
@@ -270,9 +334,10 @@ const app = {
         }
 
         this.store.ui.scheduled = true;
-        const schedule = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
-            ? window.requestAnimationFrame.bind(window)
-            : (callback) => globalThis.setTimeout(callback, 16);
+        const schedule =
+            typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+                ? window.requestAnimationFrame.bind(window)
+                : (callback) => globalThis.setTimeout(callback, 16);
 
         this.store.ui.frameId = schedule(() => {
             this.flushUiRenderQueue();
@@ -354,9 +419,7 @@ const app = {
             return Number.NaN;
         }
 
-        const normalized = /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}(:\d{2})?$/.test(raw)
-            ? raw.replace(' ', 'T')
-            : raw;
+        const normalized = /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}(:\d{2})?$/.test(raw) ? raw.replace(' ', 'T') : raw;
 
         const parsed = new Date(normalized).getTime();
         return Number.isFinite(parsed) ? parsed : Number.NaN;
@@ -370,22 +433,21 @@ const app = {
         const configuredMaxHours = Number(
             this.getSystemSetting('shifts.max_hours', DEFAULT_SYSTEM_SETTINGS.shifts.max_hours)
         );
-        const reasonableMaxHours = Number.isFinite(configuredMaxHours) && configuredMaxHours > 0
-            ? Math.max(configuredMaxHours + 6, 18)
-            : 18;
+        const reasonableMaxHours =
+            Number.isFinite(configuredMaxHours) && configuredMaxHours > 0 ? Math.max(configuredMaxHours + 6, 18) : 18;
         const maxElapsedMs = reasonableMaxHours * 60 * 60 * 1000;
 
         const startMs = this.parseShiftTimestamp(shift?.start_time || shift?.started_at);
         const scheduledStartMs = this.parseShiftTimestamp(shift?.scheduled_start);
 
-        if (Number.isFinite(startMs) && startMs > 0 && startMs <= (now + futureToleranceMs)) {
+        if (Number.isFinite(startMs) && startMs > 0 && startMs <= now + futureToleranceMs) {
             if (!Number.isFinite(scheduledStartMs) || scheduledStartMs <= 0) {
                 return startMs;
             }
 
             const elapsedFromStart = now - startMs;
             const scheduleLooksCurrent = Math.abs(now - scheduledStartMs) <= recentWindowMs;
-            const startIsFarBeforeSchedule = startMs < (scheduledStartMs - scheduleAlignmentToleranceMs);
+            const startIsFarBeforeSchedule = startMs < scheduledStartMs - scheduleAlignmentToleranceMs;
 
             if (scheduleLooksCurrent && (elapsedFromStart > maxElapsedMs || startIsFarBeforeSchedule)) {
                 return scheduledStartMs;
@@ -394,7 +456,7 @@ const app = {
             return startMs;
         }
 
-        if (Number.isFinite(scheduledStartMs) && scheduledStartMs > 0 && scheduledStartMs <= (now + futureToleranceMs)) {
+        if (Number.isFinite(scheduledStartMs) && scheduledStartMs > 0 && scheduledStartMs <= now + futureToleranceMs) {
             return scheduledStartMs;
         }
 
@@ -474,7 +536,7 @@ const app = {
             accessToken: config.accessToken,
             shiftOtpToken: config.shiftOtpToken,
             timeoutMs: config.timeoutMs,
-            deviceFingerprint: config.deviceFingerprint
+            deviceFingerprint: config.deviceFingerprint,
         });
 
         this.backend.configured = apiClient.hasBackendConfig();
@@ -493,8 +555,8 @@ const app = {
             auth: {
                 persistSession: true,
                 autoRefreshToken: false,
-                detectSessionInUrl: true
-            }
+                detectSessionInUrl: true,
+            },
         });
 
         apiClient.setAccessTokenResolver(async (options = {}) => this.getValidAccessToken(options));
@@ -638,8 +700,10 @@ const app = {
 
         const schedShiftDefaultStart = document.getElementById('sched-shift-default-start');
         const schedShiftDefaultEnd = document.getElementById('sched-shift-default-end');
-        if (schedShiftDefaultStart) schedShiftDefaultStart.addEventListener('change', () => this.onSchedShiftDefaultTimeChange());
-        if (schedShiftDefaultEnd) schedShiftDefaultEnd.addEventListener('change', () => this.onSchedShiftDefaultTimeChange());
+        if (schedShiftDefaultStart)
+            schedShiftDefaultStart.addEventListener('change', () => this.onSchedShiftDefaultTimeChange());
+        if (schedShiftDefaultEnd)
+            schedShiftDefaultEnd.addEventListener('change', () => this.onSchedShiftDefaultTimeChange());
 
         const supervisorShiftEmployeeFilter = document.getElementById('supervisor-shifts-filter-employee');
         if (supervisorShiftEmployeeFilter) {
@@ -736,7 +800,6 @@ const app = {
         document.addEventListener('input', (event) => {
             this.handleDelegatedInput(event);
         });
-
     },
 
     async handleDelegatedClick(event) {
@@ -905,7 +968,10 @@ const app = {
             }
             case 'admin-toggle-supervisor-status': {
                 const supervisorId = String(source.dataset.supervisorId || '').trim();
-                const currentlyActive = String(source.dataset.currentlyActive || '').trim().toLowerCase() === 'true';
+                const currentlyActive =
+                    String(source.dataset.currentlyActive || '')
+                        .trim()
+                        .toLowerCase() === 'true';
                 if (!supervisorId) {
                     return;
                 }
@@ -955,9 +1021,7 @@ const app = {
                     return;
                 }
 
-                const value = field === 'enabled'
-                    ? source.checked === true
-                    : source.value || '';
+                const value = field === 'enabled' ? source.checked === true : source.value || '';
                 this.updateSupervisorShiftPlanWeekRow(rowId, field, value);
                 return;
             }
@@ -1005,7 +1069,10 @@ const app = {
                 return false;
             }
 
-            console.info('Se encontró una sesión persistida. Restaurando acceso.', buildJwtDebugSummary(data.session.access_token || ''));
+            console.info(
+                'Se encontró una sesión persistida. Restaurando acceso.',
+                buildJwtDebugSummary(data.session.access_token || '')
+            );
             this.session = data.session;
             apiClient.setAccessToken(data.session.access_token || '');
             await this.bootstrapAuthenticatedUser({ silent: true, session: data.session, restoredSession: true });
@@ -1037,7 +1104,9 @@ const app = {
 
         if (forceRefresh || (session?.expires_at && session.expires_at * 1000 < Date.now() + 60_000)) {
             if (!session?.refresh_token) {
-                console.warn('Se omitió refreshSession porque la sesión actual no expone refresh_token. Se reutiliza access_token vigente.');
+                console.warn(
+                    'Se omitió refreshSession porque la sesión actual no expone refresh_token. Se reutiliza access_token vigente.'
+                );
             } else {
                 if (!this.tokenRefreshPromise) {
                     this.tokenRefreshPromise = (async () => {
@@ -1107,7 +1176,7 @@ const app = {
         this.loadingState = {
             visible: true,
             title,
-            message
+            message,
         };
 
         if (titleElement) {
@@ -1124,7 +1193,7 @@ const app = {
     hideLoading() {
         this.loadingState = {
             ...this.loadingState,
-            visible: false
+            visible: false,
         };
         document.getElementById('loading-overlay')?.classList.add('hidden');
     },
@@ -1217,13 +1286,7 @@ const app = {
         noticeDiv.classList.toggle('hidden', !message);
     },
 
-    showToast(message, {
-        tone = 'info',
-        title = '',
-        duration,
-        keepLoginMessages = false,
-        action = null
-    } = {}) {
+    showToast(message, { tone = 'info', title = '', duration, keepLoginMessages = false, action = null } = {}) {
         const toastStack = document.getElementById('app-toast-stack');
         if (!toastStack || !message) {
             return;
@@ -1239,18 +1302,18 @@ const app = {
             success: 'fa-circle-check',
             error: 'fa-circle-xmark',
             warning: 'fa-triangle-exclamation',
-            info: 'fa-circle-info'
+            info: 'fa-circle-info',
         };
         const toastId = `toast-${++this.toastCounter}`;
         const hasAction = typeof action?.onClick === 'function' && String(action?.label || '').trim().length > 0;
         const timeoutMs = Number.isFinite(duration)
             ? duration
-            : ({
-                success: 4200,
-                info: 5000,
-                warning: 5600,
-                error: 6800
-            }[normalizedTone] || 5000);
+            : {
+                  success: 4200,
+                  info: 5000,
+                  warning: 5600,
+                  error: 6800,
+              }[normalizedTone] || 5000;
 
         const toast = document.createElement('div');
         toast.className = `app-toast app-toast-${normalizedTone}`;
@@ -1385,12 +1448,13 @@ const app = {
         const rawMessage = String(error?.message || payloadMessage || fallback).trim();
         const normalizedMessage = rawMessage.toLowerCase();
 
-        const trustedDeviceConflict = status === 409
-            && (normalizedMessage.includes('dispositivo')
-                || normalizedMessage.includes('device')
-                || normalizedMessage.includes('vinculad')
-                || normalizedMessage.includes('linked')
-                || normalizedMessage.includes('trusted'));
+        const trustedDeviceConflict =
+            status === 409 &&
+            (normalizedMessage.includes('dispositivo') ||
+                normalizedMessage.includes('device') ||
+                normalizedMessage.includes('vinculad') ||
+                normalizedMessage.includes('linked') ||
+                normalizedMessage.includes('trusted'));
 
         if (trustedDeviceConflict) {
             return 'Esta cuenta ya está vinculada a otro dispositivo. Revoca el dispositivo actual para poder registrar este equipo.';
@@ -1432,8 +1496,9 @@ const app = {
             return 'Ocurrió un problema interno del servicio. Inténtalo de nuevo en unos minutos.';
         }
 
-        const looksTechnical = /endpoint|request_id|payload|stack|trace|\/|http|https|\bcode\b|\bstatus\b/i.test(rawMessage)
-            || rawMessage.length > 220;
+        const looksTechnical =
+            /endpoint|request_id|payload|stack|trace|\/|http|https|\bcode\b|\bstatus\b/i.test(rawMessage) ||
+            rawMessage.length > 220;
 
         if (looksTechnical) {
             return fallback;
@@ -1453,7 +1518,7 @@ const app = {
             error?.payload?.details?.message,
             error?.payload?.error?.message,
             error?.payload?.message,
-            error?.message
+            error?.message,
         ]
             .map((value) => String(value || '').trim())
             .filter(Boolean);
@@ -1462,15 +1527,12 @@ const app = {
             'los datos enviados no son válidos.',
             'los datos enviados no son validos.',
             'invalid request body',
-            'validation error'
+            'validation error',
         ]);
 
         const detailedMessage = rawCandidates.find((message) => !genericMessages.has(message.toLowerCase())) || '';
         const requestId = String(
-            error?.requestId
-            || error?.payload?.request_id
-            || error?.payload?.error?.request_id
-            || ''
+            error?.requestId || error?.payload?.request_id || error?.payload?.error?.request_id || ''
         ).trim();
 
         if (status === 422 && detailedMessage) {
@@ -1495,12 +1557,12 @@ const app = {
         }
 
         const message = String(
-            error?.payload?.error?.details?.message
-            || error?.payload?.details?.message
-            || error?.payload?.error?.message
-            || error?.payload?.message
-            || error?.message
-            || ''
+            error?.payload?.error?.details?.message ||
+                error?.payload?.details?.message ||
+                error?.payload?.error?.message ||
+                error?.payload?.message ||
+                error?.message ||
+                ''
         ).toLowerCase();
 
         return message.includes('salida anticipada') && message.includes('motivo');
@@ -1514,18 +1576,19 @@ const app = {
             error?.payload?.error?.details?.code,
             error?.payload?.details?.code,
             error?.payload?.diagnostic_code,
-            error?.payload?.error?.diagnostic_code
+            error?.payload?.error?.diagnostic_code,
         ]
             .filter(Boolean)
             .map((value) => String(value).toLowerCase());
 
-        const hasExplicitEmployeeAvailabilityCode = explicitCodes.some((code) => (
-            code.includes('employee_not_available')
-            || code.includes('employee_unavailable')
-            || code.includes('employee_schedule_conflict')
-            || code.includes('shift_overlap')
-            || code.includes('employee_shift_overlap')
-        ));
+        const hasExplicitEmployeeAvailabilityCode = explicitCodes.some(
+            (code) =>
+                code.includes('employee_not_available') ||
+                code.includes('employee_unavailable') ||
+                code.includes('employee_schedule_conflict') ||
+                code.includes('shift_overlap') ||
+                code.includes('employee_shift_overlap')
+        );
 
         if (hasExplicitEmployeeAvailabilityCode) {
             return true;
@@ -1539,7 +1602,7 @@ const app = {
             error?.payload?.details?.message,
             error?.code,
             error?.payload?.error?.code,
-            error?.payload?.code
+            error?.payload?.code,
         ]
             .filter(Boolean)
             .join(' ')
@@ -1549,12 +1612,9 @@ const app = {
             return false;
         }
 
-        const hasEmployeeReference = [
-            'empleado',
-            'employee',
-            'assigned_employee',
-            'asignado'
-        ].some((token) => source.includes(token));
+        const hasEmployeeReference = ['empleado', 'employee', 'assigned_employee', 'asignado'].some((token) =>
+            source.includes(token)
+        );
 
         const hasAvailabilityConflictReference = [
             'no disponible',
@@ -1569,7 +1629,7 @@ const app = {
             'turno programado en ese rango',
             'already assigned',
             'already has a scheduled shift',
-            'employee not available'
+            'employee not available',
         ].some((token) => source.includes(token));
 
         return hasEmployeeReference && hasAvailabilityConflictReference;
@@ -1584,7 +1644,7 @@ const app = {
             error?.payload?.details?.error_code,
             error?.payload?.error?.code,
             error?.payload?.code,
-            error?.code
+            error?.code,
         ]
             .filter(Boolean)
             .map((value) => String(value).toLowerCase());
@@ -1598,7 +1658,7 @@ const app = {
             error?.payload?.error?.message,
             error?.payload?.message,
             error?.payload?.error?.details?.message,
-            error?.payload?.details?.message
+            error?.payload?.details?.message,
         ]
             .filter(Boolean)
             .join(' ')
@@ -1640,7 +1700,7 @@ const app = {
             error?.payload?.details?.code,
             error?.code,
             error?.payload?.error?.code,
-            error?.payload?.code
+            error?.payload?.code,
         ]
             .filter(Boolean)
             .join(' ')
@@ -1677,7 +1737,7 @@ const app = {
             'ubicación inválida',
             'ubicacion fuera de rango',
             'ubicación fuera de rango',
-            'location mismatch'
+            'location mismatch',
         ].some((token) => source.includes(token));
     },
 
@@ -1753,7 +1813,7 @@ const app = {
                 const [{ adminMethods }, { adminModalMethods }, { supervisorMethods }] = await Promise.all([
                     import('./modules/admin.js'),
                     import('./modules/adminModals.js'),
-                    import('./modules/supervisor.js')
+                    import('./modules/supervisor.js'),
                 ]);
                 Object.assign(this, supervisorMethods, adminMethods, adminModalMethods);
             }
@@ -1764,7 +1824,11 @@ const app = {
         }
     },
 
-    async bootstrapAuthenticatedUser({ silent = false, session: incomingSession = null, restoredSession = false } = {}) {
+    async bootstrapAuthenticatedUser({
+        silent = false,
+        session: incomingSession = null,
+        restoredSession = false,
+    } = {}) {
         if (this.authBootstrapPromise) {
             return this.authBootstrapPromise;
         }
@@ -1825,11 +1889,17 @@ const app = {
                         try {
                             await this.requestLocationPermissionOnly();
                         } catch (locationError) {
-                            console.warn('No fue posible obtener el permiso de ubicación durante el login.', locationError);
-                            this.showToast('Activa la ubicación para ver tu posición actual y poder iniciar turnos sin fricción.', {
-                                tone: 'warning',
-                                title: 'Permiso de ubicación recomendado'
-                            });
+                            console.warn(
+                                'No fue posible obtener el permiso de ubicación durante el login.',
+                                locationError
+                            );
+                            this.showToast(
+                                'Activa la ubicación para ver tu posición actual y poder iniciar turnos sin fricción.',
+                                {
+                                    tone: 'warning',
+                                    title: 'Permiso de ubicación recomendado',
+                                }
+                            );
                         }
                     }
 
@@ -1847,11 +1917,13 @@ const app = {
 
                 console.error('Bootstrap autenticado falló.', error);
                 if (!silent) {
-                    this.setLoginError(this.getErrorMessage(error, 'No fue posible completar la configuración inicial.'));
+                    this.setLoginError(
+                        this.getErrorMessage(error, 'No fue posible completar la configuración inicial.')
+                    );
                 } else {
                     this.showToast(this.getErrorMessage(error, 'No fue posible completar la configuración inicial.'), {
                         tone: 'error',
-                        title: 'No fue posible continuar'
+                        title: 'No fue posible continuar',
                     });
                 }
                 await this.performLogout({ silent: true });
@@ -1872,7 +1944,8 @@ const app = {
 
     normalizeCurrentUser(me) {
         const role = this.normalizeRoleToken(me?.role || me?.app_metadata?.role || 'empleado');
-        const fullName = me?.full_name || [me?.first_name, me?.last_name].filter(Boolean).join(' ') || me?.email || 'Usuario';
+        const fullName =
+            me?.full_name || [me?.first_name, me?.last_name].filter(Boolean).join(' ') || me?.email || 'Usuario';
 
         return {
             id: me?.id || this.session?.user?.id || null,
@@ -1882,7 +1955,7 @@ const app = {
             phone_e164: me?.phone_e164 || me?.phone_number || '',
             isActive: me?.is_active ?? true,
             must_change_pin: me?.must_change_pin === true,
-            pin_updated_at: me?.pin_updated_at || null
+            pin_updated_at: me?.pin_updated_at || null,
         };
     },
 
@@ -1994,13 +2067,13 @@ const app = {
                     timestamp: new Date().toISOString(),
                     jwt: jwtSummary,
                     request_id: null,
-                    auth_user_probe: null
+                    auth_user_probe: null,
                 };
                 console.info('Preparando change_my_pin con JWT validado.', jwtSummary);
 
                 await apiClient.changeMyPin(newPin, {
                     accessToken,
-                    retryOnInvalidJwt: false
+                    retryOnInvalidJwt: false,
                 });
 
                 apiClient.setAccessToken(accessToken);
@@ -2011,7 +2084,7 @@ const app = {
                 this.currentUser = {
                     ...this.currentUser,
                     must_change_pin: false,
-                    pin_updated_at: new Date().toISOString()
+                    pin_updated_at: new Date().toISOString(),
                 };
                 localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(this.currentUser));
                 setError('');
@@ -2046,8 +2119,8 @@ const app = {
                                 status: 0,
                                 payload: {
                                     message: 'No fue posible ejecutar la prueba contra /auth/v1/user.',
-                                    detail: probeError?.message || String(probeError)
-                                }
+                                    detail: probeError?.message || String(probeError),
+                                },
                             };
                         }
                     }
@@ -2055,7 +2128,7 @@ const app = {
 
                 console.warn('Falló change_my_pin.', {
                     error: this.getErrorMessage(error, 'No fue posible actualizar el PIN.'),
-                    debug: window.__worktracePinChangeDebug || null
+                    debug: window.__worktracePinChangeDebug || null,
                 });
                 setError(this.getErrorMessage(error, 'No fue posible actualizar el PIN.'));
             } finally {
@@ -2090,20 +2163,30 @@ const app = {
             await apiClient.acceptLegalConsent({
                 legal_terms_id: activeTermId,
                 terms_code: activeTermCode,
-                version: activeTermVersion
+                version: activeTermVersion,
             });
         } catch (error) {
             const topMessage = String(error?.message || '').toLowerCase();
-            const payloadMessage = String(error?.payload?.error?.message || error?.payload?.message || '').toLowerCase();
-            const detailMessage = String(error?.payload?.error?.details?.message || error?.payload?.details?.message || '').toLowerCase();
-            const detailCode = String(error?.payload?.error?.details?.code || error?.payload?.details?.code || '').toUpperCase();
-            const missingActiveVersion = topMessage.includes('no hay version legal activa configurada')
-                || payloadMessage.includes('no hay version legal activa configurada')
-                || detailMessage.includes('cannot coerce the result to a single json object')
-                || detailCode === 'PGRST116';
+            const payloadMessage = String(
+                error?.payload?.error?.message || error?.payload?.message || ''
+            ).toLowerCase();
+            const detailMessage = String(
+                error?.payload?.error?.details?.message || error?.payload?.details?.message || ''
+            ).toLowerCase();
+            const detailCode = String(
+                error?.payload?.error?.details?.code || error?.payload?.details?.code || ''
+            ).toUpperCase();
+            const missingActiveVersion =
+                topMessage.includes('no hay version legal activa configurada') ||
+                payloadMessage.includes('no hay version legal activa configurada') ||
+                detailMessage.includes('cannot coerce the result to a single json object') ||
+                detailCode === 'PGRST116';
 
             if (error?.status === 503 && missingActiveVersion) {
-                console.warn('legal_consent no tiene una versión activa configurada. Se omite el paso de consentimiento.', error);
+                console.warn(
+                    'legal_consent no tiene una versión activa configurada. Se omite el paso de consentimiento.',
+                    error
+                );
                 return;
             }
 
@@ -2128,23 +2211,30 @@ const app = {
         try {
             await apiClient.trustedDeviceRegister({
                 deviceName,
-                platform
+                platform,
             });
         } catch (error) {
             const status = Number(error?.status);
-            const payloadMessage = String(error?.payload?.error?.message || error?.payload?.message || '').toLowerCase();
-            const detailMessage = String(error?.payload?.error?.details?.message || error?.payload?.details?.message || '').toLowerCase();
+            const payloadMessage = String(
+                error?.payload?.error?.message || error?.payload?.message || ''
+            ).toLowerCase();
+            const detailMessage = String(
+                error?.payload?.error?.details?.message || error?.payload?.details?.message || ''
+            ).toLowerCase();
             const topMessage = String(error?.message || '').toLowerCase();
             const fullMessage = `${payloadMessage} ${detailMessage} ${topMessage}`;
-            const devicePolicyConflict = status === 409
-                && (fullMessage.includes('dispositivo')
-                    || fullMessage.includes('device')
-                    || fullMessage.includes('vinculad')
-                    || fullMessage.includes('linked')
-                    || fullMessage.includes('trusted'));
+            const devicePolicyConflict =
+                status === 409 &&
+                (fullMessage.includes('dispositivo') ||
+                    fullMessage.includes('device') ||
+                    fullMessage.includes('vinculad') ||
+                    fullMessage.includes('linked') ||
+                    fullMessage.includes('trusted'));
 
             if (devicePolicyConflict) {
-                throw new Error('Esta cuenta ya está vinculada a otro dispositivo. Debes revocar el dispositivo actual antes de registrar uno nuevo.');
+                throw new Error(
+                    'Esta cuenta ya está vinculada a otro dispositivo. Debes revocar el dispositivo actual antes de registrar uno nuevo.'
+                );
             }
 
             throw error;
@@ -2253,7 +2343,7 @@ const app = {
         this.otpChallengeState = {
             purpose,
             sendResult,
-            loadingSnapshot
+            loadingSnapshot,
         };
 
         modal.classList.add('active');
@@ -2358,11 +2448,7 @@ const app = {
             localStorage.removeItem(STORAGE_KEYS.shiftOtpExpiresAt);
 
             const sendResult = await apiClient.phoneOtpSend();
-            this.populateOtpModal(
-                sendResult,
-                this.otpChallengeState.purpose,
-                this.otpChallengeState.loadingSnapshot
-            );
+            this.populateOtpModal(sendResult, this.otpChallengeState.purpose, this.otpChallengeState.loadingSnapshot);
         } catch (error) {
             this.setOtpError(this.getErrorMessage(error, 'No fue posible reenviar el código OTP.'));
         } finally {
@@ -2494,7 +2580,7 @@ const app = {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric'
+                    day: 'numeric',
                 });
             }
         }
@@ -2512,9 +2598,9 @@ const app = {
         document.querySelectorAll('button, a').forEach((element) => {
             const label = (element.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
             if (
-                label === 'actualizar restaurantes'
-                || label === 'actualizar empleados'
-                || label === 'actualizar turnos'
+                label === 'actualizar restaurantes' ||
+                label === 'actualizar empleados' ||
+                label === 'actualizar turnos'
             ) {
                 element.remove();
             }
@@ -2634,9 +2720,10 @@ const app = {
             supervisorTitle.textContent = `Bienvenida, ${firstName}`;
         }
         if (supervisorSubtitle) {
-            supervisorSubtitle.textContent = roleLabel === 'Super Admin'
-                ? 'Vista operativa con permisos ampliados'
-                : 'Gestión de equipos y operación diaria';
+            supervisorSubtitle.textContent =
+                roleLabel === 'Super Admin'
+                    ? 'Vista operativa con permisos ampliados'
+                    : 'Gestión de equipos y operación diaria';
         }
     },
 
@@ -2688,7 +2775,7 @@ const app = {
             return null;
         }
 
-        if ((Date.now() - entry.timestamp) > ttl) {
+        if (Date.now() - entry.timestamp > ttl) {
             delete this.cache[mapName][key];
             return null;
         }
@@ -2703,7 +2790,7 @@ const app = {
 
         this.cache[mapName][key] = {
             value,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         };
 
         return value;
@@ -2792,11 +2879,7 @@ const app = {
     },
 
     async loadSystemSettings(force = false) {
-        if (
-            !force
-            && this.data.systemSettings
-            && this.isCacheFresh('adminSettings', CACHE_TTLS.adminSettings)
-        ) {
+        if (!force && this.data.systemSettings && this.isCacheFresh('adminSettings', CACHE_TTLS.adminSettings)) {
             return this.data.systemSettings;
         }
 
@@ -2839,7 +2922,10 @@ const app = {
         }
 
         return uniqueCleaningAreas(
-            this.getSystemSetting('evidence.default_cleaning_areas', DEFAULT_SYSTEM_SETTINGS.evidence.default_cleaning_areas)
+            this.getSystemSetting(
+                'evidence.default_cleaning_areas',
+                DEFAULT_SYSTEM_SETTINGS.evidence.default_cleaning_areas
+            )
         );
     },
 
@@ -2857,13 +2943,13 @@ const app = {
                     if (!mergedGroups[groupKey]) {
                         mergedGroups[groupKey] = {
                             label: groupValue.label,
-                            subareas: []
+                            subareas: [],
                         };
                     }
 
                     mergedGroups[groupKey].subareas = uniqueCleaningAreas([
                         ...mergedGroups[groupKey].subareas,
-                        ...asArray(groupValue.subareas)
+                        ...asArray(groupValue.subareas),
                     ]);
                 });
             });
@@ -2875,28 +2961,24 @@ const app = {
     getSupervisorSelectedRestaurant() {
         const selectedRestaurantId = document.getElementById('supervision-restaurant-select')?.value;
         const restaurants = this.data.supervisor.restaurants || [];
-        return restaurants.find((restaurant) => String(getRestaurantRecordId(restaurant)) === String(selectedRestaurantId))
-            || restaurants[0]
-            || null;
+        return (
+            restaurants.find(
+                (restaurant) => String(getRestaurantRecordId(restaurant)) === String(selectedRestaurantId)
+            ) ||
+            restaurants[0] ||
+            null
+        );
     },
 
     getSupervisorCleaningAreaGroups() {
         const restaurant = this.getSupervisorSelectedRestaurant();
-        return this.resolveCleaningAreaGroups(
-            restaurant,
-            restaurant?.raw?.restaurant,
-            restaurant?.raw
-        );
+        return this.resolveCleaningAreaGroups(restaurant, restaurant?.raw?.restaurant, restaurant?.raw);
     },
 
     getSupervisorAvailableAreas() {
         const restaurant = this.getSupervisorSelectedRestaurant();
         this.cleaningAreaGroups = this.getSupervisorCleaningAreaGroups();
-        return this.resolveCleaningAreas(
-            restaurant,
-            restaurant?.raw?.restaurant,
-            restaurant?.raw
-        );
+        return this.resolveCleaningAreas(restaurant, restaurant?.raw?.restaurant, restaurant?.raw);
     },
 
     getSupervisorSelectedAreas() {
@@ -2910,7 +2992,9 @@ const app = {
         }
 
         const availableAreas = this.getSupervisorAvailableAreas();
-        const hasCurrentSelection = availableAreas.some((areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.selectedSupervisorArea));
+        const hasCurrentSelection = availableAreas.some(
+            (areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.selectedSupervisorArea)
+        );
         if (!hasCurrentSelection) {
             this.selectedSupervisorArea = availableAreas[0] || '';
         }
@@ -2918,14 +3002,16 @@ const app = {
         const selectedKey = normalizeAreaToken(this.selectedSupervisorArea);
         select.innerHTML = `
             <option value="">Selecciona un área</option>
-            ${availableAreas.map((areaLabel) => {
-                const optionKey = normalizeAreaToken(areaLabel);
-                return `
+            ${availableAreas
+                .map((areaLabel) => {
+                    const optionKey = normalizeAreaToken(areaLabel);
+                    return `
                     <option value="${escapeHtml(areaLabel)}" ${optionKey === selectedKey ? 'selected' : ''}>
                         ${escapeHtml(areaLabel)}
                     </option>
                 `;
-            }).join('')}
+                })
+                .join('')}
         `;
     },
 
@@ -2944,21 +3030,24 @@ const app = {
         const normalizedNext = nextAreas.length > 0 ? nextAreas : fallbackAreas;
         const previousAreas = JSON.stringify(this.areas || []);
         const previousSelection = JSON.stringify(this.selectedEmployeeAreas || []);
-        const selectedAreas = uniqueCleaningAreas((this.selectedEmployeeAreas || []).filter((areaLabel) => (
-            normalizedNext.some((candidate) => normalizeAreaToken(candidate) === normalizeAreaToken(areaLabel))
-        )));
+        const selectedAreas = uniqueCleaningAreas(
+            (this.selectedEmployeeAreas || []).filter((areaLabel) =>
+                normalizedNext.some((candidate) => normalizeAreaToken(candidate) === normalizeAreaToken(areaLabel))
+            )
+        );
         const nextSelection = JSON.stringify(selectedAreas);
         const selectionChanged = nextSelection !== previousSelection;
-        const normalizedGroups = areaGroups && typeof areaGroups === 'object'
-            ? areaGroups
-            : extractCleaningAreaGroups(normalizedNext);
+        const normalizedGroups =
+            areaGroups && typeof areaGroups === 'object' ? areaGroups : extractCleaningAreaGroups(normalizedNext);
 
         this.areas = normalizedNext;
         this.cleaningAreaGroups = normalizedGroups;
         this.selectedEmployeeAreas = selectedAreas;
-        this.activeEmployeeArea = selectedAreas.some((areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.activeEmployeeArea))
+        this.activeEmployeeArea = selectedAreas.some(
+            (areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.activeEmployeeArea)
+        )
             ? this.activeEmployeeArea
-            : (selectedAreas[0] || '');
+            : selectedAreas[0] || '';
         this.queueUiRender('employee-area-selectors');
 
         if (previousAreas === JSON.stringify(normalizedNext) && !selectionChanged) {
@@ -2974,8 +3063,12 @@ const app = {
     },
 
     getEmployeeSelectedAreas() {
-        const availableKeys = new Set(this.getEmployeeAvailableAreas().map((areaLabel) => normalizeAreaToken(areaLabel)));
-        return uniqueCleaningAreas((this.selectedEmployeeAreas || []).filter((areaLabel) => availableKeys.has(normalizeAreaToken(areaLabel))));
+        const availableKeys = new Set(
+            this.getEmployeeAvailableAreas().map((areaLabel) => normalizeAreaToken(areaLabel))
+        );
+        return uniqueCleaningAreas(
+            (this.selectedEmployeeAreas || []).filter((areaLabel) => availableKeys.has(normalizeAreaToken(areaLabel)))
+        );
     },
 
     getEmployeeActiveArea() {
@@ -2985,21 +3078,30 @@ const app = {
         }
 
         const currentActive = this.activeEmployeeArea || '';
-        const activeExists = selectedAreas.some((areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(currentActive));
+        const activeExists = selectedAreas.some(
+            (areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(currentActive)
+        );
         return activeExists ? currentActive : selectedAreas[0];
     },
 
     setEmployeeSelectedAreas(nextAreas = []) {
-        const availableKeys = new Set(this.getEmployeeAvailableAreas().map((areaLabel) => normalizeAreaToken(areaLabel)));
-        const normalizedSelection = uniqueCleaningAreas(asArray(nextAreas).filter((areaLabel) => availableKeys.has(normalizeAreaToken(areaLabel))));
-        const selectionUnchanged = JSON.stringify(normalizedSelection) === JSON.stringify(this.selectedEmployeeAreas || []);
+        const availableKeys = new Set(
+            this.getEmployeeAvailableAreas().map((areaLabel) => normalizeAreaToken(areaLabel))
+        );
+        const normalizedSelection = uniqueCleaningAreas(
+            asArray(nextAreas).filter((areaLabel) => availableKeys.has(normalizeAreaToken(areaLabel)))
+        );
+        const selectionUnchanged =
+            JSON.stringify(normalizedSelection) === JSON.stringify(this.selectedEmployeeAreas || []);
 
         if (!selectionUnchanged) {
             this.selectedEmployeeAreas = normalizedSelection;
         }
-        this.activeEmployeeArea = normalizedSelection.some((areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.activeEmployeeArea))
+        this.activeEmployeeArea = normalizedSelection.some(
+            (areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.activeEmployeeArea)
+        )
             ? this.activeEmployeeArea
-            : (normalizedSelection[0] || '');
+            : normalizedSelection[0] || '';
 
         this.queueUiRender('employee-area-selectors');
         this.queueUiRender('employee-photo-grids');
@@ -3023,7 +3125,7 @@ const app = {
             this.data.currentScheduledShift?.id,
             this.data.currentScheduledShift?.shift_id,
             this.data.currentScheduledShift?.scheduled_shift_id,
-            this.data.currentScheduledShift?.scheduledShiftId
+            this.data.currentScheduledShift?.scheduledShiftId,
         ];
 
         const uniqueKeys = [];
@@ -3083,7 +3185,7 @@ const app = {
             shift?.raw?.shift_id,
             shift?.raw?.scheduled_shift_id,
             shift?.raw?.restaurant_id,
-            shift?.raw?.restaurant?.id
+            shift?.raw?.restaurant?.id,
         ];
 
         const uniqueKeys = [];
@@ -3123,7 +3225,9 @@ const app = {
     },
 
     recordShiftRequestTrace(traceType, requestId, shift = this.data.currentShift || this.data.currentScheduledShift) {
-        const normalizedType = String(traceType || '').trim().toLowerCase();
+        const normalizedType = String(traceType || '')
+            .trim()
+            .toLowerCase();
         const normalizedRequestId = String(requestId || '').trim();
         if (!normalizedRequestId || !['finalize_upload', 'summary_by_shift', 'shifts_end'].includes(normalizedType)) {
             return;
@@ -3147,7 +3251,7 @@ const app = {
             store[shiftKey] = {
                 ...currentEntry,
                 [normalizedType]: nextList,
-                updated_at: updatedAt
+                updated_at: updatedAt,
             };
         });
 
@@ -3160,7 +3264,7 @@ const app = {
             return {
                 finalize_upload: [],
                 summary_by_shift: [],
-                shifts_end: []
+                shifts_end: [],
             };
         }
 
@@ -3168,7 +3272,7 @@ const app = {
         const merged = {
             finalize_upload: [],
             summary_by_shift: [],
-            shifts_end: []
+            shifts_end: [],
         };
 
         shiftKeys.forEach((shiftKey) => {
@@ -3195,7 +3299,11 @@ const app = {
 
     persistShiftRestaurantName(shift, restaurantName = '') {
         const normalizedName = String(restaurantName || '').trim();
-        if (!normalizedName || isGenericNamedPlaceholder(normalizedName, 'restaurant') || normalizedName === 'Restaurante sin nombre visible') {
+        if (
+            !normalizedName ||
+            isGenericNamedPlaceholder(normalizedName, 'restaurant') ||
+            normalizedName === 'Restaurante sin nombre visible'
+        ) {
             return;
         }
 
@@ -3208,7 +3316,7 @@ const app = {
         shiftKeys.forEach((shiftKey) => {
             store[shiftKey] = {
                 name: normalizedName,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
             };
         });
         this.writeShiftRestaurantNameStore(store);
@@ -3223,7 +3331,11 @@ const app = {
         const store = this.readShiftRestaurantNameStore();
         for (const shiftKey of shiftKeys) {
             const candidate = String(store?.[shiftKey]?.name || '').trim();
-            if (candidate && !isGenericNamedPlaceholder(candidate, 'restaurant') && candidate !== 'Restaurante sin nombre visible') {
+            if (
+                candidate &&
+                !isGenericNamedPlaceholder(candidate, 'restaurant') &&
+                candidate !== 'Restaurante sin nombre visible'
+            ) {
                 return candidate;
             }
         }
@@ -3270,7 +3382,7 @@ const app = {
             store[shiftKey] = {
                 areas: selectedAreas,
                 active_area: this.getEmployeeActiveArea() || selectedAreas[0] || '',
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
             };
         });
         this.writeShiftAreaSelectionStore(store);
@@ -3288,12 +3400,21 @@ const app = {
         }
 
         const candidates = [
-            item.url, item.public_url, item.publicUrl, item.signed_url, item.signedUrl,
-            item.download_url, item.downloadUrl, item.image_url, item.imageUrl, item.path
+            item.url,
+            item.public_url,
+            item.publicUrl,
+            item.signed_url,
+            item.signedUrl,
+            item.download_url,
+            item.downloadUrl,
+            item.image_url,
+            item.imageUrl,
+            item.path,
         ];
-        const resolvedUrl = candidates.find((candidate) => isHttpUrl(candidate))
-            || Array.from(collectEvidenceUrls(item, new Set()))[0]
-            || '';
+        const resolvedUrl =
+            candidates.find((candidate) => isHttpUrl(candidate)) ||
+            Array.from(collectEvidenceUrls(item, new Set()))[0] ||
+            '';
 
         if (!resolvedUrl) {
             return null;
@@ -3304,7 +3425,7 @@ const app = {
             captured_at: item.captured_at || item.capturedAt || item.created_at || item.createdAt || '',
             area_label: item.area_label || item.areaLabel || item.area || '',
             subarea_label: item.subarea_label || item.subareaLabel || item.subarea || '',
-            photo_label: item.photo_label || item.photoLabel || item.label || item.title || ''
+            photo_label: item.photo_label || item.photoLabel || item.label || item.title || '',
         };
     },
 
@@ -3359,15 +3480,16 @@ const app = {
         return items;
     },
 
-    inferSelectedAreasFromStartEvidence(shift = this.data.currentShift, availableAreas = this.getEmployeeAvailableAreas()) {
+    inferSelectedAreasFromStartEvidence(
+        shift = this.data.currentShift,
+        availableAreas = this.getEmployeeAvailableAreas()
+    ) {
         const items = this.extractShiftEvidenceItems(shift, 'start');
         if (!Array.isArray(items) || items.length === 0) {
             return [];
         }
 
-        const availableKeys = new Map(
-            availableAreas.map((areaLabel) => [normalizeAreaToken(areaLabel), areaLabel])
-        );
+        const availableKeys = new Map(availableAreas.map((areaLabel) => [normalizeAreaToken(areaLabel), areaLabel]));
 
         const inferred = items
             .map((item) => String(item?.area_label || '').trim())
@@ -3430,7 +3552,8 @@ const app = {
             return;
         }
 
-        this.activeEmployeeArea = selectedAreas.find((candidate) => normalizeAreaToken(candidate) === normalizedArea) || areaLabel;
+        this.activeEmployeeArea =
+            selectedAreas.find((candidate) => normalizeAreaToken(candidate) === normalizedArea) || areaLabel;
         this.queueUiRender('employee-area-selectors');
         this.queueUiRender('employee-photo-grids');
     },
@@ -3460,9 +3583,9 @@ const app = {
 
         const currentEmpty = container.firstElementChild;
         if (
-            container.childElementCount === 1
-            && currentEmpty?.classList.contains('photo-grid-empty')
-            && String(currentEmpty.textContent || '') === message
+            container.childElementCount === 1 &&
+            currentEmpty?.classList.contains('photo-grid-empty') &&
+            String(currentEmpty.textContent || '') === message
         ) {
             return;
         }
@@ -3485,7 +3608,7 @@ const app = {
             activeKey = '',
             readonly = false,
             alwaysActive = false,
-            emptyMessage = ''
+            emptyMessage = '',
         } = options;
 
         if (!labels.length) {
@@ -3525,10 +3648,10 @@ const app = {
             const isActive = alwaysActive
                 ? true
                 : selectedKeys instanceof Set
-                    ? selectedKeys.has(areaKey)
-                    : activeKey
-                        ? normalizeAreaToken(activeKey) === areaKey
-                        : false;
+                  ? selectedKeys.has(areaKey)
+                  : activeKey
+                    ? normalizeAreaToken(activeKey) === areaKey
+                    : false;
 
             node.className = readonly
                 ? `area-chip area-chip-readonly${isActive ? ' active' : ''}`
@@ -3569,7 +3692,7 @@ const app = {
             asButtons: true,
             action: 'toggle-employee-area',
             selectedKeys: selectedAreaKeys,
-            emptyMessage: 'No hay áreas disponibles para este turno.'
+            emptyMessage: 'No hay áreas disponibles para este turno.',
         });
 
         if (startFocusPanel) {
@@ -3580,14 +3703,14 @@ const app = {
             asButtons: true,
             action: 'set-employee-active-area',
             activeKey: activeArea,
-            emptyMessage: 'Selecciona al menos una zona para enfocarte en sus subáreas.'
+            emptyMessage: 'Selecciona al menos una zona para enfocarte en sus subáreas.',
         });
 
         this.syncAreaChipCollection(endContainer, selectedAreas, {
             asButtons: false,
             readonly: true,
             alwaysActive: true,
-            emptyMessage: 'Las áreas seleccionadas al inicio aparecerán aquí automáticamente.'
+            emptyMessage: 'Las áreas seleccionadas al inicio aparecerán aquí automáticamente.',
         });
 
         if (endFocusPanel) {
@@ -3598,7 +3721,7 @@ const app = {
             asButtons: true,
             action: 'set-employee-active-area',
             activeKey: activeArea,
-            emptyMessage: 'Selecciona al menos una zona para enfocarte en sus subáreas.'
+            emptyMessage: 'Selecciona al menos una zona para enfocarte en sus subáreas.',
         });
     },
 
@@ -3612,7 +3735,7 @@ const app = {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
         });
     },
 
@@ -3680,7 +3803,7 @@ const app = {
                     `Permite ${deniedPermissions.join(' y ')} para iniciar turnos y registrar evidencias desde la app.`,
                     {
                         tone: 'warning',
-                        title: 'Permisos recomendados'
+                        title: 'Permisos recomendados',
                     }
                 );
             }
@@ -3700,14 +3823,14 @@ const app = {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
                 enableHighAccuracy: true,
                 timeout: 10000,
-                maximumAge: 0
+                maximumAge: 0,
             });
         });
 
         this.location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-            accuracy: position.coords.accuracy
+            accuracy: position.coords.accuracy,
         };
         void this.refreshCurrentLocationAddress(this.location);
         this.gpsVerified = false;
@@ -3730,7 +3853,8 @@ const app = {
         if (!navigator.geolocation) {
             if (status && updateUi) {
                 status.className = 'gps-status invalid';
-                status.innerHTML = '<i class="fas fa-location-crosshairs"></i><span>Geolocalización no disponible</span>';
+                status.innerHTML =
+                    '<i class="fas fa-location-crosshairs"></i><span>Geolocalización no disponible</span>';
             }
             throw new Error('El navegador no permite geolocalización.');
         }
@@ -3751,14 +3875,14 @@ const app = {
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
                     enableHighAccuracy: !isBackgroundCapture,
                     timeout: isBackgroundCapture ? 5000 : 10000,
-                    maximumAge: locationAge
+                    maximumAge: locationAge,
                 });
             });
 
             this.location = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude,
-                accuracy: position.coords.accuracy
+                accuracy: position.coords.accuracy,
             };
             this.locationTimestamp = Date.now();
             void this.refreshCurrentLocationAddress(this.location);
@@ -3830,8 +3954,8 @@ const app = {
             `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&accept-language=es`,
             {
                 headers: {
-                    Accept: 'application/json'
-                }
+                    Accept: 'application/json',
+                },
             }
         );
 
@@ -3951,8 +4075,9 @@ const app = {
         const button = document.getElementById('continue-btn');
         if (button) {
             const hasActiveShift = Boolean(this.data.currentShift?.id);
-            const canStartShift = !hasActiveShift
-                && this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, this.data.employee.dashboard);
+            const canStartShift =
+                !hasActiveShift &&
+                this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, this.data.employee.dashboard);
             button.disabled = !(this.gpsVerified && (hasActiveShift || canStartShift));
         }
     },
@@ -3960,9 +4085,11 @@ const app = {
     getAreaSubareas(areaLabel) {
         const normalizedLabel = normalizeAreaGroupLabel(areaLabel);
         const groupKey = normalizeAreaToken(normalizedLabel || areaLabel);
-        const customSubareas = uniqueCleaningAreas(extractCleaningAreaSubareas(
-            this.cleaningAreaGroups?.[groupKey]?.subareas || this.cleaningAreaGroups?.[groupKey]
-        ));
+        const customSubareas = uniqueCleaningAreas(
+            extractCleaningAreaSubareas(
+                this.cleaningAreaGroups?.[groupKey]?.subareas || this.cleaningAreaGroups?.[groupKey]
+            )
+        );
 
         if (customSubareas.length > 0) {
             return customSubareas;
@@ -3980,7 +4107,7 @@ const app = {
                 areaLabel,
                 groupLabel,
                 subareaLabel,
-                title: `${groupLabel} • ${subareaLabel}`
+                title: `${groupLabel} • ${subareaLabel}`,
             }));
         });
     },
@@ -4150,12 +4277,7 @@ const app = {
             }
         });
 
-        [
-            this.photoFiles,
-            this.endPhotoFiles,
-            this.uploadedStartAreas,
-            this.uploadedEndAreas
-        ].forEach((collection) => {
+        [this.photoFiles, this.endPhotoFiles, this.uploadedStartAreas, this.uploadedEndAreas].forEach((collection) => {
             Object.keys(collection || {}).forEach((slotKey) => {
                 if (!validSlotKeys.has(slotKey)) {
                     delete collection[slotKey];
@@ -4221,7 +4343,7 @@ const app = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible abrir la cámara.'), {
                 tone: 'error',
-                title: 'Cámara no disponible'
+                title: 'Cámara no disponible',
             });
         }
     },
@@ -4249,9 +4371,10 @@ const app = {
         }
 
         if (helper) {
-            helper.textContent = type === 'supervision'
-                ? 'Usa la cámara del dispositivo para registrar la evidencia de supervisión.'
-                : 'Se abrirá la cámara del dispositivo. Toma la foto y confírmala desde aquí.';
+            helper.textContent =
+                type === 'supervision'
+                    ? 'Usa la cámara del dispositivo para registrar la evidencia de supervisión.'
+                    : 'Se abrirá la cámara del dispositivo. Toma la foto y confírmala desde aquí.';
         }
 
         if (error) {
@@ -4308,8 +4431,8 @@ const app = {
             video: {
                 facingMode: { ideal: 'environment' },
                 width: { ideal: 1920 },
-                height: { ideal: 1080 }
-            }
+                height: { ideal: 1080 },
+            },
         };
 
         try {
@@ -4322,7 +4445,7 @@ const app = {
 
             return navigator.mediaDevices.getUserMedia({
                 audio: false,
-                video: true
+                video: true,
             });
         }
     },
@@ -4389,13 +4512,17 @@ const app = {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             const blob = await new Promise((resolve, reject) => {
-                canvas.toBlob((nextBlob) => {
-                    if (nextBlob) {
-                        resolve(nextBlob);
-                        return;
-                    }
-                    reject(new Error('No fue posible capturar la imagen.'));
-                }, 'image/jpeg', 0.92);
+                canvas.toBlob(
+                    (nextBlob) => {
+                        if (nextBlob) {
+                            resolve(nextBlob);
+                            return;
+                        }
+                        reject(new Error('No fue posible capturar la imagen.'));
+                    },
+                    'image/jpeg',
+                    0.92
+                );
             });
 
             const file = new File(
@@ -4437,14 +4564,18 @@ const app = {
                 canvas.height = h;
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                 canvas.toBlob(
-                    (blob) => resolve(blob
-                        ? new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' })
-                        : file),
+                    (blob) =>
+                        resolve(
+                            blob ? new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }) : file
+                        ),
                     'image/jpeg',
                     quality
                 );
             };
-            img.onerror = () => { URL.revokeObjectURL(srcUrl); resolve(file); };
+            img.onerror = () => {
+                URL.revokeObjectURL(srcUrl);
+                resolve(file);
+            };
             img.src = srcUrl;
         });
     },
@@ -4457,13 +4588,13 @@ const app = {
         const fileCollections = {
             start: this.photoFiles,
             end: this.endPhotoFiles,
-            supervision: this.supervisionPhotoFiles
+            supervision: this.supervisionPhotoFiles,
         };
 
         const previewCollections = {
             start: this.photos,
             end: this.endPhotos,
-            supervision: this.supervisionPhotos
+            supervision: this.supervisionPhotos,
         };
 
         const targetFiles = fileCollections[type];
@@ -4504,7 +4635,7 @@ const app = {
         void this.processPhotoFile(file, 'start', this.currentPhotoArea).catch((error) => {
             this.showToast(this.getErrorMessage(error, 'No fue posible procesar la imagen.'), {
                 tone: 'error',
-                title: 'Error de imagen'
+                title: 'Error de imagen',
             });
         });
         event.target.value = '';
@@ -4519,7 +4650,7 @@ const app = {
         void this.processPhotoFile(file, 'end', this.currentPhotoArea).catch((error) => {
             this.showToast(this.getErrorMessage(error, 'No fue posible procesar la imagen final.'), {
                 tone: 'error',
-                title: 'Error de imagen'
+                title: 'Error de imagen',
             });
         });
         event.target.value = '';
@@ -4534,7 +4665,7 @@ const app = {
         void this.processPhotoFile(file, 'supervision', this.currentPhotoArea).catch((error) => {
             this.showToast(this.getErrorMessage(error, 'No fue posible procesar la evidencia de supervisión.'), {
                 tone: 'error',
-                title: 'Error de imagen'
+                title: 'Error de imagen',
             });
         });
         event.target.value = '';
@@ -4545,7 +4676,7 @@ const app = {
             key: 'special_task_evidence',
             title: 'evidencia de tarea especial',
             groupLabel: 'tarea_especial',
-            subareaLabel: 'evidencia'
+            subareaLabel: 'evidencia',
         };
 
         void this.openCameraCapture({ slot: taskSlot, type: 'task' }).catch((error) => {
@@ -4558,7 +4689,7 @@ const app = {
 
             this.showToast(this.getErrorMessage(error, 'No fue posible abrir la cámara para la tarea especial.'), {
                 tone: 'error',
-                title: 'Cámara no disponible'
+                title: 'Cámara no disponible',
             });
         });
     },
@@ -4574,7 +4705,7 @@ const app = {
         if (!previewUrl) {
             this.showToast('No fue posible leer la foto seleccionada para la tarea especial.', {
                 tone: 'error',
-                title: 'Error de evidencia'
+                title: 'Error de evidencia',
             });
             return false;
         }
@@ -4673,10 +4804,13 @@ const app = {
         }
 
         const availableAreas = this.getSupervisorAvailableAreas();
-        const selectedArea = this.selectedSupervisorArea
-            && availableAreas.some((areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.selectedSupervisorArea))
-            ? this.selectedSupervisorArea
-            : '';
+        const selectedArea =
+            this.selectedSupervisorArea &&
+            availableAreas.some(
+                (areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.selectedSupervisorArea)
+            )
+                ? this.selectedSupervisorArea
+                : '';
         const visibleAreas = selectedArea ? [selectedArea] : [];
 
         this.supervisionPhotoCatalog = this.buildPhotoSlotDefinitions(availableAreas);
@@ -4718,7 +4852,10 @@ const app = {
         const count = progress.completedCount;
         const total = progress.requiredCount;
         const percentage = total === 0 ? 100 : (count / total) * 100;
-        const requireStartPhotos = this.getSystemSetting('evidence.require_start_photos', DEFAULT_SYSTEM_SETTINGS.evidence.require_start_photos);
+        const requireStartPhotos = this.getSystemSetting(
+            'evidence.require_start_photos',
+            DEFAULT_SYSTEM_SETTINGS.evidence.require_start_photos
+        );
 
         const progressElement = document.getElementById('photo-progress');
         const countElement = document.getElementById('photos-count');
@@ -4733,7 +4870,7 @@ const app = {
         }
 
         if (button) {
-            button.disabled = total === 0 ? false : (requireStartPhotos ? count < total : false);
+            button.disabled = total === 0 ? false : requireStartPhotos ? count < total : false;
         }
     },
 
@@ -4783,7 +4920,8 @@ const app = {
 
         if (gpsStatus) {
             gpsStatus.className = 'gps-status invalid';
-            gpsStatus.innerHTML = '<i class="fas fa-location-crosshairs"></i><span>Ubicación lista para verificar</span>';
+            gpsStatus.innerHTML =
+                '<i class="fas fa-location-crosshairs"></i><span>Ubicación lista para verificar</span>';
         }
 
         if (gpsButton) {
@@ -4843,7 +4981,16 @@ const app = {
 
     getEmployeePendingScheduledShift(shifts = []) {
         const now = Date.now();
-        const closedStates = new Set(['cancelado', 'cancelled', 'completed', 'completado', 'finalizado', 'finished', 'closed', 'done']);
+        const closedStates = new Set([
+            'cancelado',
+            'cancelled',
+            'completed',
+            'completado',
+            'finalizado',
+            'finished',
+            'closed',
+            'done',
+        ]);
 
         const candidates = asArray(shifts)
             .filter(Boolean)
@@ -4864,18 +5011,18 @@ const app = {
                     return null;
                 }
 
-                if (!Number.isFinite(endMs) && Number.isFinite(startMs) && startMs < (now - (12 * 60 * 60 * 1000))) {
+                if (!Number.isFinite(endMs) && Number.isFinite(startMs) && startMs < now - 12 * 60 * 60 * 1000) {
                     return null;
                 }
 
-                if (!Boolean(shift?.id || shift?.scheduled_shift_id || startValue || endValue)) {
+                if (!(shift?.id || shift?.scheduled_shift_id || startValue || endValue)) {
                     return null;
                 }
 
                 return {
                     shift,
                     startMs,
-                    endMs
+                    endMs,
                 };
             })
             .filter(Boolean)
@@ -4925,7 +5072,7 @@ const app = {
                 hasWindowContract: false,
                 earliest: '',
                 latest: '',
-                serverNow: ''
+                serverNow: '',
             };
         }
 
@@ -4954,7 +5101,7 @@ const app = {
                 hasWindowContract: true,
                 earliest,
                 latest,
-                serverNow
+                serverNow,
             };
         }
 
@@ -4966,7 +5113,7 @@ const app = {
                 hasWindowContract: true,
                 earliest,
                 latest,
-                serverNow
+                serverNow,
             };
         }
 
@@ -4977,7 +5124,7 @@ const app = {
             hasWindowContract: false,
             earliest,
             latest,
-            serverNow
+            serverNow,
         };
     },
 
@@ -4993,7 +5140,10 @@ const app = {
         return 'Tu turno se habilita solo dentro de la ventana configurada por operación.';
     },
 
-    canEmployeeStartScheduledShift(scheduledShift = this.data.currentScheduledShift, dashboard = this.data.employee.dashboard || {}) {
+    canEmployeeStartScheduledShift(
+        scheduledShift = this.data.currentScheduledShift,
+        dashboard = this.data.employee.dashboard || {}
+    ) {
         if (!scheduledShift?.id) {
             return false;
         }
@@ -5003,26 +5153,14 @@ const app = {
     },
 
     normalizeShiftEvidenceSummary(summary = {}) {
-        const source = summary?.summary && typeof summary.summary === 'object'
-            ? summary.summary
-            : summary;
-        const counts = source?.counts && typeof source.counts === 'object'
-            ? source.counts
-            : {};
+        const source = summary?.summary && typeof summary.summary === 'object' ? summary.summary : summary;
+        const counts = source?.counts && typeof source.counts === 'object' ? source.counts : {};
 
         const startCount = Number(
-            source?.start_evidence_count
-            ?? source?.startEvidenceCount
-            ?? counts?.inicio
-            ?? counts?.start
-            ?? 0
+            source?.start_evidence_count ?? source?.startEvidenceCount ?? counts?.inicio ?? counts?.start ?? 0
         );
         const endCount = Number(
-            source?.end_evidence_count
-            ?? source?.endEvidenceCount
-            ?? counts?.fin
-            ?? counts?.end
-            ?? 0
+            source?.end_evidence_count ?? source?.endEvidenceCount ?? counts?.fin ?? counts?.end ?? 0
         );
 
         const hasStartEvidence = source?.has_start_evidence ?? source?.has_start ?? source?.hasStartEvidence;
@@ -5032,7 +5170,7 @@ const app = {
             has_start_evidence: hasStartEvidence === true || (Number.isFinite(startCount) && startCount > 0),
             has_end_evidence: hasEndEvidence === true || (Number.isFinite(endCount) && endCount > 0),
             start_evidence_count: Number.isFinite(startCount) ? startCount : 0,
-            end_evidence_count: Number.isFinite(endCount) ? endCount : 0
+            end_evidence_count: Number.isFinite(endCount) ? endCount : 0,
         };
     },
 
@@ -5042,14 +5180,13 @@ const app = {
             has_start_evidence: summary.has_start_evidence === true,
             has_end_evidence: summary.has_end_evidence === true,
             start_evidence_count: Number(summary.start_evidence_count || 0),
-            end_evidence_count: Number(summary.end_evidence_count || 0)
+            end_evidence_count: Number(summary.end_evidence_count || 0),
         };
     },
 
     async refreshCurrentActiveShift() {
         const activeShiftId = normalizeRestaurantId(
-            this.data.currentShift?.id
-            || this.data.employee.dashboard?.active_shift?.id
+            this.data.currentShift?.id || this.data.employee.dashboard?.active_shift?.id
         );
         if (activeShiftId == null) {
             return this.data.currentShift || null;
@@ -5057,11 +5194,12 @@ const app = {
 
         try {
             const activeShiftPayload = await apiClient.getEmployeeActiveShift();
-            const activeShiftCandidate = activeShiftPayload?.active_shift
-                || activeShiftPayload?.shift
-                || activeShiftPayload?.data?.active_shift
-                || activeShiftPayload?.data?.shift
-                || activeShiftPayload;
+            const activeShiftCandidate =
+                activeShiftPayload?.active_shift ||
+                activeShiftPayload?.shift ||
+                activeShiftPayload?.data?.active_shift ||
+                activeShiftPayload?.data?.shift ||
+                activeShiftPayload;
 
             const activeShift = this.enrichEmployeeShiftRecord(activeShiftCandidate, this.data.employee.dashboard);
             if (activeShift?.id) {
@@ -5087,7 +5225,7 @@ const app = {
             shift?.has_start_evidence,
             shift?.has_end_evidence,
             shift?.start_evidence_count,
-            shift?.end_evidence_count
+            shift?.end_evidence_count,
         ].some((value) => value != null);
 
         if (hasDirectEvidenceFields) {
@@ -5118,25 +5256,25 @@ const app = {
         const isStartPhase = normalizedPhase === 'start';
         const booleanCandidates = isStartPhase
             ? [
-                shift.has_start_evidence,
-                shift.hasStartEvidence,
-                shift.start_photos_uploaded,
-                shift.startPhotosUploaded,
-                shift.has_initial_evidence,
-                shift.hasInitialEvidence,
-                shift?.evidence_summary?.has_start,
-                shift?.evidence_summary?.hasStart
-            ]
+                  shift.has_start_evidence,
+                  shift.hasStartEvidence,
+                  shift.start_photos_uploaded,
+                  shift.startPhotosUploaded,
+                  shift.has_initial_evidence,
+                  shift.hasInitialEvidence,
+                  shift?.evidence_summary?.has_start,
+                  shift?.evidence_summary?.hasStart,
+              ]
             : [
-                shift.has_end_evidence,
-                shift.hasEndEvidence,
-                shift.end_photos_uploaded,
-                shift.endPhotosUploaded,
-                shift.has_final_evidence,
-                shift.hasFinalEvidence,
-                shift?.evidence_summary?.has_end,
-                shift?.evidence_summary?.hasEnd
-            ];
+                  shift.has_end_evidence,
+                  shift.hasEndEvidence,
+                  shift.end_photos_uploaded,
+                  shift.endPhotosUploaded,
+                  shift.has_final_evidence,
+                  shift.hasFinalEvidence,
+                  shift?.evidence_summary?.has_end,
+                  shift?.evidence_summary?.hasEnd,
+              ];
 
         if (booleanCandidates.some((value) => value === true)) {
             return true;
@@ -5144,27 +5282,27 @@ const app = {
 
         const numericCandidates = isStartPhase
             ? [
-                shift.start_evidence_count,
-                shift.startEvidenceCount,
-                shift.start_photos_count,
-                shift.startPhotosCount,
-                shift.initial_evidence_count,
-                shift.initialEvidenceCount,
-                shift?.evidence_summary?.start_count,
-                shift?.evidence_summary?.startCount,
-                shift?.evidence_summary?.inicio_count
-            ]
+                  shift.start_evidence_count,
+                  shift.startEvidenceCount,
+                  shift.start_photos_count,
+                  shift.startPhotosCount,
+                  shift.initial_evidence_count,
+                  shift.initialEvidenceCount,
+                  shift?.evidence_summary?.start_count,
+                  shift?.evidence_summary?.startCount,
+                  shift?.evidence_summary?.inicio_count,
+              ]
             : [
-                shift.end_evidence_count,
-                shift.endEvidenceCount,
-                shift.end_photos_count,
-                shift.endPhotosCount,
-                shift.final_evidence_count,
-                shift.finalEvidenceCount,
-                shift?.evidence_summary?.end_count,
-                shift?.evidence_summary?.endCount,
-                shift?.evidence_summary?.fin_count
-            ];
+                  shift.end_evidence_count,
+                  shift.endEvidenceCount,
+                  shift.end_photos_count,
+                  shift.endPhotosCount,
+                  shift.final_evidence_count,
+                  shift.finalEvidenceCount,
+                  shift?.evidence_summary?.end_count,
+                  shift?.evidence_summary?.endCount,
+                  shift?.evidence_summary?.fin_count,
+              ];
 
         if (numericCandidates.some((value) => Number.isFinite(Number(value)) && Number(value) > 0)) {
             return true;
@@ -5188,16 +5326,10 @@ const app = {
         }
 
         const requiredStartEvidenceCount = Number(
-            shift?.required_start_evidence_count
-            ?? shift?.requiredStartEvidenceCount
-            ?? 0
+            shift?.required_start_evidence_count ?? shift?.requiredStartEvidenceCount ?? 0
         );
 
-        const startEvidenceCount = Number(
-            shift?.start_evidence_count
-            ?? shift?.startEvidenceCount
-            ?? 0
-        );
+        const startEvidenceCount = Number(shift?.start_evidence_count ?? shift?.startEvidenceCount ?? 0);
 
         if (Number.isFinite(startEvidenceCount) && startEvidenceCount > 0) {
             if (Number.isFinite(requiredStartEvidenceCount) && requiredStartEvidenceCount > 0) {
@@ -5212,9 +5344,9 @@ const app = {
         }
 
         if (
-            Number.isFinite(requiredStartEvidenceCount)
-            && requiredStartEvidenceCount > 0
-            && (!Number.isFinite(startEvidenceCount) || startEvidenceCount <= 0)
+            Number.isFinite(requiredStartEvidenceCount) &&
+            requiredStartEvidenceCount > 0 &&
+            (!Number.isFinite(startEvidenceCount) || startEvidenceCount <= 0)
         ) {
             return false;
         }
@@ -5228,29 +5360,23 @@ const app = {
 
     getStartEvidenceProgressSnapshot(shift = this.data.currentShift) {
         const requiredFromShift = Number(
-            shift?.required_start_evidence_count
-            ?? shift?.requiredStartEvidenceCount
-            ?? Number.NaN
+            shift?.required_start_evidence_count ?? shift?.requiredStartEvidenceCount ?? Number.NaN
         );
         const requiredBySlots = this.employeePhotoSlots.length;
-        const requiredCount = Number.isFinite(requiredFromShift) && requiredFromShift > 0
-            ? Math.max(0, requiredFromShift)
-            : Math.max(0, requiredBySlots);
+        const requiredCount =
+            Number.isFinite(requiredFromShift) && requiredFromShift > 0
+                ? Math.max(0, requiredFromShift)
+                : Math.max(0, requiredBySlots);
 
-        const existingCountRaw = Number(
-            shift?.start_evidence_count
-            ?? shift?.startEvidenceCount
-            ?? 0
-        );
-        const existingCount = Number.isFinite(existingCountRaw) && existingCountRaw > 0
-            ? existingCountRaw
-            : 0;
+        const existingCountRaw = Number(shift?.start_evidence_count ?? shift?.startEvidenceCount ?? 0);
+        const existingCount = Number.isFinite(existingCountRaw) && existingCountRaw > 0 ? existingCountRaw : 0;
 
         const newEvidenceCount = Object.keys(this.photoFiles || {}).length;
         const normalizedExisting = requiredCount > 0 ? Math.min(existingCount, requiredCount) : existingCount;
-        const completedCount = requiredCount > 0
-            ? Math.min(normalizedExisting + newEvidenceCount, requiredCount)
-            : (normalizedExisting + newEvidenceCount);
+        const completedCount =
+            requiredCount > 0
+                ? Math.min(normalizedExisting + newEvidenceCount, requiredCount)
+                : normalizedExisting + newEvidenceCount;
         const remainingCount = Math.max(requiredCount - completedCount, 0);
 
         return {
@@ -5258,7 +5384,7 @@ const app = {
             existingCount: normalizedExisting,
             newEvidenceCount,
             completedCount,
-            remainingCount
+            remainingCount,
         };
     },
 
@@ -5282,8 +5408,11 @@ const app = {
             return scheduledRestaurant;
         }
 
-        return this.getEmployeeAssignedRestaurants(dashboard)
-            .find((restaurant) => String(getRestaurantRecordId(restaurant)) === String(normalizedRestaurantId)) || null;
+        return (
+            this.getEmployeeAssignedRestaurants(dashboard).find(
+                (restaurant) => String(getRestaurantRecordId(restaurant)) === String(normalizedRestaurantId)
+            ) || null
+        );
     },
 
     getEmployeeShiftRestaurantRecord(shift, dashboard = this.data.employee.dashboard || {}) {
@@ -5294,15 +5423,20 @@ const app = {
         if (shift?.restaurant && typeof shift.restaurant === 'object') {
             const directRestaurant = shift.restaurant;
             const hasRestaurantId = getRestaurantRecordId(directRestaurant) != null;
-            const hasRestaurantName = Boolean(pickMeaningfulRestaurantName([
-                directRestaurant?.restaurant_name,
-                directRestaurant?.restaurant_visible_name,
-                directRestaurant?.restaurant_label,
-                directRestaurant?.name,
-                directRestaurant?.display_name,
-                directRestaurant?.label,
-                directRestaurant?.title
-            ], directRestaurant));
+            const hasRestaurantName = Boolean(
+                pickMeaningfulRestaurantName(
+                    [
+                        directRestaurant?.restaurant_name,
+                        directRestaurant?.restaurant_visible_name,
+                        directRestaurant?.restaurant_label,
+                        directRestaurant?.name,
+                        directRestaurant?.display_name,
+                        directRestaurant?.label,
+                        directRestaurant?.title,
+                    ],
+                    directRestaurant
+                )
+            );
 
             if (hasRestaurantId || hasRestaurantName) {
                 return directRestaurant;
@@ -5310,18 +5444,19 @@ const app = {
         }
 
         const shiftRestaurantId = normalizeRestaurantId(
-            shift?.restaurant_id
-            || shift?.restaurant?.restaurant_id
-            || shift?.restaurant?.id
-            || shift?.location_id
-            || shift?.location?.id
-            || shift?.site_id
-            || shift?.site?.id
+            shift?.restaurant_id ||
+                shift?.restaurant?.restaurant_id ||
+                shift?.restaurant?.id ||
+                shift?.location_id ||
+                shift?.location?.id ||
+                shift?.site_id ||
+                shift?.site?.id
         );
 
         if (shiftRestaurantId != null) {
-            const resolvedById = this.resolveEmployeeRestaurantRecord(shiftRestaurantId, dashboard)
-                || this.getKnownRestaurantRecord(shiftRestaurantId);
+            const resolvedById =
+                this.resolveEmployeeRestaurantRecord(shiftRestaurantId, dashboard) ||
+                this.getKnownRestaurantRecord(shiftRestaurantId);
             if (resolvedById) {
                 return resolvedById;
             }
@@ -5329,17 +5464,22 @@ const app = {
 
         const scheduledShiftId = normalizeRestaurantId(shift?.scheduled_shift_id || shift?.id);
         if (scheduledShiftId != null) {
-            const scheduledMatch = asArray(dashboard?.scheduled_shifts)
-                .find((item) => String(normalizeRestaurantId(item?.id || item?.scheduled_shift_id)) === String(scheduledShiftId));
+            const scheduledMatch = asArray(dashboard?.scheduled_shifts).find(
+                (item) =>
+                    String(normalizeRestaurantId(item?.id || item?.scheduled_shift_id)) === String(scheduledShiftId)
+            );
 
             if (scheduledMatch?.restaurant) {
                 return scheduledMatch.restaurant;
             }
 
-            const scheduledRestaurantId = normalizeRestaurantId(scheduledMatch?.restaurant_id || scheduledMatch?.restaurant?.id);
+            const scheduledRestaurantId = normalizeRestaurantId(
+                scheduledMatch?.restaurant_id || scheduledMatch?.restaurant?.id
+            );
             if (scheduledRestaurantId != null) {
-                const resolvedScheduledRestaurant = this.resolveEmployeeRestaurantRecord(scheduledRestaurantId, dashboard)
-                    || this.getKnownRestaurantRecord(scheduledRestaurantId);
+                const resolvedScheduledRestaurant =
+                    this.resolveEmployeeRestaurantRecord(scheduledRestaurantId, dashboard) ||
+                    this.getKnownRestaurantRecord(scheduledRestaurantId);
                 if (resolvedScheduledRestaurant) {
                     return resolvedScheduledRestaurant;
                 }
@@ -5351,11 +5491,15 @@ const app = {
             return fallbackMatch.restaurant;
         }
 
-        const fallbackRestaurantId = normalizeRestaurantId(fallbackMatch?.restaurant_id || fallbackMatch?.restaurant?.id);
+        const fallbackRestaurantId = normalizeRestaurantId(
+            fallbackMatch?.restaurant_id || fallbackMatch?.restaurant?.id
+        );
         if (fallbackRestaurantId != null) {
-            return this.resolveEmployeeRestaurantRecord(fallbackRestaurantId, dashboard)
-                || this.getKnownRestaurantRecord(fallbackRestaurantId)
-                || null;
+            return (
+                this.resolveEmployeeRestaurantRecord(fallbackRestaurantId, dashboard) ||
+                this.getKnownRestaurantRecord(fallbackRestaurantId) ||
+                null
+            );
         }
 
         return null;
@@ -5369,40 +5513,39 @@ const app = {
         const dashboard = this.data.employee.dashboard || {};
         const restaurant = this.getEmployeeShiftRestaurantRecord(shift, dashboard);
         const restaurantId = normalizeRestaurantId(
-            shift?.restaurant_id
-            || restaurant?.restaurant_id
-            || restaurant?.id
-            || shift?.location_id
-            || shift?.site_id
+            shift?.restaurant_id || restaurant?.restaurant_id || restaurant?.id || shift?.location_id || shift?.site_id
         );
 
         const resolvedName = this.getResolvedShiftRestaurantName(
             {
                 ...shift,
                 restaurant,
-                restaurant_id: restaurantId ?? shift?.restaurant_id ?? null
+                restaurant_id: restaurantId ?? shift?.restaurant_id ?? null,
             },
             fallback
         );
 
         if (
-            resolvedName
-            && !isGenericNamedPlaceholder(resolvedName, 'restaurant')
-            && resolvedName !== 'Restaurante sin nombre visible'
-            && !isRestaurantReferenceLabel(resolvedName)
+            resolvedName &&
+            !isGenericNamedPlaceholder(resolvedName, 'restaurant') &&
+            resolvedName !== 'Restaurante sin nombre visible' &&
+            !isRestaurantReferenceLabel(resolvedName)
         ) {
             this.persistShiftRestaurantName(shift, resolvedName);
             return resolvedName;
         }
 
-        const strictRestaurant = restaurantId != null
-            ? (
-                this.resolveEmployeeRestaurantRecord(restaurantId, dashboard)
-                || this.getKnownRestaurantRecord(restaurantId)
-            )
-            : null;
+        const strictRestaurant =
+            restaurantId != null
+                ? this.resolveEmployeeRestaurantRecord(restaurantId, dashboard) ||
+                  this.getKnownRestaurantRecord(restaurantId)
+                : null;
         const strictRestaurantName = getRestaurantDisplayName(strictRestaurant, '').trim();
-        if (strictRestaurantName && !isGenericNamedPlaceholder(strictRestaurantName, 'restaurant') && strictRestaurantName !== 'Restaurante sin nombre visible') {
+        if (
+            strictRestaurantName &&
+            !isGenericNamedPlaceholder(strictRestaurantName, 'restaurant') &&
+            strictRestaurantName !== 'Restaurante sin nombre visible'
+        ) {
             this.persistShiftRestaurantName(shift, strictRestaurantName);
             return strictRestaurantName;
         }
@@ -5427,7 +5570,10 @@ const app = {
 
         const directScheduledId = normalizeRestaurantId(activeShift?.scheduled_shift_id);
         if (directScheduledId != null) {
-            const directMatch = shifts.find((shift) => String(normalizeRestaurantId(shift?.id || shift?.scheduled_shift_id)) === String(directScheduledId));
+            const directMatch = shifts.find(
+                (shift) =>
+                    String(normalizeRestaurantId(shift?.id || shift?.scheduled_shift_id)) === String(directScheduledId)
+            );
             if (directMatch) {
                 return directMatch;
             }
@@ -5443,18 +5589,22 @@ const app = {
             const candidateStartAt = new Date(shift?.scheduled_start || shift?.start_time || 0).getTime();
             const candidateEndAt = new Date(shift?.scheduled_end || shift?.end_time || 0).getTime();
 
-            if (activeRestaurantId != null && candidateRestaurantId != null && String(candidateRestaurantId) === String(activeRestaurantId)) {
+            if (
+                activeRestaurantId != null &&
+                candidateRestaurantId != null &&
+                String(candidateRestaurantId) === String(activeRestaurantId)
+            ) {
                 score += 100;
             }
 
             if (Number.isFinite(activeStartAt) && activeStartAt > 0) {
                 if (
-                    Number.isFinite(candidateStartAt)
-                    && candidateStartAt > 0
-                    && Number.isFinite(candidateEndAt)
-                    && candidateEndAt > 0
-                    && activeStartAt >= (candidateStartAt - (12 * 60 * 60 * 1000))
-                    && activeStartAt <= (candidateEndAt + (12 * 60 * 60 * 1000))
+                    Number.isFinite(candidateStartAt) &&
+                    candidateStartAt > 0 &&
+                    Number.isFinite(candidateEndAt) &&
+                    candidateEndAt > 0 &&
+                    activeStartAt >= candidateStartAt - 12 * 60 * 60 * 1000 &&
+                    activeStartAt <= candidateEndAt + 12 * 60 * 60 * 1000
                 ) {
                     score += 80;
                 }
@@ -5490,27 +5640,30 @@ const app = {
             return null;
         }
 
-        const scheduledMatch = shift?.scheduled_start || shift?.scheduled_end
-            ? shift
-            : this.findEmployeeScheduledMatchForActiveShift(shift, dashboard);
-        const restaurant = shift?.restaurant
-            || scheduledMatch?.restaurant
-            || this.resolveEmployeeRestaurantRecord(shift?.restaurant_id || scheduledMatch?.restaurant_id, dashboard)
-            || null;
+        const scheduledMatch =
+            shift?.scheduled_start || shift?.scheduled_end
+                ? shift
+                : this.findEmployeeScheduledMatchForActiveShift(shift, dashboard);
+        const restaurant =
+            shift?.restaurant ||
+            scheduledMatch?.restaurant ||
+            this.resolveEmployeeRestaurantRecord(shift?.restaurant_id || scheduledMatch?.restaurant_id, dashboard) ||
+            null;
 
         return {
             ...(scheduledMatch || {}),
             ...(shift || {}),
             restaurant,
             restaurant_id: normalizeRestaurantId(
-                shift?.restaurant_id
-                ?? scheduledMatch?.restaurant_id
-                ?? getRestaurantRecordId(restaurant)
+                shift?.restaurant_id ?? scheduledMatch?.restaurant_id ?? getRestaurantRecordId(restaurant)
             ),
-            restaurant_name: getRestaurantDisplayName(restaurant, shift?.restaurant_name || scheduledMatch?.restaurant_name || ''),
+            restaurant_name: getRestaurantDisplayName(
+                restaurant,
+                shift?.restaurant_name || scheduledMatch?.restaurant_name || ''
+            ),
             scheduled_start: shift?.scheduled_start || scheduledMatch?.scheduled_start || null,
             scheduled_end: shift?.scheduled_end || scheduledMatch?.scheduled_end || null,
-            scheduled_hours: getScheduledHours(shift) || getScheduledHours(scheduledMatch) || 0
+            scheduled_hours: getScheduledHours(shift) || getScheduledHours(scheduledMatch) || 0,
         };
     },
 
@@ -5529,7 +5682,7 @@ const app = {
                 weekday: 'long',
                 day: '2-digit',
                 month: 'long',
-                year: 'numeric'
+                year: 'numeric',
             });
             if (hasActiveShift && actualStart) {
                 return `${dateText} • ${rangeText} • iniciado ${formatTime(actualStart)}`;
@@ -5563,7 +5716,7 @@ const app = {
             weekday: 'long',
             day: '2-digit',
             month: 'long',
-            year: 'numeric'
+            year: 'numeric',
         });
     },
 
@@ -5572,13 +5725,13 @@ const app = {
         const shift = this.data.currentShift || this.data.currentScheduledShift;
         const hasActiveShift = Boolean(this.data.currentShift?.id);
         const hasPendingShift = Boolean(this.data.currentScheduledShift);
-        const canStartShift = !hasActiveShift
-            && this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, dashboard);
+        const canStartShift =
+            !hasActiveShift && this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, dashboard);
         const justCompletedShift = !hasActiveShift && !hasPendingShift ? this.data.employee.lastCompletedShift : null;
         const restaurant = this.getEmployeeShiftRestaurantRecord(shift, dashboard);
         const shiftReferenceDate = shift?.scheduled_start || shift?.start_time || null;
         const isShiftToday = shiftReferenceDate
-            ? (new Date(shiftReferenceDate)).toDateString() === (new Date()).toDateString()
+            ? new Date(shiftReferenceDate).toDateString() === new Date().toDateString()
             : false;
         const resolvedRestaurantName = shift
             ? this.getEmployeeResolvedShiftRestaurantName(shift, 'Restaurante programado')
@@ -5602,26 +5755,28 @@ const app = {
         );
 
         this.restoreCurrentShiftAreaSelection({
-            fallbackToAllAvailable: hasActiveShift
+            fallbackToAllAvailable: hasActiveShift,
         });
 
         let shiftTitle = 'Turno de Hoy';
         let shiftHelper = 'Aquí verás el estado real de tu turno y cuándo puedes iniciarlo o continuarlo.';
         let shiftStatus = 'Programado';
         let restaurantName = 'No tienes turnos pendientes';
-        let restaurantAddress = this.getEmployeeCurrentLocationText();
+        const restaurantAddress = this.getEmployeeCurrentLocationText();
         let scheduleText = 'No hay horario pendiente';
         const activeStateLabel = dashboard?.active_shift?.state || this.data.currentShift?.state || 'Activo';
 
         if (hasActiveShift) {
             shiftTitle = 'Turno en Progreso';
-            shiftHelper = 'Ya registraste el inicio de tu turno. Desde aquí puedes continuarlo y completar las evidencias pendientes.';
+            shiftHelper =
+                'Ya registraste el inicio de tu turno. Desde aquí puedes continuarlo y completar las evidencias pendientes.';
             shiftStatus = `Turno ${String(activeStateLabel).toLowerCase()}`;
             restaurantName = resolvedRestaurantName;
             scheduleText = this.getEmployeeShiftScheduleText(shift, { hasActiveShift: true });
         } else if (canStartShift) {
             shiftTitle = isShiftToday ? 'Turno de Hoy' : 'Próximo Turno';
-            shiftHelper = 'Tienes un turno dentro del horario permitido para iniciar. Revisa la información y continúa cuando estés en el restaurante.';
+            shiftHelper =
+                'Tienes un turno dentro del horario permitido para iniciar. Revisa la información y continúa cuando estés en el restaurante.';
             shiftStatus = 'Listo para iniciar';
             restaurantName = resolvedRestaurantName;
             scheduleText = this.getEmployeeShiftScheduleText(shift);
@@ -5668,7 +5823,9 @@ const app = {
         document.getElementById('employee-shift-location').textContent = restaurantAddress;
         document.getElementById('employee-task-title').textContent = task?.title || 'No hay tareas pendientes.';
         document.getElementById('employee-task-observations').textContent = task?.description || 'Sin observaciones.';
-        document.getElementById('employee-task-heading').textContent = task ? 'Tarea Especial Asignada' : 'Sin tareas urgentes';
+        document.getElementById('employee-task-heading').textContent = task
+            ? 'Tarea Especial Asignada'
+            : 'Sin tareas urgentes';
         document.getElementById('employee-task-card').style.display = task ? '' : 'none';
 
         const startButton = document.getElementById('employee-start-shift-btn');
@@ -5692,12 +5849,7 @@ const app = {
         this.renderEmployeeRestaurantTasks();
         this.updateUserUI();
     },
-
-
-
-
 };
-
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {

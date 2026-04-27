@@ -1,15 +1,43 @@
 // @ts-nocheck
 import * as XLSX from 'xlsx';
-import { CACHE_TTLS, DEFAULT_SYSTEM_SETTINGS, REPORT_COLUMNS, SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES } from '../constants.js';
+import {
+    CACHE_TTLS,
+    DEFAULT_SYSTEM_SETTINGS,
+    REPORT_COLUMNS,
+    SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES,
+} from '../constants.js';
 import { apiClient, buildIdempotencyKey } from '../api.js';
 import {
-    asArray, buildJwtFullDebugSummary, collectEvidenceUrls, countEndedEarlyShifts, decodeJwtHeader, decodeJwtPayload, delay, escapeHtml, isHttpUrl,
-    formatDate, formatDateTime, formatHours, formatShiftRange, getBadgeClass,
-    getEmployeeDisplayName, getRestaurantDisplayName, getRestaurantRecordId,
-    getScheduledHours, getShiftStatusLabel, getWorkedHours, initials,
-    isShiftEndedEarly, normalizeAreaToken, normalizeRestaurantId,
-    sumHours, sumWorkedHours, summarizeShiftStatuses, toDateTimeLocalInput,
-    toIsoDate, toLocalDateKey
+    asArray,
+    buildJwtFullDebugSummary,
+    collectEvidenceUrls,
+    countEndedEarlyShifts,
+    decodeJwtHeader,
+    decodeJwtPayload,
+    delay,
+    escapeHtml,
+    isHttpUrl,
+    formatDate,
+    formatDateTime,
+    formatHours,
+    formatShiftRange,
+    getBadgeClass,
+    getEmployeeDisplayName,
+    getRestaurantDisplayName,
+    getRestaurantRecordId,
+    getScheduledHours,
+    getShiftStatusLabel,
+    getWorkedHours,
+    initials,
+    isShiftEndedEarly,
+    normalizeAreaToken,
+    normalizeRestaurantId,
+    sumHours,
+    sumWorkedHours,
+    summarizeShiftStatuses,
+    toDateTimeLocalInput,
+    toIsoDate,
+    toLocalDateKey,
 } from '../utils.js';
 
 const SUPERVISOR_SHIFT_WEEK_TEMPLATE_STORAGE_KEY = 'worktrace_supervisor_shift_week_template_v1';
@@ -20,7 +48,7 @@ const SUPERVISOR_SHIFT_WEEK_DAYS = Object.freeze([
     { index: 3, label: 'Jueves', aliases: ['jueves', 'jue', 'thursday', 'thu', 'thur', 'thurs'] },
     { index: 4, label: 'Viernes', aliases: ['viernes', 'vie', 'friday', 'fri'] },
     { index: 5, label: 'Sábado', aliases: ['sabado', 'sáb', 'sab', 'saturday', 'sat'] },
-    { index: 6, label: 'Domingo', aliases: ['domingo', 'dom', 'sunday', 'sun'] }
+    { index: 6, label: 'Domingo', aliases: ['domingo', 'dom', 'sunday', 'sun'] },
 ]);
 
 function normalizeSpreadsheetKey(value = '') {
@@ -87,17 +115,22 @@ function parseExcelDateParts(value) {
         return {
             year: value.getFullYear(),
             month: value.getMonth() + 1,
-            day: value.getDate()
+            day: value.getDate(),
         };
     }
 
     if (typeof value === 'number' && Number.isFinite(value)) {
         const parsed = XLSX.SSF.parse_date_code(value);
-        if (parsed && Number.isFinite(Number(parsed.y)) && Number.isFinite(Number(parsed.m)) && Number.isFinite(Number(parsed.d))) {
+        if (
+            parsed &&
+            Number.isFinite(Number(parsed.y)) &&
+            Number.isFinite(Number(parsed.m)) &&
+            Number.isFinite(Number(parsed.d))
+        ) {
             return {
                 year: Number(parsed.y),
                 month: Number(parsed.m),
-                day: Number(parsed.d)
+                day: Number(parsed.d),
             };
         }
     }
@@ -112,7 +145,7 @@ function parseExcelDateParts(value) {
         return {
             year: Number(match[1]),
             month: Number(match[2]),
-            day: Number(match[3])
+            day: Number(match[3]),
         };
     }
 
@@ -121,7 +154,7 @@ function parseExcelDateParts(value) {
         return {
             year: Number(match[3]),
             month: Number(match[2]),
-            day: Number(match[1])
+            day: Number(match[1]),
         };
     }
 
@@ -133,7 +166,7 @@ function parseExcelDateParts(value) {
     return {
         year: parsedDate.getFullYear(),
         month: parsedDate.getMonth() + 1,
-        day: parsedDate.getDate()
+        day: parsedDate.getDate(),
     };
 }
 
@@ -243,7 +276,9 @@ function getImportedDayIndex(value) {
         return null;
     }
 
-    const dayEntry = SUPERVISOR_SHIFT_WEEK_DAYS.find((item) => item.aliases.some((alias) => normalizeSpreadsheetKey(alias) === normalized));
+    const dayEntry = SUPERVISOR_SHIFT_WEEK_DAYS.find((item) =>
+        item.aliases.some((alias) => normalizeSpreadsheetKey(alias) === normalized)
+    );
     return dayEntry ? dayEntry.index : null;
 }
 
@@ -257,9 +292,9 @@ function getNestedValue(record, path = '') {
         return undefined;
     }
 
-    return path.split('.').reduce((current, segment) => (
-        current && typeof current === 'object' ? current[segment] : undefined
-    ), record);
+    return path
+        .split('.')
+        .reduce((current, segment) => (current && typeof current === 'object' ? current[segment] : undefined), record);
 }
 
 function resolveRecordNumber(record, paths = []) {
@@ -293,8 +328,7 @@ function calculateDistanceMeters(from, to) {
     const deltaLng = toRadians(toLng - fromLng);
     const lat1 = toRadians(fromLat);
     const lat2 = toRadians(toLat);
-    const a = Math.sin(deltaLat / 2) ** 2
-        + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+    const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return earthRadiusMeters * c;
 }
@@ -308,17 +342,26 @@ export const supervisorMethods = {
 
         const currentValue = select.value;
         const placeholder = includePlaceholder ? '<option value="">Selecciona un restaurante</option>' : '';
-        const restaurants = this.data.supervisor.restaurants.filter((restaurant) => getRestaurantRecordId(restaurant) != null);
+        const restaurants = this.data.supervisor.restaurants.filter(
+            (restaurant) => getRestaurantRecordId(restaurant) != null
+        );
         select.innerHTML = `
             ${placeholder}
-            ${restaurants.map((restaurant) => `
+            ${restaurants
+                .map(
+                    (restaurant) => `
                 <option value="${escapeHtml(String(getRestaurantRecordId(restaurant)))}">
                     ${escapeHtml(getRestaurantDisplayName(restaurant))}
                 </option>
-            `).join('')}
+            `
+                )
+                .join('')}
         `;
 
-        if (currentValue && restaurants.some((restaurant) => String(getRestaurantRecordId(restaurant)) === String(currentValue))) {
+        if (
+            currentValue &&
+            restaurants.some((restaurant) => String(getRestaurantRecordId(restaurant)) === String(currentValue))
+        ) {
             select.value = currentValue;
         } else if (!includePlaceholder && restaurants[0]) {
             select.value = String(getRestaurantRecordId(restaurants[0]));
@@ -330,24 +373,25 @@ export const supervisorMethods = {
         const restaurantId = item.restaurant_id || item.restaurant?.id;
         const restaurantName = getRestaurantDisplayName(item, getRestaurantDisplayName(item.restaurant || null, ''));
         const assignedRestaurantsCount = Number(
-            item.assigned_restaurants_count
-            ?? employee.assigned_restaurants_count
-            ?? 0
+            item.assigned_restaurants_count ?? employee.assigned_restaurants_count ?? 0
         );
 
         return {
             id: employee.id || item.id || item.employee_id || item.user_id,
-            full_name: getEmployeeDisplayName({
-                ...item,
-                ...(employee && typeof employee === 'object' ? employee : {})
-            }, 'Empleado'),
+            full_name: getEmployeeDisplayName(
+                {
+                    ...item,
+                    ...(employee && typeof employee === 'object' ? employee : {}),
+                },
+                'Empleado'
+            ),
             email: employee.email || item.email || '-',
             phone_e164: employee.phone_e164 || employee.phone_number || item.phone_e164 || '-',
             is_active: employee.is_active ?? item.is_active ?? true,
             restaurant_id: restaurantId,
             restaurant_name: restaurantName,
             assigned_restaurants_count: Number.isFinite(assignedRestaurantsCount) ? assignedRestaurantsCount : 0,
-            assigned_to_restaurant: item.assigned_to_restaurant === true
+            assigned_to_restaurant: item.assigned_to_restaurant === true,
         };
     },
 
@@ -369,7 +413,7 @@ export const supervisorMethods = {
 
         return this.runPending(`supervisorRestaurantStaff:${cacheKey}`, async () => {
             const result = await apiClient.restaurantStaffManage('list_by_restaurant', {
-                restaurant_id: normalizedRestaurantId
+                restaurant_id: normalizedRestaurantId,
             });
 
             return this.setScopedCacheEntry(
@@ -398,8 +442,8 @@ export const supervisorMethods = {
 
         return this.runPending(`supervisorAssignableEmployees:${cacheKey}:directory`, async () => {
             if (
-                this.data.supervisor.employees.length === 0
-                || !this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees)
+                this.data.supervisor.employees.length === 0 ||
+                !this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees)
             ) {
                 await this.loadSupervisorEmployees();
             }
@@ -412,7 +456,7 @@ export const supervisorMethods = {
                     .filter((employee) => employee.is_active !== false)
                     .map((employee) => ({
                         ...employee,
-                        assigned_to_restaurant: true
+                        assigned_to_restaurant: true,
                     }))
             );
         });
@@ -460,7 +504,7 @@ export const supervisorMethods = {
         const defaultStart = new Date();
         defaultStart.setMinutes(0, 0, 0);
         defaultStart.setHours(defaultStart.getHours() + 1);
-        const defaultEnd = new Date(defaultStart.getTime() + (6 * 60 * 60 * 1000));
+        const defaultEnd = new Date(defaultStart.getTime() + 6 * 60 * 60 * 1000);
 
         const startInput = document.getElementById('supervisor-shift-start');
         const endInput = document.getElementById('supervisor-shift-end');
@@ -549,11 +593,12 @@ export const supervisorMethods = {
     updateSupervisorSpecialTaskScopeCopy() {
         const scopeCopy = document.getElementById('supervisor-task-scope-copy');
 
-        const scopeText = this.supervisorShiftMode === 'plan'
-            ? 'La misma tarea se repetirá en cada fecha que programes.'
-            : this.supervisorShiftMode === 'team'
-                ? 'La misma tarea se repetirá para cada empleado incluido.'
-                : 'Se creará junto con este turno puntual.';
+        const scopeText =
+            this.supervisorShiftMode === 'plan'
+                ? 'La misma tarea se repetirá en cada fecha que programes.'
+                : this.supervisorShiftMode === 'team'
+                  ? 'La misma tarea se repetirá para cada empleado incluido.'
+                  : 'Se creará junto con este turno puntual.';
 
         if (scopeCopy) {
             scopeCopy.textContent = scopeText;
@@ -586,9 +631,15 @@ export const supervisorMethods = {
             button.classList.toggle('active', button.dataset.mode === this.supervisorShiftMode);
         });
 
-        document.getElementById('supervisor-shift-mode-single')?.classList.toggle('hidden', this.supervisorShiftMode !== 'single');
-        document.getElementById('supervisor-shift-mode-team')?.classList.toggle('hidden', this.supervisorShiftMode !== 'team');
-        document.getElementById('supervisor-shift-mode-plan')?.classList.toggle('hidden', this.supervisorShiftMode !== 'plan');
+        document
+            .getElementById('supervisor-shift-mode-single')
+            ?.classList.toggle('hidden', this.supervisorShiftMode !== 'single');
+        document
+            .getElementById('supervisor-shift-mode-team')
+            ?.classList.toggle('hidden', this.supervisorShiftMode !== 'team');
+        document
+            .getElementById('supervisor-shift-mode-plan')
+            ?.classList.toggle('hidden', this.supervisorShiftMode !== 'plan');
         this.syncSupervisorShiftModeFieldState();
         this.updateSupervisorSpecialTaskScopeCopy();
         window.requestAnimationFrame(() => {
@@ -627,7 +678,9 @@ export const supervisorMethods = {
             return;
         }
 
-        const employees = (this.data.supervisor.employees || []).filter((employee) => employee?.id && employee.is_active !== false);
+        const employees = (this.data.supervisor.employees || []).filter(
+            (employee) => employee?.id && employee.is_active !== false
+        );
         const fragment = document.createDocumentFragment();
         if (employees.length === 0) {
             const option = document.createElement('option');
@@ -659,7 +712,9 @@ export const supervisorMethods = {
             return;
         }
 
-        const employees = (this.data.supervisor.employees || []).filter((employee) => employee?.id && employee.is_active !== false);
+        const employees = (this.data.supervisor.employees || []).filter(
+            (employee) => employee?.id && employee.is_active !== false
+        );
         const fragment = document.createDocumentFragment();
         if (employees.length === 0) {
             const option = document.createElement('option');
@@ -749,10 +804,15 @@ export const supervisorMethods = {
         try {
             const employees = await this.getAssignableEmployeesForRestaurant(restaurantId);
             const validIds = new Set(employees.map((employee) => String(employee.id)));
-            this.supervisorBatchSelectedEmployees = (this.supervisorBatchSelectedEmployees || []).filter((employeeId) => validIds.has(String(employeeId)));
+            this.supervisorBatchSelectedEmployees = (this.supervisorBatchSelectedEmployees || []).filter((employeeId) =>
+                validIds.has(String(employeeId))
+            );
 
             if (employees.length === 0) {
-                this.setShiftBatchPickerEmpty(container, 'No hay empleados activos disponibles para programar en este restaurante.');
+                this.setShiftBatchPickerEmpty(
+                    container,
+                    'No hay empleados activos disponibles para programar en este restaurante.'
+                );
                 return [];
             }
 
@@ -770,7 +830,10 @@ export const supervisorMethods = {
             return employees;
         } catch (error) {
             console.warn('No fue posible cargar empleados para programación masiva.', error);
-            this.setShiftBatchPickerEmpty(container, 'No fue posible cargar los empleados disponibles para este restaurante.');
+            this.setShiftBatchPickerEmpty(
+                container,
+                'No fue posible cargar los empleados disponibles para este restaurante.'
+            );
             this.supervisorBatchSelectedEmployees = [];
             return [];
         }
@@ -806,9 +869,10 @@ export const supervisorMethods = {
     },
 
     buildSupervisorShiftPlanRows(weekStartValue = '', seedRows = []) {
-        const weekStart = getSupervisorWeekStart(weekStartValue || this.supervisorShiftPlanWeekStart || new Date())
-            || getSupervisorWeekStart(new Date())
-            || new Date();
+        const weekStart =
+            getSupervisorWeekStart(weekStartValue || this.supervisorShiftPlanWeekStart || new Date()) ||
+            getSupervisorWeekStart(new Date()) ||
+            new Date();
         const rowsByIndex = new Map(
             asArray(seedRows)
                 .filter((row) => Number.isInteger(Number(row?.dayIndex)))
@@ -826,14 +890,15 @@ export const supervisorMethods = {
                 enabled: seed.enabled === true,
                 startTime: String(seed.startTime || '').trim(),
                 endTime: String(seed.endTime || '').trim(),
-                notes: String(seed.notes || '').trim()
+                notes: String(seed.notes || '').trim(),
             };
         });
     },
 
     setSupervisorShiftPlanWeek(weekStartValue = '', { preserveValues = true } = {}) {
-        const weekStart = getSupervisorWeekStart(weekStartValue || this.supervisorShiftPlanWeekStart || new Date())
-            || getSupervisorWeekStart(new Date());
+        const weekStart =
+            getSupervisorWeekStart(weekStartValue || this.supervisorShiftPlanWeekStart || new Date()) ||
+            getSupervisorWeekStart(new Date());
         if (!weekStart) {
             return;
         }
@@ -844,7 +909,7 @@ export const supervisorMethods = {
             weekInput.value = weekKey;
         }
 
-        const seedRows = preserveValues ? (this.supervisorShiftPlanRows || []) : [];
+        const seedRows = preserveValues ? this.supervisorShiftPlanRows || [] : [];
         this.supervisorShiftPlanWeekStart = weekKey;
         this.supervisorShiftPlanRows = this.buildSupervisorShiftPlanRows(weekKey, seedRows);
         this.renderSupervisorShiftPlanRows();
@@ -889,8 +954,8 @@ export const supervisorMethods = {
                 enabled: row.enabled === true,
                 startTime: String(row.startTime || '').trim(),
                 endTime: String(row.endTime || '').trim(),
-                notes: String(row.notes || '').trim()
-            }))
+                notes: String(row.notes || '').trim(),
+            })),
         };
     },
 
@@ -928,8 +993,8 @@ export const supervisorMethods = {
 
     applySupervisorShiftTemplate(template = {}, { keepCurrentWeek = true } = {}) {
         const targetWeek = keepCurrentWeek
-            ? (this.supervisorShiftPlanWeekStart || new Date())
-            : (template.weekStart || this.supervisorShiftPlanWeekStart || new Date());
+            ? this.supervisorShiftPlanWeekStart || new Date()
+            : template.weekStart || this.supervisorShiftPlanWeekStart || new Date();
         const weekStart = getSupervisorWeekStart(targetWeek) || getSupervisorWeekStart(new Date());
         if (!weekStart) {
             return;
@@ -944,7 +1009,11 @@ export const supervisorMethods = {
 
         const restaurantId = String(template?.restaurantId || '').trim();
         const restaurantSelect = document.getElementById('supervisor-shift-plan-restaurant');
-        if (restaurantSelect && restaurantId && Array.from(restaurantSelect.options).some((option) => option.value === restaurantId)) {
+        if (
+            restaurantSelect &&
+            restaurantId &&
+            Array.from(restaurantSelect.options).some((option) => option.value === restaurantId)
+        ) {
             restaurantSelect.value = restaurantId;
         }
 
@@ -957,7 +1026,7 @@ export const supervisorMethods = {
         if (!template || !Array.isArray(template.rows) || template.rows.length === 0) {
             this.showToast('Todavía no hay una semana guardada para replicar.', {
                 tone: 'info',
-                title: 'Sin semana anterior'
+                title: 'Sin semana anterior',
             });
             return;
         }
@@ -965,7 +1034,7 @@ export const supervisorMethods = {
         this.applySupervisorShiftTemplate(template, { keepCurrentWeek: true });
         this.showToast('Se replicó la última semana guardada en la semana que estás viendo.', {
             tone: 'success',
-            title: 'Semana replicada'
+            title: 'Semana replicada',
         });
     },
 
@@ -991,7 +1060,7 @@ export const supervisorMethods = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible importar el Excel de turnos.'), {
                 tone: 'error',
-                title: 'No fue posible importar el Excel'
+                title: 'No fue posible importar el Excel',
             });
         } finally {
             if (input) {
@@ -1004,7 +1073,7 @@ export const supervisorMethods = {
         const buffer = await file.arrayBuffer();
         const workbook = XLSX.read(buffer, {
             type: 'array',
-            cellDates: true
+            cellDates: true,
         });
         const firstSheetName = workbook.SheetNames?.[0];
         const sheet = firstSheetName ? workbook.Sheets[firstSheetName] : null;
@@ -1014,7 +1083,7 @@ export const supervisorMethods = {
 
         const rows = XLSX.utils.sheet_to_json(sheet, {
             defval: '',
-            raw: false
+            raw: false,
         });
 
         if (!Array.isArray(rows) || rows.length === 0) {
@@ -1030,12 +1099,7 @@ export const supervisorMethods = {
                 return acc;
             }, {});
 
-            const dateValue = pickFirstObjectValue(normalizedRow, [
-                'fecha',
-                'date',
-                'diafecha',
-                'workdate'
-            ]);
+            const dateValue = pickFirstObjectValue(normalizedRow, ['fecha', 'date', 'diafecha', 'workdate']);
             const dateKey = normalizeImportedDateKey(dateValue);
 
             let dayIndex = null;
@@ -1050,73 +1114,76 @@ export const supervisorMethods = {
             }
 
             if (dayIndex == null) {
-                dayIndex = getImportedDayIndex(pickFirstObjectValue(normalizedRow, [
-                    'dia',
-                    'day',
-                    'weekday'
-                ]));
+                dayIndex = getImportedDayIndex(pickFirstObjectValue(normalizedRow, ['dia', 'day', 'weekday']));
             }
 
             if (dayIndex == null) {
                 return;
             }
 
-            const startTime = normalizeImportedTimeValue(pickFirstObjectValue(normalizedRow, [
-                'entrada',
-                'horadeentrada',
-                'horaentrada',
-                'inicio',
-                'horadeinicio',
-                'horainicio',
-                'start',
-                'starttime'
-            ]));
-            const endTime = normalizeImportedTimeValue(pickFirstObjectValue(normalizedRow, [
-                'salida',
-                'horadesalida',
-                'horasalida',
-                'fin',
-                'horadefin',
-                'horafin',
-                'end',
-                'endtime'
-            ]));
-            const notes = String(pickFirstObjectValue(normalizedRow, [
-                'notas',
-                'nota',
-                'observaciones',
-                'comentario',
-                'comentarios',
-                'notes'
-            ]) || '').trim();
-            const explicitEnabled = normalizeImportedBoolean(pickFirstObjectValue(normalizedRow, [
-                'activo',
-                'active',
-                'habilitado',
-                'enabled',
-                'programar'
-            ]));
+            const startTime = normalizeImportedTimeValue(
+                pickFirstObjectValue(normalizedRow, [
+                    'entrada',
+                    'horadeentrada',
+                    'horaentrada',
+                    'inicio',
+                    'horadeinicio',
+                    'horainicio',
+                    'start',
+                    'starttime',
+                ])
+            );
+            const endTime = normalizeImportedTimeValue(
+                pickFirstObjectValue(normalizedRow, [
+                    'salida',
+                    'horadesalida',
+                    'horasalida',
+                    'fin',
+                    'horadefin',
+                    'horafin',
+                    'end',
+                    'endtime',
+                ])
+            );
+            const notes = String(
+                pickFirstObjectValue(normalizedRow, [
+                    'notas',
+                    'nota',
+                    'observaciones',
+                    'comentario',
+                    'comentarios',
+                    'notes',
+                ]) || ''
+            ).trim();
+            const explicitEnabled = normalizeImportedBoolean(
+                pickFirstObjectValue(normalizedRow, ['activo', 'active', 'habilitado', 'enabled', 'programar'])
+            );
 
             templateRows.push({
                 dayIndex,
                 enabled: explicitEnabled ?? Boolean(startTime || endTime),
                 startTime,
                 endTime,
-                notes
+                notes,
             });
         });
 
         if (templateRows.length === 0) {
-            throw new Error('No encontramos columnas reconocibles. Usa Dia/Fecha, Entrada, Salida y opcionalmente Notas.');
+            throw new Error(
+                'No encontramos columnas reconocibles. Usa Dia/Fecha, Entrada, Salida y opcionalmente Notas.'
+            );
         }
 
-        this.applySupervisorShiftTemplate({
-            restaurantId: document.getElementById('supervisor-shift-plan-restaurant')?.value || '',
-            rows: templateRows,
-            weekStart: importedWeekStart || undefined
-        }, {
-            keepCurrentWeek: !importedWeekStart
-        });
+        this.applySupervisorShiftTemplate(
+            {
+                restaurantId: document.getElementById('supervisor-shift-plan-restaurant')?.value || '',
+                rows: templateRows,
+                weekStart: importedWeekStart || undefined,
+            },
+            {
+                keepCurrentWeek: !importedWeekStart,
+            }
+        );
 
         const loadedCount = templateRows.filter((row) => row.enabled && row.startTime && row.endTime).length;
         this.showToast(
@@ -1125,20 +1192,20 @@ export const supervisorMethods = {
                 : 'El Excel se importó, pero revisa los horarios antes de guardar.',
             {
                 tone: 'success',
-                title: 'Excel importado'
+                title: 'Excel importado',
             }
         );
     },
 
     updateSupervisorShiftPlanWeekRow(rowId, field, value) {
-        this.supervisorShiftPlanRows = asArray(this.supervisorShiftPlanRows).map((row) => (
+        this.supervisorShiftPlanRows = asArray(this.supervisorShiftPlanRows).map((row) =>
             row.id === rowId
                 ? {
-                    ...row,
-                    [field]: field === 'enabled' ? value === true : value
-                }
+                      ...row,
+                      [field]: field === 'enabled' ? value === true : value,
+                  }
                 : row
-        ));
+        );
 
         if (field === 'enabled') {
             this.renderSupervisorShiftPlanRows();
@@ -1149,17 +1216,17 @@ export const supervisorMethods = {
     },
 
     clearSupervisorShiftPlanWeekRow(rowId) {
-        this.supervisorShiftPlanRows = asArray(this.supervisorShiftPlanRows).map((row) => (
+        this.supervisorShiftPlanRows = asArray(this.supervisorShiftPlanRows).map((row) =>
             row.id === rowId
                 ? {
-                    ...row,
-                    enabled: false,
-                    startTime: '',
-                    endTime: '',
-                    notes: ''
-                }
+                      ...row,
+                      enabled: false,
+                      startTime: '',
+                      endTime: '',
+                      notes: '',
+                  }
                 : row
-        ));
+        );
         this.renderSupervisorShiftPlanRows();
     },
 
@@ -1185,10 +1252,10 @@ export const supervisorMethods = {
         const dayDate = document.createElement('span');
         dayDate.textContent = row.dateKey
             ? formatDate(`${row.dateKey}T00:00:00`, {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            })
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+              })
             : '-';
         dayCopy.append(dayName, dayDate);
         dayWrap.append(toggle, dayCopy);
@@ -1252,7 +1319,9 @@ export const supervisorMethods = {
             return;
         }
 
-        const weekStart = getSupervisorWeekStart(this.supervisorShiftPlanWeekStart || new Date()) || getSupervisorWeekStart(new Date());
+        const weekStart =
+            getSupervisorWeekStart(this.supervisorShiftPlanWeekStart || new Date()) ||
+            getSupervisorWeekStart(new Date());
         if (!weekStart) {
             container.innerHTML = '';
             return;
@@ -1262,10 +1331,16 @@ export const supervisorMethods = {
         const rows = asArray(this.supervisorShiftPlanRows);
         const selectedDays = rows.filter((row) => row.enabled === true);
         const readyDays = selectedDays.filter((row) => row.startTime && row.endTime);
-        const totalMinutes = readyDays.reduce((sum, row) => sum + this.getSupervisorShiftPlanRowDurationMinutes(row), 0);
+        const totalMinutes = readyDays.reduce(
+            (sum, row) => sum + this.getSupervisorShiftPlanRowDurationMinutes(row),
+            0
+        );
 
         const restaurantId = String(document.getElementById('supervisor-shift-plan-restaurant')?.value || '').trim();
-        const restaurant = asArray(this.data.supervisor.restaurants).find((item) => String(getRestaurantRecordId(item) || '') === restaurantId) || null;
+        const restaurant =
+            asArray(this.data.supervisor.restaurants).find(
+                (item) => String(getRestaurantRecordId(item) || '') === restaurantId
+            ) || null;
         const restaurantName = restaurant ? getRestaurantDisplayName(restaurant) : 'Sin restaurante seleccionado';
 
         container.innerHTML = `
@@ -1282,8 +1357,14 @@ export const supervisorMethods = {
             return;
         }
 
-        if (!Array.isArray(this.supervisorShiftPlanRows) || this.supervisorShiftPlanRows.length !== SUPERVISOR_SHIFT_WEEK_DAYS.length) {
-            this.supervisorShiftPlanRows = this.buildSupervisorShiftPlanRows(this.supervisorShiftPlanWeekStart || new Date(), this.supervisorShiftPlanRows || []);
+        if (
+            !Array.isArray(this.supervisorShiftPlanRows) ||
+            this.supervisorShiftPlanRows.length !== SUPERVISOR_SHIFT_WEEK_DAYS.length
+        ) {
+            this.supervisorShiftPlanRows = this.buildSupervisorShiftPlanRows(
+                this.supervisorShiftPlanWeekStart || new Date(),
+                this.supervisorShiftPlanRows || []
+            );
         }
 
         const fragment = document.createDocumentFragment();
@@ -1307,7 +1388,7 @@ export const supervisorMethods = {
             title,
             description,
             requires_evidence: requiresEvidence,
-            priority
+            priority,
         };
     },
 
@@ -1317,7 +1398,9 @@ export const supervisorMethods = {
             return { ok: true };
         }
 
-        const isSupervisorRole = ['supervisora', 'supervisor'].includes(String(this.currentUser?.role || '').toLowerCase());
+        const isSupervisorRole = ['supervisora', 'supervisor'].includes(
+            String(this.currentUser?.role || '').toLowerCase()
+        );
         const supervisorRestaurantIds = new Set(
             asArray(this.data.supervisor?.restaurants)
                 .map((restaurant) => String(getRestaurantRecordId(restaurant) || '').trim())
@@ -1327,20 +1410,27 @@ export const supervisorMethods = {
         for (const assignment of normalizedAssignments) {
             const employeeId = String(assignment?.employee_id || '').trim();
             const restaurantId = String(assignment?.restaurant_id || '').trim();
-            const employeeRecord = (this.data.supervisor.employees || []).find((item) => String(item?.id || '') === employeeId);
+            const employeeRecord = (this.data.supervisor.employees || []).find(
+                (item) => String(item?.id || '') === employeeId
+            );
             const employeeName = getEmployeeDisplayName(employeeRecord, 'el empleado seleccionado');
             const isEmployeeActive = employeeRecord?.is_active;
             if (isEmployeeActive === false) {
                 return {
                     ok: false,
-                    message: `${employeeName} debe estar activo para poder crear la tarea especial.`
+                    message: `${employeeName} debe estar activo para poder crear la tarea especial.`,
                 };
             }
 
-            if (isSupervisorRole && restaurantId && supervisorRestaurantIds.size > 0 && !supervisorRestaurantIds.has(restaurantId)) {
+            if (
+                isSupervisorRole &&
+                restaurantId &&
+                supervisorRestaurantIds.size > 0 &&
+                !supervisorRestaurantIds.has(restaurantId)
+            ) {
                 return {
                     ok: false,
-                    message: `No tienes acceso al restaurante seleccionado para crear tareas especiales en ese turno.`
+                    message: `No tienes acceso al restaurante seleccionado para crear tareas especiales en ese turno.`,
                 };
             }
         }
@@ -1352,8 +1442,8 @@ export const supervisorMethods = {
         const items = Array.isArray(response?.created_items)
             ? response.created_items
             : Array.isArray(response?.data?.created_items)
-                ? response.data.created_items
-                : [];
+              ? response.data.created_items
+              : [];
 
         return items
             .filter((item) => item && typeof item === 'object')
@@ -1364,7 +1454,7 @@ export const supervisorMethods = {
                 restaurant_id: item.restaurant_id,
                 scheduled_start: item.scheduled_start,
                 scheduled_end: item.scheduled_end,
-                notes: item.notes
+                notes: item.notes,
             }));
     },
 
@@ -1372,8 +1462,8 @@ export const supervisorMethods = {
         const directArray = Array.isArray(response?.created_ids)
             ? response.created_ids
             : Array.isArray(response?.data?.created_ids)
-                ? response.data.created_ids
-                : [];
+              ? response.data.created_ids
+              : [];
 
         if (directArray.length > 0) {
             return directArray.filter((value) => value != null && String(value).trim() !== '');
@@ -1389,7 +1479,7 @@ export const supervisorMethods = {
             response?.data?.scheduled_shift?.id,
             response?.data?.scheduled_shift?.scheduled_shift_id,
             response?.data?.created_id,
-            response?.data?.id
+            response?.data?.id,
         ].filter((value) => value != null && String(value).trim() !== '');
 
         return directCandidates;
@@ -1432,7 +1522,7 @@ export const supervisorMethods = {
                 iat: null,
                 exp: null,
                 iat_utc: null,
-                exp_utc: null
+                exp_utc: null,
             };
         }
 
@@ -1453,7 +1543,7 @@ export const supervisorMethods = {
             iat: Number.isFinite(iat) ? iat : null,
             exp: Number.isFinite(exp) ? exp : null,
             iat_utc: Number.isFinite(iat) ? new Date(iat * 1000).toISOString() : null,
-            exp_utc: Number.isFinite(exp) ? new Date(exp * 1000).toISOString() : null
+            exp_utc: Number.isFinite(exp) ? new Date(exp * 1000).toISOString() : null,
         };
     },
 
@@ -1475,7 +1565,7 @@ export const supervisorMethods = {
             return {
                 ok: false,
                 status: null,
-                message: 'No fue posible ejecutar la sonda de Auth por falta de token o configuración.'
+                message: 'No fue posible ejecutar la sonda de Auth por falta de token o configuración.',
             };
         }
 
@@ -1484,8 +1574,8 @@ export const supervisorMethods = {
                 method: 'GET',
                 headers: {
                     apikey: anonKey,
-                    Authorization: `Bearer ${normalizedToken}`
-                }
+                    Authorization: `Bearer ${normalizedToken}`,
+                },
             });
 
             const text = await response.text();
@@ -1502,13 +1592,13 @@ export const supervisorMethods = {
             return {
                 ok: response.ok,
                 status: response.status,
-                body
+                body,
             };
         } catch (error) {
             return {
                 ok: false,
                 status: null,
-                message: error?.message || 'No fue posible consultar /auth/v1/user'
+                message: error?.message || 'No fue posible consultar /auth/v1/user',
             };
         }
     },
@@ -1516,7 +1606,7 @@ export const supervisorMethods = {
     registerTaskAuthDebug(entry = {}) {
         const debugEntry = {
             at: new Date().toISOString(),
-            ...entry
+            ...entry,
         };
 
         if (!Array.isArray(window.__worktraceTaskAuthDebug)) {
@@ -1539,7 +1629,7 @@ export const supervisorMethods = {
             message: error?.message || null,
             payload_sent: payload,
             backend_response: error?.payload || null,
-            context
+            context,
         };
 
         if (!Array.isArray(window.__worktraceTaskCreateDebug)) {
@@ -1562,7 +1652,7 @@ export const supervisorMethods = {
             message: error?.message || null,
             payload_sent: payload,
             request_context: requestContext,
-            backend_response: error?.payload || null
+            backend_response: error?.payload || null,
         };
 
         if (!Array.isArray(window.__worktraceReportDebug)) {
@@ -1585,7 +1675,7 @@ export const supervisorMethods = {
             message: error?.message || null,
             payload_sent: payload,
             backend_response: error?.payload || null,
-            context
+            context,
         };
 
         if (!Array.isArray(window.__worktraceSupervisionDebug)) {
@@ -1604,7 +1694,8 @@ export const supervisorMethods = {
             return;
         }
 
-        const latestEntry = debugEntry || (Array.isArray(window.__worktraceReportDebug) ? window.__worktraceReportDebug[0] : null);
+        const latestEntry =
+            debugEntry || (Array.isArray(window.__worktraceReportDebug) ? window.__worktraceReportDebug[0] : null);
         supportCard.classList.toggle('hidden', !latestEntry);
     },
 
@@ -1613,7 +1704,7 @@ export const supervisorMethods = {
         if (!latestEntry) {
             this.showToast('Todavía no hay un error reciente para copiar.', {
                 tone: 'info',
-                title: 'Sin detalle disponible'
+                title: 'Sin detalle disponible',
             });
             return;
         }
@@ -1637,12 +1728,12 @@ export const supervisorMethods = {
 
             this.showToast('Detalle copiado. Ya lo puedes compartir.', {
                 tone: 'success',
-                title: 'Copia lista'
+                title: 'Copia lista',
             });
         } catch (error) {
             this.showToast('No se pudo copiar el detalle. Inténtalo de nuevo.', {
                 tone: 'error',
-                title: 'No fue posible copiar'
+                title: 'No fue posible copiar',
             });
         }
     },
@@ -1653,7 +1744,9 @@ export const supervisorMethods = {
             return;
         }
 
-        const latestEntry = debugEntry || (Array.isArray(window.__worktraceSupervisionDebug) ? window.__worktraceSupervisionDebug[0] : null);
+        const latestEntry =
+            debugEntry ||
+            (Array.isArray(window.__worktraceSupervisionDebug) ? window.__worktraceSupervisionDebug[0] : null);
         supportCard.classList.toggle('hidden', !latestEntry);
     },
 
@@ -1688,17 +1781,21 @@ export const supervisorMethods = {
 
         return JSON.stringify({
             restaurant_id: normalizeRestaurantId(payload?.restaurant_id),
-            phase: String(payload?.phase || '').trim().toLowerCase(),
-            observed_day: observedDay
+            phase: String(payload?.phase || '')
+                .trim()
+                .toLowerCase(),
+            observed_day: observedDay,
         });
     },
 
     async copyLatestSupervisionDebug() {
-        const latestEntry = Array.isArray(window.__worktraceSupervisionDebug) ? window.__worktraceSupervisionDebug[0] : null;
+        const latestEntry = Array.isArray(window.__worktraceSupervisionDebug)
+            ? window.__worktraceSupervisionDebug[0]
+            : null;
         if (!latestEntry) {
             this.showToast('Todavía no hay un error reciente para copiar.', {
                 tone: 'info',
-                title: 'Sin detalle disponible'
+                title: 'Sin detalle disponible',
             });
             return;
         }
@@ -1722,12 +1819,12 @@ export const supervisorMethods = {
 
             this.showToast('Detalle copiado. Ya lo puedes compartir.', {
                 tone: 'success',
-                title: 'Copia lista'
+                title: 'Copia lista',
             });
         } catch (error) {
             this.showToast('No se pudo copiar el detalle. Inténtalo de nuevo.', {
                 tone: 'error',
-                title: 'No fue posible copiar'
+                title: 'No fue posible copiar',
             });
         }
     },
@@ -1738,7 +1835,7 @@ export const supervisorMethods = {
             mapping_mode: 'created_items_index_1_based',
             created_items: createdItems,
             assignments_sent: assignments,
-            created_assignments: createdAssignments
+            created_assignments: createdAssignments,
         };
 
         if (!Array.isArray(window.__worktraceBulkAssignDebug)) {
@@ -1753,17 +1850,11 @@ export const supervisorMethods = {
     getTaskCreateBackendFailure(error) {
         return {
             code: String(
-                error?.payload?.error?.details?.code
-                || error?.payload?.details?.code
-                || error?.code
-                || ''
+                error?.payload?.error?.details?.code || error?.payload?.details?.code || error?.code || ''
             ).trim(),
             message: String(
-                error?.payload?.error?.details?.message
-                || error?.payload?.details?.message
-                || error?.message
-                || ''
-            ).trim()
+                error?.payload?.error?.details?.message || error?.payload?.details?.message || error?.message || ''
+            ).trim(),
         };
     },
 
@@ -1777,7 +1868,7 @@ export const supervisorMethods = {
             error?.payload?.details?.message,
             error?.payload?.error?.code,
             error?.payload?.code,
-            error?.code
+            error?.code,
         ]
             .filter(Boolean)
             .join(' ')
@@ -1791,16 +1882,14 @@ export const supervisorMethods = {
             'turno programado no encontrado',
             'scheduled shift not found',
             'scheduled_shift_id',
-            'turno no encontrado'
+            'turno no encontrado',
         ].some((token) => source.includes(token));
     },
 
     getTaskCreateDiagnosticCode(error) {
-        return String(
-            error?.payload?.error?.details?.diagnostic_code
-            || error?.payload?.details?.diagnostic_code
-            || ''
-        ).trim().toUpperCase();
+        return String(error?.payload?.error?.details?.diagnostic_code || error?.payload?.details?.diagnostic_code || '')
+            .trim()
+            .toUpperCase();
     },
 
     getTaskCreateDiagnosticMessage(error) {
@@ -1813,9 +1902,7 @@ export const supervisorMethods = {
                 return 'No tienes permisos para acceder al turno programado seleccionado.';
             case 'SCHEDULED_SHIFT_INVALID_STATUS': {
                 const currentStatus = String(
-                    error?.payload?.error?.details?.current_status
-                    || error?.payload?.details?.current_status
-                    || ''
+                    error?.payload?.error?.details?.current_status || error?.payload?.details?.current_status || ''
                 ).trim();
                 return currentStatus
                     ? `El turno está en estado "${currentStatus}" y no permite crear tarea especial.`
@@ -1840,7 +1927,7 @@ export const supervisorMethods = {
             error?.payload?.details?.message,
             error?.payload?.error?.code,
             error?.payload?.code,
-            error?.code
+            error?.code,
         ]
             .filter(Boolean)
             .join(' ')
@@ -1864,7 +1951,7 @@ export const supervisorMethods = {
         try {
             return await apiClient.operationalTasksManage('create', payload, {
                 accessToken: freshToken,
-                retryOnInvalidJwt: false
+                retryOnInvalidJwt: false,
             });
         } catch (error) {
             if (!this.isInvalidJwtForTaskCreate(error)) {
@@ -1882,7 +1969,7 @@ export const supervisorMethods = {
             try {
                 return await apiClient.operationalTasksManage('create', payload, {
                     accessToken: retryToken,
-                    retryOnInvalidJwt: false
+                    retryOnInvalidJwt: false,
                 });
             } catch (retryError) {
                 if (this.isInvalidJwtForTaskCreate(retryError)) {
@@ -1895,15 +1982,23 @@ export const supervisorMethods = {
                         initial_attempt_error: {
                             status: Number(error?.status || 0) || null,
                             message: String(error?.message || ''),
-                            request_id: error?.requestId || error?.payload?.request_id || error?.payload?.error?.request_id || null
+                            request_id:
+                                error?.requestId ||
+                                error?.payload?.request_id ||
+                                error?.payload?.error?.request_id ||
+                                null,
                         },
                         retry_attempt_error: {
                             status: Number(retryError?.status || 0) || null,
                             message: String(retryError?.message || ''),
-                            request_id: retryError?.requestId || retryError?.payload?.request_id || retryError?.payload?.error?.request_id || null
+                            request_id:
+                                retryError?.requestId ||
+                                retryError?.payload?.request_id ||
+                                retryError?.payload?.error?.request_id ||
+                                null,
                         },
                         auth_probe_initial: initialProbe,
-                        auth_probe_retry: retryProbe
+                        auth_probe_retry: retryProbe,
                     });
                 }
 
@@ -1919,7 +2014,7 @@ export const supervisorMethods = {
             assignment_sent: assignment,
             response,
             extracted_scheduled_shift_ids: this.extractScheduledShiftIdsFromResponse(response),
-            created_assignments: createdAssignments
+            created_assignments: createdAssignments,
         };
 
         if (!Array.isArray(window.__worktraceShiftAssignDebug)) {
@@ -1932,7 +2027,12 @@ export const supervisorMethods = {
     },
 
     async createSpecialTasksForScheduledShifts(createdAssignments, taskTemplate) {
-        if (!taskTemplate?.enabled || !taskTemplate?.title || !Array.isArray(createdAssignments) || createdAssignments.length === 0) {
+        if (
+            !taskTemplate?.enabled ||
+            !taskTemplate?.title ||
+            !Array.isArray(createdAssignments) ||
+            createdAssignments.length === 0
+        ) {
             return { created: 0, failed: 0, errors: [] };
         }
 
@@ -1942,7 +2042,9 @@ export const supervisorMethods = {
 
         for (const entry of createdAssignments) {
             const scheduledShiftId = this.normalizeTaskCreatePayloadValue(entry?.scheduled_shift_id);
-            const assignedEmployeeId = this.normalizeTaskCreatePayloadValue(entry?.employee_id ?? entry?.assigned_employee_id);
+            const assignedEmployeeId = this.normalizeTaskCreatePayloadValue(
+                entry?.employee_id ?? entry?.assigned_employee_id
+            );
             if (!scheduledShiftId) {
                 failed += 1;
                 errors.push('No se pudo determinar el turno programado para crear la tarea especial.');
@@ -1951,7 +2053,9 @@ export const supervisorMethods = {
 
             if (!assignedEmployeeId) {
                 failed += 1;
-                errors.push('No se pudo determinar el empleado asignado del turno programado para crear la tarea especial.');
+                errors.push(
+                    'No se pudo determinar el empleado asignado del turno programado para crear la tarea especial.'
+                );
                 continue;
             }
 
@@ -1961,17 +2065,17 @@ export const supervisorMethods = {
                 title: taskTemplate.title,
                 description: taskTemplate.description || undefined,
                 requires_evidence: taskTemplate.requires_evidence,
-                due_at: this.normalizeTaskDueAtValue(entry?.scheduled_end)
+                due_at: this.normalizeTaskDueAtValue(entry?.scheduled_end),
             };
 
             const payloadVariants = taskTemplate.priority
                 ? [
-                    {
-                        ...basePayload,
-                        priority: taskTemplate.priority
-                    },
-                    basePayload
-                ]
+                      {
+                          ...basePayload,
+                          priority: taskTemplate.priority,
+                      },
+                      basePayload,
+                  ]
                 : [basePayload];
 
             let taskCreated = false;
@@ -1990,9 +2094,11 @@ export const supervisorMethods = {
                         const normalizedMessage = String(error?.message || '').toLowerCase();
                         const backendFailure = this.getTaskCreateBackendFailure(error);
                         const normalizedBackendMessage = backendFailure.message.toLowerCase();
-                        const isInvalidShiftRace = backendFailure.code === 'P0001'
-                            || normalizedBackendMessage.includes('turno invalido para crear tarea');
-                        const isAlreadyExists = normalizedMessage.includes('already exists') || normalizedMessage.includes('ya existe');
+                        const isInvalidShiftRace =
+                            backendFailure.code === 'P0001' ||
+                            normalizedBackendMessage.includes('turno invalido para crear tarea');
+                        const isAlreadyExists =
+                            normalizedMessage.includes('already exists') || normalizedMessage.includes('ya existe');
 
                         if (isAlreadyExists) {
                             created += 1;
@@ -2008,7 +2114,7 @@ export const supervisorMethods = {
                         }
 
                         if (attempt < 3) {
-                            await delay(isInvalidShiftRace ? ([700, 1600, 3200][attempt] || 3200) : 250 * (attempt + 1));
+                            await delay(isInvalidShiftRace ? [700, 1600, 3200][attempt] || 3200 : 250 * (attempt + 1));
                         }
                     }
                 }
@@ -2026,7 +2132,7 @@ export const supervisorMethods = {
                         scheduled_shift_id: scheduledShiftId,
                         assigned_employee_id: assignedEmployeeId,
                         source_index_1_based: entry?.source_index_1_based ?? null,
-                        source_index_0_based: entry?.source_index_0_based ?? null
+                        source_index_0_based: entry?.source_index_0_based ?? null,
                     }
                 );
                 failed += 1;
@@ -2034,7 +2140,9 @@ export const supervisorMethods = {
                 if (diagnosticMessage) {
                     errors.push(diagnosticMessage);
                 } else if (this.isScheduledShiftNotFoundOnTaskCreate(lastError)) {
-                    errors.push('No se encontró el turno programado en este ambiente o no está dentro del alcance del usuario actual. Refresca turnos y vuelve a intentarlo.');
+                    errors.push(
+                        'No se encontró el turno programado en este ambiente o no está dentro del alcance del usuario actual. Refresca turnos y vuelve a intentarlo.'
+                    );
                 } else {
                     errors.push(this.getErrorMessage(lastError, 'No fue posible enlazar una tarea especial.'));
                 }
@@ -2052,8 +2160,11 @@ export const supervisorMethods = {
             this.getSupervisorRestaurants(),
             this.getSupervisorShiftList({ forceRestaurants: false }),
             this.loadSupervisorEmployees(false).catch((error) => {
-                console.warn('No fue posible precargar el directorio de empleados para resolver nombres en alertas.', error);
-            })
+                console.warn(
+                    'No fue posible precargar el directorio de empleados para resolver nombres en alertas.',
+                    error
+                );
+            }),
         ]);
         const todayShifts = this.getTodayShifts(shifts);
         this.data.supervisor.shifts = todayShifts;
@@ -2061,23 +2172,26 @@ export const supervisorMethods = {
         const alertsContainer = document.getElementById('supervisor-alerts-container');
         const firstName = (this.currentUser.full_name || this.currentUser.email).split(' ')[0];
         document.getElementById('supervisor-welcome-title').textContent = `Bienvenida, ${firstName}`;
-        document.getElementById('supervisor-welcome-subtitle').textContent = `${restaurants.length} restaurante(s) disponibles`;
+        document.getElementById('supervisor-welcome-subtitle').textContent =
+            `${restaurants.length} restaurante(s) disponibles`;
 
         const now = Date.now();
         const graceMs = SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES * 60 * 1000;
-        const pendingAlerts = todayShifts.filter((shift) => {
-            const status = String(shift.status || shift.state || '').toLowerCase();
-            if (!['scheduled', 'programado', 'pending', 'pendiente'].includes(status)) {
-                return false;
-            }
+        const pendingAlerts = todayShifts
+            .filter((shift) => {
+                const status = String(shift.status || shift.state || '').toLowerCase();
+                if (!['scheduled', 'programado', 'pending', 'pendiente'].includes(status)) {
+                    return false;
+                }
 
-            const startTime = new Date(shift?.scheduled_start || shift?.start_time || '').getTime();
-            if (!Number.isFinite(startTime) || startTime <= 0) {
-                return false;
-            }
+                const startTime = new Date(shift?.scheduled_start || shift?.start_time || '').getTime();
+                if (!Number.isFinite(startTime) || startTime <= 0) {
+                    return false;
+                }
 
-            return now >= (startTime + graceMs);
-        }).slice(0, 3);
+                return now >= startTime + graceMs;
+            })
+            .slice(0, 3);
 
         if (alertsContainer) {
             if (pendingAlerts.length === 0) {
@@ -2091,7 +2205,9 @@ export const supervisorMethods = {
                     </div>
                 `;
             } else {
-                alertsContainer.innerHTML = pendingAlerts.map((shift) => `
+                alertsContainer.innerHTML = pendingAlerts
+                    .map(
+                        (shift) => `
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-circle"></i>
                         <div>
@@ -2099,7 +2215,9 @@ export const supervisorMethods = {
                             <small>${escapeHtml(this.getResolvedShiftEmployeeName(shift, 'Empleado sin nombre visible'))} - ${escapeHtml(this.getResolvedShiftRestaurantName(shift, 'Restaurante sin nombre visible'))} (${escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end))})</small>
                         </div>
                     </div>
-                `).join('');
+                `
+                    )
+                    .join('');
             }
         }
 
@@ -2115,7 +2233,7 @@ export const supervisorMethods = {
 
         const [restaurants, shifts] = await Promise.all([
             this.getSupervisorRestaurants(force),
-            this.getSupervisorShiftList({ forceRestaurants: force })
+            this.getSupervisorShiftList({ forceRestaurants: force }),
         ]);
 
         const container = document.getElementById('supervisor-restaurants-list');
@@ -2134,18 +2252,19 @@ export const supervisorMethods = {
             return;
         }
 
-        const canUseEmployeeCache = this.data.supervisor.employees.length > 0
-            && this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees);
+        const canUseEmployeeCache =
+            this.data.supervisor.employees.length > 0 &&
+            this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees);
         const shiftCountByRestaurant = shifts.reduce((accumulator, shift) => {
             const restaurantId = String(
-                shift?.restaurant_id
-                || shift?.restaurant?.restaurant_id
-                || shift?.restaurant?.id
-                || shift?.location_id
-                || shift?.location?.id
-                || shift?.site_id
-                || shift?.site?.id
-                || ''
+                shift?.restaurant_id ||
+                    shift?.restaurant?.restaurant_id ||
+                    shift?.restaurant?.id ||
+                    shift?.location_id ||
+                    shift?.location?.id ||
+                    shift?.site_id ||
+                    shift?.site?.id ||
+                    ''
             );
             if (!restaurantId) {
                 return accumulator;
@@ -2158,7 +2277,9 @@ export const supervisorMethods = {
             ? this.data.supervisor.employees.filter((employee) => employee?.id && employee.is_active !== false).length
             : null;
         const canManageRestaurantLifecycle = this.isAdminRole() || this.currentUser?.role === 'supervisora';
-        const canCreateRestaurantTasks = this.isAdminRole() || ['supervisora', 'supervisor'].includes(String(this.currentUser?.role || '').toLowerCase());
+        const canCreateRestaurantTasks =
+            this.isAdminRole() ||
+            ['supervisora', 'supervisor'].includes(String(this.currentUser?.role || '').toLowerCase());
 
         const fragment = document.createDocumentFragment();
         restaurants.forEach((restaurant) => {
@@ -2175,20 +2296,30 @@ export const supervisorMethods = {
             const address = document.createElement('p');
             const addressIcon = document.createElement('i');
             addressIcon.className = 'fas fa-map-marker-alt';
-            address.append(addressIcon, document.createTextNode(` ${restaurant.address_line || `${restaurant.city || ''} ${restaurant.state || ''}`.trim() || 'Sin dirección'}`));
+            address.append(
+                addressIcon,
+                document.createTextNode(
+                    ` ${restaurant.address_line || `${restaurant.city || ''} ${restaurant.state || ''}`.trim() || 'Sin dirección'}`
+                )
+            );
 
             const employeesLine = document.createElement('p');
             const employeesIcon = document.createElement('i');
             employeesIcon.className = 'fas fa-user';
             employeesLine.append(
                 employeesIcon,
-                document.createTextNode(` ${availableEmployeeCount != null ? `${availableEmployeeCount} empleado(s) disponibles` : 'Empleados disponibles para programar'}`)
+                document.createTextNode(
+                    ` ${availableEmployeeCount != null ? `${availableEmployeeCount} empleado(s) disponibles` : 'Empleados disponibles para programar'}`
+                )
             );
 
             const shiftsLine = document.createElement('p');
             const shiftsIcon = document.createElement('i');
             shiftsIcon.className = 'fas fa-calendar-alt';
-            shiftsLine.append(shiftsIcon, document.createTextNode(` ${String(shiftsForRestaurantCount)} turno(s) en el período actual`));
+            shiftsLine.append(
+                shiftsIcon,
+                document.createTextNode(` ${String(shiftsForRestaurantCount)} turno(s) en el período actual`)
+            );
 
             card.append(title, address, employeesLine, shiftsLine);
 
@@ -2228,7 +2359,7 @@ export const supervisorMethods = {
         if (normalizedRestaurantId == null) {
             this.showToast('No se pudo identificar el restaurante a eliminar.', {
                 tone: 'warning',
-                title: 'Restaurante inválido'
+                title: 'Restaurante inválido',
             });
             return;
         }
@@ -2246,7 +2377,7 @@ export const supervisorMethods = {
         if (restaurantId == null) {
             this.showToast('No se pudo identificar el restaurante a eliminar.', {
                 tone: 'warning',
-                title: 'Restaurante inválido'
+                title: 'Restaurante inválido',
             });
             this.closeDeactivateRestaurantModal();
             return;
@@ -2262,7 +2393,7 @@ export const supervisorMethods = {
         if (normalizedRestaurantId == null) {
             this.showToast('No se pudo identificar el restaurante a eliminar.', {
                 tone: 'warning',
-                title: 'Restaurante inválido'
+                title: 'Restaurante inválido',
             });
             return;
         }
@@ -2271,7 +2402,7 @@ export const supervisorMethods = {
 
         try {
             await apiClient.adminRestaurantsManage('deactivate', {
-                restaurant_id: normalizedRestaurantId
+                restaurant_id: normalizedRestaurantId,
             });
 
             this.invalidateCache('adminRestaurants', 'adminMetrics', 'supervisorRestaurants', 'supervisorShifts');
@@ -2282,18 +2413,18 @@ export const supervisorMethods = {
                 this.loadSupervisorRestaurants(true),
                 this.loadSupervisorShifts(true),
                 this.loadSupervisorDashboard(),
-                this.isAdminRole() ? this.loadAdminDashboard() : Promise.resolve()
+                this.isAdminRole() ? this.loadAdminDashboard() : Promise.resolve(),
             ]);
 
             this.showToast('Restaurante eliminado correctamente.', {
                 tone: 'success',
-                title: 'Eliminación exitosa'
+                title: 'Eliminación exitosa',
             });
         } catch (error) {
             const title = this.isAdminRole() ? 'No fue posible eliminar el restaurante' : 'Permiso insuficiente';
             this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el restaurante.'), {
                 tone: 'error',
-                title
+                title,
             });
         } finally {
             this.hideLoading();
@@ -2310,67 +2441,75 @@ export const supervisorMethods = {
         this.data.supervisor.restaurants = await this.getSupervisorRestaurants(force);
 
         if (
-            !force
-            && this.data.supervisor.employees.length > 0
-            && this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees)
+            !force &&
+            this.data.supervisor.employees.length > 0 &&
+            this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees)
         ) {
             this.renderSupervisorEmployees();
             return;
         }
 
-        const employees = await this.runPending(`supervisorEmployees:${this.currentUser?.role || 'unknown'}:${force ? 'force' : 'default'}`, async () => {
-            if (this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser') {
-                const result = await apiClient.adminUsersManage('list', {
-                    role: 'empleado',
-                    limit: 100
-                });
-                return asArray(result).map((item) => ({
-                    id: item.id || item.user_id,
-                    full_name: getEmployeeDisplayName(item),
-                    email: item.email || '-',
-                    phone_e164: item.phone_e164 || item.phone_number || '-',
-                    username: item.username || item.user_name || item.employee_username || '',
-                    employee_code: item.employee_code || item.code || '',
-                    is_active: item.is_active !== false,
-                    assignments: [],
-                    available_restaurants: [],
-                    raw: item
-                }));
+        const employees = await this.runPending(
+            `supervisorEmployees:${this.currentUser?.role || 'unknown'}:${force ? 'force' : 'default'}`,
+            async () => {
+                if (this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser') {
+                    const result = await apiClient.adminUsersManage('list', {
+                        role: 'empleado',
+                        limit: 100,
+                    });
+                    return asArray(result).map((item) => ({
+                        id: item.id || item.user_id,
+                        full_name: getEmployeeDisplayName(item),
+                        email: item.email || '-',
+                        phone_e164: item.phone_e164 || item.phone_number || '-',
+                        username: item.username || item.user_name || item.employee_username || '',
+                        employee_code: item.employee_code || item.code || '',
+                        is_active: item.is_active !== false,
+                        assignments: [],
+                        available_restaurants: [],
+                        raw: item,
+                    }));
+                }
+
+                const directoryResult = await apiClient
+                    .restaurantStaffManage('list_assignable_employees', {
+                        limit: 200,
+                    })
+                    .catch((error) => {
+                        console.warn('No fue posible cargar el directorio completo de empleados.', error);
+                        return [];
+                    });
+
+                return asArray(directoryResult)
+                    .map((item) => this.normalizeSupervisorEmployeeRecord(item))
+                    .filter((employee) => employee.id)
+                    .map((employee) => ({
+                        id: employee.id,
+                        full_name: employee.full_name,
+                        email: employee.email,
+                        phone_e164: employee.phone_e164,
+                        username: employee.username || employee.user_name || employee.employee_username || '',
+                        employee_code: employee.employee_code || employee.code || '',
+                        is_active: employee.is_active,
+                        assigned_restaurants_count: employee.assigned_restaurants_count || 0,
+                        assignments: [],
+                        available_restaurants: [],
+                        raw: employee.raw || employee,
+                    }))
+                    .sort((left, right) => {
+                        if ((left.is_active === false) !== (right.is_active === false)) {
+                            return left.is_active === false ? 1 : -1;
+                        }
+
+                        return String(left.full_name || '').localeCompare(String(right.full_name || ''), 'es', {
+                            sensitivity: 'base',
+                        });
+                    });
             }
+        );
 
-            const directoryResult = await apiClient.restaurantStaffManage('list_assignable_employees', {
-                limit: 200
-            }).catch((error) => {
-                console.warn('No fue posible cargar el directorio completo de empleados.', error);
-                return [];
-            });
-
-            return asArray(directoryResult)
-                .map((item) => this.normalizeSupervisorEmployeeRecord(item))
-                .filter((employee) => employee.id)
-                .map((employee) => ({
-                    id: employee.id,
-                    full_name: employee.full_name,
-                    email: employee.email,
-                    phone_e164: employee.phone_e164,
-                    username: employee.username || employee.user_name || employee.employee_username || '',
-                    employee_code: employee.employee_code || employee.code || '',
-                    is_active: employee.is_active,
-                    assigned_restaurants_count: employee.assigned_restaurants_count || 0,
-                    assignments: [],
-                    available_restaurants: [],
-                    raw: employee.raw || employee
-                }))
-                .sort((left, right) => {
-                    if ((left.is_active === false) !== (right.is_active === false)) {
-                        return left.is_active === false ? 1 : -1;
-                    }
-
-                    return String(left.full_name || '').localeCompare(String(right.full_name || ''), 'es', { sensitivity: 'base' });
-                });
-        });
-
-        const canViewInactiveEmployees = this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser';
+        const canViewInactiveEmployees =
+            this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser';
         this.data.supervisor.employees = asArray(employees).filter((employee) => {
             if (!employee?.id) {
                 return false;
@@ -2428,11 +2567,12 @@ export const supervisorMethods = {
             card.className = 'card';
             const paragraph = document.createElement('p');
             paragraph.style.color = 'var(--gray)';
-            paragraph.textContent = this.supervisorEmployeesStatusFilter === 'inactive'
-                ? 'No hay empleados inactivos para mostrar.'
-                : this.supervisorEmployeesStatusFilter === 'active'
-                    ? 'No hay empleados activos disponibles para mostrar.'
-                    : 'No hay empleados disponibles para mostrar.';
+            paragraph.textContent =
+                this.supervisorEmployeesStatusFilter === 'inactive'
+                    ? 'No hay empleados inactivos para mostrar.'
+                    : this.supervisorEmployeesStatusFilter === 'active'
+                      ? 'No hay empleados activos disponibles para mostrar.'
+                      : 'No hay empleados disponibles para mostrar.';
             card.appendChild(paragraph);
             container.replaceChildren(card);
             return;
@@ -2458,9 +2598,10 @@ export const supervisorMethods = {
 
             const auditMeta = document.createElement('div');
             auditMeta.className = 'audit-meta';
-            auditMeta.textContent = employee.is_active === false
-                ? 'Empleado inactivo para nuevas programaciones.'
-                : 'Disponible para programarse en cualquier restaurante.';
+            auditMeta.textContent =
+                employee.is_active === false
+                    ? 'Empleado inactivo para nuevas programaciones.'
+                    : 'Disponible para programarse en cualquier restaurante.';
 
             info.append(heading, contact, auditMeta);
 
@@ -2527,7 +2668,7 @@ export const supervisorMethods = {
         if (!employee || !employee.id) {
             this.showToast('No se pudo identificar el empleado para el informe.', {
                 tone: 'warning',
-                title: 'Empleado inválido'
+                title: 'Empleado inválido',
             });
             return;
         }
@@ -2540,7 +2681,8 @@ export const supervisorMethods = {
                 employeeSelect.value = String(employee.id);
                 employeeSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 // Opcional: hacer scroll a la sección de informes
-                const reportSection = document.getElementById('reports-section') || document.getElementById('report-employee-select');
+                const reportSection =
+                    document.getElementById('reports-section') || document.getElementById('report-employee-select');
                 if (reportSection && typeof reportSection.scrollIntoView === 'function') {
                     reportSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
@@ -2553,7 +2695,7 @@ export const supervisorMethods = {
         if (!normalizedUserId) {
             this.showToast('No se pudo identificar el usuario a eliminar.', {
                 tone: 'warning',
-                title: 'Usuario inválido'
+                title: 'Usuario inválido',
             });
             return;
         }
@@ -2575,7 +2717,7 @@ export const supervisorMethods = {
         if (!userId) {
             this.showToast('No se pudo identificar el usuario a eliminar.', {
                 tone: 'warning',
-                title: 'Usuario inválido'
+                title: 'Usuario inválido',
             });
             this.closeDeactivateUserModal();
             return;
@@ -2598,7 +2740,7 @@ export const supervisorMethods = {
         if (!normalizedUserId) {
             this.showToast('No se pudo identificar el usuario a eliminar.', {
                 tone: 'warning',
-                title: 'Usuario inválido'
+                title: 'Usuario inválido',
             });
             return;
         }
@@ -2608,7 +2750,7 @@ export const supervisorMethods = {
         try {
             await apiClient.adminUsersManage('deactivate', {
                 user_id: normalizedUserId,
-                reason: reason || undefined
+                reason: reason || undefined,
             });
 
             this.invalidateCache('supervisorEmployees', 'supervisorShifts');
@@ -2617,17 +2759,17 @@ export const supervisorMethods = {
             await Promise.all([
                 this.loadSupervisorEmployees(true),
                 this.loadSupervisorShifts(true),
-                this.loadSupervisorDashboard()
+                this.loadSupervisorDashboard(),
             ]);
 
             this.showToast('Usuario eliminado correctamente.', {
                 tone: 'success',
-                title: 'Eliminación exitosa'
+                title: 'Eliminación exitosa',
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el usuario.'), {
                 tone: 'error',
-                title: error?.status === 403 ? 'Permiso insuficiente' : 'No fue posible eliminar el usuario'
+                title: error?.status === 403 ? 'Permiso insuficiente' : 'No fue posible eliminar el usuario',
             });
         } finally {
             this.hideLoading();
@@ -2675,7 +2817,10 @@ export const supervisorMethods = {
         });
 
         if (lastWeekShifts.length === 0) {
-            this.showToast('No hay turnos en la semana anterior para replicar.', { tone: 'warning', title: 'Sin turnos anteriores' });
+            this.showToast('No hay turnos en la semana anterior para replicar.', {
+                tone: 'warning',
+                title: 'Sin turnos anteriores',
+            });
             return;
         }
 
@@ -2686,39 +2831,51 @@ export const supervisorMethods = {
         try {
             let success = 0;
             let failed = 0;
-            await Promise.all(lastWeekShifts.map(async (shift) => {
-                try {
-                    const startValue = shift?.scheduled_start || shift?.start_time;
-                    const endValue = shift?.scheduled_end || shift?.end_time;
-                    if (!startValue || !endValue) { failed++; return; }
+            await Promise.all(
+                lastWeekShifts.map(async (shift) => {
+                    try {
+                        const startValue = shift?.scheduled_start || shift?.start_time;
+                        const endValue = shift?.scheduled_end || shift?.end_time;
+                        if (!startValue || !endValue) {
+                            failed++;
+                            return;
+                        }
 
-                    const newStart = new Date(new Date(startValue).getTime() + 7 * 24 * 3600000);
-                    const newEnd = new Date(new Date(endValue).getTime() + 7 * 24 * 3600000);
-                    const empId = shift.employee_id || shift.assigned_employee_id;
-                    const restId = shift.restaurant_id;
-                    if (!empId || !restId) { failed++; return; }
+                        const newStart = new Date(new Date(startValue).getTime() + 7 * 24 * 3600000);
+                        const newEnd = new Date(new Date(endValue).getTime() + 7 * 24 * 3600000);
+                        const empId = shift.employee_id || shift.assigned_employee_id;
+                        const restId = shift.restaurant_id;
+                        if (!empId || !restId) {
+                            failed++;
+                            return;
+                        }
 
-                    await apiClient.scheduledShiftsManage('assign', {
-                        employee_id: empId,
-                        restaurant_id: restId,
-                        scheduled_start: newStart.toISOString(),
-                        scheduled_end: newEnd.toISOString(),
-                        notes: shift.notes || undefined
-                    });
-                    success++;
-                } catch {
-                    failed++;
-                }
-            }));
+                        await apiClient.scheduledShiftsManage('assign', {
+                            employee_id: empId,
+                            restaurant_id: restId,
+                            scheduled_start: newStart.toISOString(),
+                            scheduled_end: newEnd.toISOString(),
+                            notes: shift.notes || undefined,
+                        });
+                        success++;
+                    } catch {
+                        failed++;
+                    }
+                })
+            );
 
             await this.loadSupervisorShifts(true);
             const tone = failed > 0 ? 'warning' : 'success';
-            const msg = failed > 0
-                ? `${success} turno(s) replicado(s). ${failed} no se pudieron crear.`
-                : `${success} turno(s) replicado(s) correctamente.`;
+            const msg =
+                failed > 0
+                    ? `${success} turno(s) replicado(s). ${failed} no se pudieron crear.`
+                    : `${success} turno(s) replicado(s) correctamente.`;
             this.showToast(msg, { tone, title: 'Semana replicada' });
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible replicar la semana anterior.'), { tone: 'error', title: 'Error al replicar' });
+            this.showToast(this.getErrorMessage(error, 'No fue posible replicar la semana anterior.'), {
+                tone: 'error',
+                title: 'Error al replicar',
+            });
         } finally {
             this.hideLoading();
         }
@@ -2752,21 +2909,21 @@ export const supervisorMethods = {
         }
 
         if (
-            this.data.supervisor.employees.length === 0
-            || !this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees)
+            this.data.supervisor.employees.length === 0 ||
+            !this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees)
         ) {
             await this.loadSupervisorEmployees(force);
         }
 
-        const rangeStart = toIsoDate(new Date(Date.now() - (180 * 24 * 60 * 60 * 1000)));
-        const rangeEnd = toIsoDate(new Date(Date.now() + (180 * 24 * 60 * 60 * 1000)));
+        const rangeStart = toIsoDate(new Date(Date.now() - 180 * 24 * 60 * 60 * 1000));
+        const rangeEnd = toIsoDate(new Date(Date.now() + 180 * 24 * 60 * 60 * 1000));
 
         this.data.supervisor.shifts = await this.getSupervisorShiftList({
             forceRestaurants: force,
             from: rangeStart,
             to: rangeEnd,
             status: 'scheduled',
-            limit: 500
+            limit: 500,
         });
 
         this.populateSupervisorShiftFilters(this.data.supervisor.shifts);
@@ -2781,9 +2938,9 @@ export const supervisorMethods = {
 
         const normalized = text.toLowerCase();
         if (
-            normalized === 'empleado'
-            || normalized.includes('sin nombre visible')
-            || /^empleado\s+[a-f0-9-]{6,}$/i.test(text)
+            normalized === 'empleado' ||
+            normalized.includes('sin nombre visible') ||
+            /^empleado\s+[a-f0-9-]{6,}$/i.test(text)
         ) {
             return fallback;
         }
@@ -2820,12 +2977,14 @@ export const supervisorMethods = {
 
             employeeMap.set(employeeId, {
                 id: employeeId,
-                name: getEmployeeDisplayName(employee, 'Empleado')
+                name: getEmployeeDisplayName(employee, 'Empleado'),
             });
         });
 
         asArray(shifts).forEach((shift) => {
-            const employeeId = String(shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '').trim();
+            const employeeId = String(
+                shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || ''
+            ).trim();
             if (!employeeId || employeeMap.has(employeeId)) {
                 return;
             }
@@ -2835,19 +2994,23 @@ export const supervisorMethods = {
                 name: this.normalizeSupervisorShiftEmployeeLabel(
                     this.getResolvedShiftEmployeeName(shift, 'Empleado'),
                     'Empleado por confirmar'
-                )
+                ),
             });
         });
 
-        const options = Array.from(employeeMap.values()).sort((left, right) => (
+        const options = Array.from(employeeMap.values()).sort((left, right) =>
             String(left.name || '').localeCompare(String(right.name || ''), 'es', { sensitivity: 'base' })
-        ));
+        );
 
         employeeFilter.innerHTML = `
             <option value="">Todos los empleados</option>
-            ${options.map((option) => `
+            ${options
+                .map(
+                    (option) => `
                 <option value="${escapeHtml(option.id)}">${escapeHtml(option.name || 'Empleado')}</option>
-            `).join('')}
+            `
+                )
+                .join('')}
         `;
 
         const availableIds = new Set(options.map((option) => option.id));
@@ -2863,9 +3026,13 @@ export const supervisorMethods = {
                 const id = String(r?.id || '').trim();
                 if (id) restaurantMap.set(id, getRestaurantDisplayName(r, 'Restaurante'));
             });
-            restaurantFilter.innerHTML = '<option value="">Todos los restaurantes</option>'
-                + Array.from(restaurantMap.entries())
-                    .map(([id, name]) => `<option value="${escapeHtml(id)}" ${id === prevRestId ? 'selected' : ''}>${escapeHtml(name)}</option>`)
+            restaurantFilter.innerHTML =
+                '<option value="">Todos los restaurantes</option>' +
+                Array.from(restaurantMap.entries())
+                    .map(
+                        ([id, name]) =>
+                            `<option value="${escapeHtml(id)}" ${id === prevRestId ? 'selected' : ''}>${escapeHtml(name)}</option>`
+                    )
                     .join('');
             this.supervisorShiftFilters.restaurantId = restaurantMap.has(prevRestId) ? prevRestId : '';
         }
@@ -2886,7 +3053,9 @@ export const supervisorMethods = {
             if (shiftDate < weekStart || shiftDate >= weekEnd) return false;
 
             if (selectedEmployeeId) {
-                const shiftEmpId = String(shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '').trim();
+                const shiftEmpId = String(
+                    shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || ''
+                ).trim();
                 if (shiftEmpId !== selectedEmployeeId) return false;
             }
 
@@ -2909,15 +3078,16 @@ export const supervisorMethods = {
             return null;
         }
 
-        const normalizedEnd = end && !Number.isNaN(end.getTime()) && end.getTime() > start.getTime()
-            ? end
-            : new Date(start.getTime() + 60000);
+        const normalizedEnd =
+            end && !Number.isNaN(end.getTime()) && end.getTime() > start.getTime()
+                ? end
+                : new Date(start.getTime() + 60000);
 
         return {
             start,
             end: normalizedEnd,
             startMs: start.getTime(),
-            endMs: normalizedEnd.getTime()
+            endMs: normalizedEnd.getTime(),
         };
     },
 
@@ -2935,17 +3105,35 @@ export const supervisorMethods = {
             return null;
         }
 
-        const nonBlockingStates = new Set(['cancelado', 'cancelled', 'anulado', 'deleted', 'completed', 'completado', 'finalizado', 'finished', 'closed', 'done']);
+        const nonBlockingStates = new Set([
+            'cancelado',
+            'cancelled',
+            'anulado',
+            'deleted',
+            'completed',
+            'completado',
+            'finalizado',
+            'finished',
+            'closed',
+            'done',
+        ]);
 
         const normalizedExisting = asArray(existingShifts)
             .filter(Boolean)
-            .filter((shift) => !nonBlockingStates.has(String(shift?.status || shift?.state || '').trim().toLowerCase()));
+            .filter(
+                (shift) =>
+                    !nonBlockingStates.has(
+                        String(shift?.status || shift?.state || '')
+                            .trim()
+                            .toLowerCase()
+                    )
+            );
 
         const decoratedAssignments = normalizedAssignments.map((assignment, index) => ({
             index,
             assignment,
             employeeId: String(assignment?.employee_id || assignment?.assigned_employee_id || '').trim(),
-            range: this.toShiftIntervalRange(assignment)
+            range: this.toShiftIntervalRange(assignment),
         }));
 
         for (const current of decoratedAssignments) {
@@ -2954,7 +3142,9 @@ export const supervisorMethods = {
             }
 
             for (const shift of normalizedExisting) {
-                const shiftEmployeeId = String(shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '').trim();
+                const shiftEmployeeId = String(
+                    shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || ''
+                ).trim();
                 if (!shiftEmployeeId || shiftEmployeeId !== current.employeeId) {
                     continue;
                 }
@@ -2969,7 +3159,7 @@ export const supervisorMethods = {
                         type: 'existing',
                         assignment: current.assignment,
                         existingShift: shift,
-                        employeeId: current.employeeId
+                        employeeId: current.employeeId,
                     };
                 }
             }
@@ -2992,7 +3182,7 @@ export const supervisorMethods = {
                         type: 'batch',
                         leftAssignment: left.assignment,
                         rightAssignment: right.assignment,
-                        employeeId: left.employeeId
+                        employeeId: left.employeeId,
                     };
                 }
             }
@@ -3016,7 +3206,10 @@ export const supervisorMethods = {
         const activeEmps = new Set(weekShifts.map((s) => String(s.employee_id || s.assigned_employee_id || ''))).size;
         const rests = new Set(weekShifts.map((s) => String(s.restaurant_id || ''))).size;
 
-        const setStatEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        const setStatEl = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        };
         setStatEl('sws-shifts', String(weekShifts.length));
         setStatEl('sws-hours', formatHours(totalHours));
         setStatEl('sws-employees', String(activeEmps));
@@ -3026,7 +3219,9 @@ export const supervisorMethods = {
     buildWeekShiftMap(weekShifts) {
         const map = new Map();
         weekShifts.forEach((shift) => {
-            const empId = String(shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '').trim();
+            const empId = String(
+                shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || ''
+            ).trim();
             const startValue = shift?.scheduled_start || shift?.start_time;
             if (!empId || !startValue) return;
             const key = `${empId}|${toLocalDateKey(new Date(startValue))}`;
@@ -3037,16 +3232,18 @@ export const supervisorMethods = {
     },
 
     renderSsgShiftCell(cellShifts) {
-        const entries = cellShifts.map((shift) => {
-            const restName = escapeHtml(this.getResolvedShiftRestaurantName(shift, ''));
-            const timeRange = escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end));
-            const shiftId = escapeHtml(String(shift.id || shift.scheduled_shift_id || ''));
-            return `<div class="ssg-shift-entry">
+        const entries = cellShifts
+            .map((shift) => {
+                const restName = escapeHtml(this.getResolvedShiftRestaurantName(shift, ''));
+                const timeRange = escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end));
+                const shiftId = escapeHtml(String(shift.id || shift.scheduled_shift_id || ''));
+                return `<div class="ssg-shift-entry">
                 <div class="ssg-shift-rest">${restName}</div>
                 <div class="ssg-shift-time">${timeRange}</div>
                 ${shiftId ? `<button class="ssg-del-btn" onclick="event.stopPropagation();app.confirmCancelScheduledShift('${shiftId}')" title="Eliminar"><i class="fas fa-times"></i></button>` : ''}
             </div>`;
-        }).join('');
+            })
+            .join('');
         return `<div class="ssg-shift-cell ssg-has-shift">${entries}</div>`;
     },
 
@@ -3069,17 +3266,22 @@ export const supervisorMethods = {
             return { date: d, key: toLocalDateKey(d) };
         });
 
-        const search = String(this.supervisorShiftFilters.search || '').toLowerCase().trim();
+        const search = String(this.supervisorShiftFilters.search || '')
+            .toLowerCase()
+            .trim();
         let displayEmployees = asArray(this.data.supervisor.employees).filter((e) => e.is_active !== false);
         if (this.supervisorShiftFilters.employeeId) {
             displayEmployees = displayEmployees.filter((e) => String(e.id) === this.supervisorShiftFilters.employeeId);
         }
         if (search) {
-            displayEmployees = displayEmployees.filter((e) => getEmployeeDisplayName(e, '').toLowerCase().includes(search));
+            displayEmployees = displayEmployees.filter((e) =>
+                getEmployeeDisplayName(e, '').toLowerCase().includes(search)
+            );
         }
 
         if (displayEmployees.length === 0 && weekShifts.length === 0) {
-            container.innerHTML = '<div class="empty-state">No hay empleados disponibles. Agrega empleados para ver la grilla semanal.</div>';
+            container.innerHTML =
+                '<div class="empty-state">No hay empleados disponibles. Agrega empleados para ver la grilla semanal.</div>';
             return;
         }
 
@@ -3097,9 +3299,10 @@ export const supervisorMethods = {
             html += `<div class="ssg-employee-cell">${escapeHtml(getEmployeeDisplayName(emp, 'Empleado'))}</div>`;
             weekDays.forEach(({ key }) => {
                 const cellShifts = shiftsByKey.get(`${empId}|${key}`) || [];
-                html += cellShifts.length === 0
-                    ? `<div class="ssg-shift-cell ssg-empty-cell"></div>`
-                    : this.renderSsgShiftCell(cellShifts);
+                html +=
+                    cellShifts.length === 0
+                        ? `<div class="ssg-shift-cell ssg-empty-cell"></div>`
+                        : this.renderSsgShiftCell(cellShifts);
             });
         });
 
@@ -3111,7 +3314,7 @@ export const supervisorMethods = {
         if (this.pendingShiftCancellationRequest) {
             this.showToast('Ya estamos procesando la eliminación del turno. Espera un momento.', {
                 tone: 'info',
-                title: 'Eliminación en progreso'
+                title: 'Eliminación en progreso',
             });
             return;
         }
@@ -3120,7 +3323,7 @@ export const supervisorMethods = {
         if (normalizedShiftId == null) {
             this.showToast('No se pudo identificar el turno programado a eliminar.', {
                 tone: 'warning',
-                title: 'Turno inválido'
+                title: 'Turno inválido',
             });
             return;
         }
@@ -3142,7 +3345,7 @@ export const supervisorMethods = {
         if (shiftId == null) {
             this.showToast('No se pudo identificar el turno programado a eliminar.', {
                 tone: 'warning',
-                title: 'Turno inválido'
+                title: 'Turno inválido',
             });
             this.closeCancelScheduledShiftModal();
             return;
@@ -3164,7 +3367,7 @@ export const supervisorMethods = {
         if (this.pendingShiftCancellationRequest) {
             this.showToast('Ya estamos procesando la eliminación del turno. Espera un momento.', {
                 tone: 'info',
-                title: 'Eliminación en progreso'
+                title: 'Eliminación en progreso',
             });
             return;
         }
@@ -3173,7 +3376,7 @@ export const supervisorMethods = {
         if (normalizedShiftId == null) {
             this.showToast('No se pudo identificar el turno programado a eliminar.', {
                 tone: 'warning',
-                title: 'Turno inválido'
+                title: 'Turno inválido',
             });
             return;
         }
@@ -3185,7 +3388,7 @@ export const supervisorMethods = {
         try {
             await apiClient.scheduledShiftsManage('cancel', {
                 scheduled_shift_id: normalizedShiftId,
-                reason: reason || undefined
+                reason: reason || undefined,
             });
 
             this.invalidateCache('supervisorShifts', 'employeeDashboard');
@@ -3209,12 +3412,12 @@ export const supervisorMethods = {
 
             this.showToast('Turno eliminado correctamente.', {
                 tone: 'success',
-                title: 'Eliminación exitosa'
+                title: 'Eliminación exitosa',
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el turno programado.'), {
                 tone: 'error',
-                title: 'No fue posible eliminar el turno'
+                title: 'No fue posible eliminar el turno',
             });
         } finally {
             this.pendingShiftCancellationRequest = false;
@@ -3242,11 +3445,15 @@ export const supervisorMethods = {
             if (employeeSelect) {
                 employeeSelect.innerHTML = `
                     <option value="">Todos los empleados</option>
-                    ${this.data.supervisor.employees.map((employee) => `
+                    ${this.data.supervisor.employees
+                        .map(
+                            (employee) => `
                         <option value="${escapeHtml(String(employee.id))}" ${String(employee.id) === currentEmployeeValue ? 'selected' : ''}>
                             ${escapeHtml(getEmployeeDisplayName(employee))}
                         </option>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 `;
             }
             this.updateReportSupportCard();
@@ -3255,24 +3462,36 @@ export const supervisorMethods = {
 
         restaurantSelect.innerHTML = `
             <option value="">Todos los restaurantes</option>
-            ${restaurants.map((restaurant, index) => `
+            ${restaurants
+                .map(
+                    (restaurant, index) => `
             <option value="${escapeHtml(String(getRestaurantRecordId(restaurant)))}">
                 ${escapeHtml(getRestaurantDisplayName(restaurant))}
             </option>
-        `).join('')}
+        `
+                )
+                .join('')}
         `;
 
-        const availableRestaurantIds = new Set(restaurants.map((restaurant) => String(getRestaurantRecordId(restaurant))));
-        restaurantSelect.value = availableRestaurantIds.has(String(currentRestaurantValue)) ? String(currentRestaurantValue) : '';
+        const availableRestaurantIds = new Set(
+            restaurants.map((restaurant) => String(getRestaurantRecordId(restaurant)))
+        );
+        restaurantSelect.value = availableRestaurantIds.has(String(currentRestaurantValue))
+            ? String(currentRestaurantValue)
+            : '';
 
         if (employeeSelect) {
             employeeSelect.innerHTML = `
                 <option value="">Todos los empleados</option>
-                ${this.data.supervisor.employees.map((employee) => `
+                ${this.data.supervisor.employees
+                    .map(
+                        (employee) => `
                     <option value="${escapeHtml(String(employee.id))}" ${String(employee.id) === currentEmployeeValue ? 'selected' : ''}>
                         ${escapeHtml(getEmployeeDisplayName(employee))}
                     </option>
-                `).join('')}
+                `
+                    )
+                    .join('')}
             `;
         }
         this.updateReportSupportCard();
@@ -3284,8 +3503,8 @@ export const supervisorMethods = {
         }
 
         if (
-            this.data.supervisor.shifts.length === 0
-            || !this.isCacheFresh('supervisorShifts', CACHE_TTLS.supervisorShifts)
+            this.data.supervisor.shifts.length === 0 ||
+            !this.isCacheFresh('supervisorShifts', CACHE_TTLS.supervisorShifts)
         ) {
             this.data.supervisor.shifts = await this.getSupervisorShiftList({ forceRestaurants: false });
         }
@@ -3311,7 +3530,7 @@ export const supervisorMethods = {
             'raw.latitude',
             'raw.restaurant_lat',
             'raw.restaurant.latitude',
-            'raw.restaurant.lat'
+            'raw.restaurant.lat',
         ]);
         const lng = resolveRecordNumber(source, [
             'lng',
@@ -3328,7 +3547,7 @@ export const supervisorMethods = {
             'raw.longitude',
             'raw.restaurant_lng',
             'raw.restaurant.longitude',
-            'raw.restaurant.lng'
+            'raw.restaurant.lng',
         ]);
         const radiusMeters = resolveRecordNumber(source, [
             'radius',
@@ -3343,7 +3562,7 @@ export const supervisorMethods = {
             'raw.radius_meters',
             'raw.verification_radius',
             'raw.restaurant.radius',
-            'raw.restaurant.verification_radius'
+            'raw.restaurant.verification_radius',
         ]);
 
         return {
@@ -3352,7 +3571,7 @@ export const supervisorMethods = {
             radiusMeters: radiusMeters != null && radiusMeters > 0 ? radiusMeters : 100,
             hasCoordinates: lat != null && lng != null,
             hasConfiguredRadius: radiusMeters != null && radiusMeters > 0,
-            isReady: lat != null && lng != null
+            isReady: lat != null && lng != null,
         };
     },
 
@@ -3361,10 +3580,10 @@ export const supervisorMethods = {
         const restaurantId = restaurant ? String(getRestaurantRecordId(restaurant) || '') : '';
         const shifts = this.getSupervisorRestaurantShifts();
         const geofence = this.getSupervisorRestaurantGeofence(restaurant);
-        const locationCheck = this.supervisionLocationCheck
-            && String(this.supervisionLocationCheck.restaurantId || '') === restaurantId
-            ? this.supervisionLocationCheck
-            : null;
+        const locationCheck =
+            this.supervisionLocationCheck && String(this.supervisionLocationCheck.restaurantId || '') === restaurantId
+                ? this.supervisionLocationCheck
+                : null;
 
         if (!restaurantId) {
             return {
@@ -3372,7 +3591,7 @@ export const supervisorMethods = {
                 restaurantName: '',
                 shifts: [],
                 geofence,
-                locationCheck
+                locationCheck,
             };
         }
 
@@ -3383,7 +3602,7 @@ export const supervisorMethods = {
         const addressParts = [
             restaurant?.address_line,
             [restaurant?.city, restaurant?.state].filter(Boolean).join(', '),
-            restaurant?.country
+            restaurant?.country,
         ]
             .map((value) => String(value || '').trim())
             .filter(Boolean);
@@ -3394,7 +3613,7 @@ export const supervisorMethods = {
             shifts,
             geofence,
             locationCheck,
-            addressText: addressParts.join(' • ')
+            addressText: addressParts.join(' • '),
         };
     },
 
@@ -3404,10 +3623,12 @@ export const supervisorMethods = {
             return;
         }
 
-        const { restaurantName, shifts, geofence, locationCheck, addressText } = this.getSupervisorSupervisionReference();
+        const { restaurantName, shifts, geofence, locationCheck, addressText } =
+            this.getSupervisorSupervisionReference();
 
         if (!restaurantName) {
-            container.innerHTML = '<div class="empty-state">Selecciona un restaurante para preparar la supervisión en sitio.</div>';
+            container.innerHTML =
+                '<div class="empty-state">Selecciona un restaurante para preparar la supervisión en sitio.</div>';
             return;
         }
 
@@ -3415,24 +3636,24 @@ export const supervisorMethods = {
         const locationStatusLabel = !geofence?.isReady
             ? 'Geocerca pendiente'
             : locationCheck?.ok
-                ? 'En sitio'
-                : locationCheck?.attemptedAt
-                    ? 'Fuera de rango'
-                    : 'Pendiente';
+              ? 'En sitio'
+              : locationCheck?.attemptedAt
+                ? 'Fuera de rango'
+                : 'Pendiente';
         const locationStatusClass = !geofence?.isReady
             ? 'badge-warning'
             : locationCheck?.ok
-                ? 'badge-success'
-                : locationCheck?.attemptedAt
-                    ? 'badge-danger'
-                    : 'badge-warning';
+              ? 'badge-success'
+              : locationCheck?.attemptedAt
+                ? 'badge-danger'
+                : 'badge-warning';
         const locationSummary = !geofence?.isReady
             ? 'Este restaurante todavía no tiene coordenadas verificables.'
             : locationCheck?.ok
+              ? `${Math.round(locationCheck.distanceMeters || 0)} m del punto de control`
+              : locationCheck?.attemptedAt
                 ? `${Math.round(locationCheck.distanceMeters || 0)} m del punto de control`
-                : locationCheck?.attemptedAt
-                    ? `${Math.round(locationCheck.distanceMeters || 0)} m del punto de control`
-                    : 'Verifica tu ubicación para validar presencia en sitio';
+                : 'Verifica tu ubicación para validar presencia en sitio';
 
         container.innerHTML = `
             <div class="supervision-target-top">
@@ -3559,7 +3780,7 @@ export const supervisorMethods = {
         if (!restaurant) {
             this.showToast('Selecciona un restaurante antes de verificar la ubicación.', {
                 tone: 'warning',
-                title: 'Falta el restaurante'
+                title: 'Falta el restaurante',
             });
             return null;
         }
@@ -3576,12 +3797,15 @@ export const supervisorMethods = {
                     attemptedAt: new Date().toISOString(),
                     ok: false,
                     distanceMeters: null,
-                    radiusMeters: geofence?.radiusMeters || 0
+                    radiusMeters: geofence?.radiusMeters || 0,
                 });
-                this.showToast(`El restaurante ${restaurantName} aún no tiene ubicación o radio configurados para validar presencia en sitio.`, {
-                    tone: 'warning',
-                    title: 'Geocerca pendiente'
-                });
+                this.showToast(
+                    `El restaurante ${restaurantName} aún no tiene ubicación o radio configurados para validar presencia en sitio.`,
+                    {
+                        tone: 'warning',
+                        title: 'Geocerca pendiente',
+                    }
+                );
                 return null;
             }
 
@@ -3592,7 +3816,7 @@ export const supervisorMethods = {
 
             const distanceMeters = calculateDistanceMeters(location, {
                 lat: geofence.lat,
-                lng: geofence.lng
+                lng: geofence.lng,
             });
             const accuracyMeters = Math.max(0, Number(location?.accuracy || 0));
             const effectiveRadiusMeters = Math.max(geofence.radiusMeters || 0, 0) + Math.min(accuracyMeters, 35);
@@ -3605,7 +3829,7 @@ export const supervisorMethods = {
                 distanceMeters,
                 radiusMeters: geofence.radiusMeters || 0,
                 effectiveRadiusMeters,
-                accuracyMeters
+                accuracyMeters,
             };
 
             this.supervisionLocationVerified = result.ok;
@@ -3619,7 +3843,7 @@ export const supervisorMethods = {
                         : `No estás dentro del radio permitido de ${restaurantName}. Acércate al restaurante para registrar la supervisión.`,
                     {
                         tone: result.ok ? 'success' : 'warning',
-                        title: result.ok ? 'Ubicación validada' : 'Fuera de rango'
+                        title: result.ok ? 'Ubicación validada' : 'Fuera de rango',
                     }
                 );
             }
@@ -3634,14 +3858,14 @@ export const supervisorMethods = {
                 ok: false,
                 distanceMeters: null,
                 radiusMeters: geofence?.radiusMeters || 0,
-                errorMessage: this.getGeolocationMessage(error)
+                errorMessage: this.getGeolocationMessage(error),
             };
             this.updateSupervisorSupervisionLocationUi(this.supervisionLocationCheck);
 
             if (notify) {
                 this.showToast(this.getGeolocationMessage(error), {
                     tone: 'error',
-                    title: 'No fue posible verificar ubicación'
+                    title: 'No fue posible verificar ubicación',
                 });
                 return null;
             }
@@ -3655,12 +3879,14 @@ export const supervisorMethods = {
     async ensureSupervisorSupervisionLocationVerified() {
         const { restaurantName, geofence } = this.getSupervisorSupervisionReference();
         if (!geofence?.isReady) {
-            throw new Error(`No puedes registrar la supervisión porque ${restaurantName || 'el restaurante seleccionado'} no tiene geocerca configurada.`);
+            throw new Error(
+                `No puedes registrar la supervisión porque ${restaurantName || 'el restaurante seleccionado'} no tiene geocerca configurada.`
+            );
         }
 
         const result = await this.verifySupervisorSupervisionLocation({
             forceCapture: true,
-            notify: false
+            notify: false,
         });
 
         if (!result) {
@@ -3676,7 +3902,9 @@ export const supervisorMethods = {
                 ? `${Math.round(result.radiusMeters)} m`
                 : 'el radio configurado';
 
-            throw new Error(`No puedes registrar la supervisión porque tu ubicación está fuera del rango permitido de ${resolvedRestaurantName}. Distancia detectada: ${distanceText}. Radio base: ${radiusText}.`);
+            throw new Error(
+                `No puedes registrar la supervisión porque tu ubicación está fuera del rango permitido de ${resolvedRestaurantName}. Distancia detectada: ${distanceText}. Radio base: ${radiusText}.`
+            );
         }
 
         return result;
@@ -3714,8 +3942,9 @@ export const supervisorMethods = {
         const select = document.getElementById('supervisor-restaurant-task-restaurant');
         if (select) {
             this.populateSupervisorRestaurantOptions('supervisor-restaurant-task-restaurant', true);
-            const fallbackRestaurantId = this.restaurantTaskDraftRestaurantId
-                || String(getRestaurantRecordId(this.getSupervisorSelectedRestaurant()) || '').trim();
+            const fallbackRestaurantId =
+                this.restaurantTaskDraftRestaurantId ||
+                String(getRestaurantRecordId(this.getSupervisorSelectedRestaurant()) || '').trim();
             if (fallbackRestaurantId) {
                 select.value = fallbackRestaurantId;
             }
@@ -3737,7 +3966,7 @@ export const supervisorMethods = {
             description: document.getElementById('supervisor-restaurant-task-description')?.value?.trim() || '',
             requiresEvidence: document.getElementById('supervisor-restaurant-task-requires-evidence')?.checked === true,
             priority: document.getElementById('supervisor-restaurant-task-priority')?.value?.trim() || '',
-            source: this.restaurantTaskDraftSource || 'restaurants'
+            source: this.restaurantTaskDraftSource || 'restaurants',
         };
     },
 
@@ -3758,10 +3987,13 @@ export const supervisorMethods = {
 
     getRestaurantTaskErrorMessage(error, fallback) {
         const code = this.getRestaurantTaskErrorCode(error);
-        if (code === 'RESTAURANT_NOT_FOUND') return 'El restaurante no fue encontrado. Verifica que sigue activo e intenta de nuevo.';
+        if (code === 'RESTAURANT_NOT_FOUND')
+            return 'El restaurante no fue encontrado. Verifica que sigue activo e intenta de nuevo.';
         if (code === 'RESTAURANT_FORBIDDEN') return 'No tienes permiso para crear tareas en este restaurante.';
-        if (code === 'TASK_SCOPE_NOT_SUPPORTED') return 'Falta información requerida para crear la tarea. Verifica que el restaurante esté seleccionado correctamente.';
-        if (code === 'NO_ACTIVE_SHIFT') return 'El empleado no tiene un turno activo en este restaurante. Debe activar su turno primero.';
+        if (code === 'TASK_SCOPE_NOT_SUPPORTED')
+            return 'Falta información requerida para crear la tarea. Verifica que el restaurante esté seleccionado correctamente.';
+        if (code === 'NO_ACTIVE_SHIFT')
+            return 'El empleado no tiene un turno activo en este restaurante. Debe activar su turno primero.';
         return this.getErrorMessage(error, fallback);
     },
 
@@ -3774,7 +4006,7 @@ export const supervisorMethods = {
         if (!draft.restaurantId) {
             this.showToast('Selecciona el restaurante al que vas a ligar la tarea especial.', {
                 tone: 'warning',
-                title: 'Falta el restaurante'
+                title: 'Falta el restaurante',
             });
             return;
         }
@@ -3782,7 +4014,7 @@ export const supervisorMethods = {
         if (draft.title.length < 3) {
             this.showToast('Escribe un título de al menos 3 caracteres para la tarea especial.', {
                 tone: 'warning',
-                title: 'Falta el título'
+                title: 'Falta el título',
             });
             return;
         }
@@ -3790,13 +4022,15 @@ export const supervisorMethods = {
         if (draft.description.length < 5) {
             this.showToast('Describe la tarea especial con al menos 5 caracteres.', {
                 tone: 'warning',
-                title: 'Falta la descripción'
+                title: 'Falta la descripción',
             });
             return;
         }
 
-        const restaurant = asArray(this.data.supervisor.restaurants)
-            .find((item) => String(getRestaurantRecordId(item) || '').trim() === draft.restaurantId) || null;
+        const restaurant =
+            asArray(this.data.supervisor.restaurants).find(
+                (item) => String(getRestaurantRecordId(item) || '').trim() === draft.restaurantId
+            ) || null;
         const restaurantName = restaurant ? getRestaurantDisplayName(restaurant) : 'el restaurante seleccionado';
         const payloadBase = {
             restaurant_id: this.normalizeTaskCreatePayloadValue(draft.restaurantId),
@@ -3806,7 +4040,7 @@ export const supervisorMethods = {
             description: draft.description,
             requires_evidence: draft.requiresEvidence,
             priority: draft.priority || undefined,
-            origin_page: draft.source
+            origin_page: draft.source,
         };
         const payloadVariants = payloadBase.priority
             ? [payloadBase, { ...payloadBase, priority: undefined }]
@@ -3836,18 +4070,21 @@ export const supervisorMethods = {
             this.closeModal('modal-supervisor-restaurant-task');
             this.showToast(`La tarea especial quedó abierta para ${restaurantName}.`, {
                 tone: 'success',
-                title: 'Tarea creada'
+                title: 'Tarea creada',
             });
         } catch (error) {
             this.registerTaskCreateDebug(payloadVariants[payloadVariants.length - 1], error, {
                 restaurant_id: draft.restaurantId,
                 scope: 'restaurant',
-                source: draft.source
+                source: draft.source,
             });
-            this.showToast(this.getRestaurantTaskErrorMessage(error, 'No fue posible crear la tarea especial del restaurante.'), {
-                tone: 'error',
-                title: 'No fue posible crear la tarea'
-            });
+            this.showToast(
+                this.getRestaurantTaskErrorMessage(error, 'No fue posible crear la tarea especial del restaurante.'),
+                {
+                    tone: 'error',
+                    title: 'No fue posible crear la tarea',
+                }
+            );
         } finally {
             this.hideLoading();
             this.setSupervisorRestaurantTaskSubmitState(false);
@@ -3909,23 +4146,27 @@ export const supervisorMethods = {
             <span class="report-day-photo-copy">
                 <span class="report-day-photo-phase">${escapeHtml(phaseLabel)}</span>
                 <span class="report-day-photo-label">${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}</span>
-                ${this.getShiftEvidenceDisplayMeta(item)
-                    ? `<span class="report-day-photo-meta">${escapeHtml(this.getShiftEvidenceDisplayMeta(item))}</span>`
-                    : ''}
+                ${
+                    this.getShiftEvidenceDisplayMeta(item)
+                        ? `<span class="report-day-photo-meta">${escapeHtml(this.getShiftEvidenceDisplayMeta(item))}</span>`
+                        : ''
+                }
             </span>
         </a>`;
     },
 
     renderReportEvidencePairs(startMap, endMap, startItems, endItems, orderedKeys) {
-        const rows = orderedKeys.map((key, index) => {
-            const startItem = startMap.get(key) || startItems[index] || null;
-            const endItem = endMap.get(key) || endItems[index] || null;
-            if (!startItem && !endItem) return '';
-            return `<div class="report-day-pair-row">
+        const rows = orderedKeys
+            .map((key, index) => {
+                const startItem = startMap.get(key) || startItems[index] || null;
+                const endItem = endMap.get(key) || endItems[index] || null;
+                if (!startItem && !endItem) return '';
+                return `<div class="report-day-pair-row">
                 ${this.renderReportEvidenceTile('Antes', startItem, index)}
                 ${this.renderReportEvidenceTile('Después', endItem, index)}
             </div>`;
-        }).filter(Boolean);
+            })
+            .filter(Boolean);
         return rows.length === 0
             ? '<div class="report-day-phase-empty">No se recibieron fotos para este turno.</div>'
             : `<div class="report-day-pairs">${rows.join('')}</div>`;
@@ -3958,34 +4199,46 @@ export const supervisorMethods = {
         let foundEvidence = false;
         copy.textContent = 'Para reportes de un solo día aquí verás las evidencias de inicio y finalización.';
 
-        list.innerHTML = items.map((shift) => {
-            const employeeName = this.getResolvedShiftEmployeeName(shift, 'Empleado sin nombre visible');
-            const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Restaurante sin nombre visible');
-            const scheduleText = formatShiftRange(shift.scheduled_start || shift.start_time, shift.scheduled_end || shift.end_time);
-            const workedHours = formatHours(getWorkedHours(shift));
-            const scheduledHours = formatHours(getScheduledHours(shift));
-            const endedEarly = isShiftEndedEarly(shift);
-            const earlyEndReason = this.getEarlyEndReasonLabel(shift);
-            const startItems = this.extractShiftEvidenceItems(shift, 'start');
-            const endItems = this.extractShiftEvidenceItems(shift, 'end');
-            foundEvidence = foundEvidence || startItems.length > 0 || endItems.length > 0;
+        list.innerHTML = items
+            .map((shift) => {
+                const employeeName = this.getResolvedShiftEmployeeName(shift, 'Empleado sin nombre visible');
+                const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Restaurante sin nombre visible');
+                const scheduleText = formatShiftRange(
+                    shift.scheduled_start || shift.start_time,
+                    shift.scheduled_end || shift.end_time
+                );
+                const workedHours = formatHours(getWorkedHours(shift));
+                const scheduledHours = formatHours(getScheduledHours(shift));
+                const endedEarly = isShiftEndedEarly(shift);
+                const earlyEndReason = this.getEarlyEndReasonLabel(shift);
+                const startItems = this.extractShiftEvidenceItems(shift, 'start');
+                const endItems = this.extractShiftEvidenceItems(shift, 'end');
+                foundEvidence = foundEvidence || startItems.length > 0 || endItems.length > 0;
 
-            const startMap = new Map();
-            startItems.forEach((item, i) => { const k = this.buildEvidenceItemKey(item, i); if (!startMap.has(k)) startMap.set(k, item); });
-            const endMap = new Map();
-            endItems.forEach((item, i) => { const k = this.buildEvidenceItemKey(item, i); if (!endMap.has(k)) endMap.set(k, item); });
+                const startMap = new Map();
+                startItems.forEach((item, i) => {
+                    const k = this.buildEvidenceItemKey(item, i);
+                    if (!startMap.has(k)) startMap.set(k, item);
+                });
+                const endMap = new Map();
+                endItems.forEach((item, i) => {
+                    const k = this.buildEvidenceItemKey(item, i);
+                    if (!endMap.has(k)) endMap.set(k, item);
+                });
 
-            const orderedKeys = [];
-            startMap.forEach((_, k) => orderedKeys.push(k));
-            endMap.forEach((_, k) => { if (!orderedKeys.includes(k)) orderedKeys.push(k); });
-            const maxLength = Math.max(startItems.length, endItems.length);
-            for (let i = 0; i < maxLength; i++) {
-                const fb = `index_${i + 1}`;
-                if (!orderedKeys.includes(fb)) orderedKeys.push(fb);
-            }
+                const orderedKeys = [];
+                startMap.forEach((_, k) => orderedKeys.push(k));
+                endMap.forEach((_, k) => {
+                    if (!orderedKeys.includes(k)) orderedKeys.push(k);
+                });
+                const maxLength = Math.max(startItems.length, endItems.length);
+                for (let i = 0; i < maxLength; i++) {
+                    const fb = `index_${i + 1}`;
+                    if (!orderedKeys.includes(fb)) orderedKeys.push(fb);
+                }
 
-            const statusLabel = getShiftStatusLabel(shift);
-            return `<article class="report-day-shift-card">
+                const statusLabel = getShiftStatusLabel(shift);
+                return `<article class="report-day-shift-card">
                 <div class="report-day-shift-top">
                     <div>
                         <div class="report-day-shift-title">${escapeHtml(employeeName)}</div>
@@ -4003,7 +4256,8 @@ export const supervisorMethods = {
                 ${endedEarly && earlyEndReason ? `<div class="report-day-shift-metric"><span>Motivo de salida anticipada</span><strong>${escapeHtml(earlyEndReason)}</strong></div>` : ''}
                 ${this.renderReportEvidencePairs(startMap, endMap, startItems, endItems, orderedKeys)}
             </article>`;
-        }).join('');
+            })
+            .join('');
 
         if (!foundEvidence) {
             copy.textContent = 'Ese día sí tiene turnos, pero no se recibieron fotos de inicio y fin en este listado.';
@@ -4028,7 +4282,7 @@ export const supervisorMethods = {
         if (!startDate || !endDate) {
             this.showToast('Selecciona el rango de fechas del informe.', {
                 tone: 'warning',
-                title: 'Filtros incompletos'
+                title: 'Filtros incompletos',
             });
             return;
         }
@@ -4036,7 +4290,7 @@ export const supervisorMethods = {
         if (startDate > endDate) {
             this.showToast('La fecha de inicio no puede ser mayor que la fecha de fin.', {
                 tone: 'warning',
-                title: 'Rango de fechas inválido'
+                title: 'Rango de fechas inválido',
             });
             return;
         }
@@ -4058,33 +4312,34 @@ export const supervisorMethods = {
                 period_start: startDate,
                 period_end: endDate,
                 export_format: 'both',
-                columns: REPORT_COLUMNS
+                columns: REPORT_COLUMNS,
             };
             const reportIdempotencyKey = buildIdempotencyKey();
             const reportGenerateRequestOptions = {
                 accessToken,
                 requiresIdempotency: false,
                 headers: {
-                    'Idempotency-Key': reportIdempotencyKey
-                }
+                    'Idempotency-Key': reportIdempotencyKey,
+                },
             };
-            const runReportGenerate = async (timeoutMs) => apiClient.reportsGenerate(payload, {
-                ...reportGenerateRequestOptions,
-                timeoutMs
-            });
+            const runReportGenerate = async (timeoutMs) =>
+                apiClient.reportsGenerate(payload, {
+                    ...reportGenerateRequestOptions,
+                    timeoutMs,
+                });
             reportRequestContext = {
                 endpoint: '/reports_generate',
                 headers_sent: {
                     Authorization: accessToken ? 'Bearer <access_token>' : '',
                     apikey: apiClient.getConfig().anonKey || '',
-                    'Idempotency-Key': reportIdempotencyKey
+                    'Idempotency-Key': reportIdempotencyKey,
                 },
                 timeout_ms: 45000,
                 retry_on_timeout: true,
-                jwt_decoded: buildJwtFullDebugSummary(accessToken)
+                jwt_decoded: buildJwtFullDebugSummary(accessToken),
             };
 
-            let reportGeneratePromise = runReportGenerate(45000).catch(async (error) => {
+            const reportGeneratePromise = runReportGenerate(45000).catch(async (error) => {
                 if (String(error?.code || '').toUpperCase() !== 'TIMEOUT') {
                     throw error;
                 }
@@ -4094,38 +4349,40 @@ export const supervisorMethods = {
 
             const [reportResult, shiftSummaryResult] = await Promise.all([
                 reportGeneratePromise,
-                apiClient.reportsManage('list_shifts', {
-                    restaurant_id: payload.restaurant_id,
-                    employee_id: payload.employee_id,
-                    from: startDate,
-                    to: endDate,
-                    limit: 500
-                }).catch(() => null)
+                apiClient
+                    .reportsManage('list_shifts', {
+                        restaurant_id: payload.restaurant_id,
+                        employee_id: payload.employee_id,
+                        from: startDate,
+                        to: endDate,
+                        limit: 500,
+                    })
+                    .catch(() => null),
             ]);
 
             const shiftItems = asArray(shiftSummaryResult);
             const generatedTotals = reportResult?.totals || {};
             const totalWorkedHours = Number(
-                shiftSummaryResult?.total_worked_hours
-                ?? shiftSummaryResult?.totals?.total_worked_hours
-                ?? generatedTotals?.total_worked_hours
-                ?? generatedTotals?.worked_hours_total
+                shiftSummaryResult?.total_worked_hours ??
+                    shiftSummaryResult?.totals?.total_worked_hours ??
+                    generatedTotals?.total_worked_hours ??
+                    generatedTotals?.worked_hours_total
             );
             const totalScheduledHours = Number(
-                shiftSummaryResult?.total_scheduled_hours
-                ?? shiftSummaryResult?.totals?.total_scheduled_hours
-                ?? generatedTotals?.total_scheduled_hours
-                ?? generatedTotals?.scheduled_hours_total
+                shiftSummaryResult?.total_scheduled_hours ??
+                    shiftSummaryResult?.totals?.total_scheduled_hours ??
+                    generatedTotals?.total_scheduled_hours ??
+                    generatedTotals?.scheduled_hours_total
             );
             const restaurantWorkedHours = Number(
-                shiftSummaryResult?.restaurant_worked_hours_total
-                ?? shiftSummaryResult?.totals?.restaurant_worked_hours_total
-                ?? generatedTotals?.restaurant_worked_hours_total
+                shiftSummaryResult?.restaurant_worked_hours_total ??
+                    shiftSummaryResult?.totals?.restaurant_worked_hours_total ??
+                    generatedTotals?.restaurant_worked_hours_total
             );
             const restaurantScheduledHours = Number(
-                shiftSummaryResult?.restaurant_scheduled_hours_total
-                ?? shiftSummaryResult?.totals?.restaurant_scheduled_hours_total
-                ?? generatedTotals?.restaurant_scheduled_hours_total
+                shiftSummaryResult?.restaurant_scheduled_hours_total ??
+                    shiftSummaryResult?.totals?.restaurant_scheduled_hours_total ??
+                    generatedTotals?.restaurant_scheduled_hours_total
             );
             const endedEarlyCount = countEndedEarlyShifts(shiftItems);
             const statusSummary = summarizeShiftStatuses(shiftItems);
@@ -4134,19 +4391,31 @@ export const supervisorMethods = {
                 shift_items: shiftItems,
                 is_single_day: isSingleDay,
                 resolved_totals: {
-                    total_worked_hours: Number.isFinite(totalWorkedHours) && totalWorkedHours > 0 ? totalWorkedHours : sumWorkedHours(shiftItems),
-                    total_scheduled_hours: Number.isFinite(totalScheduledHours) && totalScheduledHours > 0 ? totalScheduledHours : sumHours(shiftItems),
-                    restaurant_worked_hours_total: Number.isFinite(restaurantWorkedHours) && restaurantWorkedHours > 0 ? restaurantWorkedHours : null,
-                    restaurant_scheduled_hours_total: Number.isFinite(restaurantScheduledHours) && restaurantScheduledHours > 0 ? restaurantScheduledHours : null,
-                    ended_early_count: endedEarlyCount
+                    total_worked_hours:
+                        Number.isFinite(totalWorkedHours) && totalWorkedHours > 0
+                            ? totalWorkedHours
+                            : sumWorkedHours(shiftItems),
+                    total_scheduled_hours:
+                        Number.isFinite(totalScheduledHours) && totalScheduledHours > 0
+                            ? totalScheduledHours
+                            : sumHours(shiftItems),
+                    restaurant_worked_hours_total:
+                        Number.isFinite(restaurantWorkedHours) && restaurantWorkedHours > 0
+                            ? restaurantWorkedHours
+                            : null,
+                    restaurant_scheduled_hours_total:
+                        Number.isFinite(restaurantScheduledHours) && restaurantScheduledHours > 0
+                            ? restaurantScheduledHours
+                            : null,
+                    ended_early_count: endedEarlyCount,
                 },
                 status_summary: statusSummary,
                 filters: {
                     start_date: startDate,
                     end_date: endDate,
                     restaurant_id: payload.restaurant_id ?? '',
-                    employee_id: payload.employee_id ?? ''
-                }
+                    employee_id: payload.employee_id ?? '',
+                },
             };
 
             document.getElementById('report-summary-worked-hours').textContent = formatHours(
@@ -4166,10 +4435,14 @@ export const supervisorMethods = {
 
             const restaurantTotalsCopy = document.getElementById('report-restaurant-totals-copy');
             if (restaurantTotalsCopy) {
-                const restaurantWorkedText = Number.isFinite(this.data.lastGeneratedReport.resolved_totals.restaurant_worked_hours_total)
+                const restaurantWorkedText = Number.isFinite(
+                    this.data.lastGeneratedReport.resolved_totals.restaurant_worked_hours_total
+                )
                     ? formatHours(this.data.lastGeneratedReport.resolved_totals.restaurant_worked_hours_total)
                     : formatHours(this.data.lastGeneratedReport.resolved_totals.total_worked_hours);
-                const restaurantScheduledText = Number.isFinite(this.data.lastGeneratedReport.resolved_totals.restaurant_scheduled_hours_total)
+                const restaurantScheduledText = Number.isFinite(
+                    this.data.lastGeneratedReport.resolved_totals.restaurant_scheduled_hours_total
+                )
                     ? formatHours(this.data.lastGeneratedReport.resolved_totals.restaurant_scheduled_hours_total)
                     : formatHours(this.data.lastGeneratedReport.resolved_totals.total_scheduled_hours);
                 restaurantTotalsCopy.textContent = `En este rango el restaurante acumula ${restaurantWorkedText} trabajadas y ${restaurantScheduledText} programadas.`;
@@ -4177,39 +4450,50 @@ export const supervisorMethods = {
 
             const statusBreakdown = document.getElementById('report-status-breakdown');
             if (statusBreakdown) {
-                statusBreakdown.innerHTML = statusSummary.length > 0
-                    ? statusSummary.map(({ label, count }) => `
+                statusBreakdown.innerHTML =
+                    statusSummary.length > 0
+                        ? statusSummary
+                              .map(
+                                  ({ label, count }) => `
                         <span class="report-pill ${getBadgeClass(label)}">
                             <span>${escapeHtml(label)}</span>
                             <strong>${escapeHtml(String(count))}</strong>
                         </span>
-                    `).join('')
-                    : '<span class="report-pill report-pill-empty">Aún no hay estados para mostrar.</span>';
+                    `
+                              )
+                              .join('')
+                        : '<span class="report-pill report-pill-empty">Aún no hay estados para mostrar.</span>';
             }
             this.renderReportDayEvidence(shiftItems, { isSingleDay });
             document.getElementById('report-result')?.classList.remove('hidden');
             this.updateReportSupportCard(null);
         } catch (error) {
-            this.registerReportGenerateDebug({
-                restaurant_id: this.normalizeReportFilterValue(restaurantId, { numeric: true }),
-                employee_id: this.normalizeReportFilterValue(employeeId, { numeric: false }),
-                period_start: startDate,
-                period_end: endDate,
-                export_format: 'both',
-                columns: REPORT_COLUMNS
-            }, error, reportRequestContext || {
-                endpoint: '/reports_generate',
-                headers_sent: {
-                    Authorization: apiClient.hasAccessToken() ? 'Bearer <access_token>' : '',
-                    apikey: apiClient.getConfig().anonKey || '',
-                    'Idempotency-Key': null
+            this.registerReportGenerateDebug(
+                {
+                    restaurant_id: this.normalizeReportFilterValue(restaurantId, { numeric: true }),
+                    employee_id: this.normalizeReportFilterValue(employeeId, { numeric: false }),
+                    period_start: startDate,
+                    period_end: endDate,
+                    export_format: 'both',
+                    columns: REPORT_COLUMNS,
                 },
-                jwt_decoded: buildJwtFullDebugSummary(apiClient.getConfig().accessToken || '')
-            });
-            this.updateReportSupportCard(Array.isArray(window.__worktraceReportDebug) ? window.__worktraceReportDebug[0] : null);
+                error,
+                reportRequestContext || {
+                    endpoint: '/reports_generate',
+                    headers_sent: {
+                        Authorization: apiClient.hasAccessToken() ? 'Bearer <access_token>' : '',
+                        apikey: apiClient.getConfig().anonKey || '',
+                        'Idempotency-Key': null,
+                    },
+                    jwt_decoded: buildJwtFullDebugSummary(apiClient.getConfig().accessToken || ''),
+                }
+            );
+            this.updateReportSupportCard(
+                Array.isArray(window.__worktraceReportDebug) ? window.__worktraceReportDebug[0] : null
+            );
             this.showToast(this.getErrorMessage(error, 'No fue posible generar el informe.'), {
                 tone: 'error',
-                title: 'No fue posible generar el informe'
+                title: 'No fue posible generar el informe',
             });
         } finally {
             this.hideLoading();
@@ -4221,7 +4505,7 @@ export const supervisorMethods = {
         if (!report) {
             this.showToast('Primero genera un informe.', {
                 tone: 'warning',
-                title: 'Aún no hay resultados'
+                title: 'Aún no hay resultados',
             });
             return;
         }
@@ -4230,7 +4514,7 @@ export const supervisorMethods = {
         if (!url) {
             this.showToast(`No fue posible preparar la descarga en ${type.toUpperCase()}.`, {
                 tone: 'error',
-                title: 'Descarga no disponible'
+                title: 'Descarga no disponible',
             });
             return;
         }
@@ -4265,7 +4549,7 @@ export const supervisorMethods = {
         if (!report) {
             this.showToast('Primero genera un informe.', {
                 tone: 'warning',
-                title: 'Aún no hay resultados'
+                title: 'Aún no hay resultados',
             });
             return;
         }
@@ -4283,59 +4567,59 @@ export const supervisorMethods = {
         const isSingleDay = Boolean(report?.is_single_day);
         const resolvedTotals = report?.resolved_totals || {};
         const totalWorkedHours = Number(
-            resolvedTotals?.total_worked_hours
-            ?? report?.total_worked_hours
-            ?? totals?.total_worked_hours
-            ?? totals?.worked_hours_total
+            resolvedTotals?.total_worked_hours ??
+                report?.total_worked_hours ??
+                totals?.total_worked_hours ??
+                totals?.worked_hours_total
         );
         const totalScheduledHours = Number(
-            resolvedTotals?.total_scheduled_hours
-            ?? report?.total_scheduled_hours
-            ?? totals?.total_scheduled_hours
-            ?? totals?.scheduled_hours_total
+            resolvedTotals?.total_scheduled_hours ??
+                report?.total_scheduled_hours ??
+                totals?.total_scheduled_hours ??
+                totals?.scheduled_hours_total
         );
         const restaurantWorkedHours = Number(
-            resolvedTotals?.restaurant_worked_hours_total
-            ?? report?.restaurant_worked_hours_total
-            ?? totals?.restaurant_worked_hours_total
+            resolvedTotals?.restaurant_worked_hours_total ??
+                report?.restaurant_worked_hours_total ??
+                totals?.restaurant_worked_hours_total
         );
         const restaurantScheduledHours = Number(
-            resolvedTotals?.restaurant_scheduled_hours_total
-            ?? report?.restaurant_scheduled_hours_total
-            ?? totals?.restaurant_scheduled_hours_total
+            resolvedTotals?.restaurant_scheduled_hours_total ??
+                report?.restaurant_scheduled_hours_total ??
+                totals?.restaurant_scheduled_hours_total
         );
         const summaryWorkedHours = formatHours(
-            Number.isFinite(totalWorkedHours) && totalWorkedHours > 0
-                ? totalWorkedHours
-                : sumWorkedHours(shiftItems)
+            Number.isFinite(totalWorkedHours) && totalWorkedHours > 0 ? totalWorkedHours : sumWorkedHours(shiftItems)
         );
         const summaryScheduledHours = formatHours(
-            Number.isFinite(totalScheduledHours) && totalScheduledHours > 0
-                ? totalScheduledHours
-                : sumHours(shiftItems)
+            Number.isFinite(totalScheduledHours) && totalScheduledHours > 0 ? totalScheduledHours : sumHours(shiftItems)
         );
         const summaryRestaurantWorkedHours = formatHours(
             Number.isFinite(restaurantWorkedHours) && restaurantWorkedHours > 0
                 ? restaurantWorkedHours
-                : (Number.isFinite(totalWorkedHours) && totalWorkedHours > 0 ? totalWorkedHours : sumWorkedHours(shiftItems))
+                : Number.isFinite(totalWorkedHours) && totalWorkedHours > 0
+                  ? totalWorkedHours
+                  : sumWorkedHours(shiftItems)
         );
         const summaryRestaurantScheduledHours = formatHours(
             Number.isFinite(restaurantScheduledHours) && restaurantScheduledHours > 0
                 ? restaurantScheduledHours
-                : (Number.isFinite(totalScheduledHours) && totalScheduledHours > 0 ? totalScheduledHours : sumHours(shiftItems))
+                : Number.isFinite(totalScheduledHours) && totalScheduledHours > 0
+                  ? totalScheduledHours
+                  : sumHours(shiftItems)
         );
-        const endedEarlyCount = Number(
-            resolvedTotals?.ended_early_count
-            ?? report?.ended_early_count
-        );
-        const statusSummary = Array.isArray(report?.status_summary) && report.status_summary.length > 0
-            ? report.status_summary
-            : summarizeShiftStatuses(shiftItems);
+        const endedEarlyCount = Number(resolvedTotals?.ended_early_count ?? report?.ended_early_count);
+        const statusSummary =
+            Array.isArray(report?.status_summary) && report.status_summary.length > 0
+                ? report.status_summary
+                : summarizeShiftStatuses(shiftItems);
 
         const dateSummary = [
             filters.start_date ? `Desde ${filters.start_date}` : '',
-            filters.end_date ? `hasta ${filters.end_date}` : ''
-        ].filter(Boolean).join(' ');
+            filters.end_date ? `hasta ${filters.end_date}` : '',
+        ]
+            .filter(Boolean)
+            .join(' ');
 
         const renderEvidencePhase = (label, evidenceItems) => {
             if (!evidenceItems.length) {
@@ -4351,36 +4635,50 @@ export const supervisorMethods = {
                 <div class="phase-block">
                     <div class="phase-title">${escapeHtml(label)}</div>
                     <div class="phase-gallery">
-                        ${evidenceItems.map((item, index) => `
+                        ${evidenceItems
+                            .map(
+                                (item, index) => `
                             <a class="phase-photo" href="${escapeHtml(item.url)}" aria-label="${escapeHtml(`${label} ${index + 1}`)}">
                                 <img src="${escapeHtml(item.url)}" alt="${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}">
                                 <span class="phase-photo-copy">
                                     <span class="phase-photo-label">${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}</span>
-                                    ${this.getShiftEvidenceDisplayMeta(item)
-                                        ? `<span class="phase-photo-meta">${escapeHtml(this.getShiftEvidenceDisplayMeta(item))}</span>`
-                                        : ''}
+                                    ${
+                                        this.getShiftEvidenceDisplayMeta(item)
+                                            ? `<span class="phase-photo-meta">${escapeHtml(this.getShiftEvidenceDisplayMeta(item))}</span>`
+                                            : ''
+                                    }
                                 </span>
                             </a>
-                        `).join('')}
+                        `
+                            )
+                            .join('')}
                     </div>
                 </div>
             `;
         };
 
-        const rows = shiftItems.length > 0
-            ? shiftItems.map((shift) => {
-                const employeeName = this.getResolvedShiftEmployeeName(shift, 'Empleado sin nombre visible');
-                const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Restaurante sin nombre visible');
-                const scheduleText = formatShiftRange(shift.scheduled_start || shift.start_time, shift.scheduled_end || shift.end_time);
-                const status = getShiftStatusLabel(shift);
-                const workedHours = formatHours(getWorkedHours(shift));
-                const scheduledHours = formatHours(getScheduledHours(shift));
-                const endedEarly = isShiftEndedEarly(shift);
-                const earlyEndReason = this.getEarlyEndReasonLabel(shift);
-                const startItems = this.extractShiftEvidenceItems(shift, 'start');
-                const endItems = this.extractShiftEvidenceItems(shift, 'end');
+        const rows =
+            shiftItems.length > 0
+                ? shiftItems
+                      .map((shift) => {
+                          const employeeName = this.getResolvedShiftEmployeeName(shift, 'Empleado sin nombre visible');
+                          const restaurantName = this.getResolvedShiftRestaurantName(
+                              shift,
+                              'Restaurante sin nombre visible'
+                          );
+                          const scheduleText = formatShiftRange(
+                              shift.scheduled_start || shift.start_time,
+                              shift.scheduled_end || shift.end_time
+                          );
+                          const status = getShiftStatusLabel(shift);
+                          const workedHours = formatHours(getWorkedHours(shift));
+                          const scheduledHours = formatHours(getScheduledHours(shift));
+                          const endedEarly = isShiftEndedEarly(shift);
+                          const earlyEndReason = this.getEarlyEndReasonLabel(shift);
+                          const startItems = this.extractShiftEvidenceItems(shift, 'start');
+                          const endItems = this.extractShiftEvidenceItems(shift, 'end');
 
-                return `
+                          return `
                     <article class="report-card">
                         <div class="report-card-top">
                             <div>
@@ -4409,23 +4707,32 @@ export const supervisorMethods = {
                                 <span class="report-meta-label">Salida anticipada</span>
                                 <span class="report-meta-value">${endedEarly ? 'Sí' : 'No'}</span>
                             </div>
-                            ${endedEarly && earlyEndReason ? `
+                            ${
+                                endedEarly && earlyEndReason
+                                    ? `
                                 <div class="report-meta-item">
                                     <span class="report-meta-label">Motivo</span>
                                     <span class="report-meta-value">${escapeHtml(earlyEndReason)}</span>
                                 </div>
-                            ` : ''}
+                            `
+                                    : ''
+                            }
                         </div>
-                        ${isSingleDay ? `
+                        ${
+                            isSingleDay
+                                ? `
                             <div class="phase-grid">
                                 ${renderEvidencePhase('Antes', startItems)}
                                 ${renderEvidencePhase('Después', endItems)}
                             </div>
-                        ` : ''}
+                        `
+                                : ''
+                        }
                     </article>
                 `;
-            }).join('')
-            : '<div class="empty-block">No hay turnos para los filtros seleccionados.</div>';
+                      })
+                      .join('')
+                : '<div class="empty-block">No hay turnos para los filtros seleccionados.</div>';
 
         return `<!doctype html>
 <html lang="es">
@@ -4683,14 +4990,20 @@ export const supervisorMethods = {
       <div class="summary-card" style="grid-column: 1 / -1;">
         <span class="summary-label">Estados del período</span>
         <div class="report-status-summary">
-          ${statusSummary.length > 0
-              ? statusSummary.map(({ label, count }) => `
+          ${
+              statusSummary.length > 0
+                  ? statusSummary
+                        .map(
+                            ({ label, count }) => `
                   <span class="report-status-pill ${getBadgeClass(label)}">
                     <span>${escapeHtml(label)}</span>
                     <strong>${escapeHtml(String(count))}</strong>
                   </span>
-                `).join('')
-              : '<span class="phase-empty">No hay estados para mostrar.</span>'}
+                `
+                        )
+                        .join('')
+                  : '<span class="phase-empty">No hay estados para mostrar.</span>'
+          }
         </div>
       </div>
     </section>
@@ -4714,7 +5027,7 @@ export const supervisorMethods = {
 
             const requestUpload = await apiClient.supervisorPresenceManage('request_evidence_upload', {
                 phase: 'start',
-                mime_type: file.type || 'image/jpeg'
+                mime_type: file.type || 'image/jpeg',
             });
 
             const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
@@ -4731,7 +5044,7 @@ export const supervisorMethods = {
                 path,
                 label: slot?.title || slotKey,
                 mime_type: file.type || 'image/jpeg',
-                size_bytes: file.size || undefined
+                size_bytes: file.size || undefined,
             });
         }
 
@@ -4742,7 +5055,7 @@ export const supervisorMethods = {
         if (this.supervisorShiftSubmitPending) {
             this.showToast('Ya estamos guardando la programación. Espera un momento.', {
                 tone: 'info',
-                title: 'Procesando programación'
+                title: 'Procesando programación',
             });
             return;
         }
@@ -4763,7 +5076,7 @@ export const supervisorMethods = {
                 if (!employeeId || !restaurantId || !startValue || !endValue) {
                     this.showToast('Completa empleado, restaurante y horario para programar este turno.', {
                         tone: 'warning',
-                        title: 'Faltan datos'
+                        title: 'Faltan datos',
                     });
                     return;
                 }
@@ -4773,7 +5086,7 @@ export const supervisorMethods = {
                 if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
                     this.showToast('La fecha final del turno debe ser posterior a la fecha inicial.', {
                         tone: 'warning',
-                        title: 'Horario inválido'
+                        title: 'Horario inválido',
                     });
                     return;
                 }
@@ -4783,7 +5096,7 @@ export const supervisorMethods = {
                     restaurant_id: normalizeRestaurantId(restaurantId),
                     scheduled_start: startDate.toISOString(),
                     scheduled_end: endDate.toISOString(),
-                    notes: notes || undefined
+                    notes: notes || undefined,
                 });
             } else if (this.supervisorShiftMode === 'plan') {
                 const employeeId = document.getElementById('supervisor-shift-plan-employee')?.value;
@@ -4793,7 +5106,7 @@ export const supervisorMethods = {
                 if (!employeeId) {
                     this.showToast('Selecciona el empleado al que le vas a programar la semana.', {
                         tone: 'warning',
-                        title: 'Falta el empleado'
+                        title: 'Falta el empleado',
                     });
                     return;
                 }
@@ -4801,7 +5114,7 @@ export const supervisorMethods = {
                 if (!restaurantId) {
                     this.showToast('Selecciona el restaurante base de esta semana.', {
                         tone: 'warning',
-                        title: 'Falta el restaurante'
+                        title: 'Falta el restaurante',
                     });
                     return;
                 }
@@ -4809,7 +5122,7 @@ export const supervisorMethods = {
                 if (rows.length === 0) {
                     this.showToast('No encontramos los días de la semana para programar.', {
                         tone: 'warning',
-                        title: 'Sin turnos por programar'
+                        title: 'Sin turnos por programar',
                     });
                     return;
                 }
@@ -4818,7 +5131,7 @@ export const supervisorMethods = {
                 if (activeRows.length === 0) {
                     this.showToast('Activa al menos un día de la semana antes de guardar.', {
                         tone: 'warning',
-                        title: 'Sin días seleccionados'
+                        title: 'Sin días seleccionados',
                     });
                     return;
                 }
@@ -4827,7 +5140,7 @@ export const supervisorMethods = {
                     if (!row.startTime || !row.endTime) {
                         this.showToast(`Completa entrada y salida para ${row.dayLabel || 'el día seleccionado'}.`, {
                             tone: 'warning',
-                            title: 'Faltan datos'
+                            title: 'Faltan datos',
                         });
                         return;
                     }
@@ -4837,7 +5150,7 @@ export const supervisorMethods = {
                     if (!startDate || !endDate) {
                         this.showToast(`Revisa el formato de hora en ${row.dayLabel || 'el día seleccionado'}.`, {
                             tone: 'warning',
-                            title: 'Horario inválido'
+                            title: 'Horario inválido',
                         });
                         return;
                     }
@@ -4851,7 +5164,7 @@ export const supervisorMethods = {
                         restaurant_id: normalizeRestaurantId(restaurantId),
                         scheduled_start: startDate.toISOString(),
                         scheduled_end: endDate.toISOString(),
-                        notes: row.notes?.trim() || undefined
+                        notes: row.notes?.trim() || undefined,
                     });
                 }
             } else {
@@ -4862,10 +5175,13 @@ export const supervisorMethods = {
                 const selectedEmployees = (this.supervisorBatchSelectedEmployees || []).filter(Boolean);
 
                 if (!restaurantId || !startValue || !endValue || selectedEmployees.length === 0) {
-                    this.showToast('Selecciona restaurante, horario y al menos un empleado para este turno compartido.', {
-                        tone: 'warning',
-                        title: 'Faltan datos'
-                    });
+                    this.showToast(
+                        'Selecciona restaurante, horario y al menos un empleado para este turno compartido.',
+                        {
+                            tone: 'warning',
+                            title: 'Faltan datos',
+                        }
+                    );
                     return;
                 }
 
@@ -4874,7 +5190,7 @@ export const supervisorMethods = {
                 if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
                     this.showToast('La fecha final del turno debe ser posterior a la fecha inicial.', {
                         tone: 'warning',
-                        title: 'Horario inválido'
+                        title: 'Horario inválido',
                     });
                     return;
                 }
@@ -4885,7 +5201,7 @@ export const supervisorMethods = {
                         restaurant_id: normalizeRestaurantId(restaurantId),
                         scheduled_start: startDate.toISOString(),
                         scheduled_end: endDate.toISOString(),
-                        notes: notes || undefined
+                        notes: notes || undefined,
                     });
                 });
             }
@@ -4893,7 +5209,7 @@ export const supervisorMethods = {
             if (taskTemplate.enabled && taskTemplate.title.length < 3) {
                 this.showToast('Escribe un título de al menos 3 caracteres para la tarea especial.', {
                     tone: 'warning',
-                    title: 'Falta el título de la tarea'
+                    title: 'Falta el título de la tarea',
                 });
                 return;
             }
@@ -4901,7 +5217,7 @@ export const supervisorMethods = {
             if (taskTemplate.enabled && taskTemplate.description.length < 5) {
                 this.showToast('Describe la tarea especial con al menos 5 caracteres.', {
                     tone: 'warning',
-                    title: 'Falta la descripción'
+                    title: 'Falta la descripción',
                 });
                 return;
             }
@@ -4910,44 +5226,60 @@ export const supervisorMethods = {
                 const assignmentRanges = assignments
                     .map((assignment) => this.toShiftIntervalRange(assignment))
                     .filter(Boolean);
-                const minStartMs = assignmentRanges.length > 0 ? Math.min(...assignmentRanges.map((item) => item.startMs)) : null;
-                const maxEndMs = assignmentRanges.length > 0 ? Math.max(...assignmentRanges.map((item) => item.endMs)) : null;
+                const minStartMs =
+                    assignmentRanges.length > 0 ? Math.min(...assignmentRanges.map((item) => item.startMs)) : null;
+                const maxEndMs =
+                    assignmentRanges.length > 0 ? Math.max(...assignmentRanges.map((item) => item.endMs)) : null;
 
-                const nearbyShifts = (Number.isFinite(minStartMs) && Number.isFinite(maxEndMs))
-                    ? await this.getSupervisorShiftList({
-                        from: toIsoDate(new Date(minStartMs - (24 * 60 * 60 * 1000))),
-                        to: toIsoDate(new Date(maxEndMs + (24 * 60 * 60 * 1000))),
-                        limit: 500,
-                        forceRestaurants: false
-                    })
-                    : asArray(this.data.supervisor.shifts);
+                const nearbyShifts =
+                    Number.isFinite(minStartMs) && Number.isFinite(maxEndMs)
+                        ? await this.getSupervisorShiftList({
+                              from: toIsoDate(new Date(minStartMs - 24 * 60 * 60 * 1000)),
+                              to: toIsoDate(new Date(maxEndMs + 24 * 60 * 60 * 1000)),
+                              limit: 500,
+                              forceRestaurants: false,
+                          })
+                        : asArray(this.data.supervisor.shifts);
 
                 const preConflict = this.findShiftAssignmentConflict(assignments, nearbyShifts);
                 if (preConflict) {
-                    const employeeRecord = this.getKnownEmployeeRecord(preConflict.employeeId)
-                        || asArray(this.data.supervisor.employees).find((employee) => String(employee?.id || '').trim() === String(preConflict.employeeId || '').trim())
-                        || null;
-                    const employeeName = getEmployeeDisplayName(employeeRecord || { id: preConflict.employeeId }, 'el empleado seleccionado');
+                    const employeeRecord =
+                        this.getKnownEmployeeRecord(preConflict.employeeId) ||
+                        asArray(this.data.supervisor.employees).find(
+                            (employee) =>
+                                String(employee?.id || '').trim() === String(preConflict.employeeId || '').trim()
+                        ) ||
+                        null;
+                    const employeeName = getEmployeeDisplayName(
+                        employeeRecord || { id: preConflict.employeeId },
+                        'el empleado seleccionado'
+                    );
 
                     if (preConflict.type === 'existing') {
                         const conflictShift = preConflict.existingShift;
                         const conflictDate = formatDate(conflictShift?.scheduled_start || conflictShift?.start_time, {
                             day: '2-digit',
                             month: 'short',
-                            year: 'numeric'
+                            year: 'numeric',
                         });
-                        const conflictRange = formatShiftRange(conflictShift?.scheduled_start, conflictShift?.scheduled_end);
+                        const conflictRange = formatShiftRange(
+                            conflictShift?.scheduled_start,
+                            conflictShift?.scheduled_end
+                        );
 
-                        this.showToast(`${employeeName} ya tiene un turno (${conflictDate} ${conflictRange}) que se cruza con ese horario.`, {
-                            tone: 'warning',
-                            title: 'Conflicto de horario detectado'
-                        });
+                        this.showToast(
+                            `${employeeName} ya tiene un turno (${conflictDate} ${conflictRange}) que se cruza con ese horario.`,
+                            {
+                                tone: 'warning',
+                                title: 'Conflicto de horario detectado',
+                            }
+                        );
                         return;
                     }
 
                     this.showToast(`${employeeName} tiene dos turnos en esta programación que se cruzan entre sí.`, {
                         tone: 'warning',
-                        title: 'Conflicto de horario detectado'
+                        title: 'Conflicto de horario detectado',
                     });
                     return;
                 }
@@ -4959,17 +5291,27 @@ export const supervisorMethods = {
                 try {
                     const assignmentValidation = await this.validateSpecialTaskAssignments(assignments);
                     if (!assignmentValidation.ok) {
-                        this.showToast(assignmentValidation.message || 'Revisa el empleado y el restaurante antes de crear la tarea especial.', {
-                            tone: 'warning',
-                            title: 'Tarea especial no disponible'
-                        });
+                        this.showToast(
+                            assignmentValidation.message ||
+                                'Revisa el empleado y el restaurante antes de crear la tarea especial.',
+                            {
+                                tone: 'warning',
+                                title: 'Tarea especial no disponible',
+                            }
+                        );
                         return;
                     }
                 } catch (validationError) {
-                    this.showToast(this.getErrorMessage(validationError, 'No fue posible validar la tarea especial antes de guardar.'), {
-                        tone: 'error',
-                        title: 'No fue posible validar la tarea especial'
-                    });
+                    this.showToast(
+                        this.getErrorMessage(
+                            validationError,
+                            'No fue posible validar la tarea especial antes de guardar.'
+                        ),
+                        {
+                            tone: 'error',
+                            title: 'No fue posible validar la tarea especial',
+                        }
+                    );
                     return;
                 }
             }
@@ -4993,7 +5335,7 @@ export const supervisorMethods = {
                         const createdIds = this.extractScheduledShiftIdsFromResponse(response);
                         createdAssignments = createdIds.map((scheduledShiftId) => ({
                             ...assignments[0],
-                            scheduled_shift_id: scheduledShiftId
+                            scheduled_shift_id: scheduledShiftId,
                         }));
                         this.registerShiftAssignDebug(response, assignments[0], createdAssignments);
                         successCount = 1;
@@ -5003,31 +5345,28 @@ export const supervisorMethods = {
                     }
                 } else {
                     const bulkResult = await apiClient.scheduledShiftsManage('bulk_assign', {
-                        entries: assignments
+                        entries: assignments,
                     });
                     const createdItems = this.extractCreatedScheduledShiftItems(bulkResult);
                     const createdIds = this.extractScheduledShiftIdsFromResponse(bulkResult);
                     successCount = Number(
-                        bulkResult?.created
-                        ?? bulkResult?.data?.created
-                        ?? createdItems.length
-                        ?? createdIds.length
+                        bulkResult?.created ?? bulkResult?.data?.created ?? createdItems.length ?? createdIds.length
                     );
                     failedCount = Number(
-                        bulkResult?.failed
-                        ?? bulkResult?.data?.failed
-                        ?? Math.max(assignments.length - successCount, 0)
+                        bulkResult?.failed ?? bulkResult?.data?.failed ?? Math.max(assignments.length - successCount, 0)
                     );
                     if (Array.isArray(bulkResult?.errors) && bulkResult.errors[0]) {
-                        firstError = new Error(bulkResult.errors[0]?.message || bulkResult.errors[0]?.error || 'No fue posible programar algunos turnos.');
+                        firstError = new Error(
+                            bulkResult.errors[0]?.message ||
+                                bulkResult.errors[0]?.error ||
+                                'No fue posible programar algunos turnos.'
+                        );
                     }
                     if (createdItems.length > 0) {
                         createdAssignments = createdItems.map((item) => {
                             const rawIndex = Number(item.index);
-                            const sourceIndex = Number.isFinite(rawIndex)
-                                ? Math.max(0, rawIndex - 1)
-                                : -1;
-                            const sourceAssignment = sourceIndex >= 0 ? (assignments[sourceIndex] || {}) : {};
+                            const sourceIndex = Number.isFinite(rawIndex) ? Math.max(0, rawIndex - 1) : -1;
+                            const sourceAssignment = sourceIndex >= 0 ? assignments[sourceIndex] || {} : {};
                             return {
                                 ...sourceAssignment,
                                 ...item,
@@ -5037,14 +5376,14 @@ export const supervisorMethods = {
                                 restaurant_id: item.restaurant_id ?? sourceAssignment.restaurant_id,
                                 scheduled_start: item.scheduled_start ?? sourceAssignment.scheduled_start,
                                 scheduled_end: item.scheduled_end ?? sourceAssignment.scheduled_end,
-                                notes: item.notes ?? sourceAssignment.notes
+                                notes: item.notes ?? sourceAssignment.notes,
                             };
                         });
                         this.registerBulkAssignDebug(createdItems, assignments, createdAssignments);
                     } else {
                         createdAssignments = createdIds.map((scheduledShiftId, index) => ({
                             ...(assignments[index] || {}),
-                            scheduled_shift_id: scheduledShiftId
+                            scheduled_shift_id: scheduledShiftId,
                         }));
                     }
                 }
@@ -5055,7 +5394,10 @@ export const supervisorMethods = {
 
                 let taskCreationResult = { created: 0, failed: 0 };
                 if (taskTemplate.enabled) {
-                    taskCreationResult = await this.createSpecialTasksForScheduledShifts(createdAssignments, taskTemplate);
+                    taskCreationResult = await this.createSpecialTasksForScheduledShifts(
+                        createdAssignments,
+                        taskTemplate
+                    );
                 }
 
                 if (this.supervisorShiftMode === 'plan') {
@@ -5064,40 +5406,36 @@ export const supervisorMethods = {
 
                 this.invalidateCache('supervisorShifts');
                 this.closeModal('modal-supervisor-schedule-shift');
-                await Promise.all([
-                    this.loadSupervisorShifts(true),
-                    this.loadSupervisorDashboard()
-                ]);
+                await Promise.all([this.loadSupervisorShifts(true), this.loadSupervisorDashboard()]);
 
                 if (successCount === assignments.length && failedCount === 0) {
                     const successMessage = taskTemplate.enabled
-                        ? (
-                            taskCreationResult.created === successCount
-                                ? (successCount === 1
-                                    ? 'Turno y tarea especial creados correctamente.'
-                                    : `${successCount} turnos y sus tareas especiales quedaron creados correctamente.`)
-                                : (successCount === 1
-                                    ? 'Turno programado correctamente.'
-                                    : `${successCount} turnos programados correctamente.`)
-                        )
-                        : (successCount === 1
-                            ? 'Turno programado correctamente.'
-                            : `${successCount} turnos programados correctamente.`);
+                        ? taskCreationResult.created === successCount
+                            ? successCount === 1
+                                ? 'Turno y tarea especial creados correctamente.'
+                                : `${successCount} turnos y sus tareas especiales quedaron creados correctamente.`
+                            : successCount === 1
+                              ? 'Turno programado correctamente.'
+                              : `${successCount} turnos programados correctamente.`
+                        : successCount === 1
+                          ? 'Turno programado correctamente.'
+                          : `${successCount} turnos programados correctamente.`;
                     this.showToast(successMessage, {
                         tone: 'success',
-                        title: 'Programación exitosa'
+                        title: 'Programación exitosa',
                     });
                 } else {
-                    const firstTaskIssue = Array.isArray(taskCreationResult?.errors) && taskCreationResult.errors[0]
-                        ? ` ${taskCreationResult.errors[0]}`
-                        : '';
+                    const firstTaskIssue =
+                        Array.isArray(taskCreationResult?.errors) && taskCreationResult.errors[0]
+                            ? ` ${taskCreationResult.errors[0]}`
+                            : '';
                     this.showToast(
                         taskTemplate.enabled
                             ? `${successCount} de ${assignments.length} turnos quedaron programados. Revisa también las tareas especiales del resto.${firstTaskIssue}`
                             : `${successCount} de ${assignments.length} turnos quedaron programados. Revisa el resto.`,
                         {
                             tone: 'warning',
-                            title: 'Programación parcial'
+                            title: 'Programación parcial',
                         }
                     );
                 }
@@ -5105,14 +5443,14 @@ export const supervisorMethods = {
                 if (this.isEmployeeUnavailableInSchedule(error)) {
                     this.showToast('El empleado no está disponible en ese horario.', {
                         tone: 'warning',
-                        title: 'Horario no disponible'
+                        title: 'Horario no disponible',
                     });
                     return;
                 }
 
                 this.showToast(this.getErrorMessage(error, 'No fue posible programar los turnos.'), {
                     tone: 'error',
-                    title: 'No fue posible programar los turnos'
+                    title: 'No fue posible programar los turnos',
                 });
             } finally {
                 this.hideLoading();
@@ -5136,7 +5474,7 @@ export const supervisorMethods = {
         if (!name) {
             this.showToast('Escribe el nombre del restaurante.', {
                 tone: 'warning',
-                title: 'Falta el nombre'
+                title: 'Falta el nombre',
             });
             return;
         }
@@ -5144,7 +5482,7 @@ export const supervisorMethods = {
         if (!addressLine || !Number.isFinite(lat) || !Number.isFinite(lng)) {
             this.showToast('Busca una dirección completa y verifica el punto en el mapa antes de guardar.', {
                 tone: 'warning',
-                title: 'Ubicación pendiente'
+                title: 'Ubicación pendiente',
             });
             return;
         }
@@ -5152,7 +5490,7 @@ export const supervisorMethods = {
         if (!Number.isFinite(radius)) {
             this.showToast('Define el radio de verificación del restaurante.', {
                 tone: 'warning',
-                title: 'Falta el radio'
+                title: 'Falta el radio',
             });
             return;
         }
@@ -5169,7 +5507,7 @@ export const supervisorMethods = {
                 city: city || undefined,
                 state: state || undefined,
                 country: country || undefined,
-                is_active: isActive
+                is_active: isActive,
             });
 
             this.invalidateCache('adminRestaurants', 'adminMetrics', 'supervisorRestaurants');
@@ -5178,23 +5516,23 @@ export const supervisorMethods = {
             this.closeModal('modal-admin-restaurant');
             await Promise.all([
                 this.loadSupervisorRestaurants(true),
-                this.isAdminRole() ? this.loadAdminDashboard() : Promise.resolve()
+                this.isAdminRole() ? this.loadAdminDashboard() : Promise.resolve(),
             ]);
             this.showToast('Restaurante creado correctamente.', {
                 tone: 'success',
-                title: 'Creación exitosa'
+                title: 'Creación exitosa',
             });
         } catch (error) {
             if (!this.isAdminRole() && error?.status === 403) {
                 this.showToast(this.getErrorMessage(error, 'Tu cuenta de supervisora no pudo crear el restaurante.'), {
                     tone: 'error',
-                    title: 'Permiso insuficiente'
+                    title: 'Permiso insuficiente',
                 });
                 return;
             }
             this.showToast(this.getErrorMessage(error, 'No fue posible crear el restaurante.'), {
                 tone: 'error',
-                title: 'No fue posible crear el restaurante'
+                title: 'No fue posible crear el restaurante',
             });
         } finally {
             this.hideLoading();
@@ -5210,7 +5548,7 @@ export const supervisorMethods = {
         if (!fullName || !email || !phone) {
             this.showToast('Completa nombre, correo y teléfono del empleado.', {
                 tone: 'warning',
-                title: 'Faltan datos'
+                title: 'Faltan datos',
             });
             return;
         }
@@ -5218,7 +5556,7 @@ export const supervisorMethods = {
         if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
             this.showToast('El teléfono debe estar en formato E.164, por ejemplo +573001112233.', {
                 tone: 'warning',
-                title: 'Teléfono inválido'
+                title: 'Teléfono inválido',
             });
             return;
         }
@@ -5231,7 +5569,7 @@ export const supervisorMethods = {
                 full_name: fullName,
                 email,
                 phone_number: phone,
-                is_active: isActive
+                is_active: isActive,
             });
 
             this.invalidateCache('supervisorEmployees');
@@ -5239,23 +5577,24 @@ export const supervisorMethods = {
             this.closeModal('modal-admin-employee');
             await this.loadSupervisorEmployees(true);
 
-            const initialPassword = result?.temporary_password || result?.generated_password || result?.password || '123456';
+            const initialPassword =
+                result?.temporary_password || result?.generated_password || result?.password || '123456';
             this.showToast(`Empleado creado correctamente. Clave inicial: ${initialPassword}.`, {
                 tone: 'success',
                 title: 'Creación exitosa',
-                duration: 5200
+                duration: 5200,
             });
         } catch (error) {
             if (!this.isAdminRole() && error?.status === 403) {
                 this.showToast(this.getErrorMessage(error, 'Tu cuenta de supervisora no pudo crear el empleado.'), {
                     tone: 'error',
-                    title: 'Permiso insuficiente'
+                    title: 'Permiso insuficiente',
                 });
                 return;
             }
             this.showToast(this.getErrorMessage(error, 'No fue posible crear el empleado.'), {
                 tone: 'error',
-                title: 'No fue posible crear el empleado'
+                title: 'No fue posible crear el empleado',
             });
         } finally {
             this.hideLoading();
@@ -5269,27 +5608,33 @@ export const supervisorMethods = {
 
         this.setSupervisionSubmitState(true);
         try {
-            const restaurants = this.data.supervisor.restaurants.length > 0
-                ? this.data.supervisor.restaurants
-                : await this.getSupervisorRestaurants();
+            const restaurants =
+                this.data.supervisor.restaurants.length > 0
+                    ? this.data.supervisor.restaurants
+                    : await this.getSupervisorRestaurants();
             const selectedRestaurantId = document.getElementById('supervision-restaurant-select')?.value;
             const targetRestaurant = selectedRestaurantId
-                ? restaurants.find((restaurant) => String(getRestaurantRecordId(restaurant)) === String(selectedRestaurantId))
+                ? restaurants.find(
+                      (restaurant) => String(getRestaurantRecordId(restaurant)) === String(selectedRestaurantId)
+                  )
                 : restaurants[0];
 
             if (!targetRestaurant) {
                 this.showToast('No hay restaurantes disponibles para registrar supervisión.', {
                     tone: 'warning',
-                    title: 'Sin restaurantes disponibles'
+                    title: 'Sin restaurantes disponibles',
                 });
                 return;
             }
 
-            const requireSupervisionPhotos = this.getSystemSetting('evidence.require_supervision_photos', DEFAULT_SYSTEM_SETTINGS.evidence.require_supervision_photos);
+            const requireSupervisionPhotos = this.getSystemSetting(
+                'evidence.require_supervision_photos',
+                DEFAULT_SYSTEM_SETTINGS.evidence.require_supervision_photos
+            );
             if (requireSupervisionPhotos && Object.keys(this.supervisionPhotoFiles).length === 0) {
                 this.showToast('Debes adjuntar al menos una foto de supervisión antes de guardar.', {
                     tone: 'warning',
-                    title: 'Faltan evidencias'
+                    title: 'Faltan evidencias',
                 });
                 return;
             }
@@ -5311,14 +5656,14 @@ export const supervisorMethods = {
                     accuracy: Math.round(location.accuracy || 0),
                     observed_at: new Date().toISOString(),
                     notes,
-                    evidences
+                    evidences,
                 };
 
                 const supervisionSignature = this.buildSupervisionRegisterSignature(supervisionPayload);
                 const reuseCurrentIdempotencyKey = Boolean(
-                    this.supervisionRegisterIdempotencyKey
-                    && this.supervisionRegisterRetrySignature
-                    && this.supervisionRegisterRetrySignature === supervisionSignature
+                    this.supervisionRegisterIdempotencyKey &&
+                    this.supervisionRegisterRetrySignature &&
+                    this.supervisionRegisterRetrySignature === supervisionSignature
                 );
                 const supervisionIdempotencyKey = reuseCurrentIdempotencyKey
                     ? this.supervisionRegisterIdempotencyKey
@@ -5329,10 +5674,11 @@ export const supervisorMethods = {
                 const registerResult = await apiClient.supervisorPresenceManage('register', supervisionPayload, {
                     requiresIdempotency: false,
                     headers: {
-                        'Idempotency-Key': supervisionIdempotencyKey
-                    }
+                        'Idempotency-Key': supervisionIdempotencyKey,
+                    },
                 });
-                const alreadyExists = registerResult?.already_exists === true || registerResult?.data?.already_exists === true;
+                const alreadyExists =
+                    registerResult?.already_exists === true || registerResult?.data?.already_exists === true;
 
                 this.invalidateCache('supervisorShifts');
                 this.showToast(
@@ -5341,7 +5687,7 @@ export const supervisorMethods = {
                         : 'Supervisión registrada correctamente.',
                     {
                         tone: 'success',
-                        title: 'Registro exitoso'
+                        title: 'Registro exitoso',
                     }
                 );
                 this.clearSupervisionRegisterRetryState();
@@ -5358,18 +5704,18 @@ export const supervisorMethods = {
                 const debugEntry = this.registerSupervisionDebug(supervisionPayload, error, {
                     restaurant_id: targetRestaurant?.restaurant_id || targetRestaurant?.id || null,
                     idempotency_key: this.supervisionRegisterIdempotencyKey || null,
-                    retry_signature: this.supervisionRegisterRetrySignature || null
+                    retry_signature: this.supervisionRegisterRetrySignature || null,
                 });
                 this.updateSupervisionSupportCard(debugEntry);
                 const supervisionErrorMessage = String(
-                    error?.payload?.error?.message
-                    || error?.payload?.message
-                    || error?.message
-                    || 'No fue posible registrar la supervisión.'
+                    error?.payload?.error?.message ||
+                        error?.payload?.message ||
+                        error?.message ||
+                        'No fue posible registrar la supervisión.'
                 ).trim();
                 this.showToast(supervisionErrorMessage || 'No fue posible registrar la supervisión.', {
                     tone: 'error',
-                    title: 'No fue posible guardar la supervisión'
+                    title: 'No fue posible guardar la supervisión',
                 });
             } finally {
                 this.hideLoading();
@@ -5393,11 +5739,18 @@ export const supervisorMethods = {
 
         if (restaurantEl) {
             const restaurants = this.data.supervisor.restaurants || [];
-            restaurantEl.innerHTML = '<option value="">Selecciona un restaurante</option>'
-                + restaurants.map((r) => `<option value="${escapeHtml(String(getRestaurantRecordId(r)))}">${escapeHtml(getRestaurantDisplayName(r))}</option>`).join('');
+            restaurantEl.innerHTML =
+                '<option value="">Selecciona un restaurante</option>' +
+                restaurants
+                    .map(
+                        (r) =>
+                            `<option value="${escapeHtml(String(getRestaurantRecordId(r)))}">${escapeHtml(getRestaurantDisplayName(r))}</option>`
+                    )
+                    .join('');
             restaurantEl.value = '';
         }
-        if (pickerEl) this.setShiftBatchPickerEmpty(pickerEl, 'Selecciona un restaurante para ver los empleados disponibles.');
+        if (pickerEl)
+            this.setShiftBatchPickerEmpty(pickerEl, 'Selecciona un restaurante para ver los empleados disponibles.');
         if (startDateEl) startDateEl.value = today;
         if (endDateEl) endDateEl.value = today;
         if (defaultStartEl) defaultStartEl.value = '08:00';
@@ -5420,7 +5773,9 @@ export const supervisorMethods = {
         try {
             const employees = await this.getAssignableEmployeesForRestaurant(restaurantId);
             const validIds = new Set(employees.map((e) => String(e.id)));
-            this.schedShiftSelectedEmployees = (this.schedShiftSelectedEmployees || []).filter((id) => validIds.has(String(id)));
+            this.schedShiftSelectedEmployees = (this.schedShiftSelectedEmployees || []).filter((id) =>
+                validIds.has(String(id))
+            );
 
             if (employees.length === 0) {
                 this.setShiftBatchPickerEmpty(container, 'No hay empleados activos disponibles para este restaurante.');
@@ -5440,7 +5795,8 @@ export const supervisorMethods = {
                 input.checked = isActive;
                 input.onchange = () => {
                     const sel = new Set((this.schedShiftSelectedEmployees || []).map(String));
-                    if (input.checked) sel.add(id); else sel.delete(id);
+                    if (input.checked) sel.add(id);
+                    else sel.delete(id);
                     this.schedShiftSelectedEmployees = Array.from(sel);
                     label.classList.toggle('active', input.checked);
                 };
@@ -5489,7 +5845,7 @@ export const supervisorMethods = {
                 enabled: dow !== 0 && dow !== 6,
                 startTime: defaultStart,
                 endTime: defaultEnd,
-                isDefaultTime: true
+                isDefaultTime: true,
             });
             current = new Date(current.getTime() + 24 * 3600 * 1000);
         }
@@ -5577,7 +5933,10 @@ export const supervisorMethods = {
 
     async submitSchedShiftForm() {
         if (this.supervisorShiftSubmitPending) {
-            this.showToast('Ya estamos guardando la programación. Espera un momento.', { tone: 'info', title: 'Procesando' });
+            this.showToast('Ya estamos guardando la programación. Espera un momento.', {
+                tone: 'info',
+                title: 'Procesando',
+            });
             return;
         }
 
@@ -5587,7 +5946,10 @@ export const supervisorMethods = {
         const activeRows = rows.filter((r) => r.enabled);
 
         if (!restaurantId) {
-            this.showToast('Selecciona un restaurante antes de guardar.', { tone: 'warning', title: 'Falta el restaurante' });
+            this.showToast('Selecciona un restaurante antes de guardar.', {
+                tone: 'warning',
+                title: 'Falta el restaurante',
+            });
             return;
         }
         if (selectedEmployees.length === 0) {
@@ -5595,20 +5957,29 @@ export const supervisorMethods = {
             return;
         }
         if (activeRows.length === 0) {
-            this.showToast('Activa al menos un día antes de guardar.', { tone: 'warning', title: 'Sin días seleccionados' });
+            this.showToast('Activa al menos un día antes de guardar.', {
+                tone: 'warning',
+                title: 'Sin días seleccionados',
+            });
             return;
         }
 
         const assignments = [];
         for (const row of activeRows) {
             if (!row.startTime || !row.endTime) {
-                this.showToast(`Completa la hora de entrada y salida para el ${row.dayLabel} ${row.dateKey}.`, { tone: 'warning', title: 'Faltan horas' });
+                this.showToast(`Completa la hora de entrada y salida para el ${row.dayLabel} ${row.dateKey}.`, {
+                    tone: 'warning',
+                    title: 'Faltan horas',
+                });
                 return;
             }
             const startDate = this.buildSupervisorShiftDateTime(row.dateKey, row.startTime);
             const endDate = this.buildSupervisorShiftDateTime(row.dateKey, row.endTime);
             if (!startDate || !endDate) {
-                this.showToast(`Revisa el formato de hora para el ${row.dayLabel} ${row.dateKey}.`, { tone: 'warning', title: 'Horario inválido' });
+                this.showToast(`Revisa el formato de hora para el ${row.dayLabel} ${row.dateKey}.`, {
+                    tone: 'warning',
+                    title: 'Horario inválido',
+                });
                 return;
             }
             if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
@@ -5617,7 +5988,7 @@ export const supervisorMethods = {
                     employee_id: normalizeRestaurantId(employeeId),
                     restaurant_id: normalizeRestaurantId(restaurantId),
                     scheduled_start: startDate.toISOString(),
-                    scheduled_end: endDate.toISOString()
+                    scheduled_end: endDate.toISOString(),
                 });
             }
         }
@@ -5627,26 +5998,39 @@ export const supervisorMethods = {
             const minStartMs = assignmentRanges.length > 0 ? Math.min(...assignmentRanges.map((r) => r.startMs)) : null;
             const maxEndMs = assignmentRanges.length > 0 ? Math.max(...assignmentRanges.map((r) => r.endMs)) : null;
 
-            const nearbyShifts = (Number.isFinite(minStartMs) && Number.isFinite(maxEndMs))
-                ? await this.getSupervisorShiftList({
-                    from: toIsoDate(new Date(minStartMs - 86400000)),
-                    to: toIsoDate(new Date(maxEndMs + 86400000)),
-                    limit: 500,
-                    forceRestaurants: false
-                })
-                : asArray(this.data.supervisor.shifts);
+            const nearbyShifts =
+                Number.isFinite(minStartMs) && Number.isFinite(maxEndMs)
+                    ? await this.getSupervisorShiftList({
+                          from: toIsoDate(new Date(minStartMs - 86400000)),
+                          to: toIsoDate(new Date(maxEndMs + 86400000)),
+                          limit: 500,
+                          forceRestaurants: false,
+                      })
+                    : asArray(this.data.supervisor.shifts);
 
             const conflict = this.findShiftAssignmentConflict(assignments, nearbyShifts);
             if (conflict) {
-                const empRecord = this.getKnownEmployeeRecord(conflict.employeeId)
-                    || asArray(this.data.supervisor.employees).find((e) => String(e?.id || '') === String(conflict.employeeId || ''))
-                    || null;
-                const empName = getEmployeeDisplayName(empRecord || { id: conflict.employeeId }, 'el empleado seleccionado');
+                const empRecord =
+                    this.getKnownEmployeeRecord(conflict.employeeId) ||
+                    asArray(this.data.supervisor.employees).find(
+                        (e) => String(e?.id || '') === String(conflict.employeeId || '')
+                    ) ||
+                    null;
+                const empName = getEmployeeDisplayName(
+                    empRecord || { id: conflict.employeeId },
+                    'el empleado seleccionado'
+                );
                 if (conflict.type === 'existing') {
                     const cs = conflict.existingShift;
-                    this.showToast(`${empName} ya tiene un turno (${formatDate(cs?.scheduled_start, { day: '2-digit', month: 'short' })} ${formatShiftRange(cs?.scheduled_start, cs?.scheduled_end)}) que se cruza con ese horario.`, { tone: 'warning', title: 'Conflicto de horario' });
+                    this.showToast(
+                        `${empName} ya tiene un turno (${formatDate(cs?.scheduled_start, { day: '2-digit', month: 'short' })} ${formatShiftRange(cs?.scheduled_start, cs?.scheduled_end)}) que se cruza con ese horario.`,
+                        { tone: 'warning', title: 'Conflicto de horario' }
+                    );
                 } else {
-                    this.showToast(`${empName} tiene dos turnos en esta programación que se cruzan entre sí.`, { tone: 'warning', title: 'Conflicto de horario' });
+                    this.showToast(`${empName} tiene dos turnos en esta programación que se cruzan entre sí.`, {
+                        tone: 'warning',
+                        title: 'Conflicto de horario',
+                    });
                 }
                 return;
             }
@@ -5674,12 +6058,16 @@ export const supervisorMethods = {
             this.closeModal('modal-supervisor-schedule-shift');
 
             const tone = failedCount > 0 ? 'warning' : 'success';
-            const msg = failedCount > 0
-                ? `${successCount} turno(s) creado(s). ${failedCount} no se pudieron guardar.`
-                : `${successCount} turno(s) programado(s) correctamente.`;
+            const msg =
+                failedCount > 0
+                    ? `${successCount} turno(s) creado(s). ${failedCount} no se pudieron guardar.`
+                    : `${successCount} turno(s) programado(s) correctamente.`;
             this.showToast(msg, { tone, title: tone === 'success' ? 'Turnos guardados' : 'Guardado parcial' });
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible guardar los turnos.'), { tone: 'error', title: 'Error al guardar' });
+            this.showToast(this.getErrorMessage(error, 'No fue posible guardar los turnos.'), {
+                tone: 'error',
+                title: 'Error al guardar',
+            });
         } finally {
             this.setSupervisorShiftSubmitState(false);
             this.hideLoading();

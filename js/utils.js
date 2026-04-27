@@ -1,9 +1,5 @@
 // @ts-nocheck
-import {
-    AREA_META,
-    AREA_GROUP_ALIASES,
-    scopedConsole as console
-} from './constants.js';
+import { AREA_META, AREA_GROUP_ALIASES, scopedConsole as console } from './constants.js';
 
 export function getMonthStart(date = new Date()) {
     return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -78,9 +74,11 @@ export function decodeJwtPart(token = '', index = 1) {
             .replace(/-/g, '+')
             .replace(/_/g, '/')
             .padEnd(Math.ceil(parts[index].length / 4) * 4, '=');
-        const json = decodeURIComponent(Array.from(atob(base64)).map((char) => (
-            `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`
-        )).join(''));
+        const json = decodeURIComponent(
+            Array.from(atob(base64))
+                .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
+                .join('')
+        );
         return JSON.parse(json);
     } catch (error) {
         console.warn('No fue posible decodificar una parte del JWT.', error);
@@ -105,7 +103,7 @@ export function buildJwtFullDebugSummary(token = '') {
     return {
         header: decodeJwtHeader(token),
         payload: decodeJwtPayload(token),
-        unsigned_token: parts.length >= 2 ? `${parts[0]}.${parts[1]}` : null
+        unsigned_token: parts.length >= 2 ? `${parts[0]}.${parts[1]}` : null,
     };
 }
 
@@ -121,7 +119,7 @@ export function buildJwtDebugSummary(token = '') {
         role: payload.role || payload.user_role || payload.app_metadata?.role || null,
         session_id: payload.session_id || payload.sessionId || payload.sid || null,
         exp: payload.exp || null,
-        aal: payload.aal || null
+        aal: payload.aal || null,
     };
 }
 
@@ -135,7 +133,7 @@ export function toDateTimeLocalInput(value) {
         return '';
     }
 
-    const local = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
     return local.toISOString().slice(0, 16);
 }
 
@@ -164,7 +162,7 @@ export function formatTime(value) {
 
     return date.toLocaleTimeString('es-CO', {
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
     });
 }
 
@@ -183,7 +181,7 @@ export function formatDateTime(value) {
         month: 'short',
         day: '2-digit',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
     });
 }
 
@@ -238,7 +236,7 @@ export function collectEvidenceUrls(value, bucket = new Set()) {
             value.download_url,
             value.downloadUrl,
             value.image_url,
-            value.imageUrl
+            value.imageUrl,
         ].forEach((candidate) => collectEvidenceUrls(candidate, bucket));
     }
 
@@ -288,17 +286,23 @@ export function extractCleaningAreas(value) {
 }
 
 export function extractCleaningAreaSubareas(value) {
-    return uniqueCleaningAreas(asArray(value).map((item) => {
-        if (typeof item === 'string') {
-            return item.trim();
-        }
+    return uniqueCleaningAreas(
+        asArray(value)
+            .map((item) => {
+                if (typeof item === 'string') {
+                    return item.trim();
+                }
 
-        if (item && typeof item === 'object') {
-            return String(item.label || item.name || item.subarea_label || item.title || item.area || '').trim();
-        }
+                if (item && typeof item === 'object') {
+                    return String(
+                        item.label || item.name || item.subarea_label || item.title || item.area || ''
+                    ).trim();
+                }
 
-        return '';
-    }).filter(Boolean));
+                return '';
+            })
+            .filter(Boolean)
+    );
 }
 
 export function extractCleaningAreaGroups(value) {
@@ -320,7 +324,7 @@ export function extractCleaningAreaGroups(value) {
             if (!groups[key]) {
                 groups[key] = {
                     label: canonicalLabel || areaLabel,
-                    subareas: []
+                    subareas: [],
                 };
             }
             return;
@@ -340,13 +344,17 @@ export function extractCleaningAreaGroups(value) {
         if (!groups[key]) {
             groups[key] = {
                 label: canonicalLabel || areaLabel,
-                subareas: []
+                subareas: [],
             };
         }
 
         const nextSubareas = extractCleaningAreaSubareas(item.subareas);
         nextSubareas.forEach((subareaLabel) => {
-            if (!groups[key].subareas.some((currentLabel) => normalizeAreaToken(currentLabel) === normalizeAreaToken(subareaLabel))) {
+            if (
+                !groups[key].subareas.some(
+                    (currentLabel) => normalizeAreaToken(currentLabel) === normalizeAreaToken(subareaLabel)
+                )
+            ) {
                 groups[key].subareas.push(subareaLabel);
             }
         });
@@ -373,10 +381,12 @@ export function uniqueCleaningAreas(items) {
 }
 
 export function buildAreaMeta(areaLabel) {
-    return AREA_META[areaLabel] || {
-        area_key: normalizeAreaToken(areaLabel),
-        area_label: areaLabel
-    };
+    return (
+        AREA_META[areaLabel] || {
+            area_key: normalizeAreaToken(areaLabel),
+            area_label: areaLabel,
+        }
+    );
 }
 
 export function formatEntityReference(prefix, id) {
@@ -427,18 +437,21 @@ export function pickMeaningfulDisplayValue(candidates = [], type = 'text') {
 
 export function getRestaurantAddressFallback(record) {
     const source = record && typeof record === 'object' ? record : {};
-    return pickMeaningfulDisplayValue([
-        source.address_line,
-        source.formatted_address,
-        source.display_address,
-        source.restaurant?.address_line,
-        source.location?.address_line,
-        source.site?.address_line,
-        source.raw?.address_line,
-        source.raw?.formatted_address,
-        [source.city, source.state].filter(Boolean).join(', '),
-        [source.city, source.state, source.country].filter(Boolean).join(', ')
-    ], 'text');
+    return pickMeaningfulDisplayValue(
+        [
+            source.address_line,
+            source.formatted_address,
+            source.display_address,
+            source.restaurant?.address_line,
+            source.location?.address_line,
+            source.site?.address_line,
+            source.raw?.address_line,
+            source.raw?.formatted_address,
+            [source.city, source.state].filter(Boolean).join(', '),
+            [source.city, source.state, source.country].filter(Boolean).join(', '),
+        ],
+        'text'
+    );
 }
 
 export function collectRestaurantAddressCandidates(record) {
@@ -461,7 +474,7 @@ export function collectRestaurantAddressCandidates(record) {
         source.raw?.formatted_address,
         source.raw?.display_name,
         [source.city, source.state].filter(Boolean).join(', '),
-        [source.city, source.state, source.country].filter(Boolean).join(', ')
+        [source.city, source.state, source.country].filter(Boolean).join(', '),
     ]
         .map((value) => getDisplayTextCandidate(value))
         .filter(Boolean)
@@ -475,7 +488,8 @@ export function isLikelyAddressDisplayValue(value) {
         return false;
     }
 
-    const addressPattern = /\b(calle|carrera|cra|cl|av|avenida|street|st|road|rd|drive|dr|lane|ln|boulevard|blvd|highway|hwy|way|place|pl|court|ct|suite|ste|apt|apartment)\b/;
+    const addressPattern =
+        /\b(calle|carrera|cra|cl|av|avenida|street|st|road|rd|drive|dr|lane|ln|boulevard|blvd|highway|hwy|way|place|pl|court|ct|suite|ste|apt|apartment)\b/;
     const startsWithNumber = /^\d+[a-z]?(?:[\s#-]+\d+)/.test(normalized) || /^\d+[a-z]?\s/.test(normalized);
     const hasAddressSeparator = normalized.includes('#') || /\b\d{1,5}[-/]\d{1,5}\b/.test(normalized);
     const hasCommaAndStreet = normalized.includes(',') && addressPattern.test(normalized);
@@ -562,36 +576,36 @@ export function pickMeaningfulRestaurantName(candidates = [], record = null) {
 
 export function getEmployeeDisplayName(record, fallback = 'Empleado') {
     const source = record && typeof record === 'object' ? record : {};
-    const directName = pickMeaningfulDisplayValue([
-        source.full_name,
-        source.employee_full_name,
-        source.employee_name,
-        source.employee_visible_name,
-        source.assigned_employee_name,
-        source.user_name,
-        source.visible_name,
-        source.name,
-        source.display_name,
-        source.label,
-        source.title,
-        source.user?.full_name,
-        source.user?.name,
-        source.employee?.full_name,
-        source.employee?.name,
-        source.raw?.full_name,
-        source.raw?.employee_full_name,
-        source.raw?.employee_name,
-        source.raw?.name
-    ], 'employee');
+    const directName = pickMeaningfulDisplayValue(
+        [
+            source.full_name,
+            source.employee_full_name,
+            source.employee_name,
+            source.employee_visible_name,
+            source.assigned_employee_name,
+            source.user_name,
+            source.visible_name,
+            source.name,
+            source.display_name,
+            source.label,
+            source.title,
+            source.user?.full_name,
+            source.user?.name,
+            source.employee?.full_name,
+            source.employee?.name,
+            source.raw?.full_name,
+            source.raw?.employee_full_name,
+            source.raw?.employee_name,
+            source.raw?.name,
+        ],
+        'employee'
+    );
 
     if (directName) {
         return directName;
     }
 
-    const composedName = [source.first_name, source.last_name]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
+    const composedName = [source.first_name, source.last_name].filter(Boolean).join(' ').trim();
     if (composedName && !isGenericNamedPlaceholder(composedName, 'employee')) {
         return composedName;
     }
@@ -606,57 +620,63 @@ export function getEmployeeDisplayName(record, fallback = 'Empleado') {
         return phone;
     }
 
-    const referenceLabel = formatEntityReference('Empleado', source.id || source.employee_id || source.user_id || source.assigned_employee_id);
+    const referenceLabel = formatEntityReference(
+        'Empleado',
+        source.id || source.employee_id || source.user_id || source.assigned_employee_id
+    );
     return referenceLabel !== 'Empleado' ? referenceLabel : fallback;
 }
 
 export function getRestaurantDisplayName(record, fallback = 'Restaurante') {
     const source = record && typeof record === 'object' ? record : {};
-    const directName = pickMeaningfulRestaurantName([
-        source.restaurant_name,
-        source.restaurant_visible_name,
-        source.restaurant_label,
-        source.location_name,
-        source.site_name,
-        source.restaurant?.restaurant_name,
-        source.restaurant?.restaurant_visible_name,
-        source.restaurant?.restaurant_label,
-        source.location?.location_name,
-        source.site?.site_name,
-        source.raw?.restaurant_name,
-        source.raw?.restaurant_visible_name,
-        source.raw?.restaurant_label,
-        source.raw?.restaurant?.restaurant_name,
-        source.raw?.restaurant?.restaurant_visible_name,
-        source.raw?.restaurant?.restaurant_label,
-        source.name,
-        source.visible_name,
-        source.label,
-        source.title,
-        source.display_name,
-        source.restaurant?.name,
-        source.restaurant?.label,
-        source.restaurant?.title,
-        source.restaurant?.display_name,
-        source.location?.name,
-        source.location?.label,
-        source.location?.title,
-        source.location?.display_name,
-        source.site?.name,
-        source.site?.label,
-        source.site?.title,
-        source.site?.display_name,
-        source.raw?.name,
-        source.raw?.display_name,
-        source.raw?.label,
-        source.raw?.title,
-        source.raw?.restaurant?.name,
-        source.raw?.restaurant?.label,
-        source.raw?.restaurant?.title,
-        source.raw?.restaurant?.display_name,
-        source.raw?.location_name,
-        source.raw?.site_name
-    ], source);
+    const directName = pickMeaningfulRestaurantName(
+        [
+            source.restaurant_name,
+            source.restaurant_visible_name,
+            source.restaurant_label,
+            source.location_name,
+            source.site_name,
+            source.restaurant?.restaurant_name,
+            source.restaurant?.restaurant_visible_name,
+            source.restaurant?.restaurant_label,
+            source.location?.location_name,
+            source.site?.site_name,
+            source.raw?.restaurant_name,
+            source.raw?.restaurant_visible_name,
+            source.raw?.restaurant_label,
+            source.raw?.restaurant?.restaurant_name,
+            source.raw?.restaurant?.restaurant_visible_name,
+            source.raw?.restaurant?.restaurant_label,
+            source.name,
+            source.visible_name,
+            source.label,
+            source.title,
+            source.display_name,
+            source.restaurant?.name,
+            source.restaurant?.label,
+            source.restaurant?.title,
+            source.restaurant?.display_name,
+            source.location?.name,
+            source.location?.label,
+            source.location?.title,
+            source.location?.display_name,
+            source.site?.name,
+            source.site?.label,
+            source.site?.title,
+            source.site?.display_name,
+            source.raw?.name,
+            source.raw?.display_name,
+            source.raw?.label,
+            source.raw?.title,
+            source.raw?.restaurant?.name,
+            source.raw?.restaurant?.label,
+            source.raw?.restaurant?.title,
+            source.raw?.restaurant?.display_name,
+            source.raw?.location_name,
+            source.raw?.site_name,
+        ],
+        source
+    );
 
     if (directName) {
         return directName;
@@ -672,49 +692,53 @@ export function getRestaurantDisplayName(record, fallback = 'Restaurante') {
 }
 
 export function isRestaurantReferenceLabel(value = '') {
-    const normalized = String(value || '').trim().toLowerCase();
+    const normalized = String(value || '')
+        .trim()
+        .toLowerCase();
     return /^restaurante\s*#\s*[a-z0-9_-]+$/i.test(normalized);
 }
 
 export function getShiftEmployeeName(shift, options = {}) {
-    const employeeRecord = options.employeeRecord && typeof options.employeeRecord === 'object'
-        ? options.employeeRecord
-        : {};
+    const employeeRecord =
+        options.employeeRecord && typeof options.employeeRecord === 'object' ? options.employeeRecord : {};
     const employee = shift?.employee || shift?.user || shift?.staff || shift?.worker || shift?.employee_user || {};
     const employeeText = typeof employee === 'string' ? employee.trim() : '';
-    const directName = pickMeaningfulDisplayValue([
-        employeeText,
-        employeeRecord.full_name,
-        employeeRecord.employee_full_name,
-        employeeRecord.employee_name,
-        employeeRecord.visible_name,
-        employeeRecord.name,
-        employeeRecord.display_name,
-        employeeRecord.label,
-        employeeRecord.title,
-        employeeRecord.email,
-        employee.full_name,
-        employee.employee_full_name,
-        employee.visible_name,
-        employee.name,
-        employee.display_name,
-        employee.label,
-        employee.title,
-        employee.user?.full_name,
-        shift?.assigned_employee?.full_name,
-        shift?.employee_user?.full_name,
-        shift?.employee,
-        shift?.employee_name,
-        shift?.employee_visible_name,
-        shift?.employee_display_name,
-        shift?.employee_full_name,
-        shift?.assigned_employee_name,
-        shift?.assignee_name,
-        shift?.worker_name,
-        shift?.full_name,
-        shift?.user_name,
-        shift?.user?.full_name
-    ], 'employee');
+    const directName = pickMeaningfulDisplayValue(
+        [
+            employeeText,
+            employeeRecord.full_name,
+            employeeRecord.employee_full_name,
+            employeeRecord.employee_name,
+            employeeRecord.visible_name,
+            employeeRecord.name,
+            employeeRecord.display_name,
+            employeeRecord.label,
+            employeeRecord.title,
+            employeeRecord.email,
+            employee.full_name,
+            employee.employee_full_name,
+            employee.visible_name,
+            employee.name,
+            employee.display_name,
+            employee.label,
+            employee.title,
+            employee.user?.full_name,
+            shift?.assigned_employee?.full_name,
+            shift?.employee_user?.full_name,
+            shift?.employee,
+            shift?.employee_name,
+            shift?.employee_visible_name,
+            shift?.employee_display_name,
+            shift?.employee_full_name,
+            shift?.assigned_employee_name,
+            shift?.assignee_name,
+            shift?.worker_name,
+            shift?.full_name,
+            shift?.user_name,
+            shift?.user?.full_name,
+        ],
+        'employee'
+    );
 
     if (directName) {
         return directName;
@@ -722,7 +746,7 @@ export function getShiftEmployeeName(shift, options = {}) {
 
     const composedName = [
         employee.first_name || employeeRecord.first_name || shift?.first_name,
-        employee.last_name || employeeRecord.last_name || shift?.last_name
+        employee.last_name || employeeRecord.last_name || shift?.last_name,
     ]
         .filter(Boolean)
         .join(' ')
@@ -732,64 +756,84 @@ export function getShiftEmployeeName(shift, options = {}) {
         return composedName;
     }
 
-    return getEmployeeDisplayName({
-        ...employeeRecord,
-        ...(employee && typeof employee === 'object' ? employee : {}),
-        email: employee.email || employeeRecord.email || shift?.email || shift?.employee_email || '',
-        id: employee.id || employeeRecord.id || shift?.employee_id || shift?.assigned_employee_id || shift?.user_id || ''
-    }, 'Empleado');
+    return getEmployeeDisplayName(
+        {
+            ...employeeRecord,
+            ...(employee && typeof employee === 'object' ? employee : {}),
+            email: employee.email || employeeRecord.email || shift?.email || shift?.employee_email || '',
+            id:
+                employee.id ||
+                employeeRecord.id ||
+                shift?.employee_id ||
+                shift?.assigned_employee_id ||
+                shift?.user_id ||
+                '',
+        },
+        'Empleado'
+    );
 }
 
 export function getShiftRestaurantName(shift, options = {}) {
-    const restaurantRecord = options.restaurantRecord && typeof options.restaurantRecord === 'object'
-        ? options.restaurantRecord
-        : {};
+    const restaurantRecord =
+        options.restaurantRecord && typeof options.restaurantRecord === 'object' ? options.restaurantRecord : {};
     const restaurant = shift?.restaurant || shift?.location || shift?.site || {};
     const restaurantText = typeof restaurant === 'string' ? restaurant.trim() : '';
-    const directName = pickMeaningfulRestaurantName([
-        shift?.restaurant_name,
-        shift?.restaurant_visible_name,
-        shift?.restaurant_label,
-        shift?.location_name,
-        shift?.site_name,
-        restaurantRecord.restaurant_name,
-        restaurantRecord.restaurant_visible_name,
-        restaurantRecord.restaurant_label,
-        restaurant.restaurant_name,
-        restaurant.restaurant_visible_name,
-        restaurant.restaurant_label,
-        restaurantText,
-        restaurantRecord.name,
-        restaurantRecord.visible_name,
-        restaurantRecord.label,
-        restaurantRecord.title,
-        restaurantRecord.display_name,
-        restaurant.name,
-        restaurant.visible_name,
-        restaurant.label,
-        restaurant.title,
-        restaurant.display_name,
-        shift?.name,
-        shift?.display_name
-    ], {
-        ...restaurantRecord,
-        ...(restaurant && typeof restaurant === 'object' ? restaurant : {}),
-        ...(shift && typeof shift === 'object' ? shift : {})
-    });
+    const directName = pickMeaningfulRestaurantName(
+        [
+            shift?.restaurant_name,
+            shift?.restaurant_visible_name,
+            shift?.restaurant_label,
+            shift?.location_name,
+            shift?.site_name,
+            restaurantRecord.restaurant_name,
+            restaurantRecord.restaurant_visible_name,
+            restaurantRecord.restaurant_label,
+            restaurant.restaurant_name,
+            restaurant.restaurant_visible_name,
+            restaurant.restaurant_label,
+            restaurantText,
+            restaurantRecord.name,
+            restaurantRecord.visible_name,
+            restaurantRecord.label,
+            restaurantRecord.title,
+            restaurantRecord.display_name,
+            restaurant.name,
+            restaurant.visible_name,
+            restaurant.label,
+            restaurant.title,
+            restaurant.display_name,
+            shift?.name,
+            shift?.display_name,
+        ],
+        {
+            ...restaurantRecord,
+            ...(restaurant && typeof restaurant === 'object' ? restaurant : {}),
+            ...(shift && typeof shift === 'object' ? shift : {}),
+        }
+    );
 
     if (directName) {
         return directName;
     }
 
-    return getRestaurantDisplayName({
-        ...restaurantRecord,
-        ...(restaurant && typeof restaurant === 'object' ? restaurant : {}),
-        address_line: restaurant?.address_line || restaurantRecord?.address_line || shift?.address_line || '',
-        city: restaurant?.city || restaurantRecord?.city || shift?.city || '',
-        state: restaurant?.state || restaurantRecord?.state || shift?.state || '',
-        country: restaurant?.country || restaurantRecord?.country || shift?.country || '',
-        id: restaurant?.id || restaurantRecord?.id || shift?.restaurant_id || shift?.location_id || shift?.site_id || ''
-    }, 'Restaurante');
+    return getRestaurantDisplayName(
+        {
+            ...restaurantRecord,
+            ...(restaurant && typeof restaurant === 'object' ? restaurant : {}),
+            address_line: restaurant?.address_line || restaurantRecord?.address_line || shift?.address_line || '',
+            city: restaurant?.city || restaurantRecord?.city || shift?.city || '',
+            state: restaurant?.state || restaurantRecord?.state || shift?.state || '',
+            country: restaurant?.country || restaurantRecord?.country || shift?.country || '',
+            id:
+                restaurant?.id ||
+                restaurantRecord?.id ||
+                shift?.restaurant_id ||
+                shift?.location_id ||
+                shift?.site_id ||
+                '',
+        },
+        'Restaurante'
+    );
 }
 
 export function normalizeAreaGroupLabel(areaLabel) {
@@ -806,17 +850,18 @@ export function areaDomId(areaLabel) {
 }
 
 export function getRestaurantRecordId(restaurant) {
-    const candidate = restaurant?.restaurant_id
-        ?? restaurant?.id
-        ?? restaurant?.restaurant?.restaurant_id
-        ?? restaurant?.restaurant?.id
-        ?? restaurant?.location_id
-        ?? restaurant?.location?.id
-        ?? restaurant?.site_id
-        ?? restaurant?.site?.id
-        ?? restaurant?.raw?.restaurant_id
-        ?? restaurant?.raw?.id
-        ?? null;
+    const candidate =
+        restaurant?.restaurant_id ??
+        restaurant?.id ??
+        restaurant?.restaurant?.restaurant_id ??
+        restaurant?.restaurant?.id ??
+        restaurant?.location_id ??
+        restaurant?.location?.id ??
+        restaurant?.site_id ??
+        restaurant?.site?.id ??
+        restaurant?.raw?.restaurant_id ??
+        restaurant?.raw?.id ??
+        null;
 
     if (candidate == null) {
         return null;
@@ -874,7 +919,10 @@ export function initials(value) {
         return 'U';
     }
 
-    return parts.slice(0, 2).map((part) => part[0].toUpperCase()).join('');
+    return parts
+        .slice(0, 2)
+        .map((part) => part[0].toUpperCase())
+        .join('');
 }
 
 export function delay(ms) {
@@ -882,18 +930,44 @@ export function delay(ms) {
 }
 
 export function isGenericNamedPlaceholder(value, type = 'text') {
-    const normalized = String(value || '').trim().toLowerCase();
+    const normalized = String(value || '')
+        .trim()
+        .toLowerCase();
     if (!normalized) {
         return true;
     }
 
-    if (['-', '--', 'n/a', 'na', 'null', 'undefined', 'unknown', 'scheduled', 'programado', 'programada', 'pending', 'pendiente', 'active', 'activo', 'inactivo', 'inactive', 'completed', 'completado', 'finalizado', 'finished'].includes(normalized)) {
+    if (
+        [
+            '-',
+            '--',
+            'n/a',
+            'na',
+            'null',
+            'undefined',
+            'unknown',
+            'scheduled',
+            'programado',
+            'programada',
+            'pending',
+            'pendiente',
+            'active',
+            'activo',
+            'inactivo',
+            'inactive',
+            'completed',
+            'completado',
+            'finalizado',
+            'finished',
+        ].includes(normalized)
+    ) {
         return true;
     }
 
-    const genericTokens = type === 'restaurant'
-        ? ['restaurante', 'restaurant', 'local', 'sede', 'site', 'location']
-        : ['empleado', 'employee', 'usuario', 'user', 'trabajador', 'worker', 'staff'];
+    const genericTokens =
+        type === 'restaurant'
+            ? ['restaurante', 'restaurant', 'local', 'sede', 'site', 'location']
+            : ['empleado', 'employee', 'usuario', 'user', 'trabajador', 'worker', 'staff'];
 
     return genericTokens.some((token) => normalized === token || normalized.startsWith(`${token} `));
 }
@@ -901,11 +975,39 @@ export function isGenericNamedPlaceholder(value, type = 'text') {
 export function getBadgeClass(status) {
     const normalized = String(status || '').toLowerCase();
 
-    if (['activo', 'active', 'approved', 'aprobado', 'completado', 'completed', 'finished', 'finalizado', 'ok', 'success', 'en progreso', 'in_progress', 'in-progress'].includes(normalized)) {
+    if (
+        [
+            'activo',
+            'active',
+            'approved',
+            'aprobado',
+            'completado',
+            'completed',
+            'finished',
+            'finalizado',
+            'ok',
+            'success',
+            'en progreso',
+            'in_progress',
+            'in-progress',
+        ].includes(normalized)
+    ) {
         return 'badge-success';
     }
 
-    if (['rechazado', 'rejected', 'cancelado', 'cancelled', 'canceled', 'deactivated', 'inactive', 'error', 'failed'].includes(normalized)) {
+    if (
+        [
+            'rechazado',
+            'rejected',
+            'cancelado',
+            'cancelled',
+            'canceled',
+            'deactivated',
+            'inactive',
+            'error',
+            'failed',
+        ].includes(normalized)
+    ) {
         return 'badge-danger';
     }
 
@@ -981,7 +1083,7 @@ export function getScheduledHours(item) {
         getHoursFromRange(
             item?.scheduled_start || item?.scheduled_shift?.scheduled_start,
             item?.scheduled_end || item?.scheduled_shift?.scheduled_end
-        )
+        ),
     ];
 
     for (const candidate of scheduledCandidates) {
@@ -991,12 +1093,7 @@ export function getScheduledHours(item) {
         }
     }
 
-    const fallbackCandidates = [
-        item?.hours,
-        item?.duration_hours,
-        item?.hours_worked,
-        item?.worked_hours
-    ];
+    const fallbackCandidates = [item?.hours, item?.duration_hours, item?.hours_worked, item?.worked_hours];
 
     for (const candidate of fallbackCandidates) {
         const numericCandidate = Number(candidate);
@@ -1020,7 +1117,7 @@ export function getWorkedHours(item) {
         item?.completed_hours,
         item?.tracked_hours,
         item?.effective_hours,
-        item?.total_hours_worked
+        item?.total_hours_worked,
     ];
 
     for (const candidate of directCandidates) {
@@ -1047,7 +1144,7 @@ export function getShiftStatusLabel(item) {
         finalized: 'Finalizado',
         cancelled: 'Cancelado',
         canceled: 'Cancelado',
-        rejected: 'Rechazado'
+        rejected: 'Rechazado',
     };
 
     return labelMap[normalized] || label || 'Pendiente';
@@ -1064,7 +1161,9 @@ export function isShiftEndedEarly(item) {
         return rawValue > 0;
     }
 
-    const normalized = String(rawValue || '').trim().toLowerCase();
+    const normalized = String(rawValue || '')
+        .trim()
+        .toLowerCase();
     return ['1', 'true', 'yes', 'si', 'sí'].includes(normalized);
 }
 

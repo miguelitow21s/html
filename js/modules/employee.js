@@ -2,18 +2,28 @@
 import { CACHE_TTLS, DEFAULT_SYSTEM_SETTINGS } from '../constants.js';
 import { apiClient } from '../api.js';
 import {
-    asArray, buildAreaMeta, formatDate, formatDateTime,
-    formatHours, formatShiftRange, getBadgeClass, getMonthStart,
-    getRestaurantDisplayName, getRestaurantRecordId,
-    getScheduledHours, normalizeAreaToken, sumHours, toInputDate
+    asArray,
+    buildAreaMeta,
+    formatDate,
+    formatDateTime,
+    formatHours,
+    formatShiftRange,
+    getBadgeClass,
+    getMonthStart,
+    getRestaurantDisplayName,
+    getRestaurantRecordId,
+    getScheduledHours,
+    normalizeAreaToken,
+    sumHours,
+    toInputDate,
 } from '../utils.js';
 
 export const employeeMethods = {
     async loadEmployeeDashboard(force = false) {
         if (
-            !force
-            && this.data.employee.dashboard
-            && this.isCacheFresh('employeeDashboard', CACHE_TTLS.employeeDashboard)
+            !force &&
+            this.data.employee.dashboard &&
+            this.isCacheFresh('employeeDashboard', CACHE_TTLS.employeeDashboard)
         ) {
             this.renderEmployeeDashboard();
             this.warmEmployeeWorkspace();
@@ -25,14 +35,16 @@ export const employeeMethods = {
             const [dashboard, openTasksResult] = await Promise.all([
                 apiClient.getEmployeeDashboard({
                     schedule_limit: 10,
-                    pending_tasks_limit: 10
+                    pending_tasks_limit: 10,
                 }),
-                apiClient.operationalTasksManage('list_my_open', {
-                    limit: 40
-                }).catch((error) => {
-                    console.warn('No fue posible cargar el detalle de tareas abiertas.', error);
-                    return [];
-                })
+                apiClient
+                    .operationalTasksManage('list_my_open', {
+                        limit: 40,
+                    })
+                    .catch((error) => {
+                        console.warn('No fue posible cargar el detalle de tareas abiertas.', error);
+                        return [];
+                    }),
             ]);
 
             const openTasks = this.filterEmployeeTasksByKnownShifts(asArray(openTasksResult), dashboard);
@@ -42,7 +54,10 @@ export const employeeMethods = {
             this.data.currentShift = this.enrichEmployeeShiftRecord(dashboard?.active_shift, dashboard);
             this.data.currentScheduledShift = this.data.currentShift
                 ? null
-                : this.enrichEmployeeShiftRecord(this.getEmployeePendingScheduledShift(dashboard?.scheduled_shifts), dashboard);
+                : this.enrichEmployeeShiftRecord(
+                      this.getEmployeePendingScheduledShift(dashboard?.scheduled_shifts),
+                      dashboard
+                  );
             if (this.data.currentShift?.id) {
                 void this.hydrateShiftEvidenceSummary(this.data.currentShift).then((nextShift) => {
                     if (nextShift?.id && this.currentPage === 'employee-dashboard') {
@@ -61,22 +76,23 @@ export const employeeMethods = {
     renderEmployeeProfile() {
         const history = this.data.employee.hoursHistory || {};
         const totalScheduledHours = Number(
-            history?.total_scheduled_hours
-            ?? history?.total_hours_scheduled
-            ?? history?.total_assigned_hours
+            history?.total_scheduled_hours ?? history?.total_hours_scheduled ?? history?.total_assigned_hours
         );
-        const profileHours = Number.isFinite(totalScheduledHours) && totalScheduledHours > 0
-            ? totalScheduledHours
-            : sumHours(asArray(history));
+        const profileHours =
+            Number.isFinite(totalScheduledHours) && totalScheduledHours > 0
+                ? totalScheduledHours
+                : sumHours(asArray(history));
 
         document.getElementById('profile-hours-worked').textContent = formatHours(profileHours);
         document.getElementById('profile-total-shifts').textContent = String(history?.total_shifts || 0);
         document.getElementById('profile-upcoming-shifts').textContent = String(
-            asArray(this.data.employee.dashboard?.scheduled_shifts)
-                .filter((shift) => this.getEmployeePendingScheduledShift([shift]))
-                .length
+            asArray(this.data.employee.dashboard?.scheduled_shifts).filter((shift) =>
+                this.getEmployeePendingScheduledShift([shift])
+            ).length
         );
-        document.getElementById('profile-pending-tasks').textContent = String(this.data.employee.dashboard?.pending_tasks_count || 0);
+        document.getElementById('profile-pending-tasks').textContent = String(
+            this.data.employee.dashboard?.pending_tasks_count || 0
+        );
         const visibleTasks = this.getVisibleEmployeeTasks(this.data.employee.dashboard);
         this.renderEmployeeProfileTasks(visibleTasks);
         this.updateUserUI();
@@ -104,14 +120,16 @@ export const employeeMethods = {
         };
 
         pushRestaurantId(this.data.currentShift?.restaurant_id || this.data.currentShift?.restaurant?.id);
-        pushRestaurantId(this.data.currentScheduledShift?.restaurant_id || this.data.currentScheduledShift?.restaurant?.id);
+        pushRestaurantId(
+            this.data.currentScheduledShift?.restaurant_id || this.data.currentScheduledShift?.restaurant?.id
+        );
         asArray(dashboard?.scheduled_shifts).forEach((shift) => {
             pushRestaurantId(
-                shift?.restaurant_id
-                || shift?.restaurant?.restaurant_id
-                || shift?.restaurant?.id
-                || shift?.location_id
-                || shift?.location?.id
+                shift?.restaurant_id ||
+                    shift?.restaurant?.restaurant_id ||
+                    shift?.restaurant?.id ||
+                    shift?.location_id ||
+                    shift?.location?.id
             );
         });
         this.getEmployeeAssignedRestaurants(dashboard).forEach((restaurant) => {
@@ -120,29 +138,29 @@ export const employeeMethods = {
 
         return asArray(tasks).filter((task) => {
             const linkedScheduledShiftId = String(
-                task?.scheduled_shift_id
-                || task?.scheduledShiftId
-                || task?.scheduled_shift?.id
-                || task?.scheduled_shift?.scheduled_shift_id
-                || task?.meta?.scheduled_shift_id
-                || task?.metadata?.scheduled_shift_id
-                || ''
+                task?.scheduled_shift_id ||
+                    task?.scheduledShiftId ||
+                    task?.scheduled_shift?.id ||
+                    task?.scheduled_shift?.scheduled_shift_id ||
+                    task?.meta?.scheduled_shift_id ||
+                    task?.metadata?.scheduled_shift_id ||
+                    ''
             ).trim();
             const linkedShiftId = String(
-                task?.shift_id
-                || task?.shiftId
-                || task?.shift?.id
-                || task?.meta?.shift_id
-                || task?.metadata?.shift_id
-                || ''
+                task?.shift_id ||
+                    task?.shiftId ||
+                    task?.shift?.id ||
+                    task?.meta?.shift_id ||
+                    task?.metadata?.shift_id ||
+                    ''
             ).trim();
             const linkedRestaurantId = String(
-                task?.restaurant_id
-                || task?.restaurant?.restaurant_id
-                || task?.restaurant?.id
-                || task?.meta?.restaurant_id
-                || task?.metadata?.restaurant_id
-                || ''
+                task?.restaurant_id ||
+                    task?.restaurant?.restaurant_id ||
+                    task?.restaurant?.id ||
+                    task?.meta?.restaurant_id ||
+                    task?.metadata?.restaurant_id ||
+                    ''
             ).trim();
 
             if (!linkedScheduledShiftId && !linkedShiftId && !linkedRestaurantId) {
@@ -172,12 +190,12 @@ export const employeeMethods = {
         }
 
         const restaurantId = String(
-            task?.restaurant_id
-            || task?.restaurant?.restaurant_id
-            || task?.restaurant?.id
-            || task?.meta?.restaurant_id
-            || task?.metadata?.restaurant_id
-            || ''
+            task?.restaurant_id ||
+                task?.restaurant?.restaurant_id ||
+                task?.restaurant?.id ||
+                task?.meta?.restaurant_id ||
+                task?.metadata?.restaurant_id ||
+                ''
         ).trim();
 
         if (!restaurantId) {
@@ -206,7 +224,9 @@ export const employeeMethods = {
 
     getVisibleEmployeeTasks(dashboard = this.data.employee.dashboard || {}) {
         const shiftOnly = (tasks) => tasks.filter((t) => !this.isRestaurantScopedTask(t));
-        const filteredOpenTasks = shiftOnly(this.filterEmployeeTasksByKnownShifts(this.data.employee.openTasks, dashboard));
+        const filteredOpenTasks = shiftOnly(
+            this.filterEmployeeTasksByKnownShifts(this.data.employee.openTasks, dashboard)
+        );
         if (filteredOpenTasks.length > 0) {
             return filteredOpenTasks;
         }
@@ -220,9 +240,9 @@ export const employeeMethods = {
         }
 
         if (
-            !force
-            && this.data.employee.hoursHistory
-            && this.isCacheFresh('employeeHoursHistory', CACHE_TTLS.employeeHoursHistory)
+            !force &&
+            this.data.employee.hoursHistory &&
+            this.isCacheFresh('employeeHoursHistory', CACHE_TTLS.employeeHoursHistory)
         ) {
             this.renderEmployeeProfile();
             return this.data.employee.hoursHistory;
@@ -232,7 +252,7 @@ export const employeeMethods = {
             const nextHistory = await apiClient.getEmployeeHoursHistory({
                 period_start: toInputDate(getMonthStart()),
                 period_end: toInputDate(new Date()),
-                limit: 120
+                limit: 120,
             });
             this.data.employee.hoursHistory = nextHistory;
             this.touchCache('employeeHoursHistory');
@@ -288,8 +308,10 @@ export const employeeMethods = {
             detailsCopy.className = 'task-observations-copy';
             detailsCopy.textContent = [
                 task.description || dueText,
-                restaurantName ? `Restaurante: ${restaurantName}` : ''
-            ].filter(Boolean).join(' ');
+                restaurantName ? `Restaurante: ${restaurantName}` : '',
+            ]
+                .filter(Boolean)
+                .join(' ');
             observations.append(detailsLabel, detailsCopy);
 
             card.append(title, statusWrap, observations);
@@ -310,14 +332,15 @@ export const employeeMethods = {
         try {
             await this.loadEmployeeDashboard(true);
             const hasActiveShift = Boolean(this.data.currentShift?.id);
-            const canStartShift = !hasActiveShift
-                && this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, this.data.employee.dashboard);
+            const canStartShift =
+                !hasActiveShift &&
+                this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, this.data.employee.dashboard);
             const hasShiftAvailable = hasActiveShift || canStartShift;
 
             if (!hasShiftAvailable) {
                 this.showToast(this.getShiftStartWindowCopy(this.data.currentScheduledShift), {
                     tone: 'warning',
-                    title: 'Turno no disponible'
+                    title: 'Turno no disponible',
                 });
                 this.navigate('employee-dashboard');
                 return;
@@ -327,7 +350,7 @@ export const employeeMethods = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible validar tu turno actual.'), {
                 tone: 'error',
-                title: 'No fue posible continuar'
+                title: 'No fue posible continuar',
             });
         } finally {
             this.hideLoading();
@@ -371,7 +394,8 @@ export const employeeMethods = {
 
         const requiresEvidence = task.requires_evidence === true;
         const notesRequired = task.notes_required === true;
-        const hasTaskEvidence = Boolean(this.specialTaskEvidenceFile) || Object.keys(this.endPhotoFiles || {}).length > 0;
+        const hasTaskEvidence =
+            Boolean(this.specialTaskEvidenceFile) || Object.keys(this.endPhotoFiles || {}).length > 0;
         const lockCompletionCheck = requiresEvidence && !hasTaskEvidence;
         card.classList.toggle('requires-evidence', requiresEvidence);
         card.classList.toggle('notes-required', notesRequired);
@@ -408,7 +432,9 @@ export const employeeMethods = {
             }
             const shiftOpenTasks = (this.data.employee.openTasks || []).filter((t) => !this.isRestaurantScopedTask(t));
             if (shiftOpenTasks.length > 1) {
-                details.push(`Hay ${shiftOpenTasks.length} tareas abiertas; se intentarán cerrar todas con este registro.`);
+                details.push(
+                    `Hay ${shiftOpenTasks.length} tareas abiertas; se intentarán cerrar todas con este registro.`
+                );
             }
             detail.textContent = details.join(' ') || 'Confirma el estado de la tarea asignada antes de finalizar.';
         }
@@ -417,7 +443,9 @@ export const employeeMethods = {
             const requirements = [];
             if (requiresEvidence) {
                 if (lockCompletionCheck) {
-                    requirements.push('Toma una foto de evidencia o adjunta una foto final para habilitar la confirmación de tarea.');
+                    requirements.push(
+                        'Toma una foto de evidencia o adjunta una foto final para habilitar la confirmación de tarea.'
+                    );
                 } else {
                     requirements.push('Debes adjuntar evidencia fotográfica para completar la tarea.');
                 }
@@ -441,8 +469,9 @@ export const employeeMethods = {
             hasActiveShift = Boolean(this.data.currentShift?.id);
         }
 
-        const canStartShift = !hasActiveShift
-            && this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, this.data.employee.dashboard);
+        const canStartShift =
+            !hasActiveShift &&
+            this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, this.data.employee.dashboard);
         const shift = this.enrichEmployeeShiftRecord(
             this.data.currentShift || this.data.currentScheduledShift,
             this.data.employee.dashboard
@@ -450,7 +479,7 @@ export const employeeMethods = {
         if (!shift || (!hasActiveShift && !canStartShift)) {
             this.showToast(this.getShiftStartWindowCopy(this.data.currentScheduledShift), {
                 tone: 'warning',
-                title: 'Turno no disponible'
+                title: 'Turno no disponible',
             });
             this.navigate('employee-dashboard');
             return;
@@ -462,10 +491,10 @@ export const employeeMethods = {
             this.data.currentScheduledShift = shift;
         }
 
-        const restaurant = shift?.restaurant || this.resolveEmployeeRestaurantRecord(
-            shift?.restaurant_id,
-            this.data.employee.dashboard
-        ) || null;
+        const restaurant =
+            shift?.restaurant ||
+            this.resolveEmployeeRestaurantRecord(shift?.restaurant_id, this.data.employee.dashboard) ||
+            null;
         const button = document.getElementById('continue-btn');
 
         void this.primeEmployeeWorkspacePermissions();
@@ -488,16 +517,14 @@ export const employeeMethods = {
             hasActiveShift ? 'Restaurante del turno activo' : 'Restaurante del turno programado'
         );
         document.getElementById('shift-start-schedule').textContent = this.getEmployeeShiftScheduleText(shift, {
-            hasActiveShift
+            hasActiveShift,
         });
 
         if (button) {
             button.innerHTML = hasActiveShift
-                ? (
-                    this.shouldResumeActiveShiftInCleaning(shift)
-                        ? 'Continuar con el Turno Activo <i class="fas fa-arrow-right"></i>'
-                        : 'Completar Fotos Iniciales <i class="fas fa-camera"></i>'
-                )
+                ? this.shouldResumeActiveShiftInCleaning(shift)
+                    ? 'Continuar con el Turno Activo <i class="fas fa-arrow-right"></i>'
+                    : 'Completar Fotos Iniciales <i class="fas fa-camera"></i>'
                 : 'Registrar Inicio y Continuar <i class="fas fa-arrow-right"></i>';
         }
 
@@ -507,7 +534,8 @@ export const employeeMethods = {
 
         if (gpsStatus) {
             gpsStatus.className = 'gps-status invalid';
-            gpsStatus.innerHTML = '<i class="fas fa-location-crosshairs"></i><span>Ubicación lista para verificar</span>';
+            gpsStatus.innerHTML =
+                '<i class="fas fa-location-crosshairs"></i><span>Ubicación lista para verificar</span>';
         }
 
         if (gpsButton) {
@@ -527,13 +555,13 @@ export const employeeMethods = {
             hasActiveShift = Boolean(this.data.currentShift?.id);
         }
 
-        const canStartShift = !hasActiveShift
-            && this.canEmployeeStartScheduledShift(scheduledShift, this.data.employee.dashboard);
+        const canStartShift =
+            !hasActiveShift && this.canEmployeeStartScheduledShift(scheduledShift, this.data.employee.dashboard);
 
         if (!this.gpsVerified) {
             this.showToast('Tu ubicación no está verificada. Pulsa "Verificar Ubicación" para continuar.', {
                 tone: 'warning',
-                title: 'Ubicación pendiente'
+                title: 'Ubicación pendiente',
             });
             return;
         }
@@ -541,7 +569,7 @@ export const employeeMethods = {
         if (!this.healthCertified) {
             this.showToast('Debes marcar el certificado de salud/aptitud antes de iniciar el turno.', {
                 tone: 'warning',
-                title: 'Falta certificado de salud'
+                title: 'Falta certificado de salud',
             });
             return;
         }
@@ -549,7 +577,7 @@ export const employeeMethods = {
         if (!hasActiveShift && !canStartShift) {
             this.showToast(this.getShiftStartWindowCopy(scheduledShift), {
                 tone: 'warning',
-                title: 'Turno no disponible'
+                title: 'Turno no disponible',
             });
             return;
         }
@@ -558,7 +586,7 @@ export const employeeMethods = {
 
         try {
             await this.ensureOtpVerification();
-            const location = this.location || await this.captureLocation({ updateUi: false });
+            const location = this.location || (await this.captureLocation({ updateUi: false }));
 
             if (!this.data.currentShift) {
                 const result = await apiClient.startShift({
@@ -567,18 +595,21 @@ export const employeeMethods = {
                     lat: location.lat,
                     lng: location.lng,
                     fit_for_work: true,
-                    declaration: 'Me encuentro en condiciones de iniciar labores.'
+                    declaration: 'Me encuentro en condiciones de iniciar labores.',
                 });
 
-                this.data.currentShift = this.enrichEmployeeShiftRecord({
-                    ...scheduledShift,
-                    id: result?.shift_id,
-                    scheduled_shift_id: scheduledShift.id,
-                    restaurant_id: scheduledShift.restaurant_id,
-                    restaurant: scheduledShift.restaurant,
-                    start_time: new Date().toISOString(),
-                    state: 'activo'
-                }, this.data.employee.dashboard);
+                this.data.currentShift = this.enrichEmployeeShiftRecord(
+                    {
+                        ...scheduledShift,
+                        id: result?.shift_id,
+                        scheduled_shift_id: scheduledShift.id,
+                        restaurant_id: scheduledShift.restaurant_id,
+                        restaurant: scheduledShift.restaurant,
+                        start_time: new Date().toISOString(),
+                        state: 'activo',
+                    },
+                    this.data.employee.dashboard
+                );
                 this.data.currentScheduledShift = null;
             }
 
@@ -595,10 +626,13 @@ export const employeeMethods = {
             }
 
             if (hasActiveShift && !resumeInCleaning) {
-                this.showToast('Aún faltan evidencias iniciales del turno activo. Completa las fotos de inicio para continuar.', {
-                    tone: 'info',
-                    title: 'Faltan fotos iniciales'
-                });
+                this.showToast(
+                    'Aún faltan evidencias iniciales del turno activo. Completa las fotos de inicio para continuar.',
+                    {
+                        tone: 'info',
+                        title: 'Faltan fotos iniciales',
+                    }
+                );
             }
 
             this.navigate('employee-shift-photos');
@@ -606,7 +640,7 @@ export const employeeMethods = {
             if (this.isShiftStartOutsideWindow(error)) {
                 this.showToast(this.getShiftStartWindowOutsideMessage(error), {
                     tone: 'warning',
-                    title: 'Turno fuera de ventana'
+                    title: 'Turno fuera de ventana',
                 });
                 void this.loadEmployeeDashboard(true);
                 return;
@@ -615,14 +649,14 @@ export const employeeMethods = {
             if (this.isOutsideAllowedShiftArea(error)) {
                 this.showToast('No se puede iniciar el turno porque no estás dentro del área permitida o asignada.', {
                     tone: 'warning',
-                    title: 'Área no permitida'
+                    title: 'Área no permitida',
                 });
                 return;
             }
 
             this.showToast(this.getErrorMessage(error, 'No fue posible iniciar el turno.'), {
                 tone: 'error',
-                title: 'No fue posible iniciar el turno'
+                title: 'No fue posible iniciar el turno',
             });
         } finally {
             this.hideLoading();
@@ -639,59 +673,64 @@ export const employeeMethods = {
 
         if (entries.length === 0) return;
 
-        const location = this.location || await this.captureLocation({ updateUi: false });
+        const location = this.location || (await this.captureLocation({ updateUi: false }));
 
-        await Promise.all(entries.map(async ([area, file]) => {
-            const [requestUpload, compressed] = await Promise.all([
-                apiClient.requestShiftEvidenceUpload(shiftId, type),
-                this.compressImage(file)
-            ]);
+        await Promise.all(
+            entries.map(async ([area, file]) => {
+                const [requestUpload, compressed] = await Promise.all([
+                    apiClient.requestShiftEvidenceUpload(shiftId, type),
+                    this.compressImage(file),
+                ]);
 
-            const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
-            const path = requestUpload?.path || requestUpload?.upload?.path;
+                const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
+                const path = requestUpload?.path || requestUpload?.upload?.path;
 
-            if (!signedUrl || !path) {
-                throw new Error('No fue posible preparar la subida de la foto.');
-            }
-
-            await apiClient.uploadToSignedUrl(signedUrl, compressed, 'image/jpeg');
-
-            const slot = this.getPhotoSlotDefinition(area, 'start');
-            const areaMeta = buildAreaMeta(slot?.groupLabel || area);
-            const finalizePayload = await apiClient.finalizeShiftEvidenceUpload({
-                shift_id: shiftId,
-                type,
-                path,
-                lat: location.lat,
-                lng: location.lng,
-                accuracy: Math.round(location.accuracy || 0),
-                captured_at: new Date().toISOString(),
-                meta: {
-                    ...areaMeta,
-                    subarea_key: normalizeAreaToken(slot?.subareaLabel || area),
-                    subarea_label: slot?.subareaLabel || area,
-                    photo_label: slot?.title || area
+                if (!signedUrl || !path) {
+                    throw new Error('No fue posible preparar la subida de la foto.');
                 }
-            });
-            this.recordShiftRequestTrace(
-                'finalize_upload',
-                this.extractRequestId(finalizePayload, apiClient.lastResponseMeta),
-                this.data.currentShift
-            );
-            uploadedMap[area] = true;
-        }));
+
+                await apiClient.uploadToSignedUrl(signedUrl, compressed, 'image/jpeg');
+
+                const slot = this.getPhotoSlotDefinition(area, 'start');
+                const areaMeta = buildAreaMeta(slot?.groupLabel || area);
+                const finalizePayload = await apiClient.finalizeShiftEvidenceUpload({
+                    shift_id: shiftId,
+                    type,
+                    path,
+                    lat: location.lat,
+                    lng: location.lng,
+                    accuracy: Math.round(location.accuracy || 0),
+                    captured_at: new Date().toISOString(),
+                    meta: {
+                        ...areaMeta,
+                        subarea_key: normalizeAreaToken(slot?.subareaLabel || area),
+                        subarea_label: slot?.subareaLabel || area,
+                        photo_label: slot?.title || area,
+                    },
+                });
+                this.recordShiftRequestTrace(
+                    'finalize_upload',
+                    this.extractRequestId(finalizePayload, apiClient.lastResponseMeta),
+                    this.data.currentShift
+                );
+                uploadedMap[area] = true;
+            })
+        );
     },
 
     async completeShiftStartPhotos() {
         if (this.getEmployeeSelectedAreas().length === 0) {
             this.showToast('Selecciona al menos un área antes de registrar las fotos iniciales.', {
                 tone: 'warning',
-                title: 'Selecciona áreas'
+                title: 'Selecciona áreas',
             });
             return;
         }
 
-        const requireStartPhotos = this.getSystemSetting('evidence.require_start_photos', DEFAULT_SYSTEM_SETTINGS.evidence.require_start_photos);
+        const requireStartPhotos = this.getSystemSetting(
+            'evidence.require_start_photos',
+            DEFAULT_SYSTEM_SETTINGS.evidence.require_start_photos
+        );
         const progress = this.getStartEvidenceProgressSnapshot(this.data.currentShift);
         if (requireStartPhotos && progress.remainingCount > 0) {
             const isActiveShift = Boolean(this.data.currentShift?.id);
@@ -700,7 +739,7 @@ export const employeeMethods = {
                 : 'Debes tomar las fotos iniciales de todas las subáreas requeridas.';
             this.showToast(message, {
                 tone: 'warning',
-                title: 'Faltan evidencias'
+                title: 'Faltan evidencias',
             });
             return;
         }
@@ -712,32 +751,38 @@ export const employeeMethods = {
                     const summaryPayload = await apiClient.getShiftEvidenceSummary(this.data.currentShift.id);
                     const summary = this.normalizeShiftEvidenceSummary(summaryPayload);
                     const requiredStartEvidenceCount = Number(
-                        this.data.currentShift?.required_start_evidence_count
-                        ?? this.data.currentShift?.requiredStartEvidenceCount
-                        ?? this.employeePhotoSlots.length
+                        this.data.currentShift?.required_start_evidence_count ??
+                            this.data.currentShift?.requiredStartEvidenceCount ??
+                            this.employeePhotoSlots.length
                     );
                     const backendStartCount = Number(summary?.start_evidence_count || 0);
-                    const hasEnoughStartEvidence = Number.isFinite(requiredStartEvidenceCount) && requiredStartEvidenceCount > 0
-                        ? backendStartCount >= requiredStartEvidenceCount
-                        : summary?.has_start_evidence === true;
+                    const hasEnoughStartEvidence =
+                        Number.isFinite(requiredStartEvidenceCount) && requiredStartEvidenceCount > 0
+                            ? backendStartCount >= requiredStartEvidenceCount
+                            : summary?.has_start_evidence === true;
 
                     if (!hasEnoughStartEvidence) {
-                        const missingCount = Number.isFinite(requiredStartEvidenceCount) && requiredStartEvidenceCount > 0
-                            ? Math.max(requiredStartEvidenceCount - backendStartCount, 0)
-                            : 0;
-                        const missingCopy = missingCount > 0
-                            ? `Faltan ${missingCount} foto(s) inicial(es) por registrar.`
-                            : 'Aún faltan fotos iniciales por registrar.';
+                        const missingCount =
+                            Number.isFinite(requiredStartEvidenceCount) && requiredStartEvidenceCount > 0
+                                ? Math.max(requiredStartEvidenceCount - backendStartCount, 0)
+                                : 0;
+                        const missingCopy =
+                            missingCount > 0
+                                ? `Faltan ${missingCount} foto(s) inicial(es) por registrar.`
+                                : 'Aún faltan fotos iniciales por registrar.';
                         this.showToast(`${missingCopy} Toma las fotos de inicio antes de continuar.`, {
                             tone: 'warning',
-                            title: 'Evidencia inicial incompleta'
+                            title: 'Evidencia inicial incompleta',
                         });
                         return;
                     }
 
                     this.data.currentShift = this.mergeShiftEvidenceSummary(this.data.currentShift, summary);
                 } catch (summaryError) {
-                    console.warn('No fue posible validar summary_by_shift antes de continuar a limpieza.', summaryError);
+                    console.warn(
+                        'No fue posible validar summary_by_shift antes de continuar a limpieza.',
+                        summaryError
+                    );
                 }
             }
 
@@ -756,7 +801,7 @@ export const employeeMethods = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible subir las fotos de inicio.'), {
                 tone: 'error',
-                title: 'No fue posible continuar'
+                title: 'No fue posible continuar',
             });
         } finally {
             this.hideLoading();
@@ -773,7 +818,7 @@ export const employeeMethods = {
 
     navigateToShiftCompletion() {
         this.restoreCurrentShiftAreaSelection({
-            fallbackToAllAvailable: Boolean(this.data.currentShift?.id)
+            fallbackToAllAvailable: Boolean(this.data.currentShift?.id),
         });
         this.syncShiftCompletionTaskCard();
         this.navigate('employee-shift-complete');
@@ -782,23 +827,26 @@ export const employeeMethods = {
     prepareShiftSummary() {
         if (this.getEmployeeSelectedAreas().length === 0) {
             this.restoreCurrentShiftAreaSelection({
-                fallbackToAllAvailable: Boolean(this.data.currentShift?.id)
+                fallbackToAllAvailable: Boolean(this.data.currentShift?.id),
             });
         }
 
         if (this.getEmployeeSelectedAreas().length === 0) {
             this.showToast('Primero debes seleccionar las áreas trabajadas y registrar sus evidencias.', {
                 tone: 'warning',
-                title: 'Selecciona áreas'
+                title: 'Selecciona áreas',
             });
             return;
         }
 
-        const requireEndPhotos = this.getSystemSetting('evidence.require_end_photos', DEFAULT_SYSTEM_SETTINGS.evidence.require_end_photos);
+        const requireEndPhotos = this.getSystemSetting(
+            'evidence.require_end_photos',
+            DEFAULT_SYSTEM_SETTINGS.evidence.require_end_photos
+        );
         if (requireEndPhotos && Object.keys(this.endPhotoFiles).length < this.employeePhotoSlots.length) {
             this.showToast('Debes tomar las fotos finales de todas las subáreas antes de continuar.', {
                 tone: 'warning',
-                title: 'Faltan evidencias'
+                title: 'Faltan evidencias',
             });
             return;
         }
@@ -814,37 +862,42 @@ export const employeeMethods = {
         const hasTaskEvidence = Boolean(this.specialTaskEvidenceFile) || Object.keys(this.endPhotoFiles).length > 0;
 
         if (evidenceWillBeRequired && !hasTaskEvidence) {
-            this.showToast('La tarea especial requiere evidencia. Toma una foto de evidencia o adjunta una foto final antes de continuar.', {
-                tone: 'warning',
-                title: 'Evidencia obligatoria'
-            });
+            this.showToast(
+                'La tarea especial requiere evidencia. Toma una foto de evidencia o adjunta una foto final antes de continuar.',
+                {
+                    tone: 'warning',
+                    title: 'Evidencia obligatoria',
+                }
+            );
             return;
         }
 
         this.syncShiftCompletionTaskCard();
 
         this.restoreCurrentShiftAreaSelection({
-            fallbackToAllAvailable: Boolean(this.data.currentShift?.id)
+            fallbackToAllAvailable: Boolean(this.data.currentShift?.id),
         });
 
         const shift = this.data.currentShift || this.data.currentScheduledShift;
         const summaryShift = this.enrichEmployeeShiftRecord(shift, this.data.employee.dashboard || {}) || shift;
         const restaurant = this.getEmployeeShiftRestaurantRecord(summaryShift, this.data.employee.dashboard || {});
-        const durationHours = getScheduledHours(summaryShift)
-            || getScheduledHours(this.data.currentScheduledShift)
-            || 0;
-        const scheduledEndSource = summaryShift?.scheduled_end || this.data.currentScheduledShift?.scheduled_end || null;
+        const durationHours =
+            getScheduledHours(summaryShift) || getScheduledHours(this.data.currentScheduledShift) || 0;
+        const scheduledEndSource =
+            summaryShift?.scheduled_end || this.data.currentScheduledShift?.scheduled_end || null;
         const scheduledEnd = scheduledEndSource ? new Date(scheduledEndSource) : null;
         const summaryReferenceDate = summaryShift?.scheduled_start || summaryShift?.start_time || null;
-        const isEarlyEnd = Boolean(scheduledEnd && !Number.isNaN(scheduledEnd.getTime()) && scheduledEnd.getTime() > Date.now());
+        const isEarlyEnd = Boolean(
+            scheduledEnd && !Number.isNaN(scheduledEnd.getTime()) && scheduledEnd.getTime() > Date.now()
+        );
         const earlyEndCard = document.getElementById('shift-early-end-card');
         const earlyEndReasonInput = document.getElementById('early-end-reason');
 
         document.getElementById('summary-duration').textContent = formatHours(durationHours);
         document.getElementById('summary-photos').textContent = String(
-            Object.keys(this.photoFiles).length
-            + Object.keys(this.endPhotoFiles).length
-            + (this.specialTaskEvidenceFile ? 1 : 0)
+            Object.keys(this.photoFiles).length +
+                Object.keys(this.endPhotoFiles).length +
+                (this.specialTaskEvidenceFile ? 1 : 0)
         );
         document.getElementById('summary-restaurant').textContent = this.getEmployeeResolvedShiftRestaurantName(
             { ...summaryShift, restaurant },
@@ -856,11 +909,11 @@ export const employeeMethods = {
         );
         document.getElementById('summary-date').textContent = summaryReferenceDate
             ? formatDate(summaryReferenceDate, {
-                weekday: 'long',
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric'
-            })
+                  weekday: 'long',
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+              })
             : '-';
 
         if (earlyEndCard) {
@@ -879,7 +932,7 @@ export const employeeMethods = {
     async uploadTaskEvidence(taskId, file) {
         const requestUpload = await apiClient.operationalTasksManage('request_evidence_upload', {
             task_id: taskId,
-            mime_type: file.type || 'image/jpeg'
+            mime_type: file.type || 'image/jpeg',
         });
 
         const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
@@ -914,43 +967,47 @@ export const employeeMethods = {
             return;
         }
 
-        await Promise.all(tasks.map(async (task) => {
-            const taskId = task.task_id || task.id;
-            if (!taskId) {
-                return;
-            }
-
-            if (task.notes_required === true && !notes) {
-                throw new Error('Esta tarea requiere observaciones antes de finalizar.');
-            }
-
-            if (task.requires_evidence === true) {
-                const file = this.specialTaskEvidenceFile || Object.values(this.endPhotoFiles)[0];
-                if (!file) {
-                    throw new Error('La tarea requiere evidencia. Toma una foto de evidencia o adjunta una foto final antes de terminar.');
+        await Promise.all(
+            tasks.map(async (task) => {
+                const taskId = task.task_id || task.id;
+                if (!taskId) {
+                    return;
                 }
 
-                const evidencePath = await this.uploadTaskEvidence(taskId, file);
-                await apiClient.operationalTasksManage('complete', {
-                    task_id: taskId,
-                    evidence_path: evidencePath,
-                    notes
-                });
-                return;
-            }
+                if (task.notes_required === true && !notes) {
+                    throw new Error('Esta tarea requiere observaciones antes de finalizar.');
+                }
 
-            await apiClient.operationalTasksManage('close', {
-                task_id: taskId,
-                notes
-            });
-        }));
+                if (task.requires_evidence === true) {
+                    const file = this.specialTaskEvidenceFile || Object.values(this.endPhotoFiles)[0];
+                    if (!file) {
+                        throw new Error(
+                            'La tarea requiere evidencia. Toma una foto de evidencia o adjunta una foto final antes de terminar.'
+                        );
+                    }
+
+                    const evidencePath = await this.uploadTaskEvidence(taskId, file);
+                    await apiClient.operationalTasksManage('complete', {
+                        task_id: taskId,
+                        evidence_path: evidencePath,
+                        notes,
+                    });
+                    return;
+                }
+
+                await apiClient.operationalTasksManage('close', {
+                    task_id: taskId,
+                    notes,
+                });
+            })
+        );
     },
 
     async finalizeShift() {
         if (!this.data.currentShift?.id) {
             this.showToast('No hay un turno activo para finalizar.', {
                 tone: 'warning',
-                title: 'Sin turno activo'
+                title: 'Sin turno activo',
             });
             return;
         }
@@ -959,7 +1016,7 @@ export const employeeMethods = {
         const startEvidencePrecheck = {
             status: 'not-run',
             has_start_evidence: null,
-            request_id: ''
+            request_id: '',
         };
 
         try {
@@ -970,32 +1027,54 @@ export const employeeMethods = {
             );
 
             const precheckPromise = requireStartPhotos
-                ? apiClient.getShiftEvidenceSummary(this.data.currentShift.id)
-                    .then((summaryPayload) => {
-                        startEvidencePrecheck.status = 'ok';
-                        startEvidencePrecheck.request_id = this.extractRequestId(summaryPayload, apiClient.lastResponseMeta);
-                        this.recordShiftRequestTrace('summary_by_shift', startEvidencePrecheck.request_id, this.data.currentShift);
-                        const summary = this.normalizeShiftEvidenceSummary(summaryPayload);
-                        startEvidencePrecheck.has_start_evidence = Boolean(summary?.has_start_evidence);
-                        if (!summary.has_start_evidence) startEvidencePrecheck.status = 'mismatch';
-                    })
-                    .catch((summaryError) => {
-                        startEvidencePrecheck.status = 'error';
-                        startEvidencePrecheck.request_id = this.extractRequestId(summaryError, apiClient.lastResponseMeta);
-                        this.recordShiftRequestTrace('summary_by_shift', startEvidencePrecheck.request_id, this.data.currentShift);
-                        console.warn('No fue posible validar summary_by_shift antes de finalizar el turno.', summaryError);
-                    })
+                ? apiClient
+                      .getShiftEvidenceSummary(this.data.currentShift.id)
+                      .then((summaryPayload) => {
+                          startEvidencePrecheck.status = 'ok';
+                          startEvidencePrecheck.request_id = this.extractRequestId(
+                              summaryPayload,
+                              apiClient.lastResponseMeta
+                          );
+                          this.recordShiftRequestTrace(
+                              'summary_by_shift',
+                              startEvidencePrecheck.request_id,
+                              this.data.currentShift
+                          );
+                          const summary = this.normalizeShiftEvidenceSummary(summaryPayload);
+                          startEvidencePrecheck.has_start_evidence = Boolean(summary?.has_start_evidence);
+                          if (!summary.has_start_evidence) startEvidencePrecheck.status = 'mismatch';
+                      })
+                      .catch((summaryError) => {
+                          startEvidencePrecheck.status = 'error';
+                          startEvidencePrecheck.request_id = this.extractRequestId(
+                              summaryError,
+                              apiClient.lastResponseMeta
+                          );
+                          this.recordShiftRequestTrace(
+                              'summary_by_shift',
+                              startEvidencePrecheck.request_id,
+                              this.data.currentShift
+                          );
+                          console.warn(
+                              'No fue posible validar summary_by_shift antes de finalizar el turno.',
+                              summaryError
+                          );
+                      })
                 : Promise.resolve();
 
-            const location = this.location || await this.captureLocation({ updateUi: false });
+            const location = this.location || (await this.captureLocation({ updateUi: false }));
             const notes = document.getElementById('special-task-notes')?.value?.trim() || 'Sin incidentes';
             const earlyEndReasonInput = document.getElementById('early-end-reason');
-            const enrichedShift = this.enrichEmployeeShiftRecord(this.data.currentShift, this.data.employee.dashboard || {});
+            const enrichedShift = this.enrichEmployeeShiftRecord(
+                this.data.currentShift,
+                this.data.employee.dashboard || {}
+            );
             if (enrichedShift?.id) {
                 this.data.currentShift = enrichedShift;
             }
 
-            const scheduledEndSource = this.data.currentShift?.scheduled_end || this.data.currentScheduledShift?.scheduled_end || null;
+            const scheduledEndSource =
+                this.data.currentShift?.scheduled_end || this.data.currentScheduledShift?.scheduled_end || null;
             const scheduledEnd = scheduledEndSource ? new Date(scheduledEndSource) : null;
             const earlyEndReasonRaw = earlyEndReasonInput?.value?.trim() || '';
             const requiresEarlyEndReason = Boolean(scheduledEnd && scheduledEnd.getTime() > Date.now());
@@ -1003,10 +1082,13 @@ export const employeeMethods = {
 
             if (requiresEarlyEndReason && !earlyEndReason) {
                 this.hideLoading();
-                this.showToast('Debes indicar el motivo de salida anticipada para finalizar el turno antes de la hora programada.', {
-                    tone: 'warning',
-                    title: 'Falta el motivo'
-                });
+                this.showToast(
+                    'Debes indicar el motivo de salida anticipada para finalizar el turno antes de la hora programada.',
+                    {
+                        tone: 'warning',
+                        title: 'Falta el motivo',
+                    }
+                );
                 earlyEndReasonInput?.focus();
                 return;
             }
@@ -1014,7 +1096,7 @@ export const employeeMethods = {
             await Promise.all([
                 precheckPromise,
                 this.uploadShiftEvidenceBatch('fin', this.endPhotoFiles, this.uploadedEndAreas),
-                this.resolveOpenEmployeeTasks(notes)
+                this.resolveOpenEmployeeTasks(notes),
             ]);
 
             const endShiftPayload = await apiClient.endShift({
@@ -1023,7 +1105,7 @@ export const employeeMethods = {
                 lng: location.lng,
                 fit_for_work: true,
                 declaration: notes,
-                early_end_reason: earlyEndReason
+                early_end_reason: earlyEndReason,
             });
             this.recordShiftRequestTrace(
                 'shifts_end',
@@ -1036,7 +1118,7 @@ export const employeeMethods = {
                 restaurant_name: this.getEmployeeResolvedShiftRestaurantName(
                     this.data.currentShift || this.data.currentScheduledShift,
                     ''
-                )
+                ),
             };
             this.invalidateCache('employeeDashboard', 'employeeHoursHistory');
             this.showSuccessScreen();
@@ -1047,18 +1129,16 @@ export const employeeMethods = {
             const detailedMessage = this.getShiftFinalizeDetailedErrorMessage(error);
             const visibleMessage = detailedMessage || this.getErrorMessage(error, 'No fue posible finalizar el turno.');
             const requestId = String(
-                error?.requestId
-                || error?.payload?.request_id
-                || error?.payload?.error?.request_id
-                || ''
+                error?.requestId || error?.payload?.request_id || error?.payload?.error?.request_id || ''
             ).trim();
             this.recordShiftRequestTrace('shifts_end', requestId, this.data.currentShift);
             const traceSnapshot = this.getShiftRequestTraceSnapshot(this.data.currentShift);
-            const finalizeUploadIds = traceSnapshot.finalize_upload.length > 0 ? traceSnapshot.finalize_upload.join(', ') : 'N/A';
-            const summaryIds = traceSnapshot.summary_by_shift.length > 0 ? traceSnapshot.summary_by_shift.join(', ') : 'N/A';
-            const shiftsEndIds = traceSnapshot.shifts_end.length > 0
-                ? traceSnapshot.shifts_end.join(', ')
-                : (requestId || 'N/A');
+            const finalizeUploadIds =
+                traceSnapshot.finalize_upload.length > 0 ? traceSnapshot.finalize_upload.join(', ') : 'N/A';
+            const summaryIds =
+                traceSnapshot.summary_by_shift.length > 0 ? traceSnapshot.summary_by_shift.join(', ') : 'N/A';
+            const shiftsEndIds =
+                traceSnapshot.shifts_end.length > 0 ? traceSnapshot.shifts_end.join(', ') : requestId || 'N/A';
             const copyPayload = [
                 `timestamp: ${new Date().toISOString()}`,
                 `shift_id: ${String(this.data.currentShift?.id || '').trim() || 'N/A'}`,
@@ -1072,19 +1152,22 @@ export const employeeMethods = {
                 `scheduled_end: ${String(this.data.currentShift?.scheduled_end || this.data.currentScheduledShift?.scheduled_end || 'N/A')}`,
                 `early_end_reason_sent: ${String(document.getElementById('early-end-reason')?.value?.trim() || 'N/A')}`,
                 `error_code: ${String(error?.code || error?.payload?.code || error?.payload?.error?.code || 'N/A')}`,
-                `message: ${visibleMessage}`
+                `message: ${visibleMessage}`,
             ].join('\n');
 
             if (this.isEarlyEndReasonRequiredError(error)) {
                 const earlyEndReasonInput = document.getElementById('early-end-reason');
                 const enteredReason = String(earlyEndReasonInput?.value?.trim() || '');
                 if (!enteredReason) {
-                    this.showToast('Backend exige motivo de salida anticipada para este cierre. Escríbelo y vuelve a finalizar.', {
-                        tone: 'warning',
-                        title: 'Motivo obligatorio',
-                        keepLoginMessages: true,
-                        duration: 9000
-                    });
+                    this.showToast(
+                        'Backend exige motivo de salida anticipada para este cierre. Escríbelo y vuelve a finalizar.',
+                        {
+                            tone: 'warning',
+                            title: 'Motivo obligatorio',
+                            keepLoginMessages: true,
+                            duration: 9000,
+                        }
+                    );
                     earlyEndReasonInput?.focus();
                 }
             }
@@ -1105,11 +1188,11 @@ export const employeeMethods = {
                             {
                                 tone: copied ? 'success' : 'error',
                                 title: copied ? 'Copia lista' : 'No fue posible copiar',
-                                keepLoginMessages: true
+                                keepLoginMessages: true,
                             }
                         );
-                    }
-                }
+                    },
+                },
             });
         } finally {
             this.hideLoading();
@@ -1147,9 +1230,7 @@ export const employeeMethods = {
             return Number.NaN;
         }
 
-        const normalized = /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}(:\d{2})?$/.test(raw)
-            ? raw.replace(' ', 'T')
-            : raw;
+        const normalized = /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}(:\d{2})?$/.test(raw) ? raw.replace(' ', 'T') : raw;
 
         const parsed = new Date(normalized).getTime();
         return Number.isFinite(parsed) ? parsed : Number.NaN;
@@ -1163,22 +1244,21 @@ export const employeeMethods = {
         const configuredMaxHours = Number(
             this.getSystemSetting('shifts.max_hours', DEFAULT_SYSTEM_SETTINGS.shifts.max_hours)
         );
-        const reasonableMaxHours = Number.isFinite(configuredMaxHours) && configuredMaxHours > 0
-            ? Math.max(configuredMaxHours + 6, 18)
-            : 18;
+        const reasonableMaxHours =
+            Number.isFinite(configuredMaxHours) && configuredMaxHours > 0 ? Math.max(configuredMaxHours + 6, 18) : 18;
         const maxElapsedMs = reasonableMaxHours * 60 * 60 * 1000;
 
         const startMs = this.parseShiftTimestamp(shift?.start_time || shift?.started_at);
         const scheduledStartMs = this.parseShiftTimestamp(shift?.scheduled_start);
 
-        if (Number.isFinite(startMs) && startMs > 0 && startMs <= (now + futureToleranceMs)) {
+        if (Number.isFinite(startMs) && startMs > 0 && startMs <= now + futureToleranceMs) {
             if (!Number.isFinite(scheduledStartMs) || scheduledStartMs <= 0) {
                 return startMs;
             }
 
             const elapsedFromStart = now - startMs;
             const scheduleLooksCurrent = Math.abs(now - scheduledStartMs) <= recentWindowMs;
-            const startIsFarBeforeSchedule = startMs < (scheduledStartMs - scheduleAlignmentToleranceMs);
+            const startIsFarBeforeSchedule = startMs < scheduledStartMs - scheduleAlignmentToleranceMs;
 
             if (scheduleLooksCurrent && (elapsedFromStart > maxElapsedMs || startIsFarBeforeSchedule)) {
                 return scheduledStartMs;
@@ -1187,7 +1267,7 @@ export const employeeMethods = {
             return startMs;
         }
 
-        if (Number.isFinite(scheduledStartMs) && scheduledStartMs > 0 && scheduledStartMs <= (now + futureToleranceMs)) {
+        if (Number.isFinite(scheduledStartMs) && scheduledStartMs > 0 && scheduledStartMs <= now + futureToleranceMs) {
             return scheduledStartMs;
         }
 
@@ -1249,10 +1329,13 @@ export const employeeMethods = {
         const metaParts = [
             restaurantName ? `Restaurante: ${escapeHtml(restaurantName)}` : '',
             dueText ? `Vence: ${escapeHtml(dueText)}` : '',
-            requiresEvidence ? 'Requiere foto de evidencia.' : ''
+            requiresEvidence ? 'Requiere foto de evidencia.' : '',
         ].filter(Boolean);
 
-        const actionsHtml = isDone ? '' : requiresEvidence ? `
+        const actionsHtml = isDone
+            ? ''
+            : requiresEvidence
+              ? `
             <div class="rtask-actions">
                 <button type="button" class="btn btn-primary btn-sm" data-rtask-action="show-evidence" data-task-id="${taskId}">Completar tarea</button>
                 <div class="rtask-evidence-wrap hidden" id="rtask-evidence-wrap-${taskId}">
@@ -1261,7 +1344,8 @@ export const employeeMethods = {
                     <button type="button" class="btn btn-primary btn-sm" data-rtask-action="submit-evidence" data-task-id="${taskId}">Enviar evidencia</button>
                     <button type="button" class="btn btn-secondary btn-sm" data-rtask-action="cancel-evidence" data-task-id="${taskId}">Cancelar</button>
                 </div>
-            </div>` : `
+            </div>`
+              : `
             <div class="rtask-actions">
                 <button type="button" class="btn btn-success btn-sm" data-rtask-action="close" data-task-id="${taskId}">Marcar completada</button>
             </div>`;
@@ -1288,8 +1372,10 @@ export const employeeMethods = {
             const action = btn.dataset.rtaskAction;
             if (action === 'close') void this.employeeCloseRestaurantTask(taskId);
             else if (action === 'submit-evidence') void this.employeeCompleteRestaurantTask(taskId);
-            else if (action === 'show-evidence') document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.remove('hidden');
-            else if (action === 'cancel-evidence') document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.add('hidden');
+            else if (action === 'show-evidence')
+                document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.remove('hidden');
+            else if (action === 'cancel-evidence')
+                document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.add('hidden');
         });
     },
 
@@ -1321,10 +1407,10 @@ export const employeeMethods = {
             this.renderEmployeeRestaurantTasks();
             this.showToast('Tarea marcada como completada.', { tone: 'success', title: 'Listo' });
         } catch (error) {
-            this.showToast(
-                this.getEmployeeRestaurantTaskErrorMessage(error, 'No fue posible completar la tarea.'),
-                { tone: 'error', title: 'Error al completar' }
-            );
+            this.showToast(this.getEmployeeRestaurantTaskErrorMessage(error, 'No fue posible completar la tarea.'), {
+                tone: 'error',
+                title: 'Error al completar',
+            });
         }
     },
 
@@ -1337,7 +1423,7 @@ export const employeeMethods = {
         if (!file) {
             this.showToast('Selecciona una foto de evidencia antes de enviar.', {
                 tone: 'warning',
-                title: 'Foto requerida'
+                title: 'Foto requerida',
             });
             return;
         }
@@ -1348,7 +1434,7 @@ export const employeeMethods = {
             await apiClient.operationalTasksManage('complete', {
                 task_id: taskId,
                 evidence_path: evidencePath,
-                notes
+                notes,
             });
             this.data.employee.openTasks = (this.data.employee.openTasks || []).filter(
                 (t) => (t.task_id || t.id) !== taskId
@@ -1356,10 +1442,10 @@ export const employeeMethods = {
             this.renderEmployeeRestaurantTasks();
             this.showToast('Tarea completada con evidencia.', { tone: 'success', title: 'Listo' });
         } catch (error) {
-            this.showToast(
-                this.getEmployeeRestaurantTaskErrorMessage(error, 'No fue posible completar la tarea.'),
-                { tone: 'error', title: 'Error al completar' }
-            );
+            this.showToast(this.getEmployeeRestaurantTaskErrorMessage(error, 'No fue posible completar la tarea.'), {
+                tone: 'error',
+                title: 'Error al completar',
+            });
         } finally {
             this.hideLoading();
         }
@@ -1371,7 +1457,8 @@ export const employeeMethods = {
 
     getEmployeeRestaurantTaskErrorMessage(error, fallback) {
         const code = this.getEmployeeRestaurantTaskDiagnosticCode(error);
-        if (code === 'NO_ACTIVE_SHIFT') return 'Necesitas tener un turno activo en este restaurante para completar esta tarea.';
+        if (code === 'NO_ACTIVE_SHIFT')
+            return 'Necesitas tener un turno activo en este restaurante para completar esta tarea.';
         if (code === 'RESTAURANT_FORBIDDEN') return 'No tienes permiso para operar tareas en este restaurante.';
         const httpCode = error?.payload?.error?.code;
         if (httpCode === 409) return 'Esta tarea ya fue completada o cancelada.';

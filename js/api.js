@@ -1,26 +1,22 @@
 // @ts-nocheck
 const DEFAULT_TIMEOUT_MS = 15000;
-    
+
 export const DEFAULT_FUNCTIONS_BASE_URL = 'https://<SUPABASE_PROJECT>.supabase.co/functions/v1';
 
 export const STORAGE_KEYS = Object.freeze({
     accessToken: 'worktrace_access_token',
     shiftOtpToken: 'worktrace_shift_otp_token',
-    deviceFingerprint: 'worktrace_device_fingerprint'
+    deviceFingerprint: 'worktrace_device_fingerprint',
 });
 
 function createScopedConsole() {
     const baseConsole = globalThis.console || {};
     const host = globalThis.location?.hostname || '';
-    const debugEnabled = Boolean(globalThis.WORKTRACE_CONFIG?.debugConsole)
-        || /^(localhost|127\.0\.0\.1)$/i.test(host);
+    const debugEnabled = Boolean(globalThis.WORKTRACE_CONFIG?.debugConsole) || /^(localhost|127\.0\.0\.1)$/i.test(host);
 
     const noop = () => {};
-    const bindMethod = (method) => (
-        typeof baseConsole?.[method] === 'function'
-            ? baseConsole[method].bind(baseConsole)
-            : noop
-    );
+    const bindMethod = (method) =>
+        typeof baseConsole?.[method] === 'function' ? baseConsole[method].bind(baseConsole) : noop;
 
     return {
         ...baseConsole,
@@ -28,7 +24,7 @@ function createScopedConsole() {
         info: debugEnabled ? bindMethod('info') : noop,
         warn: debugEnabled ? bindMethod('warn') : noop,
         debug: debugEnabled ? bindMethod('debug') : noop,
-        error: bindMethod('error')
+        error: bindMethod('error'),
     };
 }
 
@@ -113,7 +109,7 @@ function hashString(value) {
     let hash = 0;
 
     for (let index = 0; index < value.length; index += 1) {
-        hash = ((hash << 5) - hash) + value.charCodeAt(index);
+        hash = (hash << 5) - hash + value.charCodeAt(index);
         hash |= 0;
     }
 
@@ -161,16 +157,17 @@ export function getOrCreateDeviceFingerprint() {
         return storedFingerprint;
     }
 
-    const browserSeed = typeof window === 'undefined'
-        ? 'server'
-        : [
-            window.navigator.userAgent,
-            window.navigator.language,
-            window.navigator.platform,
-            window.screen.width,
-            window.screen.height,
-            Intl.DateTimeFormat().resolvedOptions().timeZone
-        ].join('|');
+    const browserSeed =
+        typeof window === 'undefined'
+            ? 'server'
+            : [
+                  window.navigator.userAgent,
+                  window.navigator.language,
+                  window.navigator.platform,
+                  window.screen.width,
+                  window.screen.height,
+                  Intl.DateTimeFormat().resolvedOptions().timeZone,
+              ].join('|');
 
     const fingerprint = `web-${hashString(browserSeed)}-${buildUuid()}`;
     writeStoredValue(STORAGE_KEYS.deviceFingerprint, fingerprint);
@@ -186,7 +183,7 @@ export class WorkTraceApiClient {
             shiftOtpToken: readStoredValue(STORAGE_KEYS.shiftOtpToken),
             currentRole: '',
             deviceFingerprint: readStoredValue(STORAGE_KEYS.deviceFingerprint) || getOrCreateDeviceFingerprint(),
-            timeoutMs: DEFAULT_TIMEOUT_MS
+            timeoutMs: DEFAULT_TIMEOUT_MS,
         };
         this.lastResponseMeta = null;
         this.accessTokenResolver = null;
@@ -240,7 +237,7 @@ export class WorkTraceApiClient {
             currentRole: this.config.currentRole,
             deviceFingerprint: this.config.deviceFingerprint,
             timeoutMs: this.config.timeoutMs,
-            lastResponseMeta: this.lastResponseMeta
+            lastResponseMeta: this.lastResponseMeta,
         };
     }
 
@@ -302,10 +299,10 @@ export class WorkTraceApiClient {
         requiresAuth = true,
         requiresOtp = false,
         requiresIdempotency = true,
-        extraHeaders = {}
+        extraHeaders = {},
     } = {}) {
         const headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         };
 
         if (this.config.anonKey) {
@@ -315,7 +312,7 @@ export class WorkTraceApiClient {
         if (requiresAuth) {
             if (!accessToken) {
                 throw buildRequestError('Falta accessToken para llamar a un endpoint protegido.', {
-                    code: 'AUTH_MISSING'
+                    code: 'AUTH_MISSING',
                 });
             }
 
@@ -333,7 +330,7 @@ export class WorkTraceApiClient {
         if (requiresOtp) {
             if (!this.config.shiftOtpToken) {
                 throw buildRequestError('Falta shiftOtpToken para esta operación protegida por OTP.', {
-                    code: 'OTP_MISSING'
+                    code: 'OTP_MISSING',
                 });
             }
 
@@ -342,7 +339,7 @@ export class WorkTraceApiClient {
 
         return {
             ...headers,
-            ...extraHeaders
+            ...extraHeaders,
         };
     }
 
@@ -357,7 +354,7 @@ export class WorkTraceApiClient {
             headers = {},
             timeoutMs = this.config.timeoutMs,
             signal,
-            retryOnInvalidJwt = true
+            retryOnInvalidJwt = true,
         } = options;
 
         if (!this.hasBackendConfig()) {
@@ -386,9 +383,9 @@ export class WorkTraceApiClient {
 
         try {
             const accessToken = requiresAuth
-                ? (typeof explicitAccessToken === 'string'
+                ? typeof explicitAccessToken === 'string'
                     ? explicitAccessToken
-                    : await this.resolveAccessToken())
+                    : await this.resolveAccessToken()
                 : this.config.accessToken;
             const response = await fetch(`${this.config.baseUrl}${endpoint}`, {
                 method,
@@ -397,10 +394,10 @@ export class WorkTraceApiClient {
                     requiresAuth,
                     requiresOtp,
                     requiresIdempotency,
-                    extraHeaders: headers
+                    extraHeaders: headers,
                 }),
                 body: method === 'GET' || body == null ? undefined : JSON.stringify(body),
-                signal: controller.signal
+                signal: controller.signal,
             });
 
             const text = await response.text();
@@ -416,16 +413,17 @@ export class WorkTraceApiClient {
 
             this.lastResponseMeta = {
                 status: response.status,
-                requestId: response.headers.get('X-Request-Id') || payload?.request_id || null
+                requestId: response.headers.get('X-Request-Id') || payload?.request_id || null,
             };
 
             const topLevelCode = payload?.code || payload?.error?.code || null;
             const topLevelErrorCode = payload?.error?.error_code || payload?.error_code || null;
             const topLevelMessage = payloadMessage(payload);
-            const shouldRetryInvalidJwt = requiresAuth
-                && retryOnInvalidJwt
-                && response.status === 401
-                && /invalid jwt/i.test(topLevelMessage || '');
+            const shouldRetryInvalidJwt =
+                requiresAuth &&
+                retryOnInvalidJwt &&
+                response.status === 401 &&
+                /invalid jwt/i.test(topLevelMessage || '');
 
             if (shouldRetryInvalidJwt) {
                 const refreshedToken = await this.resolveAccessToken({ forceRefresh: true });
@@ -433,7 +431,7 @@ export class WorkTraceApiClient {
                 if (refreshedToken && refreshedToken !== accessToken) {
                     return this.request(path, {
                         ...options,
-                        retryOnInvalidJwt: false
+                        retryOnInvalidJwt: false,
                     });
                 }
             }
@@ -450,7 +448,7 @@ export class WorkTraceApiClient {
                         requestId: errorPayload.request_id || this.lastResponseMeta.requestId,
                         endpoint,
                         method,
-                        payload
+                        payload,
                     }
                 );
             }
@@ -462,7 +460,7 @@ export class WorkTraceApiClient {
                     code: 'TIMEOUT',
                     endpoint,
                     method,
-                    cause: error
+                    cause: error,
                 });
             }
 
@@ -474,7 +472,7 @@ export class WorkTraceApiClient {
                 code: 'NETWORK_ERROR',
                 endpoint,
                 method,
-                cause: error
+                cause: error,
             });
         } finally {
             clearTimeout(timeoutId);
@@ -485,7 +483,7 @@ export class WorkTraceApiClient {
         return this.request(path, {
             ...options,
             method: 'GET',
-            requiresIdempotency: false
+            requiresIdempotency: false,
         });
     }
 
@@ -493,15 +491,19 @@ export class WorkTraceApiClient {
         return this.request(path, {
             ...options,
             method: 'POST',
-            body
+            body,
         });
     }
 
     callAction(endpoint, action, payload = {}, options = {}) {
-        return this.post(endpoint, {
-            action,
-            ...payload
-        }, options);
+        return this.post(
+            endpoint,
+            {
+                action,
+                ...payload,
+            },
+            options
+        );
     }
 
     healthPing() {
@@ -509,9 +511,14 @@ export class WorkTraceApiClient {
     }
 
     legalConsentStatus() {
-        return this.callAction('/legal_consent', 'status', {}, {
-            requiresIdempotency: false
-        });
+        return this.callAction(
+            '/legal_consent',
+            'status',
+            {},
+            {
+                requiresIdempotency: false,
+            }
+        );
     }
 
     acceptLegalConsent(termInfo = null) {
@@ -542,19 +549,19 @@ export class WorkTraceApiClient {
 
     trustedDeviceValidate(deviceFingerprint = this.config.deviceFingerprint) {
         return this.post('/trusted_device_validate', {
-            device_fingerprint: deviceFingerprint
+            device_fingerprint: deviceFingerprint,
         });
     }
 
     trustedDeviceRegister({
         deviceFingerprint = this.config.deviceFingerprint,
         deviceName = 'Web Browser',
-        platform = 'web'
+        platform = 'web',
     } = {}) {
         return this.post('/trusted_device_register', {
             device_fingerprint: deviceFingerprint,
             device_name: deviceName,
-            platform
+            platform,
         });
     }
 
@@ -564,14 +571,14 @@ export class WorkTraceApiClient {
 
     phoneOtpSend(deviceFingerprint = this.config.deviceFingerprint) {
         return this.post('/phone_otp_send', {
-            device_fingerprint: deviceFingerprint
+            device_fingerprint: deviceFingerprint,
         });
     }
 
     async phoneOtpVerify(code, deviceFingerprint = this.config.deviceFingerprint) {
         const data = await this.post('/phone_otp_verify', {
             code,
-            device_fingerprint: deviceFingerprint
+            device_fingerprint: deviceFingerprint,
         });
 
         if (data?.verification_token) {
@@ -594,9 +601,13 @@ export class WorkTraceApiClient {
     }
 
     changeMyPin(newPin, options = {}) {
-        return this.usersManage('change_my_pin', {
-            new_pin: newPin
-        }, options);
+        return this.usersManage(
+            'change_my_pin',
+            {
+                new_pin: newPin,
+            },
+            options
+        );
     }
 
     async probeSupabaseAuthUser(accessToken = this.config.accessToken) {
@@ -607,8 +618,8 @@ export class WorkTraceApiClient {
                 ok: false,
                 status: 0,
                 payload: {
-                    message: 'No hay base URL o access token para probar auth/v1/user.'
-                }
+                    message: 'No hay base URL o access token para probar auth/v1/user.',
+                },
             };
         }
 
@@ -616,8 +627,8 @@ export class WorkTraceApiClient {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${accessToken}`,
-                apikey: this.config.anonKey || ''
-            }
+                apikey: this.config.anonKey || '',
+            },
         });
 
         const text = await response.text();
@@ -634,7 +645,7 @@ export class WorkTraceApiClient {
         return {
             ok: response.ok,
             status: response.status,
-            payload
+            payload,
         };
     }
 
@@ -671,31 +682,44 @@ export class WorkTraceApiClient {
     }
 
     approveShift(shiftId, options = {}) {
-        return this.post('/shifts_approve', { shift_id: shiftId }, {
-            ...options,
-            requiresOtp: this.shouldRequireSupervisorOtp(options)
-        });
+        return this.post(
+            '/shifts_approve',
+            { shift_id: shiftId },
+            {
+                ...options,
+                requiresOtp: this.shouldRequireSupervisorOtp(options),
+            }
+        );
     }
 
     rejectShift(shiftId, options = {}) {
-        return this.post('/shifts_reject', { shift_id: shiftId }, {
-            ...options,
-            requiresOtp: this.shouldRequireSupervisorOtp(options)
-        });
+        return this.post(
+            '/shifts_reject',
+            { shift_id: shiftId },
+            {
+                ...options,
+                requiresOtp: this.shouldRequireSupervisorOtp(options),
+            }
+        );
     }
 
     requestShiftEvidenceUpload(shiftId, type) {
-        return this.callAction('/evidence_upload', 'request_upload', {
-            shift_id: shiftId,
-            type
-        }, {
-            requiresOtp: true
-        });
+        return this.callAction(
+            '/evidence_upload',
+            'request_upload',
+            {
+                shift_id: shiftId,
+                type,
+            },
+            {
+                requiresOtp: true,
+            }
+        );
     }
 
     finalizeShiftEvidenceUpload(payload) {
         return this.callAction('/evidence_upload', 'finalize_upload', payload, {
-            requiresOtp: true
+            requiresOtp: true,
         });
     }
 
@@ -713,13 +737,13 @@ export class WorkTraceApiClient {
                 method: 'PUT',
                 headers,
                 body: file,
-                signal: controller.signal
+                signal: controller.signal,
             });
 
             if (!response.ok) {
                 throw buildRequestError('No fue posible subir el archivo a la URL firmada.', {
                     status: response.status,
-                    code: 'SIGNED_UPLOAD_FAILED'
+                    code: 'SIGNED_UPLOAD_FAILED',
                 });
             }
 
@@ -727,7 +751,7 @@ export class WorkTraceApiClient {
         } catch (error) {
             if (error.name === 'AbortError') {
                 throw buildRequestError('Tiempo de espera agotado al subir la foto.', {
-                    code: 'UPLOAD_TIMEOUT'
+                    code: 'UPLOAD_TIMEOUT',
                 });
             }
             throw error;
@@ -739,7 +763,7 @@ export class WorkTraceApiClient {
     createIncident(payload, options = {}) {
         return this.post('/incidents_create', payload, {
             ...options,
-            requiresOtp: this.shouldRequireSupervisorOtp(options)
+            requiresOtp: this.shouldRequireSupervisorOtp(options),
         });
     }
 
@@ -760,11 +784,15 @@ export class WorkTraceApiClient {
     }
 
     getShiftEvidenceSummary(shiftId) {
-        return this.shiftEvidenceManage('summary_by_shift', {
-            shift_id: shiftId
-        }, {
-            requiresIdempotency: false
-        });
+        return this.shiftEvidenceManage(
+            'summary_by_shift',
+            {
+                shift_id: shiftId,
+            },
+            {
+                requiresIdempotency: false,
+            }
+        );
     }
 
     suppliesDeliver(action, payload = {}) {
@@ -776,12 +804,16 @@ export class WorkTraceApiClient {
     }
 
     adminUserPhoneRemove(userId, options = {}) {
-        return this.post('/admin_user_phone_remove', {
-            user_id: userId
-        }, {
-            ...options,
-            requiresIdempotency: false
-        });
+        return this.post(
+            '/admin_user_phone_remove',
+            {
+                user_id: userId,
+            },
+            {
+                ...options,
+                requiresIdempotency: false,
+            }
+        );
     }
 
     adminRestaurantsManage(action, payload = {}) {
@@ -825,6 +857,6 @@ if (typeof window !== 'undefined') {
         apiClient,
         buildIdempotencyKey,
         getOrCreateDeviceFingerprint,
-        STORAGE_KEYS
+        STORAGE_KEYS,
     };
 }

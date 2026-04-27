@@ -2,39 +2,53 @@
 import { apiClient } from '../api.js';
 import { CACHE_TTLS, ROLE_LABELS } from '../constants.js';
 import {
-    asArray, escapeHtml, formatDateTime, formatHours,
-    getMonthStart, getRestaurantDisplayName, getTodayEnd,
-    getTodayStart, initials, toInputDate, toIsoDate
+    asArray,
+    escapeHtml,
+    formatDateTime,
+    formatHours,
+    getMonthStart,
+    getRestaurantDisplayName,
+    getTodayEnd,
+    getTodayStart,
+    initials,
+    toInputDate,
+    toIsoDate,
 } from '../utils.js';
 
 export const adminMethods = {
     async loadAdminDashboard() {
         const restaurants = await this.ensureAdminRestaurants();
-        const canUseMetricsCache = this.data.admin.metrics && this.isCacheFresh('adminMetrics', CACHE_TTLS.adminMetrics);
+        const canUseMetricsCache =
+            this.data.admin.metrics && this.isCacheFresh('adminMetrics', CACHE_TTLS.adminMetrics);
 
         const metricsPromise = canUseMetricsCache
             ? Promise.resolve(this.data.admin.metrics)
-            : (!this.cache.adminMetricsUnavailable && restaurants.length > 0
-                ? apiClient.adminDashboardMetrics({
-                    restaurant_id: restaurants[0].id || restaurants[0].restaurant_id,
-                    period_start: toInputDate(getMonthStart()),
-                    period_end: toInputDate(new Date())
-                }, {
-                    retryOnInvalidJwt: false
-                }).catch((error) => {
-                    if (error?.status === 401 || error?.status === 403) {
-                        this.cache.adminMetricsUnavailable = true;
-                    }
-                    console.warn('No fue posible cargar admin_dashboard_metrics.', error);
-                    return null;
-                })
-                : Promise.resolve(null));
+            : !this.cache.adminMetricsUnavailable && restaurants.length > 0
+              ? apiClient
+                    .adminDashboardMetrics(
+                        {
+                            restaurant_id: restaurants[0].id || restaurants[0].restaurant_id,
+                            period_start: toInputDate(getMonthStart()),
+                            period_end: toInputDate(new Date()),
+                        },
+                        {
+                            retryOnInvalidJwt: false,
+                        }
+                    )
+                    .catch((error) => {
+                        if (error?.status === 401 || error?.status === 403) {
+                            this.cache.adminMetricsUnavailable = true;
+                        }
+                        console.warn('No fue posible cargar admin_dashboard_metrics.', error);
+                        return null;
+                    })
+              : Promise.resolve(null);
 
         const [metrics, supervisions] = await Promise.all([
             metricsPromise,
             this.fetchAdminSupervisions(restaurants, {
-                limit: 50
-            })
+                limit: 50,
+            }),
         ]);
 
         this.data.admin.metrics = metrics;
@@ -52,7 +66,7 @@ export const adminMethods = {
             restaurantLimit = restaurants.length,
             from = toIsoDate(getTodayStart()),
             to = toIsoDate(getTodayEnd()),
-            limit = 50
+            limit = 50,
         } = options;
         const restaurantIds = restaurants
             .slice(0, restaurantLimit)
@@ -65,7 +79,7 @@ export const adminMethods = {
             from,
             to,
             String(limit),
-            restaurantIds
+            restaurantIds,
         ].join('|');
     },
 
@@ -76,19 +90,21 @@ export const adminMethods = {
         }
 
         const totalRestaurants = restaurants.length;
-        const totalShifts = metrics?.shifts?.scheduled_total
-            ?? metrics?.total_shifts
-            ?? metrics?.shifts_total
-            ?? metrics?.completed_shifts
-            ?? 0;
-        const totalHours = metrics?.productivity?.scheduled_hours_total
-            ?? metrics?.total_scheduled_hours
-            ?? metrics?.scheduled_hours_total
-            ?? metrics?.total_assigned_hours
-            ?? metrics?.total_hours
-            ?? metrics?.hours_worked
-            ?? metrics?.worked_hours
-            ?? 0;
+        const totalShifts =
+            metrics?.shifts?.scheduled_total ??
+            metrics?.total_shifts ??
+            metrics?.shifts_total ??
+            metrics?.completed_shifts ??
+            0;
+        const totalHours =
+            metrics?.productivity?.scheduled_hours_total ??
+            metrics?.total_scheduled_hours ??
+            metrics?.scheduled_hours_total ??
+            metrics?.total_assigned_hours ??
+            metrics?.total_hours ??
+            metrics?.hours_worked ??
+            metrics?.worked_hours ??
+            0;
         const incidents = metrics?.incidents_total ?? metrics?.total_incidents ?? 0;
 
         container.innerHTML = `
@@ -120,14 +136,14 @@ export const adminMethods = {
             restaurantLimit = restaurants.length,
             from = toIsoDate(getTodayStart()),
             to = toIsoDate(getTodayEnd()),
-            limit = 50
+            limit = 50,
         } = options;
 
         const requestKey = this.getAdminSupervisionsRequestKey(restaurants, {
             restaurantLimit,
             from,
             to,
-            limit
+            limit,
         });
         const hasMatchingCache = this.cache.adminSupervisionsQuery === requestKey;
         const cachedSupervisions = hasMatchingCache ? asArray(this.data.admin.supervisions) : [];
@@ -152,41 +168,59 @@ export const adminMethods = {
                 const restaurant = visibleRestaurants[index];
 
                 try {
-                    const result = await apiClient.supervisorPresenceManage('list_by_restaurant', {
-                        restaurant_id: restaurant.id || restaurant.restaurant_id,
-                        from,
-                        to,
-                        limit
-                    }, {
-                        retryOnInvalidJwt: false
-                    });
+                    const result = await apiClient.supervisorPresenceManage(
+                        'list_by_restaurant',
+                        {
+                            restaurant_id: restaurant.id || restaurant.restaurant_id,
+                            from,
+                            to,
+                            limit,
+                        },
+                        {
+                            retryOnInvalidJwt: false,
+                        }
+                    );
 
                     const rawItems = asArray(result);
                     if (rawItems.length > 0) {
-                        console.log('[admin] supervisor_presence raw item sample:', JSON.stringify(rawItems[0], null, 2));
+                        console.log(
+                            '[admin] supervisor_presence raw item sample:',
+                            JSON.stringify(rawItems[0], null, 2)
+                        );
                     }
-                    grouped.push(...rawItems.map((item) => ({
-                        ...item,
-                        restaurant_name: getRestaurantDisplayName(item, getRestaurantDisplayName(restaurant)),
-                        restaurant: item.restaurant || {
-                            id: restaurant.id || restaurant.restaurant_id,
-                            name: getRestaurantDisplayName(restaurant)
-                        }
-                    })));
+                    grouped.push(
+                        ...rawItems.map((item) => ({
+                            ...item,
+                            restaurant_name: getRestaurantDisplayName(item, getRestaurantDisplayName(restaurant)),
+                            restaurant: item.restaurant || {
+                                id: restaurant.id || restaurant.restaurant_id,
+                                name: getRestaurantDisplayName(restaurant),
+                            },
+                        }))
+                    );
                 } catch (error) {
                     if (error?.status === 401 || error?.status === 403) {
                         this.cache.adminSupervisionsUnavailable = true;
-                        console.warn('No fue posible cargar supervisor_presence_manage para el dashboard admin.', error);
+                        console.warn(
+                            'No fue posible cargar supervisor_presence_manage para el dashboard admin.',
+                            error
+                        );
                         return [];
                     }
 
                     if (error?.status === 429) {
                         this.cache.adminSupervisionsRateLimitedUntil = Date.now() + 90 * 1000;
-                        console.warn('Se alcanzó el rate limit de supervisor_presence_manage para el monitoreo admin.', error);
+                        console.warn(
+                            'Se alcanzó el rate limit de supervisor_presence_manage para el monitoreo admin.',
+                            error
+                        );
                         return cachedSupervisions.length > 0 ? cachedSupervisions : grouped;
                     }
 
-                    console.warn(`No fue posible listar supervisiones para ${restaurant?.name || restaurant?.id}.`, error);
+                    console.warn(
+                        `No fue posible listar supervisiones para ${restaurant?.name || restaurant?.id}.`,
+                        error
+                    );
                 }
 
                 if (index < visibleRestaurants.length - 1) {
@@ -210,9 +244,9 @@ export const adminMethods = {
 
     async ensureAdminSupervisionMonitorSupervisors(force = false) {
         if (
-            !force
-            && this.data.admin.supervisionSupervisorOptions.length > 0
-            && this.isCacheFresh('adminMonitorSupervisors', CACHE_TTLS.adminSupervisors)
+            !force &&
+            this.data.admin.supervisionSupervisorOptions.length > 0 &&
+            this.isCacheFresh('adminMonitorSupervisors', CACHE_TTLS.adminSupervisors)
         ) {
             return this.data.admin.supervisionSupervisorOptions;
         }
@@ -224,24 +258,31 @@ export const adminMethods = {
                 supervisors = this.data.admin.supervisors.map((item) => ({
                     id: item.id,
                     full_name: item.full_name || item.email || 'Supervisora',
-                    email: item.email || ''
+                    email: item.email || '',
                 }));
             } else {
                 const result = await apiClient.adminUsersManage('list', {
                     role: 'supervisora',
-                    limit: 100
+                    limit: 100,
                 });
 
-                supervisors = asArray(result).map((item) => ({
-                    id: item.id || item.user_id || '',
-                    full_name: item.full_name || item.name || `${item.first_name || ''} ${item.last_name || ''}`.trim() || item.email || 'Supervisora',
-                    email: item.email || ''
-                })).filter((item) => item.id);
+                supervisors = asArray(result)
+                    .map((item) => ({
+                        id: item.id || item.user_id || '',
+                        full_name:
+                            item.full_name ||
+                            item.name ||
+                            `${item.first_name || ''} ${item.last_name || ''}`.trim() ||
+                            item.email ||
+                            'Supervisora',
+                        email: item.email || '',
+                    }))
+                    .filter((item) => item.id);
             }
 
-            supervisors.sort((left, right) => (
+            supervisors.sort((left, right) =>
                 String(left.full_name || '').localeCompare(String(right.full_name || ''), 'es', { sensitivity: 'base' })
-            ));
+            );
 
             this.data.admin.supervisionSupervisorOptions = supervisors;
             this.touchCache('adminMonitorSupervisors');
@@ -266,7 +307,7 @@ export const adminMethods = {
 
             optionMap.set(id, {
                 id,
-                label: item.full_name || item.email || 'Supervisora'
+                label: item.full_name || item.email || 'Supervisora',
             });
         });
 
@@ -278,19 +319,23 @@ export const adminMethods = {
 
             optionMap.set(id, {
                 id,
-                label: item?.supervisor?.full_name || item?.supervisor_name || item?.supervisor?.email || 'Supervisora'
+                label: item?.supervisor?.full_name || item?.supervisor_name || item?.supervisor?.email || 'Supervisora',
             });
         });
 
-        const options = Array.from(optionMap.values()).sort((left, right) => (
+        const options = Array.from(optionMap.values()).sort((left, right) =>
             String(left.label || '').localeCompare(String(right.label || ''), 'es', { sensitivity: 'base' })
-        ));
+        );
 
         select.innerHTML = `
             <option value="">Todas las supervisoras</option>
-            ${options.map((item) => `
+            ${options
+                .map(
+                    (item) => `
                 <option value="${escapeHtml(item.id)}">${escapeHtml(item.label)}</option>
-            `).join('')}
+            `
+                )
+                .join('')}
         `;
 
         if (currentValue && optionMap.has(currentValue)) {
@@ -299,17 +344,23 @@ export const adminMethods = {
     },
 
     getFilteredAdminSupervisions(items = []) {
-        const selectedSupervisorId = String(document.getElementById('admin-supervision-supervisor-filter')?.value || '').trim();
+        const selectedSupervisorId = String(
+            document.getElementById('admin-supervision-supervisor-filter')?.value || ''
+        ).trim();
         if (!selectedSupervisorId) {
             return asArray(items);
         }
 
-        return asArray(items).filter((item) => String(item?.supervisor?.id || item?.supervisor_id || '').trim() === selectedSupervisorId);
+        return asArray(items).filter(
+            (item) => String(item?.supervisor?.id || item?.supervisor_id || '').trim() === selectedSupervisorId
+        );
     },
 
     applyAdminSupervisionMonitorFilter() {
         const filteredSupervisions = this.getFilteredAdminSupervisions(this.data.admin.supervisions);
-        const hasSupervisorFilter = Boolean(String(document.getElementById('admin-supervision-supervisor-filter')?.value || '').trim());
+        const hasSupervisorFilter = Boolean(
+            String(document.getElementById('admin-supervision-supervisor-filter')?.value || '').trim()
+        );
 
         this.renderAdminSupervisionMonitorSummary(filteredSupervisions);
         this.renderAdminSupervisions(filteredSupervisions, {
@@ -317,7 +368,7 @@ export const adminMethods = {
             maxItems: Number.POSITIVE_INFINITY,
             emptyMessage: hasSupervisorFilter
                 ? 'No hay supervisiones hoy para esta supervisora.'
-                : 'Aún no hay supervisiones registradas hoy para monitorear.'
+                : 'Aún no hay supervisiones registradas hoy para monitorear.',
         });
     },
 
@@ -325,7 +376,7 @@ export const adminMethods = {
         const {
             containerId = 'admin-supervisions-list',
             maxItems = 6,
-            emptyMessage = 'Aún no hay supervisiones registradas para hoy.'
+            emptyMessage = 'Aún no hay supervisiones registradas para hoy.',
         } = options;
         const container = document.getElementById(containerId);
         if (!container) {
@@ -341,18 +392,20 @@ export const adminMethods = {
 
         container.innerHTML = `
             <div class="admin-supervisions-stack">
-                ${visibleItems.map((item) => {
-                    const supervisorName = item.supervisor?.full_name || item.supervisor_name || 'Supervisora';
-                    const supervisorDetail = item.supervisor?.email || item.supervisor_email || '';
-                    const restaurantName = getRestaurantDisplayName(
-                        item,
-                        getRestaurantDisplayName(item.restaurant || null, 'Restaurante sin nombre visible')
-                    );
-                    const observedAt = item.observed_at || item.created_at || item.registered_at || '';
-                    const observationCount = asArray(item.evidences).length
-                        || Number(item.photo_count || item.evidence_count || item.photos_count || 0);
+                ${visibleItems
+                    .map((item) => {
+                        const supervisorName = item.supervisor?.full_name || item.supervisor_name || 'Supervisora';
+                        const supervisorDetail = item.supervisor?.email || item.supervisor_email || '';
+                        const restaurantName = getRestaurantDisplayName(
+                            item,
+                            getRestaurantDisplayName(item.restaurant || null, 'Restaurante sin nombre visible')
+                        );
+                        const observedAt = item.observed_at || item.created_at || item.registered_at || '';
+                        const observationCount =
+                            asArray(item.evidences).length ||
+                            Number(item.photo_count || item.evidence_count || item.photos_count || 0);
 
-                    return `
+                        return `
                         <article class="admin-supervision-card">
                             <div class="admin-supervision-top">
                                 <div class="admin-supervision-identity">
@@ -386,7 +439,8 @@ export const adminMethods = {
                             </div>
                         </article>
                     `;
-                }).join('')}
+                    })
+                    .join('')}
             </div>
         `;
     },
@@ -404,16 +458,21 @@ export const adminMethods = {
         let totalEvidences = 0;
 
         supervisions.forEach((item) => {
-            const supervisorKey = String(item.supervisor?.id || item.supervisor_id || item.supervisor_name || '').trim();
-            const restaurantKey = String(item.restaurant?.id || item.restaurant_id || item.restaurant_name || '').trim();
+            const supervisorKey = String(
+                item.supervisor?.id || item.supervisor_id || item.supervisor_name || ''
+            ).trim();
+            const restaurantKey = String(
+                item.restaurant?.id || item.restaurant_id || item.restaurant_name || ''
+            ).trim();
             if (supervisorKey) {
                 uniqueSupervisors.add(supervisorKey);
             }
             if (restaurantKey) {
                 uniqueRestaurants.add(restaurantKey);
             }
-            totalEvidences += asArray(item.evidences).length
-                || Number(item.photo_count || item.evidence_count || item.photos_count || 0);
+            totalEvidences +=
+                asArray(item.evidences).length ||
+                Number(item.photo_count || item.evidence_count || item.photos_count || 0);
         });
 
         container.innerHTML = `
@@ -444,8 +503,8 @@ export const adminMethods = {
                 restaurantLimit: restaurants.length,
                 from: toIsoDate(getTodayStart()),
                 to: toIsoDate(getTodayEnd()),
-                limit: 50
-            })
+                limit: 50,
+            }),
         ]);
 
         this.data.admin.supervisions = supervisions;
@@ -462,11 +521,15 @@ export const adminMethods = {
         const currentValue = select.value;
         select.innerHTML = `
             <option value="">Todos los restaurantes</option>
-            ${this.data.admin.restaurants.map((restaurant) => `
+            ${this.data.admin.restaurants
+                .map(
+                    (restaurant) => `
                 <option value="${escapeHtml(String(restaurant.id || restaurant.restaurant_id))}">
                     ${escapeHtml(getRestaurantDisplayName(restaurant))}
                 </option>
-            `).join('')}
+            `
+                )
+                .join('')}
         `;
 
         if (currentValue) {
@@ -510,7 +573,7 @@ export const adminMethods = {
         if (!supervisor) {
             this.showToast('No fue posible cargar la supervisora seleccionada.', {
                 tone: 'error',
-                title: 'No fue posible continuar'
+                title: 'No fue posible continuar',
             });
             return;
         }
@@ -537,7 +600,7 @@ export const adminMethods = {
         if (!fullName || !email || !phone) {
             this.showToast('Completa nombre, correo y teléfono de la supervisora.', {
                 tone: 'warning',
-                title: 'Faltan datos'
+                title: 'Faltan datos',
             });
             return;
         }
@@ -545,7 +608,7 @@ export const adminMethods = {
         if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
             this.showToast('El teléfono debe estar en formato E.164, por ejemplo +573001112233.', {
                 tone: 'warning',
-                title: 'Teléfono inválido'
+                title: 'Teléfono inválido',
             });
             return;
         }
@@ -553,24 +616,21 @@ export const adminMethods = {
         const isEditing = Boolean(editId);
         const payload = isEditing
             ? {
-                user_id: editId,
-                full_name: fullName,
-                email,
-                phone_number: phone,
-                is_active: isActive
-            }
+                  user_id: editId,
+                  full_name: fullName,
+                  email,
+                  phone_number: phone,
+                  is_active: isActive,
+              }
             : {
-                role: 'supervisora',
-                full_name: fullName,
-                email,
-                phone_number: phone,
-                is_active: isActive
-            };
+                  role: 'supervisora',
+                  full_name: fullName,
+                  email,
+                  phone_number: phone,
+                  is_active: isActive,
+              };
 
-        this.showLoading(
-            isEditing ? 'Actualizando supervisora...' : 'Creando supervisora...',
-            'Guardando los datos.'
-        );
+        this.showLoading(isEditing ? 'Actualizando supervisora...' : 'Creando supervisora...', 'Guardando los datos.');
 
         try {
             const result = await apiClient.adminUsersManage(isEditing ? 'update' : 'create', payload);
@@ -578,23 +638,24 @@ export const adminMethods = {
             this.resetAdminSupervisorForm();
             await this.loadAdminSupervisors(true);
 
-            const initialPassword = result?.temporary_password || result?.generated_password || result?.password || '123456';
+            const initialPassword =
+                result?.temporary_password || result?.generated_password || result?.password || '123456';
             if (!isEditing) {
                 this.showToast(`Supervisora creada correctamente. Clave inicial: ${initialPassword}.`, {
                     tone: 'success',
                     title: 'Creación exitosa',
-                    duration: 5200
+                    duration: 5200,
                 });
             } else {
                 this.showToast('Supervisora actualizada correctamente.', {
                     tone: 'success',
-                    title: 'Actualización exitosa'
+                    title: 'Actualización exitosa',
                 });
             }
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible guardar la supervisora.'), {
                 tone: 'error',
-                title: 'No fue posible guardar la supervisora'
+                title: 'No fue posible guardar la supervisora',
             });
         } finally {
             this.hideLoading();
@@ -616,17 +677,21 @@ export const adminMethods = {
         const queryKey = JSON.stringify({
             search: search || '',
             statusFilter,
-            restaurantFilter
+            restaurantFilter,
         });
 
         if (
-            !force
-            && this.data.admin.supervisors.length > 0
-            && this.cache.adminSupervisorsQuery === queryKey
-            && this.isCacheFresh('adminSupervisors', CACHE_TTLS.adminSupervisors)
+            !force &&
+            this.data.admin.supervisors.length > 0 &&
+            this.cache.adminSupervisorsQuery === queryKey &&
+            this.isCacheFresh('adminSupervisors', CACHE_TTLS.adminSupervisors)
         ) {
             const cachedSupervisors = restaurantFilter
-                ? this.data.admin.supervisors.filter((item) => item.assignments.some((assignment) => String(assignment.restaurant_id) === String(restaurantFilter)))
+                ? this.data.admin.supervisors.filter((item) =>
+                      item.assignments.some(
+                          (assignment) => String(assignment.restaurant_id) === String(restaurantFilter)
+                      )
+                  )
                 : this.data.admin.supervisors;
             this.renderAdminSupervisorList(cachedSupervisors);
             return;
@@ -634,7 +699,7 @@ export const adminMethods = {
 
         const payload = {
             role: 'supervisora',
-            limit: 100
+            limit: 100,
         };
 
         if (search) {
@@ -647,52 +712,73 @@ export const adminMethods = {
             payload.is_active = false;
         }
 
-        const supervisors = await this.runPending(`adminSupervisors:${queryKey}:${force ? 'force' : 'default'}`, async () => {
-            const result = await apiClient.adminUsersManage('list', payload);
-            return Promise.all(asArray(result).map(async (item) => {
-                const supervisorId = item.id || item.user_id;
-                let assignments = [];
+        const supervisors = await this.runPending(
+            `adminSupervisors:${queryKey}:${force ? 'force' : 'default'}`,
+            async () => {
+                const result = await apiClient.adminUsersManage('list', payload);
+                return Promise.all(
+                    asArray(result).map(async (item) => {
+                        const supervisorId = item.id || item.user_id;
+                        let assignments = [];
 
-                if (supervisorId) {
-                    try {
-                        assignments = asArray(await apiClient.adminSupervisorsManage('list_by_supervisor', {
-                            supervisor_id: supervisorId
-                        }));
-                    } catch (error) {
-                        console.warn(`No fue posible cargar asignaciones para la supervisora ${supervisorId}.`, error);
-                    }
-                }
+                        if (supervisorId) {
+                            try {
+                                assignments = asArray(
+                                    await apiClient.adminSupervisorsManage('list_by_supervisor', {
+                                        supervisor_id: supervisorId,
+                                    })
+                                );
+                            } catch (error) {
+                                console.warn(
+                                    `No fue posible cargar asignaciones para la supervisora ${supervisorId}.`,
+                                    error
+                                );
+                            }
+                        }
 
-                const normalizedAssignments = assignments.map((assignment) => {
-                    const restaurantId = assignment.restaurant_id || assignment.restaurant?.id;
-                    const restaurant = this.data.admin.restaurants.find((candidate) => String(candidate.id || candidate.restaurant_id) === String(restaurantId));
+                        const normalizedAssignments = assignments
+                            .map((assignment) => {
+                                const restaurantId = assignment.restaurant_id || assignment.restaurant?.id;
+                                const restaurant = this.data.admin.restaurants.find(
+                                    (candidate) =>
+                                        String(candidate.id || candidate.restaurant_id) === String(restaurantId)
+                                );
 
-                    if (!restaurantId) {
-                        return null;
-                    }
+                                if (!restaurantId) {
+                                    return null;
+                                }
 
-                    return {
-                        restaurant_id: restaurantId,
-                        name: getRestaurantDisplayName(assignment, getRestaurantDisplayName(restaurant))
-                    };
-                }).filter(Boolean);
+                                return {
+                                    restaurant_id: restaurantId,
+                                    name: getRestaurantDisplayName(assignment, getRestaurantDisplayName(restaurant)),
+                                };
+                            })
+                            .filter(Boolean);
 
-                return {
-                    id: supervisorId,
-                    full_name: item.full_name || item.name || `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Supervisora',
-                    email: item.email || '-',
-                    phone_e164: item.phone_e164 || item.phone_number || '-',
-                    is_active: item.is_active !== false,
-                    assignments: normalizedAssignments,
-                    raw: item
-                };
-            }));
-        });
+                        return {
+                            id: supervisorId,
+                            full_name:
+                                item.full_name ||
+                                item.name ||
+                                `${item.first_name || ''} ${item.last_name || ''}`.trim() ||
+                                'Supervisora',
+                            email: item.email || '-',
+                            phone_e164: item.phone_e164 || item.phone_number || '-',
+                            is_active: item.is_active !== false,
+                            assignments: normalizedAssignments,
+                            raw: item,
+                        };
+                    })
+                );
+            }
+        );
 
         this.data.admin.supervisors = supervisors;
 
         const filteredSupervisors = restaurantFilter
-            ? supervisors.filter((item) => item.assignments.some((assignment) => String(assignment.restaurant_id) === String(restaurantFilter)))
+            ? supervisors.filter((item) =>
+                  item.assignments.some((assignment) => String(assignment.restaurant_id) === String(restaurantFilter))
+              )
             : supervisors;
 
         this.cache.adminSupervisorsQuery = queryKey;
@@ -707,24 +793,31 @@ export const adminMethods = {
         }
 
         if (supervisors.length === 0) {
-            container.innerHTML = '<div class="empty-state">No hay supervisoras que coincidan con el filtro actual.</div>';
+            container.innerHTML =
+                '<div class="empty-state">No hay supervisoras que coincidan con el filtro actual.</div>';
             return;
         }
 
         const canManagePhoneBinding = this.currentUser?.role === 'super_admin';
-        container.innerHTML = supervisors.map((supervisor) => {
-            const supervisorId = String(supervisor.id || '');
-            const assignedRestaurants = supervisor.assignments || [];
-            const availableRestaurants = this.data.admin.restaurants.filter((restaurant) => (
-                !assignedRestaurants.some((assignment) => String(assignment.restaurant_id) === String(restaurant.id || restaurant.restaurant_id))
-            ));
-            const selectId = `admin-supervisor-assign-${supervisorId}`;
-            const statusLabel = supervisor.is_active ? 'Activa' : 'Inactiva';
-            const statusClass = supervisor.is_active ? 'badge-success' : 'badge-danger';
-            const assignDisabled = availableRestaurants.length === 0 ? 'disabled' : '';
-            const phoneBindingAction = this.getPhoneBindingActionState(supervisor);
-            const clearPhoneButton = canManagePhoneBinding && phoneBindingAction.visible
-                ? `
+        container.innerHTML = supervisors
+            .map((supervisor) => {
+                const supervisorId = String(supervisor.id || '');
+                const assignedRestaurants = supervisor.assignments || [];
+                const availableRestaurants = this.data.admin.restaurants.filter(
+                    (restaurant) =>
+                        !assignedRestaurants.some(
+                            (assignment) =>
+                                String(assignment.restaurant_id) === String(restaurant.id || restaurant.restaurant_id)
+                        )
+                );
+                const selectId = `admin-supervisor-assign-${supervisorId}`;
+                const statusLabel = supervisor.is_active ? 'Activa' : 'Inactiva';
+                const statusClass = supervisor.is_active ? 'badge-success' : 'badge-danger';
+                const assignDisabled = availableRestaurants.length === 0 ? 'disabled' : '';
+                const phoneBindingAction = this.getPhoneBindingActionState(supervisor);
+                const clearPhoneButton =
+                    canManagePhoneBinding && phoneBindingAction.visible
+                        ? `
                         <button
                             type="button"
                             class="btn btn-warning btn-inline"
@@ -736,9 +829,9 @@ export const adminMethods = {
                             <span>Desvincular Teléfono</span>
                         </button>
                     `
-                : '';
+                        : '';
 
-            return `
+                return `
                 <article class="admin-supervisor-card">
                     <div class="admin-supervisor-top">
                         <div class="admin-supervisor-identity">
@@ -754,9 +847,13 @@ export const adminMethods = {
 
                     <div class="admin-supervisor-section">
                         <span class="info-item-label">Restaurantes asignados</span>
-                        ${assignedRestaurants.length > 0 ? `
+                        ${
+                            assignedRestaurants.length > 0
+                                ? `
                             <div class="assignment-list">
-                                ${assignedRestaurants.map((assignment) => `
+                                ${assignedRestaurants
+                                    .map(
+                                        (assignment) => `
                                     <span class="assignment-chip">
                                         ${escapeHtml(getRestaurantDisplayName(assignment))}
                                         <button
@@ -769,9 +866,13 @@ export const adminMethods = {
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </span>
-                                `).join('')}
+                                `
+                                    )
+                                    .join('')}
                             </div>
-                        ` : '<p class="muted-copy">Sin restaurantes asignados todavía.</p>'}
+                        `
+                                : '<p class="muted-copy">Sin restaurantes asignados todavía.</p>'
+                        }
                     </div>
 
                     <div class="admin-supervisor-assignment-row">
@@ -779,11 +880,15 @@ export const adminMethods = {
                             <label>Asignar restaurante</label>
                             <select id="${escapeHtml(selectId)}" class="dark-control" ${assignDisabled}>
                                 <option value="">${availableRestaurants.length > 0 ? 'Selecciona un restaurante' : 'Sin restaurantes disponibles'}</option>
-                                ${availableRestaurants.map((restaurant) => `
+                                ${availableRestaurants
+                                    .map(
+                                        (restaurant) => `
                                     <option value="${escapeHtml(String(restaurant.id || restaurant.restaurant_id))}">
                                         ${escapeHtml(getRestaurantDisplayName(restaurant))}
                                     </option>
-                                `).join('')}
+                                `
+                                    )
+                                    .join('')}
                             </select>
                         </div>
                         <button
@@ -822,7 +927,8 @@ export const adminMethods = {
                     </div>
                 </article>
             `;
-        }).join('');
+            })
+            .join('');
     },
 
     async toggleAdminSupervisorStatus(userId, isCurrentlyActive) {
@@ -834,7 +940,7 @@ export const adminMethods = {
         try {
             await apiClient.adminUsersManage(isCurrentlyActive ? 'deactivate' : 'activate', {
                 user_id: userId,
-                ...(isCurrentlyActive ? { reason: 'Actualización desde el panel administrativo.' } : {})
+                ...(isCurrentlyActive ? { reason: 'Actualización desde el panel administrativo.' } : {}),
             });
 
             this.invalidateCache('adminSupervisors');
@@ -843,13 +949,13 @@ export const adminMethods = {
                 isCurrentlyActive ? 'Supervisora desactivada correctamente.' : 'Supervisora activada correctamente.',
                 {
                     tone: 'success',
-                    title: 'Cambio guardado'
+                    title: 'Cambio guardado',
                 }
             );
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible actualizar el estado de la supervisora.'), {
                 tone: 'error',
-                title: 'No fue posible actualizar el estado'
+                title: 'No fue posible actualizar el estado',
             });
         } finally {
             this.hideLoading();
@@ -863,7 +969,7 @@ export const adminMethods = {
         if (!restaurantId) {
             this.showToast('Selecciona un restaurante para asignar.', {
                 tone: 'warning',
-                title: 'Falta seleccionar restaurante'
+                title: 'Falta seleccionar restaurante',
             });
             return;
         }
@@ -873,19 +979,19 @@ export const adminMethods = {
         try {
             await apiClient.adminSupervisorsManage('assign', {
                 supervisor_id: supervisorId,
-                restaurant_id: Number.isFinite(Number(restaurantId)) ? Number(restaurantId) : restaurantId
+                restaurant_id: Number.isFinite(Number(restaurantId)) ? Number(restaurantId) : restaurantId,
             });
 
             this.invalidateCache('adminSupervisors');
             await this.loadAdminSupervisors(true);
             this.showToast('Restaurante asignado correctamente.', {
                 tone: 'success',
-                title: 'Asignación exitosa'
+                title: 'Asignación exitosa',
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible asignar el restaurante.'), {
                 tone: 'error',
-                title: 'No fue posible asignar el restaurante'
+                title: 'No fue posible asignar el restaurante',
             });
         } finally {
             this.hideLoading();
@@ -898,19 +1004,19 @@ export const adminMethods = {
         try {
             await apiClient.adminSupervisorsManage('unassign', {
                 supervisor_id: supervisorId,
-                restaurant_id: Number.isFinite(Number(restaurantId)) ? Number(restaurantId) : restaurantId
+                restaurant_id: Number.isFinite(Number(restaurantId)) ? Number(restaurantId) : restaurantId,
             });
 
             this.invalidateCache('adminSupervisors');
             await this.loadAdminSupervisors(true);
             this.showToast('Restaurante desasignado correctamente.', {
                 tone: 'success',
-                title: 'Cambio guardado'
+                title: 'Cambio guardado',
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible desasignar el restaurante.'), {
                 tone: 'error',
-                title: 'No fue posible desasignar el restaurante'
+                title: 'No fue posible desasignar el restaurante',
             });
         } finally {
             this.hideLoading();
@@ -936,7 +1042,7 @@ export const adminMethods = {
 
         try {
             const result = await this.supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.href
+                redirectTo: window.location.href,
             });
 
             if (result.error) {
@@ -954,14 +1060,14 @@ export const adminMethods = {
     adminAction(action) {
         const routes = {
             supervisores: 'admin-supervisors',
-            'monitoreo-supervisoras': 'admin-supervision-monitor'
+            'monitoreo-supervisoras': 'admin-supervision-monitor',
         };
 
         const page = routes[action];
         if (!page) {
             this.showToast('Acción administrativa en preparación.', {
                 tone: 'info',
-                title: 'Próximamente'
+                title: 'Próximamente',
             });
             return;
         }
@@ -971,10 +1077,10 @@ export const adminMethods = {
 
     showNotification() {
         const backendStatus = this.backend.connected ? 'Sistema listo' : 'Sistema en revisión';
-        const userRole = this.currentUser ? (ROLE_LABELS[this.currentUser.role] || this.currentUser.role) : 'Sin sesión';
+        const userRole = this.currentUser ? ROLE_LABELS[this.currentUser.role] || this.currentUser.role : 'Sin sesión';
         this.showToast(`• ${backendStatus}\n• Rol actual: ${userRole}\n• Sesión lista para operar.`, {
             tone: 'info',
-            title: 'Notificaciones'
+            title: 'Notificaciones',
         });
     },
 
@@ -999,5 +1105,5 @@ export const adminMethods = {
         if (debugBackend) {
             debugBackend.textContent = this.backend.statusText;
         }
-    }
+    },
 };

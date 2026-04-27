@@ -2,13 +2,19 @@
 import { CACHE_TTLS } from '../constants.js';
 import { apiClient } from '../api.js';
 import {
-    asArray, escapeHtml, getRestaurantRecordId,
+    asArray,
+    escapeHtml,
+    getRestaurantRecordId,
     formatShiftRange,
     getShiftStatusLabel,
     normalizeLinkedPhoneValue,
     pickMeaningfulRestaurantName,
-    getShiftEmployeeName, getShiftRestaurantName,
-    getTodayEnd, getTodayStart, normalizeAreaToken, toIsoDate
+    getShiftEmployeeName,
+    getShiftRestaurantName,
+    getTodayEnd,
+    getTodayStart,
+    normalizeAreaToken,
+    toIsoDate,
 } from '../utils.js';
 
 export const adminModalMethods = {
@@ -71,7 +77,7 @@ export const adminModalMethods = {
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
                     enableHighAccuracy: true,
                     timeout: 10000,
-                    maximumAge: 0
+                    maximumAge: 0,
                 });
             });
 
@@ -79,18 +85,15 @@ export const adminModalMethods = {
             this.restaurantSelectedResultIndex = -1;
             this.renderAdminRestaurantSearchResults();
 
-            await this.setAdminRestaurantLocationFromCoordinates(
-                position.coords.latitude,
-                position.coords.longitude,
-                { reverseLookup: true, preserveQuery: false }
-            );
+            await this.setAdminRestaurantLocationFromCoordinates(position.coords.latitude, position.coords.longitude, {
+                reverseLookup: true,
+                preserveQuery: false,
+            });
 
             const roundedAccuracy = Number.isFinite(position.coords.accuracy)
                 ? Math.round(position.coords.accuracy)
                 : null;
-            const accuracyCopy = roundedAccuracy
-                ? ` Precisión aproximada: ${roundedAccuracy} m.`
-                : '';
+            const accuracyCopy = roundedAccuracy ? ` Precisión aproximada: ${roundedAccuracy} m.` : '';
 
             this.setAdminRestaurantSearchFeedback(
                 `Se tomó tu ubicación actual. Revisa el punto exacto en el mapa antes de guardar.${accuracyCopy}`,
@@ -102,7 +105,8 @@ export const adminModalMethods = {
         } finally {
             if (button) {
                 button.disabled = false;
-                button.innerHTML = defaultButtonHtml || '<i class="fas fa-location-crosshairs"></i> Usar ubicación actual';
+                button.innerHTML =
+                    defaultButtonHtml || '<i class="fas fa-location-crosshairs"></i> Usar ubicación actual';
             }
         }
     },
@@ -117,7 +121,10 @@ export const adminModalMethods = {
             await this.ensureGoogleMapsLibrary();
         } catch (error) {
             console.warn('No fue posible cargar Google Maps.', error);
-            this.setAdminRestaurantSearchFeedback('No fue posible cargar el mapa en este momento. Intenta recargar la página.', 'error');
+            this.setAdminRestaurantSearchFeedback(
+                'No fue posible cargar el mapa en este momento. Intenta recargar la página.',
+                'error'
+            );
             return;
         }
 
@@ -128,7 +135,7 @@ export const adminModalMethods = {
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
-                gestureHandling: 'greedy'
+                gestureHandling: 'greedy',
             });
             this.restaurantGeocoder = new window.google.maps.Geocoder();
             this.restaurantAutocompleteService = new window.google.maps.places.AutocompleteService();
@@ -136,11 +143,10 @@ export const adminModalMethods = {
             this.restaurantMap.addListener('click', (event) => {
                 const clickedLat = typeof event?.latLng?.lat === 'function' ? event.latLng.lat() : Number.NaN;
                 const clickedLng = typeof event?.latLng?.lng === 'function' ? event.latLng.lng() : Number.NaN;
-                void this.setAdminRestaurantLocationFromCoordinates(
-                    clickedLat,
-                    clickedLng,
-                    { reverseLookup: true, preserveQuery: false }
-                );
+                void this.setAdminRestaurantLocationFromCoordinates(clickedLat, clickedLng, {
+                    reverseLookup: true,
+                    preserveQuery: false,
+                });
             });
         }
 
@@ -163,12 +169,8 @@ export const adminModalMethods = {
 
         feedback.textContent = message;
         feedback.classList.toggle('hidden', !message);
-        feedback.style.background = tone === 'error'
-            ? 'rgba(239, 68, 68, 0.12)'
-            : 'rgba(14, 165, 233, 0.12)';
-        feedback.style.borderColor = tone === 'error'
-            ? 'rgba(239, 68, 68, 0.28)'
-            : 'rgba(14, 165, 233, 0.28)';
+        feedback.style.background = tone === 'error' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(14, 165, 233, 0.12)';
+        feedback.style.borderColor = tone === 'error' ? 'rgba(239, 68, 68, 0.28)' : 'rgba(14, 165, 233, 0.28)';
         feedback.style.color = tone === 'error' ? '#fecaca' : '#e0f2fe';
     },
 
@@ -177,7 +179,11 @@ export const adminModalMethods = {
     },
 
     async ensureGoogleMapsLibrary() {
-        if (window.google?.maps?.Map && window.google?.maps?.Geocoder && window.google?.maps?.places?.AutocompleteService) {
+        if (
+            window.google?.maps?.Map &&
+            window.google?.maps?.Geocoder &&
+            window.google?.maps?.places?.AutocompleteService
+        ) {
             return window.google.maps;
         }
 
@@ -208,11 +214,15 @@ export const adminModalMethods = {
             };
 
             if (existingScript) {
-                existingScript.addEventListener('error', () => {
-                    cleanup();
-                    this.googleMapsPromise = null;
-                    reject(new Error('No fue posible cargar Google Maps.'));
-                }, { once: true });
+                existingScript.addEventListener(
+                    'error',
+                    () => {
+                        cleanup();
+                        this.googleMapsPromise = null;
+                        reject(new Error('No fue posible cargar Google Maps.'));
+                    },
+                    { once: true }
+                );
                 return;
             }
 
@@ -242,7 +252,11 @@ export const adminModalMethods = {
             return null;
         }
 
-        if (Number.isFinite(result?.lat) && Number.isFinite(result?.lng) && (result?.display_name || result?.address_line)) {
+        if (
+            Number.isFinite(result?.lat) &&
+            Number.isFinite(result?.lng) &&
+            (result?.display_name || result?.address_line)
+        ) {
             return {
                 display_name: result.display_name || result.address_line || '',
                 address_line: result.address_line || result.display_name || '',
@@ -254,32 +268,31 @@ export const adminModalMethods = {
                 lng: Number(result.lng),
                 summary: result.summary || '',
                 detail_line: result.detail_line || '',
-                place_id: result.place_id || ''
+                place_id: result.place_id || '',
             };
         }
 
         const geometryLocation = result?.geometry?.location;
-        const lat = typeof geometryLocation?.lat === 'function'
-            ? Number(geometryLocation.lat())
-            : Number(result?.lat);
-        const lng = typeof geometryLocation?.lng === 'function'
-            ? Number(geometryLocation.lng())
-            : Number(result?.lng);
+        const lat = typeof geometryLocation?.lat === 'function' ? Number(geometryLocation.lat()) : Number(result?.lat);
+        const lng = typeof geometryLocation?.lng === 'function' ? Number(geometryLocation.lng()) : Number(result?.lng);
         const streetNumber = this.getGoogleAddressComponent(result.address_components, 'street_number');
         const route = this.getGoogleAddressComponent(result.address_components, 'route');
-        const premise = this.getGoogleAddressComponent(result.address_components, 'premise')
-            || this.getGoogleAddressComponent(result.address_components, 'establishment')
-            || this.getGoogleAddressComponent(result.address_components, 'subpremise');
-        const addressLine = [streetNumber, route].filter(Boolean).join(' ').trim()
-            || premise
-            || result?.formatted_address
-            || result?.display_name
-            || 'Dirección sin identificar';
-        const city = this.getGoogleAddressComponent(result.address_components, 'locality')
-            || this.getGoogleAddressComponent(result.address_components, 'postal_town')
-            || this.getGoogleAddressComponent(result.address_components, 'administrative_area_level_2')
-            || this.getGoogleAddressComponent(result.address_components, 'sublocality')
-            || '';
+        const premise =
+            this.getGoogleAddressComponent(result.address_components, 'premise') ||
+            this.getGoogleAddressComponent(result.address_components, 'establishment') ||
+            this.getGoogleAddressComponent(result.address_components, 'subpremise');
+        const addressLine =
+            [streetNumber, route].filter(Boolean).join(' ').trim() ||
+            premise ||
+            result?.formatted_address ||
+            result?.display_name ||
+            'Dirección sin identificar';
+        const city =
+            this.getGoogleAddressComponent(result.address_components, 'locality') ||
+            this.getGoogleAddressComponent(result.address_components, 'postal_town') ||
+            this.getGoogleAddressComponent(result.address_components, 'administrative_area_level_2') ||
+            this.getGoogleAddressComponent(result.address_components, 'sublocality') ||
+            '';
         const state = this.getGoogleAddressComponent(result.address_components, 'administrative_area_level_1');
         const country = this.getGoogleAddressComponent(result.address_components, 'country');
         const postcode = this.getGoogleAddressComponent(result.address_components, 'postal_code');
@@ -295,7 +308,7 @@ export const adminModalMethods = {
             lng,
             summary: [city, state, postcode, country].filter(Boolean).join(', '),
             detail_line: '',
-            place_id: result?.place_id || ''
+            place_id: result?.place_id || '',
         };
     },
 
@@ -314,7 +327,7 @@ export const adminModalMethods = {
             lng: Number.NaN,
             summary: detailLine,
             detail_line: detailLine,
-            place_id: prediction?.place_id || ''
+            place_id: prediction?.place_id || '',
         };
     },
 
@@ -436,7 +449,9 @@ export const adminModalMethods = {
     },
 
     buildAdminRestaurantSearchQueries(query = '') {
-        const baseQuery = String(query || '').trim().replace(/\s+/g, ' ');
+        const baseQuery = String(query || '')
+            .trim()
+            .replace(/\s+/g, ' ');
         if (!baseQuery) {
             return [];
         }
@@ -445,7 +460,7 @@ export const adminModalMethods = {
             baseQuery,
             baseQuery.replace(/\s*#\s*/g, ' No '),
             baseQuery.replace(/\s*#\s*/g, ' '),
-            baseQuery.replace(/[#,]/g, ' ').replace(/\s+/g, ' ').trim()
+            baseQuery.replace(/[#,]/g, ' ').replace(/\s+/g, ' ').trim(),
         ];
 
         return variants.filter((value, index, values) => value && values.indexOf(value) === index);
@@ -453,14 +468,11 @@ export const adminModalMethods = {
 
     scoreAdminRestaurantSearchResult(result = {}, originalQuery = '') {
         const normalizedQuery = this.normalizeAdminRestaurantSearchText(originalQuery);
-        const haystack = this.normalizeAdminRestaurantSearchText([
-            result.display_name,
-            result.address_line,
-            result.city,
-            result.state,
-            result.country,
-            result.postcode
-        ].filter(Boolean).join(' '));
+        const haystack = this.normalizeAdminRestaurantSearchText(
+            [result.display_name, result.address_line, result.city, result.state, result.country, result.postcode]
+                .filter(Boolean)
+                .join(' ')
+        );
 
         if (!normalizedQuery || !haystack) {
             return 0;
@@ -493,7 +505,7 @@ export const adminModalMethods = {
             const key = [
                 Number.isFinite(item?.lat) ? Number(item.lat).toFixed(6) : '',
                 Number.isFinite(item?.lng) ? Number(item.lng).toFixed(6) : '',
-                String(item?.display_name || '').trim()
+                String(item?.display_name || '').trim(),
             ].join('|');
 
             if (!seen.has(key)) {
@@ -504,7 +516,7 @@ export const adminModalMethods = {
         return Array.from(seen.values())
             .map((item) => ({
                 ...item,
-                __searchScore: this.scoreAdminRestaurantSearchResult(item, originalQuery)
+                __searchScore: this.scoreAdminRestaurantSearchResult(item, originalQuery),
             }))
             .sort((left, right) => {
                 if ((right.__searchScore || 0) !== (left.__searchScore || 0)) {
@@ -542,7 +554,8 @@ export const adminModalMethods = {
 
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = `restaurant-search-result ${index === this.restaurantSelectedResultIndex ? 'active' : ''}`.trim();
+            button.className =
+                `restaurant-search-result ${index === this.restaurantSelectedResultIndex ? 'active' : ''}`.trim();
             button.dataset.action = 'select-admin-restaurant-search-result';
             button.dataset.resultIndex = String(index);
 
@@ -583,9 +596,7 @@ export const adminModalMethods = {
     },
 
     clearAdminRestaurantSelectedLocation(options = {}) {
-        const {
-            removeMarker = true
-        } = options;
+        const { removeMarker = true } = options;
 
         this.restaurantLocationDraft = null;
         this.updateAdminRestaurantHiddenLocationFields();
@@ -652,7 +663,7 @@ export const adminModalMethods = {
                 this.restaurantAutocompleteService.getPlacePredictions(
                     {
                         input: query,
-                        types: ['address']
+                        types: ['address'],
                     },
                     (items, status) => {
                         if (controller.signal.aborted) {
@@ -692,7 +703,10 @@ export const adminModalMethods = {
                 this.restaurantSelectedResultIndex = -1;
                 this.clearAdminRestaurantSelectedLocation();
                 this.renderAdminRestaurantSearchResults();
-                this.setAdminRestaurantSearchFeedback('No encontramos coincidencias. Prueba con calle, número, ciudad, estado y país.', 'error');
+                this.setAdminRestaurantSearchFeedback(
+                    'No encontramos coincidencias. Prueba con calle, número, ciudad, estado y país.',
+                    'error'
+                );
                 return;
             }
 
@@ -710,7 +724,10 @@ export const adminModalMethods = {
             this.restaurantSearchResults = [];
             this.restaurantSelectedResultIndex = -1;
             this.renderAdminRestaurantSearchResults();
-            this.setAdminRestaurantSearchFeedback('No fue posible buscar la dirección en el mapa en este momento.', 'error');
+            this.setAdminRestaurantSearchFeedback(
+                'No fue posible buscar la dirección en el mapa en este momento.',
+                'error'
+            );
         } finally {
             if (this.restaurantGeocodeAbortController === controller) {
                 this.restaurantGeocodeAbortController = null;
@@ -753,7 +770,10 @@ export const adminModalMethods = {
                 }
 
                 console.warn('No fue posible seleccionar la dirección del restaurante.', error);
-                this.setAdminRestaurantSearchFeedback('No fue posible cargar esa dirección. Intenta con otra opción.', 'error');
+                this.setAdminRestaurantSearchFeedback(
+                    'No fue posible cargar esa dirección. Intenta con otra opción.',
+                    'error'
+                );
             } finally {
                 if (this.restaurantGeocodeAbortController === controller) {
                     this.restaurantGeocodeAbortController = null;
@@ -767,9 +787,7 @@ export const adminModalMethods = {
             return;
         }
 
-        const {
-            preserveQuery = false
-        } = options;
+        const { preserveQuery = false } = options;
 
         this.restaurantLocationDraft = {
             address_line: location.address_line || '',
@@ -779,7 +797,7 @@ export const adminModalMethods = {
             lat: Number(location.lat),
             lng: Number(location.lng),
             display_name: location.display_name || location.address_line || '',
-            postcode: location.postcode || ''
+            postcode: location.postcode || '',
         };
 
         if (!preserveQuery) {
@@ -831,7 +849,7 @@ export const adminModalMethods = {
             this.restaurantMapMarker = new window.google.maps.Marker({
                 position: { lat, lng },
                 map: this.restaurantMap,
-                draggable: true
+                draggable: true,
             });
 
             this.restaurantMapMarker.addListener('dragend', () => {
@@ -852,21 +870,22 @@ export const adminModalMethods = {
     },
 
     async setAdminRestaurantLocationFromCoordinates(lat, lng, options = {}) {
-        const {
-            reverseLookup = true,
-            preserveQuery = false
-        } = options;
+        const { reverseLookup = true, preserveQuery = false } = options;
 
         const nextLocation = {
             ...(this.restaurantLocationDraft || {}),
             lat,
-            lng
+            lng,
         };
 
         if (reverseLookup) {
             try {
                 const controller = this.restaurantGeocodeAbortController;
-                const resolvedLocation = await this.reverseGeocodeAdminRestaurantCoordinates(lat, lng, controller?.signal);
+                const resolvedLocation = await this.reverseGeocodeAdminRestaurantCoordinates(
+                    lat,
+                    lng,
+                    controller?.signal
+                );
                 if (resolvedLocation) {
                     Object.assign(nextLocation, resolvedLocation);
                 }
@@ -898,7 +917,11 @@ export const adminModalMethods = {
             return null;
         }
 
-        return asArray(this.data.supervisor.employees).find((employee) => String(employee?.id || '').trim() === normalizedEmployeeId) || null;
+        return (
+            asArray(this.data.supervisor.employees).find(
+                (employee) => String(employee?.id || '').trim() === normalizedEmployeeId
+            ) || null
+        );
     },
 
     getKnownSupervisorRestaurantRecord(restaurantId) {
@@ -907,9 +930,11 @@ export const adminModalMethods = {
             return null;
         }
 
-        return asArray(this.data.supervisor.restaurants).find((restaurant) => (
-            String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
-        )) || null;
+        return (
+            asArray(this.data.supervisor.restaurants).find(
+                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
+            ) || null
+        );
     },
 
     getKnownAdminRestaurantRecord(restaurantId) {
@@ -918,9 +943,11 @@ export const adminModalMethods = {
             return null;
         }
 
-        return asArray(this.data.admin.restaurants).find((restaurant) => (
-            String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
-        )) || null;
+        return (
+            asArray(this.data.admin.restaurants).find(
+                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
+            ) || null
+        );
     },
 
     getKnownAdminSupervisorRecord(supervisorId) {
@@ -929,26 +956,28 @@ export const adminModalMethods = {
             return null;
         }
 
-        return asArray(this.data.admin.supervisors).find((supervisor) => (
-            String(supervisor?.id || supervisor?.user_id || '').trim() === normalizedSupervisorId
-        )) || null;
+        return (
+            asArray(this.data.admin.supervisors).find(
+                (supervisor) => String(supervisor?.id || supervisor?.user_id || '').trim() === normalizedSupervisorId
+            ) || null
+        );
     },
 
     getPhoneBindingActionState(record) {
         const userId = String(record?.id || record?.user_id || record?.raw?.id || record?.raw?.user_id || '').trim();
         const phoneNumber = normalizeLinkedPhoneValue(
-            record?.phone_e164
-            || record?.phone_number
-            || record?.raw?.phone_e164
-            || record?.raw?.phone_number
-            || record?.raw?.phone
+            record?.phone_e164 ||
+                record?.phone_number ||
+                record?.raw?.phone_e164 ||
+                record?.raw?.phone_number ||
+                record?.raw?.phone
         );
 
         return {
             userId,
             phoneNumber,
             enabled: Boolean(userId && phoneNumber),
-            visible: Boolean(userId && phoneNumber)
+            visible: Boolean(userId && phoneNumber),
         };
     },
 
@@ -956,13 +985,13 @@ export const adminModalMethods = {
         const {
             emptyMessage = 'No se pudo identificar el perfil seleccionado.',
             subjectLabel = 'perfil',
-            refresh = null
+            refresh = null,
         } = options;
 
         if (!record) {
             this.showToast(emptyMessage, {
                 tone: 'warning',
-                title: 'Perfil inválido'
+                title: 'Perfil inválido',
             });
             return;
         }
@@ -970,7 +999,7 @@ export const adminModalMethods = {
         if (this.currentUser?.role !== 'super_admin') {
             this.showToast('Solo una cuenta super_admin puede remover el teléfono de un usuario.', {
                 tone: 'warning',
-                title: 'Permiso insuficiente'
+                title: 'Permiso insuficiente',
             });
             return;
         }
@@ -979,13 +1008,15 @@ export const adminModalMethods = {
         if (!enabled) {
             this.showToast('El perfil seleccionado no tiene un teléfono removible en este momento.', {
                 tone: 'warning',
-                title: 'Sin teléfono vinculado'
+                title: 'Sin teléfono vinculado',
             });
             return;
         }
 
         const displayName = String(record.full_name || record.email || subjectLabel).trim() || subjectLabel;
-        const confirmed = window.confirm(`¿Seguro que deseas remover el teléfono ${phoneNumber} de ${displayName}? Luego podrás registrar un nuevo número para este perfil.`);
+        const confirmed = window.confirm(
+            `¿Seguro que deseas remover el teléfono ${phoneNumber} de ${displayName}? Luego podrás registrar un nuevo número para este perfil.`
+        );
         if (!confirmed) {
             return;
         }
@@ -1006,12 +1037,12 @@ export const adminModalMethods = {
             this.showToast(`El teléfono de ${displayName} fue removido correctamente. ${consentStatus}`, {
                 tone: 'success',
                 title: 'Teléfono removido',
-                duration: 5200
+                duration: 5200,
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible remover el teléfono de este perfil.'), {
                 tone: 'error',
-                title: 'No fue posible remover el teléfono'
+                title: 'No fue posible remover el teléfono',
             });
         } finally {
             this.hideLoading();
@@ -1026,7 +1057,7 @@ export const adminModalMethods = {
             refresh: async () => {
                 this.invalidateCache('supervisorEmployees');
                 await this.loadSupervisorEmployees(true);
-            }
+            },
         });
     },
 
@@ -1038,7 +1069,7 @@ export const adminModalMethods = {
             refresh: async () => {
                 this.invalidateCache('adminSupervisors');
                 await this.loadAdminSupervisors(true);
-            }
+            },
         });
     },
 
@@ -1052,10 +1083,12 @@ export const adminModalMethods = {
     },
 
     getKnownRestaurantRecord(restaurantId) {
-        return this.getKnownEmployeeRestaurantRecord(restaurantId)
-            || this.getKnownSupervisorRestaurantRecord(restaurantId)
-            || this.getKnownAdminRestaurantRecord(restaurantId)
-            || null;
+        return (
+            this.getKnownEmployeeRestaurantRecord(restaurantId) ||
+            this.getKnownSupervisorRestaurantRecord(restaurantId) ||
+            this.getKnownAdminRestaurantRecord(restaurantId) ||
+            null
+        );
     },
 
     getKnownEmployeeRecord(employeeId) {
@@ -1086,7 +1119,8 @@ export const adminModalMethods = {
             return activeShiftEmployee;
         }
 
-        const scheduledShiftEmployee = this.data.currentScheduledShift?.employee || this.data.currentScheduledShift?.user || null;
+        const scheduledShiftEmployee =
+            this.data.currentScheduledShift?.employee || this.data.currentScheduledShift?.user || null;
         if (String(scheduledShiftEmployee?.id || '').trim() === normalizedEmployeeId) {
             return scheduledShiftEmployee;
         }
@@ -1097,7 +1131,11 @@ export const adminModalMethods = {
     getKnownEmployeeRecordByAlias(aliasCandidates = []) {
         const normalizedAliases = new Set(
             asArray(aliasCandidates)
-                .map((value) => String(value || '').trim().toLowerCase())
+                .map((value) =>
+                    String(value || '')
+                        .trim()
+                        .toLowerCase()
+                )
                 .filter(Boolean)
         );
 
@@ -1127,10 +1165,16 @@ export const adminModalMethods = {
                 record.auth_user?.email,
                 record.raw?.id,
                 record.raw?.username,
-                record.raw?.email
+                record.raw?.email,
             ];
 
-            return candidateValues.some((value) => normalizedAliases.has(String(value || '').trim().toLowerCase()));
+            return candidateValues.some((value) =>
+                normalizedAliases.has(
+                    String(value || '')
+                        .trim()
+                        .toLowerCase()
+                )
+            );
         };
 
         if (matchesAlias(this.currentUser)) {
@@ -1154,7 +1198,8 @@ export const adminModalMethods = {
             return activeShiftEmployee;
         }
 
-        const scheduledShiftEmployee = this.data.currentScheduledShift?.employee || this.data.currentScheduledShift?.user || null;
+        const scheduledShiftEmployee =
+            this.data.currentScheduledShift?.employee || this.data.currentScheduledShift?.user || null;
         if (matchesAlias(scheduledShiftEmployee)) {
             return scheduledShiftEmployee;
         }
@@ -1163,7 +1208,8 @@ export const adminModalMethods = {
     },
 
     getResolvedShiftEmployeeName(shift, fallback = 'Empleado') {
-        const employeeId = shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '';
+        const employeeId =
+            shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '';
         const employeeAliasCandidates = [
             shift?.employee,
             shift?.employee_username,
@@ -1177,29 +1223,35 @@ export const adminModalMethods = {
             shift?.employee?.id,
             shift?.user?.username,
             shift?.user?.email,
-            shift?.user?.id
+            shift?.user?.id,
         ];
-        const employeeRecord = this.getKnownEmployeeRecord(employeeId)
-            || this.getKnownEmployeeRecordByAlias(employeeAliasCandidates)
-            || null;
+        const employeeRecord =
+            this.getKnownEmployeeRecord(employeeId) ||
+            this.getKnownEmployeeRecordByAlias(employeeAliasCandidates) ||
+            null;
 
-        return getShiftEmployeeName(shift, {
-            employeeRecord
-        }) || fallback;
+        return (
+            getShiftEmployeeName(shift, {
+                employeeRecord,
+            }) || fallback
+        );
     },
 
     getResolvedShiftRestaurantName(shift, fallback = 'Restaurante') {
-        const restaurantId = shift?.restaurant_id
-            || shift?.restaurant?.restaurant_id
-            || shift?.restaurant?.id
-            || shift?.location_id
-            || shift?.location?.id
-            || shift?.site_id
-            || shift?.site?.id
-            || '';
-        return getShiftRestaurantName(shift, {
-            restaurantRecord: this.getKnownRestaurantRecord(restaurantId)
-        }) || fallback;
+        const restaurantId =
+            shift?.restaurant_id ||
+            shift?.restaurant?.restaurant_id ||
+            shift?.restaurant?.id ||
+            shift?.location_id ||
+            shift?.location?.id ||
+            shift?.site_id ||
+            shift?.site?.id ||
+            '';
+        return (
+            getShiftRestaurantName(shift, {
+                restaurantRecord: this.getKnownRestaurantRecord(restaurantId),
+            }) || fallback
+        );
     },
 
     getSupervisorShiftSelectionKey(shift) {
@@ -1208,18 +1260,22 @@ export const adminModalMethods = {
         }
 
         return String(
-            shift?.id
-            || shift?.scheduled_shift_id
-            || `${shift?.employee_id || shift?.assigned_employee_id || 'employee'}__${shift?.restaurant_id || shift?.restaurant?.id || 'restaurant'}__${shift?.scheduled_start || shift?.start_time || shift?.created_at || 'shift'}`
+            shift?.id ||
+                shift?.scheduled_shift_id ||
+                `${shift?.employee_id || shift?.assigned_employee_id || 'employee'}__${shift?.restaurant_id || shift?.restaurant?.id || 'restaurant'}__${shift?.scheduled_start || shift?.start_time || shift?.created_at || 'shift'}`
         ).trim();
     },
 
     getSupervisorSelectedRestaurant() {
         const selectedRestaurantId = document.getElementById('supervision-restaurant-select')?.value;
         const restaurants = this.data.supervisor.restaurants || [];
-        return restaurants.find((restaurant) => String(getRestaurantRecordId(restaurant)) === String(selectedRestaurantId))
-            || restaurants[0]
-            || null;
+        return (
+            restaurants.find(
+                (restaurant) => String(getRestaurantRecordId(restaurant)) === String(selectedRestaurantId)
+            ) ||
+            restaurants[0] ||
+            null
+        );
     },
 
     getSupervisorRestaurantShifts() {
@@ -1232,31 +1288,33 @@ export const adminModalMethods = {
         return asArray(this.data.supervisor.shifts)
             .filter((shift) => {
                 const shiftRestaurantId = String(
-                    shift?.restaurant_id
-                    || shift?.restaurant?.restaurant_id
-                    || shift?.restaurant?.id
-                    || shift?.location_id
-                    || shift?.location?.id
-                    || shift?.site_id
-                    || shift?.site?.id
-                    || ''
+                    shift?.restaurant_id ||
+                        shift?.restaurant?.restaurant_id ||
+                        shift?.restaurant?.id ||
+                        shift?.location_id ||
+                        shift?.location?.id ||
+                        shift?.site_id ||
+                        shift?.site?.id ||
+                        ''
                 );
                 return shiftRestaurantId === restaurantId;
             })
             .sort((left, right) => {
-                const leftTime = new Date(left?.scheduled_start || left?.start_time || left?.created_at || '').getTime();
-                const rightTime = new Date(right?.scheduled_start || right?.start_time || right?.created_at || '').getTime();
-                return (Number.isFinite(leftTime) ? leftTime : Number.MAX_SAFE_INTEGER)
-                    - (Number.isFinite(rightTime) ? rightTime : Number.MAX_SAFE_INTEGER);
+                const leftTime = new Date(
+                    left?.scheduled_start || left?.start_time || left?.created_at || ''
+                ).getTime();
+                const rightTime = new Date(
+                    right?.scheduled_start || right?.start_time || right?.created_at || ''
+                ).getTime();
+                return (
+                    (Number.isFinite(leftTime) ? leftTime : Number.MAX_SAFE_INTEGER) -
+                    (Number.isFinite(rightTime) ? rightTime : Number.MAX_SAFE_INTEGER)
+                );
             });
     },
 
     getShiftReferenceDate(shift) {
-        const value = shift?.scheduled_start
-            || shift?.start_time
-            || shift?.scheduled_end
-            || shift?.end_time
-            || null;
+        const value = shift?.scheduled_start || shift?.start_time || shift?.scheduled_end || shift?.end_time || null;
 
         if (!value) {
             return null;
@@ -1312,14 +1370,16 @@ export const adminModalMethods = {
         }
 
         select.disabled = false;
-        select.innerHTML = shifts.map((shift) => {
-            const shiftKey = this.getSupervisorShiftSelectionKey(shift);
-            return `
+        select.innerHTML = shifts
+            .map((shift) => {
+                const shiftKey = this.getSupervisorShiftSelectionKey(shift);
+                return `
                 <option value="${escapeHtml(shiftKey)}" ${shiftKey === this.selectedSupervisorShiftId ? 'selected' : ''}>
                     ${escapeHtml(this.buildSupervisorShiftOptionLabel(shift))}
                 </option>
             `;
-        }).join('');
+            })
+            .join('');
     },
 
     setSupervisorSelectedShift(shiftId = '') {
@@ -1333,21 +1393,13 @@ export const adminModalMethods = {
 
     getSupervisorCleaningAreaGroups() {
         const restaurant = this.getSupervisorSelectedRestaurant();
-        return this.resolveCleaningAreaGroups(
-            restaurant,
-            restaurant?.raw?.restaurant,
-            restaurant?.raw
-        );
+        return this.resolveCleaningAreaGroups(restaurant, restaurant?.raw?.restaurant, restaurant?.raw);
     },
 
     getSupervisorAvailableAreas() {
         const restaurant = this.getSupervisorSelectedRestaurant();
         this.cleaningAreaGroups = this.getSupervisorCleaningAreaGroups();
-        return this.resolveCleaningAreas(
-            restaurant,
-            restaurant?.raw?.restaurant,
-            restaurant?.raw
-        );
+        return this.resolveCleaningAreas(restaurant, restaurant?.raw?.restaurant, restaurant?.raw);
     },
 
     getSupervisorSelectedAreas() {
@@ -1361,7 +1413,9 @@ export const adminModalMethods = {
         }
 
         const availableAreas = this.getSupervisorAvailableAreas();
-        const hasCurrentSelection = availableAreas.some((areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.selectedSupervisorArea));
+        const hasCurrentSelection = availableAreas.some(
+            (areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.selectedSupervisorArea)
+        );
         if (!hasCurrentSelection) {
             this.selectedSupervisorArea = availableAreas[0] || '';
         }
@@ -1369,14 +1423,16 @@ export const adminModalMethods = {
         const selectedKey = normalizeAreaToken(this.selectedSupervisorArea);
         select.innerHTML = `
             <option value="">Selecciona un área</option>
-            ${availableAreas.map((areaLabel) => {
-                const optionKey = normalizeAreaToken(areaLabel);
-                return `
+            ${availableAreas
+                .map((areaLabel) => {
+                    const optionKey = normalizeAreaToken(areaLabel);
+                    return `
                     <option value="${escapeHtml(areaLabel)}" ${optionKey === selectedKey ? 'selected' : ''}>
                         ${escapeHtml(areaLabel)}
                     </option>
                 `;
-            }).join('')}
+                })
+                .join('')}
         `;
     },
 
@@ -1407,106 +1463,133 @@ export const adminModalMethods = {
 
     async getSupervisorRestaurants(force = false) {
         if (
-            !force
-            && this.data.supervisor.restaurants.length > 0
-            && this.isCacheFresh('supervisorRestaurants', CACHE_TTLS.supervisorRestaurants)
+            !force &&
+            this.data.supervisor.restaurants.length > 0 &&
+            this.isCacheFresh('supervisorRestaurants', CACHE_TTLS.supervisorRestaurants)
         ) {
             return this.data.supervisor.restaurants;
         }
 
-        return this.runPending(`supervisorRestaurants:${this.currentUser?.role || 'unknown'}:${force ? 'force' : 'default'}`, async () => {
-            let restaurants = [];
-            const mapRestaurantList = (result) => asArray(result).map((item) => ({
-                ...item,
-                id: getRestaurantRecordId(item),
-                restaurant_id: getRestaurantRecordId(item),
-                is_active: item.is_active !== false,
-                name: pickMeaningfulRestaurantName([
-                    item.restaurant_name,
-                    item.restaurant_visible_name,
-                    item.restaurant_label,
-                    item.restaurant?.restaurant_name,
-                    item.restaurant?.restaurant_visible_name,
-                    item.restaurant?.restaurant_label,
-                    item.name,
-                    item.display_name,
-                    item.label,
-                    item.title,
-                    item.restaurant?.name,
-                    item.restaurant?.display_name,
-                    item.restaurant?.label,
-                    item.restaurant?.title
-                ], item) || '',
-                address_line: item.address_line || item.restaurant?.address_line,
-                city: item.city || item.restaurant?.city,
-                state: item.state || item.restaurant?.state,
-                country: item.country || item.restaurant?.country,
-                cleaning_areas: item.cleaning_areas || item.restaurant?.cleaning_areas,
-                effective_cleaning_areas: item.effective_cleaning_areas || item.restaurant?.effective_cleaning_areas || item.cleaning_areas || item.restaurant?.cleaning_areas,
-                raw: item
-            })).filter((item) => item.is_active !== false && getRestaurantRecordId(item) != null);
+        return this.runPending(
+            `supervisorRestaurants:${this.currentUser?.role || 'unknown'}:${force ? 'force' : 'default'}`,
+            async () => {
+                let restaurants = [];
+                const mapRestaurantList = (result) =>
+                    asArray(result)
+                        .map((item) => ({
+                            ...item,
+                            id: getRestaurantRecordId(item),
+                            restaurant_id: getRestaurantRecordId(item),
+                            is_active: item.is_active !== false,
+                            name:
+                                pickMeaningfulRestaurantName(
+                                    [
+                                        item.restaurant_name,
+                                        item.restaurant_visible_name,
+                                        item.restaurant_label,
+                                        item.restaurant?.restaurant_name,
+                                        item.restaurant?.restaurant_visible_name,
+                                        item.restaurant?.restaurant_label,
+                                        item.name,
+                                        item.display_name,
+                                        item.label,
+                                        item.title,
+                                        item.restaurant?.name,
+                                        item.restaurant?.display_name,
+                                        item.restaurant?.label,
+                                        item.restaurant?.title,
+                                    ],
+                                    item
+                                ) || '',
+                            address_line: item.address_line || item.restaurant?.address_line,
+                            city: item.city || item.restaurant?.city,
+                            state: item.state || item.restaurant?.state,
+                            country: item.country || item.restaurant?.country,
+                            cleaning_areas: item.cleaning_areas || item.restaurant?.cleaning_areas,
+                            effective_cleaning_areas:
+                                item.effective_cleaning_areas ||
+                                item.restaurant?.effective_cleaning_areas ||
+                                item.cleaning_areas ||
+                                item.restaurant?.cleaning_areas,
+                            raw: item,
+                        }))
+                        .filter((item) => item.is_active !== false && getRestaurantRecordId(item) != null);
 
-            if (this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser') {
-                const result = await apiClient.adminRestaurantsManage('list', {
-                    is_active: true,
-                    limit: 200
-                });
-                restaurants = mapRestaurantList(result);
-            } else {
-                try {
+                if (this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser') {
                     const result = await apiClient.adminRestaurantsManage('list', {
                         is_active: true,
-                        limit: 200
+                        limit: 200,
                     });
                     restaurants = mapRestaurantList(result);
-                } catch (error) {
-                    console.warn('No fue posible cargar todos los restaurantes para supervisora. Se usará el listado disponible como respaldo.', error);
-                    const assignments = await apiClient.restaurantStaffManage('list_my_restaurants');
-                    const items = asArray(assignments);
+                } else {
+                    try {
+                        const result = await apiClient.adminRestaurantsManage('list', {
+                            is_active: true,
+                            limit: 200,
+                        });
+                        restaurants = mapRestaurantList(result);
+                    } catch (error) {
+                        console.warn(
+                            'No fue posible cargar todos los restaurantes para supervisora. Se usará el listado disponible como respaldo.',
+                            error
+                        );
+                        const assignments = await apiClient.restaurantStaffManage('list_my_restaurants');
+                        const items = asArray(assignments);
 
-                    restaurants = items.map((item) => ({
-                        id: getRestaurantRecordId(item),
-                        restaurant_id: getRestaurantRecordId(item),
-                        name: pickMeaningfulRestaurantName([
-                            item.restaurant_name,
-                            item.restaurant_visible_name,
-                            item.restaurant_label,
-                            item.restaurant?.restaurant_name,
-                            item.restaurant?.restaurant_visible_name,
-                            item.restaurant?.restaurant_label,
-                            item.name,
-                            item.display_name,
-                            item.label,
-                            item.title,
-                            item.restaurant?.name,
-                            item.restaurant?.display_name,
-                            item.restaurant?.label,
-                            item.restaurant?.title
-                        ], item) || '',
-                        address_line: item.restaurant?.address_line || item.address_line,
-                        city: item.restaurant?.city || item.city,
-                        state: item.restaurant?.state || item.state,
-                        country: item.restaurant?.country || item.country,
-                        is_active: item.is_active !== false && item.restaurant?.is_active !== false,
-                        cleaning_areas: item.restaurant?.cleaning_areas || item.cleaning_areas,
-                        effective_cleaning_areas: item.restaurant?.effective_cleaning_areas || item.effective_cleaning_areas || item.restaurant?.cleaning_areas || item.cleaning_areas,
-                        assigned_at: item.assigned_at,
-                        raw: item
-                    })).filter((item) => item.is_active !== false && getRestaurantRecordId(item) != null);
+                        restaurants = items
+                            .map((item) => ({
+                                id: getRestaurantRecordId(item),
+                                restaurant_id: getRestaurantRecordId(item),
+                                name:
+                                    pickMeaningfulRestaurantName(
+                                        [
+                                            item.restaurant_name,
+                                            item.restaurant_visible_name,
+                                            item.restaurant_label,
+                                            item.restaurant?.restaurant_name,
+                                            item.restaurant?.restaurant_visible_name,
+                                            item.restaurant?.restaurant_label,
+                                            item.name,
+                                            item.display_name,
+                                            item.label,
+                                            item.title,
+                                            item.restaurant?.name,
+                                            item.restaurant?.display_name,
+                                            item.restaurant?.label,
+                                            item.restaurant?.title,
+                                        ],
+                                        item
+                                    ) || '',
+                                address_line: item.restaurant?.address_line || item.address_line,
+                                city: item.restaurant?.city || item.city,
+                                state: item.restaurant?.state || item.state,
+                                country: item.restaurant?.country || item.country,
+                                is_active: item.is_active !== false && item.restaurant?.is_active !== false,
+                                cleaning_areas: item.restaurant?.cleaning_areas || item.cleaning_areas,
+                                effective_cleaning_areas:
+                                    item.restaurant?.effective_cleaning_areas ||
+                                    item.effective_cleaning_areas ||
+                                    item.restaurant?.cleaning_areas ||
+                                    item.cleaning_areas,
+                                assigned_at: item.assigned_at,
+                                raw: item,
+                            }))
+                            .filter((item) => item.is_active !== false && getRestaurantRecordId(item) != null);
+                    }
                 }
-            }
 
-            this.data.supervisor.restaurants = restaurants;
-            this.touchCache('supervisorRestaurants');
-            return restaurants;
-        });
+                this.data.supervisor.restaurants = restaurants;
+                this.touchCache('supervisorRestaurants');
+                return restaurants;
+            }
+        );
     },
 
     async getSupervisorShiftList(options = {}) {
         const todayStart = getTodayStart();
         const todayEnd = getTodayEnd();
-        const defaultFrom = toIsoDate(new Date(todayStart.getTime() - (12 * 60 * 60 * 1000)));
-        const defaultTo = toIsoDate(new Date(todayEnd.getTime() + (12 * 60 * 60 * 1000)));
+        const defaultFrom = toIsoDate(new Date(todayStart.getTime() - 12 * 60 * 60 * 1000));
+        const defaultTo = toIsoDate(new Date(todayEnd.getTime() + 12 * 60 * 60 * 1000));
 
         const {
             forceRestaurants = false,
@@ -1515,19 +1598,17 @@ export const adminModalMethods = {
             to = defaultTo,
             status,
             employeeId,
-            limit = 100
+            limit = 100,
         } = options;
 
-        const usesDefaultQuery = !restaurantId && !status && !employeeId
-            && from === defaultFrom
-            && to === defaultTo
-            && limit === 100;
+        const usesDefaultQuery =
+            !restaurantId && !status && !employeeId && from === defaultFrom && to === defaultTo && limit === 100;
 
         if (
-            !forceRestaurants
-            && usesDefaultQuery
-            && this.data.supervisor.shifts.length > 0
-            && this.isCacheFresh('supervisorShifts', CACHE_TTLS.supervisorShifts)
+            !forceRestaurants &&
+            usesDefaultQuery &&
+            this.data.supervisor.shifts.length > 0 &&
+            this.isCacheFresh('supervisorShifts', CACHE_TTLS.supervisorShifts)
         ) {
             return this.data.supervisor.shifts;
         }
@@ -1556,13 +1637,13 @@ export const adminModalMethods = {
 
                 const result = await apiClient.scheduledShiftsManage('list', payload);
                 const shifts = asArray(result).filter((shift) => {
-                    const shiftStatus = String(shift?.status || shift?.state || '').trim().toLowerCase();
+                    const shiftStatus = String(shift?.status || shift?.state || '')
+                        .trim()
+                        .toLowerCase();
                     return !['cancelado', 'cancelled', 'anulado', 'deleted'].includes(shiftStatus);
                 });
 
-                const normalizedShifts = usesDefaultQuery
-                    ? this.getTodayShifts(shifts)
-                    : shifts;
+                const normalizedShifts = usesDefaultQuery ? this.getTodayShifts(shifts) : shifts;
 
                 if (usesDefaultQuery) {
                     this.data.supervisor.shifts = normalizedShifts;
@@ -1577,32 +1658,37 @@ export const adminModalMethods = {
                 return [];
             }
 
-            const grouped = await Promise.all(restaurants.map(async (restaurant) => {
-                try {
-                    const result = await apiClient.scheduledShiftsManage('list', {
-                        ...payload,
-                        restaurant_id: getRestaurantRecordId(restaurant)
-                    });
-                    return asArray(result);
-                } catch (error) {
-                    console.warn(`No fue posible listar turnos para ${restaurant.name || restaurant.id}.`, error);
-                    return [];
-                }
-            }));
+            const grouped = await Promise.all(
+                restaurants.map(async (restaurant) => {
+                    try {
+                        const result = await apiClient.scheduledShiftsManage('list', {
+                            ...payload,
+                            restaurant_id: getRestaurantRecordId(restaurant),
+                        });
+                        return asArray(result);
+                    } catch (error) {
+                        console.warn(`No fue posible listar turnos para ${restaurant.name || restaurant.id}.`, error);
+                        return [];
+                    }
+                })
+            );
 
             const dedupe = new Map();
             grouped.flat().forEach((shift) => {
-                const key = shift.id || shift.scheduled_shift_id || `${shift.employee_id}-${shift.scheduled_start}-${shift.restaurant_id}`;
+                const key =
+                    shift.id ||
+                    shift.scheduled_shift_id ||
+                    `${shift.employee_id}-${shift.scheduled_start}-${shift.restaurant_id}`;
                 dedupe.set(key, shift);
             });
             const shifts = Array.from(dedupe.values()).filter((shift) => {
-                const shiftStatus = String(shift?.status || shift?.state || '').trim().toLowerCase();
+                const shiftStatus = String(shift?.status || shift?.state || '')
+                    .trim()
+                    .toLowerCase();
                 return !['cancelado', 'cancelled', 'anulado', 'deleted'].includes(shiftStatus);
             });
 
-            const normalizedShifts = usesDefaultQuery
-                ? this.getTodayShifts(shifts)
-                : shifts;
+            const normalizedShifts = usesDefaultQuery ? this.getTodayShifts(shifts) : shifts;
 
             if (usesDefaultQuery) {
                 this.data.supervisor.shifts = normalizedShifts;
@@ -1621,19 +1707,22 @@ export const adminModalMethods = {
         }
 
         if (
-            force
-            || this.data.admin.restaurants.length === 0
-            || !this.isCacheFresh('adminRestaurants', CACHE_TTLS.adminRestaurants)
+            force ||
+            this.data.admin.restaurants.length === 0 ||
+            !this.isCacheFresh('adminRestaurants', CACHE_TTLS.adminRestaurants)
         ) {
-            this.data.admin.restaurants = await this.runPending(`adminRestaurants:${force ? 'force' : 'default'}`, async () => {
-                const restaurantsResult = await apiClient.adminRestaurantsManage('list', {
-                    is_active: true,
-                    limit: 200
-                });
-                const restaurants = asArray(restaurantsResult);
-                this.touchCache('adminRestaurants');
-                return restaurants;
-            });
+            this.data.admin.restaurants = await this.runPending(
+                `adminRestaurants:${force ? 'force' : 'default'}`,
+                async () => {
+                    const restaurantsResult = await apiClient.adminRestaurantsManage('list', {
+                        is_active: true,
+                        limit: 200,
+                    });
+                    const restaurants = asArray(restaurantsResult);
+                    this.touchCache('adminRestaurants');
+                    return restaurants;
+                }
+            );
         }
 
         return this.data.admin.restaurants;
