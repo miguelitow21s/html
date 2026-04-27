@@ -2823,7 +2823,9 @@ const app = {
             });
         }
 
-        void apiClient.evidenceUploadWarm();
+        if (this.data.currentShift?.id || this.data.currentScheduledShift?.id) {
+            void apiClient.evidenceUploadWarm();
+        }
     },
 
     warmSupervisorWorkspace() {
