@@ -276,14 +276,14 @@
          ============================================================ -->
     <div id="page-employee-dashboard" class="app-container hidden">
         <header class="header">
-            <div class="header-brand">
+            <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
                 <img class="header-brand-logo" src="css/logos/R3%20Logo%20negro%20sobre%20blanco.svg" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
                 <span>WorkTrace</span>
-            </div>
+            </button>
             <div class="header-actions">
-                <div class="header-btn" style="background: 'linear-gradient(135deg, #0ea5e9 0%, #10b981 100%)'">
+                <button class="header-btn" onclick="app.navigate('employee-profile')" aria-label="Mi perfil">
                     <span id="user-initial">U</span>
-                </div>
+                </button>
             </div>
         </header>
         
@@ -799,10 +799,10 @@
          ============================================================ -->
     <div id="page-supervisor-dashboard" class="app-container hidden">
         <header class="header">
-            <div class="header-brand">
+            <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
                 <img class="header-brand-logo" src="css/logos/R3%20Logo%20negro%20sobre%20blanco.svg" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
                 <span>WorkTrace Supervisor</span>
-            </div>
+            </button>
             <div class="header-actions">
                 <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
                     <i class="fas fa-house"></i>
@@ -1478,10 +1478,10 @@
     <!-- ADMIN DASHBOARD -->
     <div id="page-admin-dashboard" class="app-container hidden">
         <header class="header">
-            <div class="header-brand">
+            <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
                 <img class="header-brand-logo" src="css/logos/R3%20Logo%20negro%20sobre%20blanco.svg" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
                 <span>WorkTrace Admin</span>
-            </div>
+            </button>
             <div class="header-actions">
             </div>
         </header>
