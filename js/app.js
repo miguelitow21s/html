@@ -1,39 +1,25 @@
 // @ts-nocheck
 import { createClient } from '@supabase/supabase-js';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { apiClient, buildIdempotencyKey } from './api.js';
+import { apiClient } from './api.js';
 import {
     STORAGE_KEYS,
     ROLE_ROUTES,
     ROLE_LABELS,
-    REPORT_COLUMNS,
     AREA_META,
     AREA_SUBAREAS,
-    AREA_GROUP_ALIASES,
     DEFAULT_SYSTEM_SETTINGS,
     CACHE_TTLS,
-    SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES,
     createScopedConsole,
 } from './constants.js';
 import {
     getMonthStart,
-    getTodayStart,
-    getTodayEnd,
-    getDaysAgo,
     toInputDate,
-    toLocalDateKey,
-    toIsoDate,
-    decodeJwtPart,
-    decodeJwtHeader,
-    decodeJwtPayload,
-    buildJwtFullDebugSummary,
     buildJwtDebugSummary,
-    toDateTimeLocalInput,
     formatDate,
     formatTime,
     formatDateTime,
     formatShiftRange,
-    formatHours,
     isHttpUrl,
     collectEvidenceUrls,
     escapeHtml,
@@ -42,21 +28,9 @@ import {
     extractCleaningAreaSubareas,
     extractCleaningAreaGroups,
     uniqueCleaningAreas,
-    buildAreaMeta,
-    formatEntityReference,
-    getDisplayTextCandidate,
-    normalizeComparableText,
-    pickMeaningfulDisplayValue,
-    getRestaurantAddressFallback,
-    collectRestaurantAddressCandidates,
-    isLikelyAddressDisplayValue,
-    isLikelyIdentifierDisplayValue,
     pickMeaningfulRestaurantName,
-    getEmployeeDisplayName,
     getRestaurantDisplayName,
     isRestaurantReferenceLabel,
-    getShiftEmployeeName,
-    getShiftRestaurantName,
     normalizeAreaGroupLabel,
     buildPhotoSlotKey,
     areaDomId,
@@ -64,20 +38,10 @@ import {
     normalizeRestaurantId,
     deepMergeSettings,
     initials,
-    delay,
     isGenericNamedPlaceholder,
     getBadgeClass,
     asArray,
-    normalizeLinkedPhoneValue,
-    getHoursFromRange,
     getScheduledHours,
-    getWorkedHours,
-    getShiftStatusLabel,
-    isShiftEndedEarly,
-    sumHours,
-    sumWorkedHours,
-    countEndedEarlyShifts,
-    summarizeShiftStatuses,
 } from './utils.js';
 
 const console = createScopedConsole();
@@ -5145,7 +5109,7 @@ const app = {
 
     canEmployeeStartScheduledShift(
         scheduledShift = this.data.currentScheduledShift,
-        dashboard = this.data.employee.dashboard || {}
+        _dashboard = this.data.employee.dashboard || {}
     ) {
         if (!scheduledShift?.id) {
             return false;
