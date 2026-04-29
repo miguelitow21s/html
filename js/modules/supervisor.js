@@ -2655,20 +2655,19 @@ export const supervisorMethods = {
                 return [];
             }
 
-            const grouped = await Promise.all(
-                restaurants.map(async (restaurant) => {
-                    try {
-                        const result = await apiClient.scheduledShiftsManage('list', {
-                            ...payload,
-                            restaurant_id: getRestaurantRecordId(restaurant),
-                        });
-                        return asArray(result);
-                    } catch (error) {
-                        console.warn(`No fue posible listar turnos para ${restaurant.name || restaurant.id}.`, error);
-                        return [];
-                    }
-                })
-            );
+            const grouped = [];
+            for (const restaurant of restaurants) {
+                try {
+                    const result = await apiClient.scheduledShiftsManage('list', {
+                        ...payload,
+                        restaurant_id: getRestaurantRecordId(restaurant),
+                    });
+                    grouped.push(asArray(result));
+                } catch (error) {
+                    console.warn(`No fue posible listar turnos para ${restaurant.name || restaurant.id}.`, error);
+                    grouped.push([]);
+                }
+            }
 
             const dedupe = new Map();
             grouped.flat().forEach((shift) => {
