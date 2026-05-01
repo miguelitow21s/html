@@ -164,8 +164,36 @@
         .logo p {
             color: var(--gray);
             font-size: 14px;
-            margin-top: 5px;
+            margin-top: 10px;
             line-height: 1.5;
+        }
+
+        .login-cobranding {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 4px;
+        }
+
+        .login-logo-r3 {
+            width: 68px;
+            height: 68px;
+            object-fit: contain;
+        }
+
+        .login-logo-sep {
+            width: 1px;
+            height: 52px;
+            background: #cbd5e1;
+            flex-shrink: 0;
+        }
+
+        .login-logo-wt {
+            height: 38px;
+            width: auto;
+            max-width: 190px;
+            object-fit: contain;
         }
 
         .consent-box {
