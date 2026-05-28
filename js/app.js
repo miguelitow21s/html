@@ -1199,6 +1199,12 @@ const app = {
         }
 
         modal.classList.add('active');
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.dataset.scrollY = String(scrollY);
         const modalContent = modal.querySelector('.modal-content');
         if (modalContent) {
             modalContent.scrollTop = 0;
@@ -1228,6 +1234,14 @@ const app = {
         }
 
         document.getElementById(modalId)?.classList.remove('active');
+        if (!document.querySelector('.modal.active')) {
+            const scrollY = Number(document.body.dataset.scrollY || 0);
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            window.scrollTo(0, scrollY);
+        }
     },
 
     setLoginError(message = '') {
@@ -1730,6 +1744,8 @@ const app = {
             return;
         }
 
+        const loginBtn = document.getElementById('login-btn');
+        if (loginBtn) loginBtn.disabled = true;
         this.showLoading('Iniciando sesión...', 'Espera un momento.');
 
         try {
@@ -1760,6 +1776,7 @@ const app = {
             this.setLoginError(this.getErrorMessage(error, 'No fue posible iniciar sesión.'));
         } finally {
             this.hideLoading();
+            if (loginBtn) loginBtn.disabled = false;
         }
     },
 
@@ -2635,6 +2652,10 @@ const app = {
             }
         } catch (error) {
             console.error(`No fue posible cargar datos para ${page}.`, error);
+            this.showToast(this.getErrorMessage(error, 'No fue posible cargar la página. Intenta de nuevo.'), {
+                tone: 'error',
+                title: 'Error al cargar',
+            });
         }
     },
 
@@ -3767,10 +3788,11 @@ const app = {
 
             if (deniedPermissions.length > 0) {
                 this.showToast(
-                    `Permite ${deniedPermissions.join(' y ')} para iniciar turnos y registrar evidencias desde la app.`,
+                    `Activa ${deniedPermissions.join(' y ')} para usar la app. En iPhone: Ajustes › Safari › ${document.title} y activa los permisos.`,
                     {
                         tone: 'warning',
-                        title: 'Permisos recomendados',
+                        title: 'Permisos requeridos',
+                        duration: 8000,
                     }
                 );
             }

@@ -21,7 +21,11 @@ export default defineConfig({
                 chunkFileNames: 'js/[name]-[hash].js',
                 entryFileNames: 'js/[name]-[hash].js',
                 assetFileNames: (assetInfo) => {
-                    if (/\.(woff2?|ttf|eot|otf)$/i.test(assetInfo.name)) {
+                    // Exclude legacy font formats — modern browsers only need woff2
+                    if (/\.(ttf|eot|otf)$/i.test(assetInfo.name)) {
+                        return 'fonts/[name]-[hash][extname]';
+                    }
+                    if (/\.woff2?$/i.test(assetInfo.name)) {
                         return 'fonts/[name]-[hash][extname]';
                     }
                     if (/\.css$/i.test(assetInfo.name)) {
@@ -29,7 +33,19 @@ export default defineConfig({
                     }
                     return 'assets/[name]-[hash][extname]';
                 }
-            }
+            },
+            plugins: [
+                {
+                    name: 'exclude-legacy-fonts',
+                    generateBundle(_, bundle) {
+                        for (const key of Object.keys(bundle)) {
+                            if (/\.(ttf|eot|otf)$/i.test(key)) {
+                                delete bundle[key];
+                            }
+                        }
+                    }
+                }
+            ]
         }
     },
     server: {

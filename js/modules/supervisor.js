@@ -1,5 +1,12 @@
 // @ts-nocheck
-import * as XLSX from 'xlsx';
+let _XLSX = null;
+async function loadXLSX() {
+    if (!_XLSX) {
+        const mod = await import('xlsx');
+        _XLSX = mod.default ?? mod;
+    }
+    return _XLSX;
+}
 import {
     CACHE_TTLS,
     DEFAULT_SYSTEM_SETTINGS,
@@ -126,7 +133,7 @@ function parseExcelDateParts(value) {
     }
 
     if (typeof value === 'number' && Number.isFinite(value)) {
-        const parsed = XLSX.SSF.parse_date_code(value);
+        const parsed = _XLSX?.SSF?.parse_date_code(value);
         if (
             parsed &&
             Number.isFinite(Number(parsed.y)) &&
@@ -195,7 +202,7 @@ function normalizeImportedTimeValue(value) {
     }
 
     if (typeof value === 'number' && Number.isFinite(value)) {
-        const parsed = XLSX.SSF.parse_date_code(value);
+        const parsed = _XLSX?.SSF?.parse_date_code(value);
         const hour = Number(parsed?.H ?? parsed?.h);
         const minute = Number(parsed?.M ?? parsed?.m);
         if (Number.isFinite(hour) && Number.isFinite(minute)) {
@@ -1076,6 +1083,7 @@ export const supervisorMethods = {
     },
 
     async importSupervisorShiftPlanWorkbook(file) {
+        const XLSX = await loadXLSX();
         const buffer = await file.arrayBuffer();
         const workbook = XLSX.read(buffer, {
             type: 'array',
@@ -3968,10 +3976,12 @@ export const supervisorMethods = {
     },
 
     async prepareSupervisorReportsPage() {
-        const restaurants = await this.getSupervisorRestaurants();
-        if (this.data.supervisor.employees.length === 0) {
-            await this.loadSupervisorEmployees();
-        }
+        const [restaurants] = await Promise.all([
+            this.getSupervisorRestaurants(),
+            this.data.supervisor.employees.length === 0
+                ? this.loadSupervisorEmployees()
+                : Promise.resolve(),
+        ]);
 
         const restaurantSelect = document.getElementById('report-restaurant-select');
         const employeeSelect = document.getElementById('report-employee-select');

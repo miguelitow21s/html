@@ -2,7 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="WorkTrace">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
     <title>WorkTrace - Sistema de Gestión de Limpieza</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Cpath d='M18 44l18-18 10 10-18 18H18z' fill='%230ea5e9'/%3E%3Cpath d='M33 17l4-4 14 14-4 4z' fill='%23f8fafc'/%3E%3C/svg%3E">
     <link href="css/styles.css" rel="stylesheet">
@@ -74,10 +79,6 @@
                         <div>
                             <strong id="otp-context-message">Ingresa el código OTP para continuar.</strong>
                         </div>
-                    </div>
-                    <div id="otp-debug-box" class="otp-debug-box hidden">
-                        <span class="info-item-label">Código mostrado en pantalla</span>
-                        <strong id="otp-debug-code">------</strong>
                     </div>
                     <div id="otp-error" class="error-message hidden"></div>
                     <div class="form-group">
@@ -219,7 +220,7 @@
         <div class="login-box">
             <div class="logo">
                 <div class="login-cobranding">
-                    <img src="css/logos/R3%20Logo%20negro%20sobre%20blanco.svg" alt="R3" class="login-logo-r3">
+                    <img src="css/logos/r3-logo.png" alt="R3" class="login-logo-r3">
                     <div class="login-logo-sep"></div>
                     <img src="css/logos/worktrace.svg" alt="WorkTrace" class="login-logo-wt">
                 </div>
@@ -277,7 +278,7 @@
     <div id="page-employee-dashboard" class="app-container hidden">
         <header class="header">
             <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
-                <img class="header-brand-logo" src="css/logos/R3%20Logo%20negro%20sobre%20blanco.svg" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
+                <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
                 <span>WorkTrace</span>
             </button>
             <div class="header-actions">
@@ -800,7 +801,7 @@
     <div id="page-supervisor-dashboard" class="app-container hidden">
         <header class="header">
             <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
-                <img class="header-brand-logo" src="css/logos/R3%20Logo%20negro%20sobre%20blanco.svg" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
+                <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
                 <span>WorkTrace Supervisor</span>
             </button>
             <div class="header-actions">
@@ -1458,8 +1459,8 @@
                     <div class="alert alert-warning admin-employee-credential-note">
                         <i class="fas fa-key"></i>
                         <div class="admin-employee-credential-copy">
-                            <strong>PIN inicial: 123456</strong>
-                            <span>El empleado deberá cambiarlo en su primer ingreso.</span>
+                            <strong>PIN inicial predeterminado</strong>
+                            <span>El empleado deberá configurar su PIN en su primer ingreso.</span>
                         </div>
                     </div>
                 </div>
@@ -1479,7 +1480,7 @@
     <div id="page-admin-dashboard" class="app-container hidden">
         <header class="header">
             <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
-                <img class="header-brand-logo" src="css/logos/R3%20Logo%20negro%20sobre%20blanco.svg" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
+                <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
                 <span>WorkTrace Admin</span>
             </button>
             <div class="header-actions">
