@@ -2158,13 +2158,14 @@
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
+            width: 100%;
+            height: 100dvh;
             background: rgba(0,0,0,0.8);
             z-index: 1000;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             padding: 20px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
             overflow-y: auto;
         }
 
@@ -2178,9 +2179,10 @@
             border-radius: 20px;
             width: 100%;
             max-width: 500px;
-            max-height: 90vh;
+            max-height: calc(100dvh - 40px);
             overflow-y: auto;
             animation: slideIn 0.3s ease-out;
+            margin: auto;
         }
 
         .modal-header {
