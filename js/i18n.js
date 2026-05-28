@@ -1,0 +1,663 @@
+// @ts-nocheck
+const STORAGE_KEY = 'worktrace_lang';
+
+export const TRANSLATIONS = {
+    es: {
+        // Login
+        'login.consent': 'Autorizo el uso de mis datos personales, ubicación GPS y cámara para fines de verificación de acceso a sitios de trabajo. Acepto los términos y condiciones del servicio.',
+        'login.email.label': 'Correo Electrónico',
+        'login.email.placeholder': 'usuario@worktrace.com',
+        'login.password.label': 'Contraseña Numérica',
+        'login.password.placeholder': '••••••',
+        'login.password.helper': 'Solo números. Debe tener exactamente 6 dígitos.',
+        'login.btn': 'Iniciar Sesión',
+        'login.forgot': '¿Olvidé mi contraseña?',
+        'login.legal': 'Esta aplicación es una plataforma tecnológica de uso exclusivo para contratistas independientes comerciales de R3 Service & Solutions Inc. El uso de esta herramienta tiene como único fin la coordinación comercial, la entrega de evidencias de calidad (Anexo A) y la validación de acceso de seguridad a las locaciones de los clientes. El contratista retiene en todo momento su autonomía operativa, de horarios y de personal.',
+
+        // OTP
+        'otp.title': 'Verificación de Seguridad del Sitio',
+        'otp.context': 'Ingresa el código de verificación para confirmar el acceso.',
+        'otp.debug.label': 'Código de prueba',
+        'otp.code.label': 'Código de Acceso',
+        'otp.code.placeholder': 'Ingresa el código',
+        'otp.submit': 'Confirmar Acceso',
+        'otp.resend': 'Reenviar',
+        'otp.back': 'Volver al login',
+
+        // Change PIN
+        'pin.title': 'Cambiar Contraseña',
+        'pin.alert': 'Debe cambiar su contraseña temporal.',
+        'pin.helper': 'Por seguridad, debe cambiar su contraseña temporal en el primer ingreso.',
+        'pin.new.label': 'Nueva Contraseña Numérica',
+        'pin.new.placeholder': 'Mínimo 6 dígitos',
+        'pin.confirm.label': 'Confirmar Contraseña',
+        'pin.confirm.placeholder': 'Repita la contraseña',
+        'pin.submit': 'Guardar Contraseña',
+
+        // Camera
+        'camera.title': 'Capturar evidencia',
+        'camera.helper': 'Usa la cámara del dispositivo para registrar la foto requerida.',
+        'camera.cancel': 'Cancelar',
+        'camera.capture': 'Tomar Foto',
+
+        // Common
+        'btn.cancel': 'Cancelar',
+        'btn.save': 'Guardar',
+        'btn.delete': 'Eliminar',
+        'btn.close': 'Cerrar',
+        'btn.back': 'Volver',
+
+        // Nav (employee)
+        'nav.home': 'Inicio',
+        'nav.profile': 'Perfil',
+        'nav.logout': 'Salir',
+
+        // Employee dashboard
+        'employee.dashboard.title': 'Servicio del Día',
+        'employee.shift.restaurant': 'Cliente',
+        'employee.shift.date': 'Fecha',
+        'employee.shift.schedule': 'Ventana de Servicio',
+        'employee.shift.location': 'Ubicación',
+        'employee.shift.noshift': 'Sin servicios asignados',
+        'employee.task.title': 'Tarea Especial Asignada',
+        'employee.task.empty': 'No hay tareas pendientes.',
+        'employee.task.observations': 'Observaciones previas:',
+        'employee.task.noobs': 'Sin observaciones.',
+        'employee.tasks.section': 'Tareas del Sitio',
+        'employee.btn.start': 'Iniciar Servicio',
+
+        // Employee profile
+        'employee.profile.title': 'Mi Perfil',
+        'employee.profile.role': 'Contratista de Limpieza',
+        'employee.profile.hours': 'Horas de servicio este mes',
+        'employee.profile.shifts': 'Servicios realizados',
+        'employee.profile.upcoming': 'Próximos servicios',
+        'employee.profile.tasks': 'Tareas especiales',
+        'employee.profile.contact': 'Información de Contacto',
+        'employee.profile.email': 'Correo',
+        'employee.profile.phone': 'Teléfono',
+        'employee.profile.specialtasks': 'Tareas Especiales',
+        'employee.profile.notasks': 'No hay tareas especiales pendientes.',
+
+        // Employee shift start
+        'shift.start.title': 'Iniciar Servicio',
+        'shift.start.gps.title': 'Verificación de Acceso al Sitio',
+        'shift.start.gps.status': 'Ubicación lista para verificar',
+        'shift.start.gps.btn': 'Verificar acceso al sitio',
+        'shift.start.health.title': 'Declaración de Condición',
+        'shift.start.health.desc': 'Confirmo que me encuentro en condiciones de iniciar el servicio contratado.',
+        'shift.start.info': 'Detalles del Servicio',
+        'shift.start.continue': 'Continuar a Evidencias',
+
+        // Employee shift photos
+        'shift.photos.title': 'Evidencias de Inicio',
+        'shift.photos.card': 'Áreas a Fotografiar',
+        'shift.photos.subtitle': 'Registre el estado inicial de cada área del sitio',
+        'shift.photos.select.strong': 'Selecciona las áreas trabajadas hoy',
+        'shift.photos.select.helper': 'Puedes elegir una o varias áreas. Solo se mostrarán sus subáreas para tomar evidencia.',
+        'shift.photos.focus.strong': 'Área que vas a fotografiar ahora',
+        'shift.photos.focus.helper': 'Elige una de las áreas seleccionadas para ver solo sus subáreas.',
+        'shift.photos.start.cleaning': 'Iniciar Servicio de Limpieza',
+
+        // Employee shift cleaning
+        'shift.cleaning.title': 'Servicio en Progreso',
+        'shift.cleaning.active': 'SERVICIO ACTIVO',
+        'shift.cleaning.alert.strong': 'No cierre la aplicación',
+        'shift.cleaning.alert.small': 'Mantenga la app abierta mientras realiza el servicio.',
+        'shift.cleaning.complete': 'He Completado el Servicio',
+
+        // Employee shift complete
+        'shift.complete.title': 'Finalizar Servicio',
+        'shift.complete.card': 'Evidencias de Cierre',
+        'shift.complete.subtitle': 'Registre el estado final de cada área del sitio',
+        'shift.complete.select.strong': 'Mismas áreas registradas al inicio',
+        'shift.complete.select.helper': 'Debes registrar la evidencia final de las mismas áreas que trabajaste al comenzar el servicio.',
+        'shift.complete.focus.strong': 'Área que vas a fotografiar ahora',
+        'shift.complete.focus.helper': 'Selecciona una de las áreas trabajadas para registrar sus evidencias finales.',
+        'shift.complete.task.title': 'Tarea Especial',
+        'shift.complete.task.detail': 'Describe el avance o estado final de la tarea asignada.',
+        'shift.complete.task.check': '¿Completó la tarea especial asignada?',
+        'shift.complete.task.req': 'Marca la casilla cuando la tarea esté completada.',
+        'shift.complete.task.nophoto': 'Sin foto',
+        'shift.complete.task.takephoto': 'Tomar foto de evidencia',
+        'shift.complete.task.notes': 'Observaciones del servicio',
+        'shift.complete.task.placeholder': 'Describe el avance o estado del servicio...',
+        'shift.complete.summary': 'Ver Resumen y Finalizar Servicio',
+
+        // Employee shift summary
+        'shift.summary.title': 'Resumen del Servicio',
+        'shift.summary.duration': 'Duración',
+        'shift.summary.photos': 'Evidencias',
+        'shift.summary.restaurant': 'Cliente',
+        'shift.summary.schedule': 'Ventana de Servicio',
+        'shift.summary.date': 'Fecha',
+        'shift.summary.finalize': 'Confirmar y Finalizar Servicio',
+
+        // Success
+        'success.title': '¡Servicio Completado!',
+        'success.message': 'El servicio ha sido finalizado exitosamente. Todas las evidencias han sido guardadas.',
+        'success.home': 'Ir al Inicio',
+        'success.profile': 'Ver Perfil',
+
+        // Supervisor nav
+        'supervisor.nav.dashboard': 'Inicio',
+        'supervisor.nav.restaurants': 'Sitios',
+        'supervisor.nav.employees': 'Contratistas',
+        'supervisor.nav.shifts': 'Proyectos',
+        'supervisor.nav.reports': 'Reportes',
+        'supervisor.nav.supervision': 'Auditar',
+
+        // Supervisor dashboard
+        'supervisor.dashboard.title': 'Panel de Control',
+        'supervisor.dashboard.quick.restaurants': 'Sitios',
+        'supervisor.dashboard.quick.employees': 'Contratistas',
+        'supervisor.dashboard.quick.shifts': 'Proyectos',
+        'supervisor.dashboard.quick.reports': 'Reportes',
+        'supervisor.dashboard.quick.supervision': 'Auditar Calidad',
+        'supervisor.dashboard.alerts': 'Alertas Recientes',
+        'supervisor.dashboard.noalerts': 'Sin alertas operativas',
+
+        // Supervisor restaurants
+        'supervisor.restaurants.title': 'Gestión de Sitios',
+        'supervisor.restaurants.new': 'Nuevo Sitio',
+
+        // Supervisor employees
+        'supervisor.employees.title': 'Gestión de Contratistas',
+        'supervisor.employees.filter.label': 'Estado',
+        'supervisor.employees.filter.all': 'Todos',
+        'supervisor.employees.filter.active': 'Activos',
+        'supervisor.employees.filter.inactive': 'Inactivos',
+        'supervisor.employees.new': 'Nuevo Contratista',
+
+        // Supervisor shifts
+        'supervisor.shifts.title': 'Asignación de Proyectos',
+        'supervisor.shifts.replicate': 'Replicar asignaciones',
+        'supervisor.shifts.schedule': 'Asignar Servicios',
+        'supervisor.shifts.search': 'Buscar contratista...',
+        'supervisor.shifts.clear': 'Limpiar',
+        'supervisor.shifts.all.employees': 'Todos los contratistas',
+
+        // Supervisor reports
+        'supervisor.reports.title': 'Reportes de Calidad',
+        'supervisor.reports.filters': 'Filtros del Reporte',
+        'supervisor.reports.start': 'Fecha Inicio',
+        'supervisor.reports.end': 'Fecha Fin',
+        'supervisor.reports.restaurant': 'Sitio / Cliente',
+        'supervisor.reports.employee': 'Contratista',
+        'supervisor.reports.all.employees': 'Todos los contratistas',
+        'supervisor.reports.generate': 'Generar Reporte',
+        'supervisor.reports.result': 'Resumen del Período',
+        'supervisor.reports.hours': 'Horas de servicio',
+        'supervisor.reports.scheduled': 'Horas de cobertura asignadas',
+        'supervisor.reports.shifts': 'Servicios del período',
+        'supervisor.reports.early': 'Servicios incompletos',
+        'supervisor.reports.preview': 'Visualizar',
+        'supervisor.reports.pdf': 'PDF',
+        'supervisor.reports.excel': 'Excel',
+
+        // Supervisor supervision
+        'supervisor.supervision.title': 'Auditoría de Calidad en Sitio',
+        'supervisor.supervision.gps': 'Verificar acceso al sitio',
+        'supervisor.supervision.restaurant': 'Sitio / Cliente',
+        'supervisor.supervision.task': 'Tarea Especial del Sitio',
+        'supervisor.supervision.create.task': 'Crear tarea especial',
+        'supervisor.supervision.photos': 'Evidencias de Auditoría',
+        'supervisor.supervision.area': 'Área',
+        'supervisor.supervision.obs': 'Observaciones de Calidad',
+        'supervisor.supervision.obs.placeholder': 'Registre las observaciones de la auditoría de calidad...',
+        'supervisor.supervision.save': 'Guardar Auditoría',
+
+        // Admin nav
+        'admin.nav.dashboard': 'Inicio',
+        'admin.nav.monitor': 'Inspecciones',
+        'admin.nav.supervisors': 'Inspectores',
+        'admin.nav.logout': 'Salir',
+
+        // Admin dashboard
+        'admin.dashboard.title': 'Control de Operaciones y Calidad',
+        'admin.dashboard.welcome.subtitle': 'Administración y Auditoría',
+        'admin.dashboard.supervisor.btn': 'Módulo de Inspectores de Calidad',
+        'admin.dashboard.monitor.btn': 'Seguimiento de Inspecciones',
+        'admin.dashboard.manage.btn': 'Administrar Inspectores',
+        'admin.dashboard.supervisions': 'Auditorías de Calidad Hoy',
+        'admin.dashboard.summary': 'Resumen Ejecutivo',
+        'admin.dashboard.restaurants': 'Sitios',
+        'admin.dashboard.shifts': 'Servicios',
+
+        // Admin monitor
+        'admin.monitor.title': 'Seguimiento de Inspecciones',
+        'admin.monitor.tracking': 'Actividad de Hoy',
+        'admin.monitor.filter.all': 'Todos los inspectores',
+        'admin.monitor.supervisions': 'Auditorías',
+        'admin.monitor.activity': 'Actividad de Inspectores',
+
+        // Admin supervisors
+        'admin.supervisors.title': 'Administrar Inspectores / Auditores',
+        'admin.supervisors.form': 'Nuevo Inspector / Auditor',
+        'admin.supervisors.name': 'Nombre completo',
+        'admin.supervisors.email': 'Correo electrónico',
+        'admin.supervisors.phone': 'Teléfono E.164',
+        'admin.supervisors.active': 'Cuenta activa',
+        'admin.supervisors.save': 'Guardar Inspector',
+        'admin.supervisors.cancel': 'Cancelar edición',
+        'admin.supervisors.search': 'Buscar',
+        'admin.supervisors.all': 'Todos',
+        'admin.supervisors.active.filter': 'Activos',
+        'admin.supervisors.inactive': 'Inactivos',
+        'admin.supervisors.list': 'Inspectores Registrados',
+
+        // Modals - schedule shift
+        'modal.shift.title': 'Asignar Servicios',
+        'modal.shift.restaurant': 'Sitio / Cliente',
+        'modal.shift.start.date': 'Fecha inicio',
+        'modal.shift.end.date': 'Fecha fin',
+        'modal.shift.start.time': 'Apertura de ventana',
+        'modal.shift.end.time': 'Cierre de ventana',
+        'modal.shift.cancel': 'Cancelar',
+        'modal.shift.save': 'Guardar Asignación',
+
+        // Modals - restaurant task
+        'modal.task.title': 'Nueva Tarea Especial',
+        'modal.task.restaurant': 'Sitio / Cliente',
+        'modal.task.task.label': 'Título de la tarea',
+        'modal.task.task.placeholder': 'Ej: Limpieza profunda de campana',
+        'modal.task.desc': 'Descripción',
+        'modal.task.desc.placeholder': 'Explica qué debe revisar o completar el contratista en este sitio...',
+        'modal.task.evidence': 'Solicitar evidencia fotográfica',
+        'modal.task.priority': 'Prioridad',
+        'modal.task.high': 'Alta',
+        'modal.task.low': 'Baja',
+        'modal.task.cancel': 'Cancelar',
+        'modal.task.submit': 'Crear tarea',
+
+        // Modals - restaurant
+        'modal.restaurant.title': 'Nuevo Sitio',
+        'modal.restaurant.name': 'Nombre del Sitio / Cliente',
+        'modal.restaurant.name.placeholder': 'Ej: Dave\'s Hot Chicken - Locación X',
+        'modal.restaurant.address': 'Dirección del sitio o ubicación actual',
+        'modal.restaurant.search': 'Buscar ubicación',
+        'modal.restaurant.location': 'Usar ubicación actual',
+        'modal.restaurant.radius': 'Radio de verificación de acceso (m)',
+        'modal.restaurant.cancel': 'Cancelar',
+        'modal.restaurant.save': 'Guardar',
+
+        // Modals - employee
+        'modal.employee.title': 'Nuevo Contratista',
+        'modal.employee.name': 'Nombre Completo',
+        'modal.employee.name.placeholder': 'Nombre del contratista',
+        'modal.employee.email': 'Correo Electrónico',
+        'modal.employee.phone': 'Teléfono',
+        'modal.employee.pin.strong': 'PIN inicial predeterminado',
+        'modal.employee.pin.span': 'El contratista deberá configurar su PIN en su primer ingreso.',
+        'modal.employee.cancel': 'Cancelar',
+        'modal.employee.save': 'Guardar',
+
+        // Confirm modals
+        'modal.cancel.shift.title': 'Cancelar servicio asignado',
+        'modal.cancel.shift.alert': 'Esta acción cancela la asignación.',
+        'modal.cancel.shift.small': 'El servicio dejará de estar disponible para el contratista.',
+        'modal.cancel.shift.reason': 'Motivo (opcional)',
+        'modal.cancel.shift.placeholder': 'Ej: cambio de operación, cierre temporal, ajuste de cobertura...',
+        'modal.cancel.shift.btn': 'Cancelar',
+        'modal.cancel.shift.submit': 'Eliminar',
+
+        'modal.deactivate.restaurant.title': 'Eliminar sitio',
+        'modal.deactivate.restaurant.alert': 'Se desactivará este sitio.',
+        'modal.deactivate.restaurant.small': 'No aparecerá en nuevas asignaciones ni en vistas operativas activas.',
+        'modal.deactivate.restaurant.copy': 'Confirma la eliminación del sitio seleccionado.',
+        'modal.deactivate.restaurant.btn': 'Cancelar',
+        'modal.deactivate.restaurant.submit': 'Eliminar',
+
+        'modal.deactivate.user.title': 'Eliminar contratista',
+        'modal.deactivate.user.alert': 'Se desactivará el acceso del contratista.',
+        'modal.deactivate.user.small': 'Eliminación lógica (no se borra físicamente del sistema).',
+        'modal.deactivate.user.copy': 'Confirma la eliminación del contratista seleccionado.',
+        'modal.deactivate.user.reason': 'Motivo (opcional)',
+        'modal.deactivate.user.placeholder': 'Ej: fin de contrato, duplicado, retiro del equipo...',
+        'modal.deactivate.user.btn': 'Cancelar',
+        'modal.deactivate.user.submit': 'Eliminar',
+    },
+
+    en: {
+        // Login
+        'login.consent': 'I authorize the use of my personal data, GPS location and camera for the purpose of verifying access to service sites. I accept the terms and conditions of service.',
+        'login.email.label': 'Email Address',
+        'login.email.placeholder': 'user@worktrace.com',
+        'login.password.label': 'Numeric Password',
+        'login.password.placeholder': '••••••',
+        'login.password.helper': 'Numbers only. Must be exactly 6 digits.',
+        'login.btn': 'Sign In',
+        'login.forgot': 'Forgot my password?',
+        'login.legal': 'This application is a technology platform for the exclusive use of independent commercial contractors of R3 Service & Solutions Inc. The sole purpose of this tool is commercial coordination, delivery of quality evidence (Exhibit A), and validation of security access to client locations. The contractor retains at all times their operational, scheduling, and personnel autonomy.',
+
+        // OTP
+        'otp.title': 'Site Security Verification',
+        'otp.context': 'Enter the verification code to confirm site access.',
+        'otp.debug.label': 'Test code',
+        'otp.code.label': 'Access Code',
+        'otp.code.placeholder': 'Enter the code',
+        'otp.submit': 'Confirm Access',
+        'otp.resend': 'Resend',
+        'otp.back': 'Back to login',
+
+        // Change PIN
+        'pin.title': 'Change Password',
+        'pin.alert': 'You must change your temporary password.',
+        'pin.helper': 'For security, you must change your temporary password on first login.',
+        'pin.new.label': 'New Numeric Password',
+        'pin.new.placeholder': 'Minimum 6 digits',
+        'pin.confirm.label': 'Confirm Password',
+        'pin.confirm.placeholder': 'Repeat the password',
+        'pin.submit': 'Save Password',
+
+        // Camera
+        'camera.title': 'Capture evidence',
+        'camera.helper': 'Use the device camera to record the required photo.',
+        'camera.cancel': 'Cancel',
+        'camera.capture': 'Take Photo',
+
+        // Common
+        'btn.cancel': 'Cancel',
+        'btn.save': 'Save',
+        'btn.delete': 'Delete',
+        'btn.close': 'Close',
+        'btn.back': 'Back',
+
+        // Nav (employee)
+        'nav.home': 'Home',
+        'nav.profile': 'Profile',
+        'nav.logout': 'Sign Out',
+
+        // Employee dashboard
+        'employee.dashboard.title': "Today's Service",
+        'employee.shift.restaurant': 'Client',
+        'employee.shift.date': 'Date',
+        'employee.shift.schedule': 'Service Window',
+        'employee.shift.location': 'Location',
+        'employee.shift.noshift': 'No assigned services',
+        'employee.task.title': 'Assigned Special Task',
+        'employee.task.empty': 'No pending tasks.',
+        'employee.task.observations': 'Previous observations:',
+        'employee.task.noobs': 'No observations.',
+        'employee.tasks.section': 'Site Tasks',
+        'employee.btn.start': 'Start Service',
+
+        // Employee profile
+        'employee.profile.title': 'My Profile',
+        'employee.profile.role': 'Cleaning Contractor',
+        'employee.profile.hours': 'Service hours this month',
+        'employee.profile.shifts': 'Completed services',
+        'employee.profile.upcoming': 'Upcoming services',
+        'employee.profile.tasks': 'Special tasks',
+        'employee.profile.contact': 'Contact Information',
+        'employee.profile.email': 'Email',
+        'employee.profile.phone': 'Phone',
+        'employee.profile.specialtasks': 'Special Tasks',
+        'employee.profile.notasks': 'No pending special tasks.',
+
+        // Employee shift start
+        'shift.start.title': 'Start Service',
+        'shift.start.gps.title': 'Site Access Verification',
+        'shift.start.gps.status': 'Location ready to verify',
+        'shift.start.gps.btn': 'Verify site access',
+        'shift.start.health.title': 'Condition Declaration',
+        'shift.start.health.desc': 'I confirm that I am in condition to begin the contracted service.',
+        'shift.start.info': 'Service Details',
+        'shift.start.continue': 'Continue to Evidence',
+
+        // Employee shift photos
+        'shift.photos.title': 'Start Evidence',
+        'shift.photos.card': 'Areas to Photograph',
+        'shift.photos.subtitle': 'Record the initial state of each site area',
+        'shift.photos.select.strong': 'Select the areas worked today',
+        'shift.photos.select.helper': 'You can choose one or more areas. Only their subareas will be shown for evidence.',
+        'shift.photos.focus.strong': 'Area you are photographing now',
+        'shift.photos.focus.helper': 'Choose one of the selected areas to see only its subareas.',
+        'shift.photos.start.cleaning': 'Start Cleaning Service',
+
+        // Employee shift cleaning
+        'shift.cleaning.title': 'Service in Progress',
+        'shift.cleaning.active': 'ACTIVE SERVICE',
+        'shift.cleaning.alert.strong': 'Do not close the application',
+        'shift.cleaning.alert.small': 'Keep the app open while performing the service.',
+        'shift.cleaning.complete': 'I Have Completed the Service',
+
+        // Employee shift complete
+        'shift.complete.title': 'End Service',
+        'shift.complete.card': 'Closing Evidence',
+        'shift.complete.subtitle': 'Record the final state of each site area',
+        'shift.complete.select.strong': 'Same areas recorded at start',
+        'shift.complete.select.helper': 'You must record the final evidence for the same areas you worked at the beginning of the service.',
+        'shift.complete.focus.strong': 'Area you are photographing now',
+        'shift.complete.focus.helper': 'Select one of the worked areas to record its final evidence.',
+        'shift.complete.task.title': 'Special Task',
+        'shift.complete.task.detail': 'Describe the progress or final status of the assigned task.',
+        'shift.complete.task.check': 'Did you complete the assigned special task?',
+        'shift.complete.task.req': 'Check the box when the task is completed.',
+        'shift.complete.task.nophoto': 'No photo',
+        'shift.complete.task.takephoto': 'Take evidence photo',
+        'shift.complete.task.notes': 'Service notes',
+        'shift.complete.task.placeholder': 'Describe the progress or status of the service...',
+        'shift.complete.summary': 'View Summary and End Service',
+
+        // Employee shift summary
+        'shift.summary.title': 'Service Summary',
+        'shift.summary.duration': 'Duration',
+        'shift.summary.photos': 'Evidence',
+        'shift.summary.restaurant': 'Client',
+        'shift.summary.schedule': 'Service Window',
+        'shift.summary.date': 'Date',
+        'shift.summary.finalize': 'Confirm and End Service',
+
+        // Success
+        'success.title': 'Service Completed!',
+        'success.message': 'The service has been successfully completed. All evidence has been saved.',
+        'success.home': 'Go to Home',
+        'success.profile': 'View Profile',
+
+        // Supervisor nav
+        'supervisor.nav.dashboard': 'Home',
+        'supervisor.nav.restaurants': 'Sites',
+        'supervisor.nav.employees': 'Contractors',
+        'supervisor.nav.shifts': 'Projects',
+        'supervisor.nav.reports': 'Reports',
+        'supervisor.nav.supervision': 'Audit',
+
+        // Supervisor dashboard
+        'supervisor.dashboard.title': 'Control Panel',
+        'supervisor.dashboard.quick.restaurants': 'Sites',
+        'supervisor.dashboard.quick.employees': 'Contractors',
+        'supervisor.dashboard.quick.shifts': 'Projects',
+        'supervisor.dashboard.quick.reports': 'Reports',
+        'supervisor.dashboard.quick.supervision': 'Quality Audit',
+        'supervisor.dashboard.alerts': 'Recent Alerts',
+        'supervisor.dashboard.noalerts': 'No operational alerts',
+
+        // Supervisor restaurants
+        'supervisor.restaurants.title': 'Site Management',
+        'supervisor.restaurants.new': 'New Site',
+
+        // Supervisor employees
+        'supervisor.employees.title': 'Contractor Management',
+        'supervisor.employees.filter.label': 'Status',
+        'supervisor.employees.filter.all': 'All',
+        'supervisor.employees.filter.active': 'Active',
+        'supervisor.employees.filter.inactive': 'Inactive',
+        'supervisor.employees.new': 'New Contractor',
+
+        // Supervisor shifts
+        'supervisor.shifts.title': 'Project Assignment',
+        'supervisor.shifts.replicate': 'Replicate assignments',
+        'supervisor.shifts.schedule': 'Assign Services',
+        'supervisor.shifts.search': 'Search contractor...',
+        'supervisor.shifts.clear': 'Clear',
+        'supervisor.shifts.all.employees': 'All contractors',
+
+        // Supervisor reports
+        'supervisor.reports.title': 'Quality Reports',
+        'supervisor.reports.filters': 'Report Filters',
+        'supervisor.reports.start': 'Start Date',
+        'supervisor.reports.end': 'End Date',
+        'supervisor.reports.restaurant': 'Site / Client',
+        'supervisor.reports.employee': 'Contractor',
+        'supervisor.reports.all.employees': 'All contractors',
+        'supervisor.reports.generate': 'Generate Report',
+        'supervisor.reports.result': 'Period Summary',
+        'supervisor.reports.hours': 'Service hours',
+        'supervisor.reports.scheduled': 'Assigned coverage hours',
+        'supervisor.reports.shifts': 'Services in period',
+        'supervisor.reports.early': 'Incomplete services',
+        'supervisor.reports.preview': 'Preview',
+        'supervisor.reports.pdf': 'PDF',
+        'supervisor.reports.excel': 'Excel',
+
+        // Supervisor supervision
+        'supervisor.supervision.title': 'On-site Quality Audit',
+        'supervisor.supervision.gps': 'Verify site access',
+        'supervisor.supervision.restaurant': 'Site / Client',
+        'supervisor.supervision.task': 'Site Special Task',
+        'supervisor.supervision.create.task': 'Create special task',
+        'supervisor.supervision.photos': 'Audit Evidence',
+        'supervisor.supervision.area': 'Area',
+        'supervisor.supervision.obs': 'Quality Observations',
+        'supervisor.supervision.obs.placeholder': 'Record quality audit observations...',
+        'supervisor.supervision.save': 'Save Audit',
+
+        // Admin nav
+        'admin.nav.dashboard': 'Home',
+        'admin.nav.monitor': 'Inspections',
+        'admin.nav.supervisors': 'Inspectors',
+        'admin.nav.logout': 'Sign Out',
+
+        // Admin dashboard
+        'admin.dashboard.title': 'Operations & Quality Control',
+        'admin.dashboard.welcome.subtitle': 'Administration & Audit',
+        'admin.dashboard.supervisor.btn': 'Quality Inspectors Module',
+        'admin.dashboard.monitor.btn': 'Inspection Tracking',
+        'admin.dashboard.manage.btn': 'Manage Inspectors',
+        'admin.dashboard.supervisions': 'Quality Audits Today',
+        'admin.dashboard.summary': 'Executive Summary',
+        'admin.dashboard.restaurants': 'Sites',
+        'admin.dashboard.shifts': 'Services',
+
+        // Admin monitor
+        'admin.monitor.title': 'Inspection Tracking',
+        'admin.monitor.tracking': "Today's Activity",
+        'admin.monitor.filter.all': 'All inspectors',
+        'admin.monitor.supervisions': 'Audits',
+        'admin.monitor.activity': 'Inspector Activity',
+
+        // Admin supervisors
+        'admin.supervisors.title': 'Manage Inspectors / Auditors',
+        'admin.supervisors.form': 'New Inspector / Auditor',
+        'admin.supervisors.name': 'Full name',
+        'admin.supervisors.email': 'Email address',
+        'admin.supervisors.phone': 'E.164 Phone',
+        'admin.supervisors.active': 'Active account',
+        'admin.supervisors.save': 'Save Inspector',
+        'admin.supervisors.cancel': 'Cancel editing',
+        'admin.supervisors.search': 'Search',
+        'admin.supervisors.all': 'All',
+        'admin.supervisors.active.filter': 'Active',
+        'admin.supervisors.inactive': 'Inactive',
+        'admin.supervisors.list': 'Registered Inspectors',
+
+        // Modals - schedule shift
+        'modal.shift.title': 'Assign Services',
+        'modal.shift.restaurant': 'Site / Client',
+        'modal.shift.start.date': 'Start date',
+        'modal.shift.end.date': 'End date',
+        'modal.shift.start.time': 'Window opens',
+        'modal.shift.end.time': 'Window closes',
+        'modal.shift.cancel': 'Cancel',
+        'modal.shift.save': 'Save Assignment',
+
+        // Modals - restaurant task
+        'modal.task.title': 'New Special Task',
+        'modal.task.restaurant': 'Site / Client',
+        'modal.task.task.label': 'Task title',
+        'modal.task.task.placeholder': 'E.g.: Deep cleaning of hood',
+        'modal.task.desc': 'Description',
+        'modal.task.desc.placeholder': 'Explain what the contractor should review or complete at this site...',
+        'modal.task.evidence': 'Request photographic evidence',
+        'modal.task.priority': 'Priority',
+        'modal.task.high': 'High',
+        'modal.task.low': 'Low',
+        'modal.task.cancel': 'Cancel',
+        'modal.task.submit': 'Create task',
+
+        // Modals - restaurant
+        'modal.restaurant.title': 'New Site',
+        'modal.restaurant.name': 'Site / Client Name',
+        'modal.restaurant.name.placeholder': "E.g.: Dave's Hot Chicken - Location X",
+        'modal.restaurant.address': 'Site address or current location',
+        'modal.restaurant.search': 'Search location',
+        'modal.restaurant.location': 'Use current location',
+        'modal.restaurant.radius': 'Access verification radius (m)',
+        'modal.restaurant.cancel': 'Cancel',
+        'modal.restaurant.save': 'Save',
+
+        // Modals - employee
+        'modal.employee.title': 'New Contractor',
+        'modal.employee.name': 'Full Name',
+        'modal.employee.name.placeholder': 'Contractor name',
+        'modal.employee.email': 'Email Address',
+        'modal.employee.phone': 'Phone',
+        'modal.employee.pin.strong': 'Default initial PIN',
+        'modal.employee.pin.span': 'The contractor must set up their PIN on first login.',
+        'modal.employee.cancel': 'Cancel',
+        'modal.employee.save': 'Save',
+
+        // Confirm modals
+        'modal.cancel.shift.title': 'Cancel assigned service',
+        'modal.cancel.shift.alert': 'This action cancels the assignment.',
+        'modal.cancel.shift.small': 'The service will no longer be available to the contractor.',
+        'modal.cancel.shift.reason': 'Reason (optional)',
+        'modal.cancel.shift.placeholder': 'E.g.: operational change, temporary closure, coverage adjustment...',
+        'modal.cancel.shift.btn': 'Cancel',
+        'modal.cancel.shift.submit': 'Delete',
+
+        'modal.deactivate.restaurant.title': 'Delete site',
+        'modal.deactivate.restaurant.alert': 'This site will be deactivated.',
+        'modal.deactivate.restaurant.small': 'It will not appear in new assignments or active operational views.',
+        'modal.deactivate.restaurant.copy': 'Confirm deletion of the selected site.',
+        'modal.deactivate.restaurant.btn': 'Cancel',
+        'modal.deactivate.restaurant.submit': 'Delete',
+
+        'modal.deactivate.user.title': 'Delete contractor',
+        'modal.deactivate.user.alert': 'Contractor access will be deactivated.',
+        'modal.deactivate.user.small': 'Logical deletion (not physically removed from the system).',
+        'modal.deactivate.user.copy': 'Confirm deletion of the selected contractor.',
+        'modal.deactivate.user.reason': 'Reason (optional)',
+        'modal.deactivate.user.placeholder': 'E.g.: contract end, duplicate, team withdrawal...',
+        'modal.deactivate.user.btn': 'Cancel',
+        'modal.deactivate.user.submit': 'Delete',
+    },
+};
+
+let _lang = localStorage.getItem(STORAGE_KEY) || 'es';
+
+export function getLang() {
+    return _lang;
+}
+
+export function setLang(lang) {
+    if (lang !== 'es' && lang !== 'en') return;
+    _lang = lang;
+    localStorage.setItem(STORAGE_KEY, lang);
+}
+
+export function t(key) {
+    return TRANSLATIONS[_lang]?.[key] ?? TRANSLATIONS['es']?.[key] ?? key;
+}
+
+export function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const key = el.dataset.i18n;
+        el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    document.documentElement.lang = _lang;
+}

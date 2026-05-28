@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { apiClient } from './api.js';
+import { getLang, setLang, applyTranslations, t } from './i18n.js';
 import {
     STORAGE_KEYS,
     ROLE_ROUTES,
@@ -467,8 +468,22 @@ const app = {
         }
     },
 
+    setLanguage(lang) {
+        setLang(lang);
+        applyTranslations();
+        this._updateLangButtons();
+    },
+
+    _updateLangButtons() {
+        const current = getLang();
+        document.getElementById('lang-es-btn')?.classList.toggle('active', current === 'es');
+        document.getElementById('lang-en-btn')?.classList.toggle('active', current === 'en');
+    },
+
     async init() {
         console.log('WorkTrace App Initializing...');
+        applyTranslations();
+        this._updateLangButtons();
         this.showLoading('Iniciando sesión...', 'Espera un momento.');
         this.configureBackend();
         this.initSupabase();
@@ -2548,6 +2563,7 @@ const app = {
         targetPage.classList.remove('hidden');
         this.currentPage = page;
         this.removeLegacyUiArtifacts();
+        applyTranslations();
 
         if (page === 'employee-shift-cleaning') {
             this.startTimerFromCurrentShift();
@@ -5756,36 +5772,39 @@ const app = {
         const activeStateLabel = dashboard?.active_shift?.state || this.data.currentShift?.state || 'Activo';
 
         if (hasActiveShift) {
-            shiftTitle = 'Turno en Progreso';
+            shiftTitle = 'Servicio en Progreso';
             shiftHelper =
-                'Ya registraste el inicio de tu turno. Desde aquí puedes continuarlo y completar las evidencias pendientes.';
-            shiftStatus = `Turno ${String(activeStateLabel).toLowerCase()}`;
+                'Ya registraste el inicio del servicio. Desde aquí puedes continuarlo y completar las evidencias pendientes.';
+            shiftStatus = `Servicio ${String(activeStateLabel).toLowerCase()}`;
             restaurantName = resolvedRestaurantName;
             scheduleText = this.getEmployeeShiftScheduleText(shift, { hasActiveShift: true });
         } else if (canStartShift) {
-            shiftTitle = isShiftToday ? 'Turno de Hoy' : 'Próximo Turno';
+            shiftTitle = isShiftToday ? 'Servicio del Día' : 'Próximo Servicio';
             shiftHelper =
-                'Tienes un turno dentro del horario permitido para iniciar. Revisa la información y continúa cuando estés en el restaurante.';
+                'Tienes un servicio disponible dentro de la ventana de acceso. Revisa la información y continúa cuando estés en el sitio.';
             shiftStatus = 'Listo para iniciar';
             restaurantName = resolvedRestaurantName;
             scheduleText = this.getEmployeeShiftScheduleText(shift);
         } else if (hasPendingShift) {
-            shiftTitle = isShiftToday ? 'Turno Programado' : 'Próximo Turno';
+            shiftTitle = isShiftToday ? 'Servicio Asignado' : 'Próximo Servicio';
             shiftHelper = isShiftToday
                 ? this.getShiftStartWindowCopy(shift)
-                : 'Ya tienes un próximo turno asignado. Aquí verás sus datos cuando se acerque la hora de inicio.';
-            shiftStatus = 'Programado';
+                : 'Ya tienes un servicio asignado. Aquí verás sus datos cuando se acerque la ventana de acceso.';
+            shiftStatus = 'Asignado';
             restaurantName = resolvedRestaurantName;
             scheduleText = this.getEmployeeShiftScheduleText(shift);
         } else if (justCompletedShift) {
-            shiftTitle = 'Turno Finalizado';
-            shiftHelper = 'No tienes más turnos pendientes por ahora. Cuando te asignen uno nuevo, aparecerá aquí.';
-            shiftStatus = 'Finalizado';
-            restaurantName = this.getResolvedShiftRestaurantName(justCompletedShift, 'Turno finalizado correctamente');
+            shiftTitle = 'Servicio Completado';
+            shiftHelper = 'No tienes servicios pendientes por ahora. Cuando te asignen uno nuevo, aparecerá aquí.';
+            shiftStatus = 'Completado';
+            restaurantName = this.getResolvedShiftRestaurantName(
+                justCompletedShift,
+                'Servicio completado correctamente'
+            );
         } else {
-            shiftTitle = 'Sin Turno Programado';
+            shiftTitle = 'Sin Servicios Asignados';
             shiftHelper = '';
-            shiftStatus = 'Sin turno';
+            shiftStatus = 'Sin servicios';
         }
         const task = this.getPrimaryEmployeeTask();
 

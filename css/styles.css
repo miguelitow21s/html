@@ -207,6 +207,53 @@
             object-fit: contain;
         }
 
+        .login-lang-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #94a3b8;
+            cursor: pointer;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .lang-btn.active {
+            color: var(--primary);
+            background: rgba(14, 165, 233, 0.1);
+        }
+
+        .lang-sep {
+            color: #cbd5e1;
+            font-size: 12px;
+            user-select: none;
+        }
+
+        .login-legal-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+        }
+
+        .login-legal-box p {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0;
+        }
+
         .consent-box {
             background: #f0f9ff;
             border-left: 4px solid var(--primary);

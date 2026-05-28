@@ -70,18 +70,18 @@
     <div id="modal-otp" class="modal" data-locked="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Verificación de seguridad</h3>
+                <h3 data-i18n="otp.title">Verificación de seguridad</h3>
             </div>
             <form id="otp-form">
                 <div class="modal-body">
                     <div class="alert alert-success">
                         <i class="fas fa-shield-alt"></i>
                         <div>
-                            <strong id="otp-context-message">Ingresa el código OTP para continuar.</strong>
+                            <strong id="otp-context-message" data-i18n="otp.context">Ingresa el código OTP para continuar.</strong>
                         </div>
                     </div>
                     <div id="otp-debug-box" class="otp-debug-box hidden">
-                        <span class="info-item-label">Código de prueba</span>
+                        <span class="info-item-label" data-i18n="otp.debug.label">Código de prueba</span>
                         <strong id="otp-debug-code">------</strong>
                     </div>
                     <div id="otp-error" class="error-message hidden"></div>
@@ -222,6 +222,12 @@
          ============================================================ -->
     <div id="page-login" class="login-container">
         <div class="login-box">
+            <div class="login-lang-toggle">
+                <button class="lang-btn" id="lang-es-btn" onclick="app.setLanguage('es')">ES</button>
+                <span class="lang-sep">|</span>
+                <button class="lang-btn" id="lang-en-btn" onclick="app.setLanguage('en')">EN</button>
+            </div>
+
             <div class="logo">
                 <div class="login-cobranding">
                     <img src="css/logos/r3-logo.png" alt="R3" class="login-logo-r3">
@@ -234,41 +240,42 @@
                 <div class="consent-box">
                     <label>
                         <input type="checkbox" id="login-consent" required>
-                        <span>
-                            Autorizo el uso de mis datos personales, ubicación GPS y cámara 
-                            para fines de verificación de turnos laborales. Acepto los términos y condiciones del servicio.
-                        </span>
+                        <span data-i18n="login.consent">Autorizo el uso de mis datos personales, ubicación GPS y cámara para fines de verificación de turnos laborales. Acepto los términos y condiciones del servicio.</span>
                     </label>
                 </div>
-                
+
                 <div id="login-notice" class="login-message login-message-success hidden"></div>
                 <div id="login-error" class="error-message hidden"></div>
-                
+
                 <div class="form-group">
-                    <label>Correo Electrónico</label>
+                    <label data-i18n="login.email.label">Correo Electrónico</label>
                     <div class="input-wrapper">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" id="login-email" class="form-control" placeholder="usuario@worktrace.com" autocomplete="username" required>
+                        <input type="email" id="login-email" class="form-control" data-i18n-placeholder="login.email.placeholder" placeholder="usuario@worktrace.com" autocomplete="username" required>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
-                    <label>Contraseña Numérica</label>
+                    <label data-i18n="login.password.label">Contraseña Numérica</label>
                     <div class="input-wrapper">
                         <i class="fas fa-lock"></i>
                         <input type="password" id="login-password" class="form-control pin-input" placeholder="••••••" inputmode="numeric" autocomplete="current-password" minlength="6" maxlength="6" pattern="[0-9]{6}" required>
                     </div>
-                    <p class="input-helper">Solo números. Debe tener exactamente 6 dígitos.</p>
+                    <p class="input-helper" data-i18n="login.password.helper">Solo números. Debe tener exactamente 6 dígitos.</p>
                 </div>
-                
+
+                <div class="login-legal-box">
+                    <p data-i18n="login.legal">Esta aplicación es una plataforma tecnológica de uso exclusivo para contratistas independientes comerciales de R3 Service &amp; Solutions Inc. El uso de esta herramienta tiene como único fin la coordinación comercial, la entrega de evidencias de calidad (Anexo A) y la validación de acceso de seguridad a las locaciones de los clientes. El contratista retiene en todo momento su autonomía operativa, de horarios y de personal.</p>
+                </div>
+
                 <button type="submit" class="btn btn-primary" id="login-btn">
                     <i class="fas fa-sign-in-alt"></i>
-                    <span>Iniciar Sesión</span>
+                    <span data-i18n="login.btn">Iniciar Sesión</span>
                 </button>
             </form>
-            
+
             <div class="forgot-password">
-                <a href="#" onclick="app.requestPasswordReset(); return false;">¿Olvidé mi contraseña?</a>
+                <a href="#" onclick="app.requestPasswordReset(); return false;" data-i18n="login.forgot">¿Olvidé mi contraseña?</a>
             </div>
         </div>
     </div>
@@ -364,15 +371,15 @@
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="app.navigate('employee-dashboard')">
                 <i class="fas fa-home"></i>
-                <span>Inicio</span>
+                <span data-i18n="nav.home">Inicio</span>
             </button>
             <button class="nav-item" onclick="app.navigate('employee-profile')">
                 <i class="fas fa-user"></i>
-                <span>Perfil</span>
+                <span data-i18n="nav.profile">Perfil</span>
             </button>
             <button class="nav-item" onclick="app.logout()">
                 <i class="fas fa-sign-out-alt"></i>
-                <span>Salir</span>
+                <span data-i18n="nav.logout">Salir</span>
             </button>
         </nav>
     </div>
@@ -451,15 +458,15 @@
         <nav class="bottom-nav">
             <button class="nav-item" onclick="app.navigate('employee-dashboard')">
                 <i class="fas fa-home"></i>
-                <span>Inicio</span>
+                <span data-i18n="nav.home">Inicio</span>
             </button>
             <button class="nav-item active" onclick="app.navigate('employee-profile')">
                 <i class="fas fa-user"></i>
-                <span>Perfil</span>
+                <span data-i18n="nav.profile">Perfil</span>
             </button>
             <button class="nav-item" onclick="app.logout()">
                 <i class="fas fa-sign-out-alt"></i>
-                <span>Salir</span>
+                <span data-i18n="nav.logout">Salir</span>
             </button>
         </nav>
     </div>
@@ -827,15 +834,15 @@
             <div class="quick-actions">
                 <button class="quick-action-btn" onclick="app.navigate('supervisor-restaurants')">
                     <i class="fas fa-store"></i>
-                    <span>Restaurantes</span>
+                    <span data-i18n="supervisor.nav.restaurants">Sitios</span>
                 </button>
                 <button class="quick-action-btn" onclick="app.navigate('supervisor-employees')">
                     <i class="fas fa-users"></i>
-                    <span>Empleados</span>
+                    <span data-i18n="supervisor.nav.employees">Contratistas</span>
                 </button>
                 <button class="quick-action-btn" onclick="app.navigate('supervisor-shifts')">
                     <i class="fas fa-calendar-alt"></i>
-                    <span>Turnos</span>
+                    <span data-i18n="supervisor.nav.shifts">Proyectos</span>
                 </button>
                 <button class="quick-action-btn" onclick="app.navigate('supervisor-reports')">
                     <i class="fas fa-chart-bar"></i>
@@ -843,7 +850,7 @@
                 </button>
                 <button class="quick-action-btn" onclick="app.navigate('supervisor-supervision')">
                     <i class="fas fa-clipboard-check"></i>
-                    <span>Supervisar</span>
+                    <span data-i18n="supervisor.nav.supervision">Auditar</span>
                 </button>
             </div>
             
@@ -866,11 +873,11 @@
         <nav class="bottom-nav">
             <button class="nav-item" onclick="app.navigate('supervisor-dashboard')">
                 <i class="fas fa-home"></i>
-                <span>Inicio</span>
+                <span data-i18n="nav.home">Inicio</span>
             </button>
             <button class="nav-item" onclick="app.logout()">
                 <i class="fas fa-sign-out-alt"></i>
-                <span>Salir</span>
+                <span data-i18n="nav.logout">Salir</span>
             </button>
         </nav>
     </div>
@@ -882,7 +889,7 @@
                 <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Gestión de Restaurantes</span>
+                <span data-i18n="supervisor.restaurants.title">Gestión de Sitios</span>
             </div>
             <div class="header-actions">
                 <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
@@ -910,7 +917,7 @@
                 <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Gestión de Empleados</span>
+                <span data-i18n="supervisor.employees.title">Gestión de Contratistas</span>
             </div>
             <div class="header-actions">
                 <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
@@ -945,7 +952,7 @@
                 <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Programación de Turnos</span>
+                <span data-i18n="supervisor.shifts.title">Asignación de Proyectos</span>
             </div>
             <div class="header-actions">
                 <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
@@ -984,7 +991,7 @@
                         <option value="">Todos los restaurantes</option>
                     </select>
                     <select id="supervisor-shifts-filter-employee" class="dark-control">
-                        <option value="">Todos los empleados</option>
+                        <option value="" data-i18n="supervisor.shifts.all.employees">Todos los contratistas</option>
                     </select>
                     <input type="text" id="supervisor-shifts-filter-search" class="dark-control" placeholder="Buscar empleado...">
                     <button type="button" class="btn btn-secondary btn-inline" onclick="app.clearSupervisorShiftFilters()">
@@ -1058,7 +1065,7 @@
                     <div class="form-group report-filter-field">
                         <label for="report-employee-select">Empleado</label>
                         <select id="report-employee-select" class="dark-control">
-                            <option value="">Todos los empleados</option>
+                            <option value="" data-i18n="supervisor.shifts.all.employees">Todos los contratistas</option>
                         </select>
                     </div>
                 </div>
@@ -1158,7 +1165,7 @@
                 <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Supervisión en Sitio</span>
+                <span data-i18n="supervisor.supervision.title">Auditoría de Calidad en Sitio</span>
             </div>
             <div class="header-actions">
                 <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
@@ -1245,11 +1252,11 @@
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="app.navigate('supervisor-dashboard')">
                 <i class="fas fa-home"></i>
-                <span>Inicio</span>
+                <span data-i18n="nav.home">Inicio</span>
             </button>
             <button class="nav-item" onclick="app.logout()">
                 <i class="fas fa-sign-out-alt"></i>
-                <span>Salir</span>
+                <span data-i18n="nav.logout">Salir</span>
             </button>
         </nav>
     </div>
@@ -1258,7 +1265,7 @@
     <div id="modal-supervisor-schedule-shift" class="modal">
         <div class="modal-content shift-scheduler-modal-content">
             <div class="modal-header">
-                <h3>Programar Turnos</h3>
+                <h3 data-i18n="modal.shift.title">Asignar Servicios</h3>
                 <button class="btn-close" onclick="app.closeModal('modal-supervisor-schedule-shift')">&times;</button>
             </div>
             <form id="supervisor-shift-form">
@@ -1270,7 +1277,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Empleados</label>
+                        <label data-i18n="supervisor.employees.title">Contratistas</label>
                         <div id="sched-shift-employee-picker" class="shift-batch-picker"></div>
                     </div>
                     <div class="form-row two-col">
@@ -1495,22 +1502,22 @@
             <div class="page-title">Panel de Superusuario</div>
 
             <div class="welcome-banner" style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);">
-                <h2>Control Total del Sistema</h2>
+                <h2 data-i18n="admin.dashboard.title">Control de Operaciones y Calidad</h2>
                 <p>Administración y supervisión</p>
             </div>
             
             <div class="quick-actions">
                 <button class="quick-action-btn" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-user-tie"></i>
-                    <span>Funciones Supervisor</span>
+                    <span data-i18n="admin.dashboard.supervisor.btn">Módulo de Inspectores de Calidad</span>
                 </button>
                 <button class="quick-action-btn" onclick="app.adminAction('monitoreo-supervisoras')">
                     <i class="fas fa-clipboard-check"></i>
-                    <span>Monitorear Supervisoras</span>
+                    <span data-i18n="admin.dashboard.monitor.btn">Seguimiento de Inspecciones</span>
                 </button>
                 <button class="quick-action-btn" onclick="app.adminAction('supervisores')">
                     <i class="fas fa-user-shield"></i>
-                    <span>Gestionar Supervisores</span>
+                    <span data-i18n="admin.dashboard.manage.btn">Administrar Inspectores</span>
                 </button>
             </div>
 
@@ -1541,11 +1548,11 @@
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="app.navigate('admin-dashboard')">
                 <i class="fas fa-home"></i>
-                <span>Inicio</span>
+                <span data-i18n="nav.home">Inicio</span>
             </button>
             <button class="nav-item" onclick="app.logout()">
                 <i class="fas fa-sign-out-alt"></i>
-                <span>Salir</span>
+                <span data-i18n="nav.logout">Salir</span>
             </button>
         </nav>
     </div>
@@ -1591,15 +1598,15 @@
         <nav class="bottom-nav">
             <button class="nav-item" onclick="app.navigate('admin-dashboard')">
                 <i class="fas fa-home"></i>
-                <span>Inicio</span>
+                <span data-i18n="nav.home">Inicio</span>
             </button>
             <button class="nav-item active" onclick="app.navigate('admin-supervision-monitor')">
                 <i class="fas fa-clipboard-check"></i>
-                <span>Supervisar</span>
+                <span data-i18n="supervisor.nav.supervision">Auditar</span>
             </button>
             <button class="nav-item" onclick="app.logout()">
                 <i class="fas fa-sign-out-alt"></i>
-                <span>Salir</span>
+                <span data-i18n="nav.logout">Salir</span>
             </button>
         </nav>
     </div>
@@ -1611,7 +1618,7 @@
                 <button class="header-btn" onclick="app.navigate('admin-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Gestionar Supervisores</span>
+                <span data-i18n="admin.dashboard.manage.btn">Administrar Inspectores</span>
             </div>
         </header>
 
@@ -1707,7 +1714,7 @@
         <nav class="bottom-nav">
             <button class="nav-item" onclick="app.navigate('admin-dashboard')">
                 <i class="fas fa-home"></i>
-                <span>Inicio</span>
+                <span data-i18n="nav.home">Inicio</span>
             </button>
             <button class="nav-item active" onclick="app.navigate('admin-supervisors')">
                 <i class="fas fa-user-shield"></i>
@@ -1715,7 +1722,7 @@
             </button>
             <button class="nav-item" onclick="app.logout()">
                 <i class="fas fa-sign-out-alt"></i>
-                <span>Salir</span>
+                <span data-i18n="nav.logout">Salir</span>
             </button>
         </nav>
     </div>

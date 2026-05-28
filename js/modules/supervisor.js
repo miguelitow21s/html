@@ -396,7 +396,7 @@ export const supervisorMethods = {
                     ...item,
                     ...(employee && typeof employee === 'object' ? employee : {}),
                 },
-                'Empleado'
+                'Contratista'
             ),
             email: employee.email || item.email || '-',
             phone_e164: employee.phone_e164 || employee.phone_number || item.phone_e164 || '-',
@@ -845,7 +845,7 @@ export const supervisorMethods = {
             console.warn('No fue posible cargar empleados para programación masiva.', error);
             this.setShiftBatchPickerEmpty(
                 container,
-                'No fue posible cargar los empleados disponibles para este restaurante.'
+                'No fue posible cargar los contratistas disponibles para este sitio.'
             );
             this.supervisorBatchSelectedEmployees = [];
             return [];
@@ -1071,7 +1071,7 @@ export const supervisorMethods = {
         try {
             await this.importSupervisorShiftPlanWorkbook(file);
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible importar el Excel de turnos.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible importar el Excel de servicios.'), {
                 tone: 'error',
                 title: 'No fue posible importar el Excel',
             });
@@ -2335,7 +2335,7 @@ export const supervisorMethods = {
         return null;
     },
 
-    getResolvedShiftEmployeeName(shift, fallback = 'Empleado') {
+    getResolvedShiftEmployeeName(shift, fallback = 'Contratista') {
         const employeeId =
             shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '';
         const employeeAliasCandidates = [
@@ -2536,7 +2536,7 @@ export const supervisorMethods = {
                         restaurants = mapRestaurantList(result);
                     } catch (error) {
                         console.warn(
-                            'No fue posible cargar todos los restaurantes para supervisora. Se usará el listado disponible como respaldo.',
+                            'No fue posible cargar todos los sitios para inspectora. Se usará el listado disponible como respaldo.',
                             error
                         );
                         const assignments = await apiClient.restaurantStaffManage('list_my_restaurants');
@@ -2711,7 +2711,7 @@ export const supervisorMethods = {
             this.getSupervisorShiftList({ forceRestaurants: false }),
             this.loadSupervisorEmployees(false).catch((error) => {
                 console.warn(
-                    'No fue posible precargar el directorio de empleados para resolver nombres en alertas.',
+                    'No fue posible precargar el directorio de contratistas para resolver nombres en alertas.',
                     error
                 );
             }),
@@ -3369,7 +3369,7 @@ export const supervisorMethods = {
         if (lastWeekShifts.length === 0) {
             this.showToast('No hay turnos en la semana anterior para replicar.', {
                 tone: 'warning',
-                title: 'Sin turnos anteriores',
+                title: 'Sin asignaciones anteriores',
             });
             return;
         }
@@ -3422,7 +3422,7 @@ export const supervisorMethods = {
                     : `${success} turno(s) replicado(s) correctamente.`;
             this.showToast(msg, { tone, title: 'Semana replicada' });
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible replicar la semana anterior.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible replicar las asignaciones.'), {
                 tone: 'error',
                 title: 'Error al replicar',
             });
@@ -3527,7 +3527,7 @@ export const supervisorMethods = {
 
             employeeMap.set(employeeId, {
                 id: employeeId,
-                name: getEmployeeDisplayName(employee, 'Empleado'),
+                name: getEmployeeDisplayName(employee, 'Contratista'),
             });
         });
 
@@ -3542,7 +3542,7 @@ export const supervisorMethods = {
             employeeMap.set(employeeId, {
                 id: employeeId,
                 name: this.normalizeSupervisorShiftEmployeeLabel(
-                    this.getResolvedShiftEmployeeName(shift, 'Empleado'),
+                    this.getResolvedShiftEmployeeName(shift, 'Contratista'),
                     'Empleado por confirmar'
                 ),
             });
@@ -3557,7 +3557,7 @@ export const supervisorMethods = {
             ${options
                 .map(
                     (option) => `
-                <option value="${escapeHtml(option.id)}">${escapeHtml(option.name || 'Empleado')}</option>
+                <option value="${escapeHtml(option.id)}">${escapeHtml(option.name || 'Contratista')}</option>
             `
                 )
                 .join('')}
@@ -3846,7 +3846,7 @@ export const supervisorMethods = {
 
         displayEmployees.forEach((emp) => {
             const empId = String(emp.id || '');
-            html += `<div class="ssg-employee-cell">${escapeHtml(getEmployeeDisplayName(emp, 'Empleado'))}</div>`;
+            html += `<div class="ssg-employee-cell">${escapeHtml(getEmployeeDisplayName(emp, 'Contratista'))}</div>`;
             weekDays.forEach(({ key }) => {
                 const cellShifts = shiftsByKey.get(`${empId}|${key}`) || [];
                 html +=
@@ -3873,7 +3873,7 @@ export const supervisorMethods = {
         if (normalizedShiftId == null) {
             this.showToast('No se pudo identificar el turno programado a eliminar.', {
                 tone: 'warning',
-                title: 'Turno inválido',
+                title: 'Servicio inválido',
             });
             return;
         }
@@ -3895,7 +3895,7 @@ export const supervisorMethods = {
         if (shiftId == null) {
             this.showToast('No se pudo identificar el turno programado a eliminar.', {
                 tone: 'warning',
-                title: 'Turno inválido',
+                title: 'Servicio inválido',
             });
             this.closeCancelScheduledShiftModal();
             return;
@@ -3926,7 +3926,7 @@ export const supervisorMethods = {
         if (normalizedShiftId == null) {
             this.showToast('No se pudo identificar el turno programado a eliminar.', {
                 tone: 'warning',
-                title: 'Turno inválido',
+                title: 'Servicio inválido',
             });
             return;
         }

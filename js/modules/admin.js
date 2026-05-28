@@ -218,7 +218,7 @@ export const adminMethods = {
                     }
 
                     console.warn(
-                        `No fue posible listar supervisiones para ${restaurant?.name || restaurant?.id}.`,
+                        `No fue posible listar auditorías para ${restaurant?.name || restaurant?.id}.`,
                         error
                     );
                 }
@@ -367,8 +367,8 @@ export const adminMethods = {
             containerId: 'admin-supervision-monitor-list',
             maxItems: Number.POSITIVE_INFINITY,
             emptyMessage: hasSupervisorFilter
-                ? 'No hay supervisiones hoy para esta supervisora.'
-                : 'Aún no hay supervisiones registradas hoy para monitorear.',
+                ? 'No hay auditorías hoy para este inspector.'
+                : 'Aún no hay auditorías registradas hoy para seguimiento.',
         });
     },
 
@@ -376,7 +376,7 @@ export const adminMethods = {
         const {
             containerId = 'admin-supervisions-list',
             maxItems = 6,
-            emptyMessage = 'Aún no hay supervisiones registradas para hoy.',
+            emptyMessage = 'Aún no hay auditorías de calidad registradas para hoy.',
         } = options;
         const container = document.getElementById(containerId);
         if (!container) {
@@ -478,7 +478,7 @@ export const adminMethods = {
         container.innerHTML = `
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(String(totalSupervisions))}</div>
-                <div class="stat-label">Supervisiones</div>
+                <div class="stat-label">Auditorías</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(String(uniqueSupervisors.size))}</div>

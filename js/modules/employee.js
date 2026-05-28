@@ -327,7 +327,7 @@ export const employeeMethods = {
     },
 
     async openEmployeeShiftStart() {
-        this.showLoading('Verificando turno...', 'Consultando si tienes un turno disponible para continuar.');
+        this.showLoading('Verificando servicio...', 'Consultando si tienes un servicio disponible para continuar.');
 
         try {
             await this.loadEmployeeDashboard(true);
@@ -340,7 +340,7 @@ export const employeeMethods = {
             if (!hasShiftAvailable) {
                 this.showToast(this.getShiftStartWindowCopy(this.data.currentScheduledShift), {
                     tone: 'warning',
-                    title: 'Turno no disponible',
+                    title: 'Servicio no disponible',
                 });
                 this.navigate('employee-dashboard');
                 return;
@@ -348,7 +348,7 @@ export const employeeMethods = {
 
             this.navigate('employee-shift-start');
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible validar tu turno actual.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible validar tu servicio actual.'), {
                 tone: 'error',
                 title: 'No fue posible continuar',
             });
@@ -479,7 +479,7 @@ export const employeeMethods = {
         if (!shift || (!hasActiveShift && !canStartShift)) {
             this.showToast(this.getShiftStartWindowCopy(this.data.currentScheduledShift), {
                 tone: 'warning',
-                title: 'Turno no disponible',
+                title: 'Servicio no disponible',
             });
             this.navigate('employee-dashboard');
             return;
@@ -514,7 +514,7 @@ export const employeeMethods = {
 
         document.getElementById('shift-start-restaurant').textContent = this.getResolvedShiftRestaurantName(
             { ...shift, restaurant },
-            hasActiveShift ? 'Restaurante del turno activo' : 'Restaurante del turno programado'
+            hasActiveShift ? 'Sitio del servicio activo' : 'Sitio del servicio asignado'
         );
         document.getElementById('shift-start-schedule').textContent = this.getEmployeeShiftScheduleText(shift, {
             hasActiveShift,
@@ -523,7 +523,7 @@ export const employeeMethods = {
         if (button) {
             button.innerHTML = hasActiveShift
                 ? this.shouldResumeActiveShiftInCleaning(shift)
-                    ? 'Continuar con el Turno Activo <i class="fas fa-arrow-right"></i>'
+                    ? 'Continuar con el Servicio Activo <i class="fas fa-arrow-right"></i>'
                     : 'Completar Fotos Iniciales <i class="fas fa-camera"></i>'
                 : 'Registrar Inicio y Continuar <i class="fas fa-arrow-right"></i>';
         }
@@ -567,7 +567,7 @@ export const employeeMethods = {
         }
 
         if (!this.healthCertified) {
-            this.showToast('Debes marcar el certificado de salud/aptitud antes de iniciar el turno.', {
+            this.showToast('Debes marcar el certificado de salud/aptitud antes de iniciar el servicio.', {
                 tone: 'warning',
                 title: 'Falta certificado de salud',
             });
@@ -577,12 +577,12 @@ export const employeeMethods = {
         if (!hasActiveShift && !canStartShift) {
             this.showToast(this.getShiftStartWindowCopy(scheduledShift), {
                 tone: 'warning',
-                title: 'Turno no disponible',
+                title: 'Servicio no disponible',
             });
             return;
         }
 
-        this.showLoading('Iniciando turno...', 'Espera un momento.');
+        this.showLoading('Iniciando servicio...', 'Espera un momento.');
 
         try {
             await this.ensureOtpVerification();
@@ -627,7 +627,7 @@ export const employeeMethods = {
 
             if (hasActiveShift && !resumeInCleaning) {
                 this.showToast(
-                    'Aún faltan evidencias iniciales del turno activo. Completa las fotos de inicio para continuar.',
+                    'Aún faltan evidencias iniciales del servicio activo. Completa las evidencias de inicio para continuar.',
                     {
                         tone: 'info',
                         title: 'Faltan fotos iniciales',
@@ -640,23 +640,23 @@ export const employeeMethods = {
             if (this.isShiftStartOutsideWindow(error)) {
                 this.showToast(this.getShiftStartWindowOutsideMessage(error), {
                     tone: 'warning',
-                    title: 'Turno fuera de ventana',
+                    title: 'Fuera de ventana de acceso',
                 });
                 void this.loadEmployeeDashboard(true);
                 return;
             }
 
             if (this.isOutsideAllowedShiftArea(error)) {
-                this.showToast('No se puede iniciar el turno porque no estás dentro del área permitida o asignada.', {
+                this.showToast('No se puede iniciar el servicio porque no estás dentro del área de acceso autorizada.', {
                     tone: 'warning',
                     title: 'Área no permitida',
                 });
                 return;
             }
 
-            this.showToast(this.getErrorMessage(error, 'No fue posible iniciar el turno.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible iniciar el servicio.'), {
                 tone: 'error',
-                title: 'No fue posible iniciar el turno',
+                title: 'No fue posible iniciar el servicio',
             });
         } finally {
             this.hideLoading();
@@ -668,7 +668,7 @@ export const employeeMethods = {
         const shiftId = this.data.currentShift?.id;
 
         if (!shiftId) {
-            throw new Error('No hay un turno activo para adjuntar evidencias.');
+            throw new Error('No hay un servicio activo para adjuntar evidencias.');
         }
 
         if (entries.length === 0) return;
@@ -735,7 +735,7 @@ export const employeeMethods = {
         if (requireStartPhotos && progress.remainingCount > 0) {
             const isActiveShift = Boolean(this.data.currentShift?.id);
             const message = isActiveShift
-                ? `Faltan ${progress.remainingCount} evidencia(s) inicial(es) para continuar con el turno activo.`
+                ? `Faltan ${progress.remainingCount} evidencia(s) inicial(es) para continuar con el servicio activo.`
                 : 'Debes tomar las fotos iniciales de todas las subáreas requeridas.';
             this.showToast(message, {
                 tone: 'warning',
@@ -812,7 +812,7 @@ export const employeeMethods = {
         const shift = this.data.currentShift || this.data.currentScheduledShift;
         const restaurantElement = document.getElementById('cleaning-restaurant');
         if (restaurantElement) {
-            restaurantElement.textContent = this.getResolvedShiftRestaurantName(shift, 'Turno activo');
+            restaurantElement.textContent = this.getResolvedShiftRestaurantName(shift, 'Servicio activo');
         }
     },
 
@@ -960,7 +960,7 @@ export const employeeMethods = {
         );
 
         if (!confirmed && requireTaskCompletion) {
-            throw new Error('Debes confirmar la tarea especial antes de finalizar el turno.');
+            throw new Error('Debes confirmar la tarea especial antes de finalizar el servicio.');
         }
 
         if (!confirmed) {
@@ -1005,9 +1005,9 @@ export const employeeMethods = {
 
     async finalizeShift() {
         if (!this.data.currentShift?.id) {
-            this.showToast('No hay un turno activo para finalizar.', {
+            this.showToast('No hay un servicio activo para finalizar.', {
                 tone: 'warning',
-                title: 'Sin turno activo',
+                title: 'Sin servicio activo',
             });
             return;
         }
@@ -1083,7 +1083,7 @@ export const employeeMethods = {
             if (requiresEarlyEndReason && !earlyEndReason) {
                 this.hideLoading();
                 this.showToast(
-                    'Debes indicar el motivo de salida anticipada para finalizar el turno antes de la hora programada.',
+                    'Debes indicar el motivo para finalizar el servicio antes del cierre de la ventana de acceso.',
                     {
                         tone: 'warning',
                         title: 'Falta el motivo',
@@ -1123,11 +1123,11 @@ export const employeeMethods = {
             this.invalidateCache('employeeDashboard', 'employeeHoursHistory');
             this.showSuccessScreen();
             void this.loadEmployeeDashboard(true).catch((error) => {
-                console.warn('No fue posible refrescar el dashboard después de finalizar el turno.', error);
+                console.warn('No fue posible refrescar el dashboard después de finalizar el servicio.', error);
             });
         } catch (error) {
             const detailedMessage = this.getShiftFinalizeDetailedErrorMessage(error);
-            const visibleMessage = detailedMessage || this.getErrorMessage(error, 'No fue posible finalizar el turno.');
+            const visibleMessage = detailedMessage || this.getErrorMessage(error, 'No fue posible finalizar el servicio.');
             const requestId = String(
                 error?.requestId || error?.payload?.request_id || error?.payload?.error?.request_id || ''
             ).trim();
@@ -1174,7 +1174,7 @@ export const employeeMethods = {
 
             this.showToast(visibleMessage, {
                 tone: 'error',
-                title: 'No fue posible finalizar el turno',
+                title: 'No fue posible finalizar el servicio',
                 duration: 12000,
                 action: {
                     label: 'Copiar error',
@@ -1458,7 +1458,7 @@ export const employeeMethods = {
     getEmployeeRestaurantTaskErrorMessage(error, fallback) {
         const code = this.getEmployeeRestaurantTaskDiagnosticCode(error);
         if (code === 'NO_ACTIVE_SHIFT')
-            return 'Necesitas tener un turno activo en este restaurante para completar esta tarea.';
+            return 'Necesitas tener un servicio activo en este sitio para completar esta tarea.';
         if (code === 'RESTAURANT_FORBIDDEN') return 'No tienes permiso para operar tareas en este restaurante.';
         const httpCode = error?.payload?.error?.code;
         if (httpCode === 409) return 'Esta tarea ya fue completada o cancelada.';
