@@ -522,6 +522,43 @@ const app = {
         }
     },
 
+    async resetUserPin(email, { subjectLabel = 'usuario' } = {}) {
+        if (!email) return;
+
+        const subjectCapitalized = subjectLabel.charAt(0).toUpperCase() + subjectLabel.slice(1);
+        const confirmed = window.confirm(
+            `¿Generar un nuevo PIN para ${email}?\n\nEl ${subjectLabel} deberá cambiarlo al ingresar.`
+        );
+        if (!confirmed) return;
+
+        this.showLoading('Reseteando PIN...', 'Generando un nuevo PIN aleatorio.');
+
+        try {
+            const result = await apiClient.adminUsersManage('reset_password', { email });
+
+            const newPin = result?.new_pin;
+            if (newPin) {
+                this.showInitialPinModal({
+                    pin: newPin,
+                    email: result?.email || email,
+                    emailSent: Boolean(result?.pin_email_sent),
+                });
+            } else {
+                this.showToast(`PIN del ${subjectLabel} restablecido correctamente.`, {
+                    tone: 'success',
+                    title: `${subjectCapitalized} actualizado`,
+                });
+            }
+        } catch (error) {
+            this.showToast(this.getErrorMessage(error, `No fue posible resetear el PIN del ${subjectLabel}.`), {
+                tone: 'error',
+                title: 'No fue posible resetear el PIN',
+            });
+        } finally {
+            this.hideLoading();
+        }
+    },
+
     setLanguage(lang) {
         setLang(lang);
         applyTranslations();
@@ -946,6 +983,24 @@ const app = {
                 }
                 event.preventDefault();
                 void this.handleClearPhoneUser(userId);
+                return;
+            }
+            case 'reset-pin-user': {
+                const email = String(source.dataset.email || '').trim();
+                if (!email) {
+                    return;
+                }
+                event.preventDefault();
+                void this.resetUserPin(email, { subjectLabel: 'contratista' });
+                return;
+            }
+            case 'admin-reset-pin-supervisor': {
+                const email = String(source.dataset.email || '').trim();
+                if (!email) {
+                    return;
+                }
+                event.preventDefault();
+                void this.resetUserPin(email, { subjectLabel: 'inspector' });
                 return;
             }
             case 'confirm-cancel-scheduled-shift': {

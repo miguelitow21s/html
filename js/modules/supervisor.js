@@ -3175,6 +3175,16 @@ export const supervisorMethods = {
             }
 
             if (employee.is_active !== false) {
+                const resetPinBtn = document.createElement('button');
+                resetPinBtn.type = 'button';
+                resetPinBtn.className = 'btn btn-secondary btn-inline';
+                resetPinBtn.dataset.action = 'reset-pin-user';
+                resetPinBtn.dataset.email = String(employee.email || '');
+                resetPinBtn.dataset.userId = String(employee.id || '');
+                resetPinBtn.textContent = 'Resetear PIN';
+                resetPinBtn.title = 'Genera un nuevo PIN y obliga al contratista a cambiarlo al ingresar.';
+                actions.appendChild(resetPinBtn);
+
                 const removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
                 removeBtn.className = 'btn btn-danger btn-inline';

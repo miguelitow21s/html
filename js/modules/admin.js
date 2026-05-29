@@ -914,6 +914,17 @@ export const adminMethods = {
                         <button
                             type="button"
                             class="btn btn-secondary btn-inline"
+                            data-action="admin-reset-pin-supervisor"
+                            data-supervisor-id="${escapeHtml(supervisorId)}"
+                            data-email="${escapeHtml(supervisor.email || '')}"
+                            title="Genera un nuevo PIN y obliga al inspector a cambiarlo al ingresar."
+                        >
+                            <i class="fas fa-key"></i>
+                            <span>Resetear PIN</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-secondary btn-inline"
                             data-action="admin-edit-supervisor"
                             data-supervisor-id="${escapeHtml(supervisorId)}"
                         >
