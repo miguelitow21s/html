@@ -135,6 +135,41 @@
         </div>
     </div>
 
+    <div id="modal-initial-pin" class="modal" data-locked="true">
+        <div class="modal-content confirm-modal-content">
+            <div class="modal-header">
+                <h3 data-i18n="pin.initial.title">Guarda este PIN inicial</h3>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <div>
+                        <strong data-i18n="pin.initial.alert">Solo se muestra una vez</strong><br>
+                        <small data-i18n="pin.initial.helper">Cópialo ahora y envíaselo al contratista por el canal que prefieras. No podrás verlo de nuevo.</small>
+                    </div>
+                </div>
+                <div class="initial-pin-display">
+                    <span class="initial-pin-label" data-i18n="pin.initial.for">Cuenta:</span>
+                    <strong id="initial-pin-email">contratista@ejemplo.com</strong>
+                </div>
+                <div class="initial-pin-code-row">
+                    <code id="initial-pin-code" class="initial-pin-code">000000</code>
+                    <button type="button" id="initial-pin-copy-btn" class="btn btn-secondary" onclick="app.copyInitialPin()">
+                        <i class="fas fa-copy"></i>
+                        <span data-i18n="pin.initial.copy">Copiar</span>
+                    </button>
+                </div>
+                <p id="initial-pin-email-status" class="muted-copy hidden"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="app.closeInitialPinModal()">
+                    <i class="fas fa-check"></i>
+                    <span data-i18n="pin.initial.done">Listo, ya lo guardé</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-scheduled-shift-cancel" class="modal" data-locked="true">
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">

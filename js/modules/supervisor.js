@@ -6113,7 +6113,7 @@ export const supervisorMethods = {
             return;
         }
 
-        this.showLoading('Creando empleado...', 'Registrando usuario y credenciales iniciales.');
+        this.showLoading('Creando contratista...', 'Registrando cuenta y credenciales iniciales.');
 
         try {
             const result = await apiClient.adminUsersManage('create', {
@@ -6129,24 +6129,30 @@ export const supervisorMethods = {
             this.closeModal('modal-admin-employee');
             await this.loadSupervisorEmployees(true);
 
-            const initialPassword =
-                result?.temporary_password || result?.generated_password || result?.password || '123456';
-            this.showToast(`Empleado creado correctamente. Clave inicial: ${initialPassword}.`, {
-                tone: 'success',
-                title: 'Creación exitosa',
-                duration: 5200,
-            });
+            const initialPin = result?.initial_pin;
+            if (initialPin) {
+                this.showInitialPinModal({
+                    pin: initialPin,
+                    email,
+                    emailSent: Boolean(result?.pin_email_sent),
+                });
+            } else {
+                this.showToast('Contratista creado correctamente.', {
+                    tone: 'success',
+                    title: 'Creación exitosa',
+                });
+            }
         } catch (error) {
             if (!this.isAdminRole() && error?.status === 403) {
-                this.showToast(this.getErrorMessage(error, 'Tu cuenta de supervisora no pudo crear el empleado.'), {
+                this.showToast(this.getErrorMessage(error, 'Tu cuenta no pudo crear el contratista.'), {
                     tone: 'error',
                     title: 'Permiso insuficiente',
                 });
                 return;
             }
-            this.showToast(this.getErrorMessage(error, 'No fue posible crear el empleado.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible crear el contratista.'), {
                 tone: 'error',
-                title: 'No fue posible crear el empleado',
+                title: 'No fue posible crear el contratista',
             });
         } finally {
             this.hideLoading();

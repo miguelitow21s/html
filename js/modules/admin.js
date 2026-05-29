@@ -630,7 +630,7 @@ export const adminMethods = {
                   is_active: isActive,
               };
 
-        this.showLoading(isEditing ? 'Actualizando supervisora...' : 'Creando supervisora...', 'Guardando los datos.');
+        this.showLoading(isEditing ? 'Actualizando inspector...' : 'Creando inspector...', 'Guardando los datos.');
 
         try {
             const result = await apiClient.adminUsersManage(isEditing ? 'update' : 'create', payload);
@@ -638,24 +638,30 @@ export const adminMethods = {
             this.resetAdminSupervisorForm();
             await this.loadAdminSupervisors(true);
 
-            const initialPassword =
-                result?.temporary_password || result?.generated_password || result?.password || '123456';
             if (!isEditing) {
-                this.showToast(`Supervisora creada correctamente. Clave inicial: ${initialPassword}.`, {
-                    tone: 'success',
-                    title: 'Creación exitosa',
-                    duration: 5200,
-                });
+                const initialPin = result?.initial_pin;
+                if (initialPin) {
+                    this.showInitialPinModal({
+                        pin: initialPin,
+                        email,
+                        emailSent: Boolean(result?.pin_email_sent),
+                    });
+                } else {
+                    this.showToast('Inspector creado correctamente.', {
+                        tone: 'success',
+                        title: 'Creación exitosa',
+                    });
+                }
             } else {
-                this.showToast('Supervisora actualizada correctamente.', {
+                this.showToast('Inspector actualizado correctamente.', {
                     tone: 'success',
                     title: 'Actualización exitosa',
                 });
             }
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible guardar la supervisora.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible guardar el inspector.'), {
                 tone: 'error',
-                title: 'No fue posible guardar la supervisora',
+                title: 'No fue posible guardar el inspector',
             });
         } finally {
             this.hideLoading();

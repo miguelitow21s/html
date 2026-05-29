@@ -468,6 +468,60 @@ const app = {
         }
     },
 
+    showInitialPinModal({ pin, email = '', emailSent = false } = {}) {
+        if (!pin) return;
+        const modal = document.getElementById('modal-initial-pin');
+        const codeEl = document.getElementById('initial-pin-code');
+        const emailEl = document.getElementById('initial-pin-email');
+        const statusEl = document.getElementById('initial-pin-email-status');
+        if (!modal || !codeEl) return;
+
+        codeEl.textContent = String(pin);
+        if (emailEl) emailEl.textContent = email || '';
+
+        if (statusEl) {
+            statusEl.textContent = emailSent ? t('pin.initial.email.sent') : t('pin.initial.email.notsent');
+            statusEl.classList.remove('hidden');
+        }
+
+        modal.classList.add('active');
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.dataset.scrollY = String(scrollY);
+    },
+
+    closeInitialPinModal() {
+        this.closeModal('modal-initial-pin');
+    },
+
+    async copyInitialPin() {
+        const codeEl = document.getElementById('initial-pin-code');
+        if (!codeEl) return;
+        const pin = codeEl.textContent.trim();
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(pin);
+            } else {
+                const tmp = document.createElement('input');
+                tmp.value = pin;
+                document.body.appendChild(tmp);
+                tmp.select();
+                document.execCommand('copy');
+                document.body.removeChild(tmp);
+            }
+            this.showToast(t('pin.initial.copied'), {
+                tone: 'success',
+                title: 'PIN',
+                duration: 2500,
+            });
+        } catch (error) {
+            console.warn('No fue posible copiar el PIN.', error);
+        }
+    },
+
     setLanguage(lang) {
         setLang(lang);
         applyTranslations();

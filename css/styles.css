@@ -2177,6 +2177,46 @@
             max-width: 520px;
         }
 
+        .initial-pin-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 0;
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .initial-pin-display strong {
+            color: var(--white);
+            word-break: break-all;
+        }
+
+        .initial-pin-code-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 8px 0 4px;
+        }
+
+        .initial-pin-code {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 8px;
+            text-align: center;
+            padding: 18px 12px;
+            background: rgba(14, 165, 233, 0.12);
+            border: 2px dashed rgba(14, 165, 233, 0.45);
+            border-radius: 12px;
+            color: var(--white);
+            user-select: all;
+        }
+
+        #initial-pin-copy-btn {
+            min-width: 100px;
+        }
+
         .status-badge {
             padding: 4px 12px;
             border-radius: 20px;

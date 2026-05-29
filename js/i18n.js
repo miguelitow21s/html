@@ -33,6 +33,15 @@ export const TRANSLATIONS = {
         'pin.confirm.label': 'Confirmar Contraseña',
         'pin.confirm.placeholder': 'Repita la contraseña',
         'pin.submit': 'Guardar Contraseña',
+        'pin.initial.title': 'Guarda este PIN inicial',
+        'pin.initial.alert': 'Solo se muestra una vez',
+        'pin.initial.helper': 'Cópialo ahora y envíaselo al contratista por el canal que prefieras. No podrás verlo de nuevo.',
+        'pin.initial.for': 'Cuenta:',
+        'pin.initial.copy': 'Copiar',
+        'pin.initial.copied': '¡PIN copiado al portapapeles!',
+        'pin.initial.done': 'Listo, ya lo guardé',
+        'pin.initial.email.sent': 'También se envió por correo automáticamente.',
+        'pin.initial.email.notsent': 'El envío por correo aún no está disponible. Cópialo y compártelo manualmente.',
 
         // Camera
         'camera.title': 'Capturar evidencia',
@@ -397,6 +406,15 @@ export const TRANSLATIONS = {
         'pin.confirm.label': 'Confirm Password',
         'pin.confirm.placeholder': 'Repeat the password',
         'pin.submit': 'Save Password',
+        'pin.initial.title': 'Save this initial PIN',
+        'pin.initial.alert': 'Shown only once',
+        'pin.initial.helper': 'Copy it now and share it with the contractor through your preferred channel. You will not see it again.',
+        'pin.initial.for': 'Account:',
+        'pin.initial.copy': 'Copy',
+        'pin.initial.copied': 'PIN copied to clipboard!',
+        'pin.initial.done': 'Done, I saved it',
+        'pin.initial.email.sent': 'Also sent by email automatically.',
+        'pin.initial.email.notsent': 'Email delivery is not yet available. Copy it and share it manually.',
 
         // Camera
         'camera.title': 'Capture evidence',
