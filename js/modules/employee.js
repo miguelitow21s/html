@@ -308,7 +308,7 @@ export const employeeMethods = {
             detailsCopy.className = 'task-observations-copy';
             detailsCopy.textContent = [
                 task.description || dueText,
-                restaurantName ? `Restaurante: ${restaurantName}` : '',
+                restaurantName ? `Cliente: ${restaurantName}` : '',
             ]
                 .filter(Boolean)
                 .join(' ');
@@ -901,7 +901,7 @@ export const employeeMethods = {
         );
         document.getElementById('summary-restaurant').textContent = this.getEmployeeResolvedShiftRestaurantName(
             { ...summaryShift, restaurant },
-            'Restaurante asignado'
+            'Sitio asignado'
         );
         document.getElementById('summary-schedule').textContent = formatShiftRange(
             summaryShift?.scheduled_start || summaryShift?.start_time,
@@ -1056,7 +1056,7 @@ export const employeeMethods = {
                               this.data.currentShift
                           );
                           console.warn(
-                              'No fue posible validar summary_by_shift antes de finalizar el turno.',
+                              'No fue posible validar summary_by_shift antes de finalizar el servicio.',
                               summaryError
                           );
                       })
@@ -1327,7 +1327,7 @@ export const employeeMethods = {
         const isDone = status === 'completed' || status === 'cancelled' || status === 'closed';
 
         const metaParts = [
-            restaurantName ? `Restaurante: ${escapeHtml(restaurantName)}` : '',
+            restaurantName ? `Cliente: ${escapeHtml(restaurantName)}` : '',
             dueText ? `Vence: ${escapeHtml(dueText)}` : '',
             requiresEvidence ? 'Requiere foto de evidencia.' : '',
         ].filter(Boolean);
@@ -1352,7 +1352,7 @@ export const employeeMethods = {
 
         return `<div class="rtask-card" data-task-id="${taskId}">
             <div class="rtask-header">
-                <span class="rtask-title">${escapeHtml(task.title || 'Tarea de restaurante')}</span>
+                <span class="rtask-title">${escapeHtml(task.title || 'Tarea del sitio')}</span>
                 <span class="badge ${getBadgeClass(status)}">${escapeHtml(status)}</span>
             </div>
             ${task.description ? `<p class="rtask-desc">${escapeHtml(task.description)}</p>` : ''}
@@ -1459,7 +1459,7 @@ export const employeeMethods = {
         const code = this.getEmployeeRestaurantTaskDiagnosticCode(error);
         if (code === 'NO_ACTIVE_SHIFT')
             return 'Necesitas tener un servicio activo en este sitio para completar esta tarea.';
-        if (code === 'RESTAURANT_FORBIDDEN') return 'No tienes permiso para operar tareas en este restaurante.';
+        if (code === 'RESTAURANT_FORBIDDEN') return 'No tienes permiso para operar tareas en este sitio.';
         const httpCode = error?.payload?.error?.code;
         if (httpCode === 409) return 'Esta tarea ya fue completada o cancelada.';
         if (httpCode === 404) return 'La tarea no fue encontrada.';

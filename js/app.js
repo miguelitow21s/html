@@ -472,6 +472,16 @@ const app = {
         setLang(lang);
         applyTranslations();
         this._updateLangButtons();
+        try {
+            if (typeof this.renderEmployeeDashboard === 'function' && this.currentPage === 'employee-dashboard') {
+                this.renderEmployeeDashboard();
+            }
+            if (typeof this.renderSupervisorDashboard === 'function' && this.currentPage === 'supervisor-dashboard') {
+                this.renderSupervisorDashboard();
+            }
+        } catch {
+            // noop - rerender failures should not block language switch
+        }
     },
 
     _updateLangButtons() {
@@ -1533,7 +1543,7 @@ const app = {
         }
 
         if (status === 422 && requestId) {
-            return `El backend rechazó el cierre del turno. request_id: ${requestId}`;
+            return `El backend rechazó el cierre del servicio. request_id: ${requestId}`;
         }
 
         return '';
@@ -1605,9 +1615,14 @@ const app = {
             return false;
         }
 
-        const hasEmployeeReference = ['empleado', 'employee', 'assigned_employee', 'asignado'].some((token) =>
-            source.includes(token)
-        );
+        const hasEmployeeReference = [
+            'contratista',
+            'contractor',
+            'empleado',
+            'employee',
+            'assigned_employee',
+            'asignado',
+        ].some((token) => source.includes(token));
 
         const hasAvailabilityConflictReference = [
             'no disponible',
@@ -1617,12 +1632,18 @@ const app = {
             'overlap',
             'schedule conflict',
             'conflicto de horario',
+            'ya tiene un servicio activo',
+            'ya existe un servicio activo',
+            'ya tiene un servicio asignado',
+            'servicio asignado en ese rango',
             'ya tiene un turno programado',
             'tiene un turno programado',
             'turno programado en ese rango',
             'already assigned',
+            'already has an active service',
             'already has a scheduled shift',
             'employee not available',
+            'contractor not available',
         ].some((token) => source.includes(token));
 
         return hasEmployeeReference && hasAvailabilityConflictReference;
@@ -1657,7 +1678,11 @@ const app = {
             .join(' ')
             .toLowerCase();
 
-        return source.includes('fuera de la ventana permitida para iniciar el turno');
+        return (
+            source.includes('fuera de la ventana de servicio permitida') ||
+            source.includes('fuera de la ventana permitida para iniciar el turno') ||
+            source.includes('ventana de servicio vencida')
+        );
     },
 
     getShiftStartWindowErrorDetails(error) {
@@ -1670,16 +1695,16 @@ const app = {
     getShiftStartWindowOutsideMessage(error) {
         const { earliest, latest } = this.getShiftStartWindowErrorDetails(error);
         if (!earliest || !latest) {
-            return 'El turno está fuera de la ventana permitida para iniciar.';
+            return 'El servicio está fuera de la ventana de acceso autorizada.';
         }
 
         const earliestLabel = formatDateTime(earliest);
         const latestLabel = formatDateTime(latest);
         if (earliestLabel === '-' || latestLabel === '-') {
-            return 'El turno está fuera de la ventana permitida para iniciar.';
+            return 'El servicio está fuera de la ventana de acceso autorizada.';
         }
 
-        return `Puedes iniciar este turno entre ${earliestLabel} y ${latestLabel}.`;
+        return `Puedes iniciar este servicio entre ${earliestLabel} y ${latestLabel}.`;
     },
 
     isOutsideAllowedShiftArea(error) {
@@ -1890,7 +1915,7 @@ const app = {
                                 locationError
                             );
                             this.showToast(
-                                'Activa la ubicación para ver tu posición actual y poder iniciar turnos sin fricción.',
+                                'Activa la ubicación para ver tu posición actual y poder iniciar servicios sin fricción.',
                                 {
                                     tone: 'warning',
                                     title: 'Permiso de ubicación recomendado',
@@ -2306,7 +2331,7 @@ const app = {
         const cancelButton = document.getElementById('otp-cancel-btn');
 
         if (!modal || !form || !input) {
-            throw new Error('La interfaz de verificación OTP no está disponible.');
+            throw new Error('La interfaz de verificación de acceso no está disponible.');
         }
 
         const screenMode = Boolean(sendResult?.debug_code);
@@ -2319,8 +2344,8 @@ const app = {
 
         if (contextMessage) {
             contextMessage.textContent = loginFlow
-                ? 'Ingresa el código OTP para continuar.'
-                : 'Ingresa el código OTP para continuar con esta operación.';
+                ? 'Ingresa el código de acceso para continuar.'
+                : 'Ingresa el código de acceso para continuar con esta operación.';
         }
 
         if (debugBox) {
@@ -2365,7 +2390,7 @@ const app = {
         }
     },
 
-    rejectOtpGate(message = 'Se canceló la verificación OTP.') {
+    rejectOtpGate(message = 'Se canceló la verificación de acceso.') {
         const gate = this.otpGate;
 
         this.otpGate = null;
@@ -2409,7 +2434,7 @@ const app = {
         this.setOtpError('');
 
         if (!/^\d{4,8}$/.test(code)) {
-            this.setOtpError('Ingresa un código OTP numérico válido.');
+            this.setOtpError('Ingresa un código de acceso numérico válido.');
             input?.focus();
             return;
         }
@@ -2424,7 +2449,7 @@ const app = {
 
             this.resolveOtpGate(verifyResult);
         } catch (error) {
-            this.setOtpError(this.getErrorMessage(error, 'No fue posible validar el código OTP.'));
+            this.setOtpError(this.getErrorMessage(error, 'No fue posible validar el código de acceso.'));
             input?.focus();
             input?.select?.();
         } finally {
@@ -2447,7 +2472,7 @@ const app = {
             const sendResult = await apiClient.phoneOtpSend();
             this.populateOtpModal(sendResult, this.otpChallengeState.purpose, this.otpChallengeState.loadingSnapshot);
         } catch (error) {
-            this.setOtpError(this.getErrorMessage(error, 'No fue posible reenviar el código OTP.'));
+            this.setOtpError(this.getErrorMessage(error, 'No fue posible reenviar el código de acceso.'));
         } finally {
             this.setOtpBusy('');
         }
@@ -2457,8 +2482,8 @@ const app = {
         const loginFlow = this.otpChallengeState?.purpose === 'login';
         this.rejectOtpGate(
             loginFlow
-                ? 'Cancelaste la verificación OTP antes de completar el acceso.'
-                : 'Se canceló la verificación OTP.'
+                ? 'Cancelaste la verificación de acceso antes de completar el ingreso.'
+                : 'Se canceló la verificación de acceso.'
         );
     },
 
@@ -2499,7 +2524,7 @@ const app = {
         }
 
         if (this.otpGate?.reject) {
-            this.otpGate.reject(new Error('La sesión se cerró antes de completar la verificación OTP.'));
+            this.otpGate.reject(new Error('La sesión se cerró antes de completar la verificación de acceso.'));
         }
 
         this.pinChangeGate = null;
@@ -2598,7 +2623,7 @@ const app = {
             if (
                 label === 'actualizar restaurantes' ||
                 label === 'actualizar empleados' ||
-                label === 'actualizar turnos'
+                label === 'actualizar servicios'
             ) {
                 element.remove();
             }
@@ -3696,7 +3721,7 @@ const app = {
             asButtons: true,
             action: 'toggle-employee-area',
             selectedKeys: selectedAreaKeys,
-            emptyMessage: 'No hay áreas disponibles para este turno.',
+            emptyMessage: 'No hay áreas disponibles para este servicio.',
         });
 
         if (startFocusPanel) {
@@ -4838,7 +4863,7 @@ const app = {
             this.supervisionPhotoSlots,
             availableAreas.length > 0
                 ? 'Selecciona un área para ver las subáreas de supervisión requeridas.'
-                : 'No hay áreas configuradas para este restaurante.'
+                : 'No hay áreas configuradas para este sitio.'
         );
 
         Object.entries(this.supervisionPhotos).forEach(([area, source]) => {
@@ -5139,10 +5164,10 @@ const app = {
         const latestLabel = formatDateTime(state?.latest);
 
         if (earliestLabel !== '-' && latestLabel !== '-') {
-            return `Tu turno se habilita entre ${earliestLabel} y ${latestLabel}.`;
+            return `Tu servicio se habilita entre ${earliestLabel} y ${latestLabel}.`;
         }
 
-        return 'Tu turno se habilita solo dentro de la ventana configurada por operación.';
+        return 'Tu servicio está disponible dentro de la ventana de acceso configurada.';
     },
 
     canEmployeeStartScheduledShift(
@@ -5510,7 +5535,7 @@ const app = {
         return null;
     },
 
-    getEmployeeResolvedShiftRestaurantName(shift, fallback = 'Restaurante asignado') {
+    getEmployeeResolvedShiftRestaurantName(shift, fallback = 'Sitio asignado') {
         if (!shift) {
             return fallback;
         }
@@ -5560,7 +5585,7 @@ const app = {
             return persistedName;
         }
 
-        return isRestaurantReferenceLabel(resolvedName) ? 'Restaurante asignado' : resolvedName;
+        return isRestaurantReferenceLabel(resolvedName) ? 'Sitio asignado' : resolvedName;
     },
 
     findEmployeeScheduledMatchForActiveShift(activeShift, dashboard = this.data.employee.dashboard || {}) {
@@ -5674,7 +5699,7 @@ const app = {
 
     getEmployeeShiftScheduleText(shift, { hasActiveShift = false } = {}) {
         if (!shift) {
-            return 'No hay horario pendiente';
+            return 'No requerida';
         }
 
         const scheduledStart = shift?.scheduled_start || null;
@@ -5697,24 +5722,24 @@ const app = {
         }
 
         if (hasActiveShift && actualStart) {
-            return `Turno iniciado a las ${formatTime(actualStart)}`;
+            return `Servicio iniciado a las ${formatTime(actualStart)}`;
         }
 
         if (scheduledStart) {
-            return `Programado para ${formatDateTime(scheduledStart)}`;
+            return `Asignado para ${formatDateTime(scheduledStart)}`;
         }
 
-        return 'Horario pendiente de confirmar';
+        return 'Ventana de servicio por confirmar';
     },
 
     getEmployeeShiftDateText(shift) {
         if (!shift) {
-            return 'No hay fecha pendiente';
+            return 'Sin asignación pendiente';
         }
 
         const shiftDate = shift?.scheduled_start || shift?.start_time || shift?.started_at || null;
         if (!shiftDate) {
-            return 'No hay fecha pendiente';
+            return 'Sin asignación pendiente';
         }
 
         return formatDate(shiftDate, {
@@ -5739,7 +5764,7 @@ const app = {
             ? new Date(shiftReferenceDate).toDateString() === new Date().toDateString()
             : false;
         const resolvedRestaurantName = shift
-            ? this.getEmployeeResolvedShiftRestaurantName(shift, 'Restaurante programado')
+            ? this.getEmployeeResolvedShiftRestaurantName(shift, 'Sitio asignado')
             : '';
 
         if (hasActiveShift || hasPendingShift) {
@@ -5766,45 +5791,41 @@ const app = {
         let shiftTitle;
         let shiftHelper;
         let shiftStatus;
-        let restaurantName = 'No tienes turnos pendientes';
+        let restaurantName = 'No hay servicios asignados en esta fecha';
         const restaurantAddress = this.getEmployeeCurrentLocationText();
-        let scheduleText = 'No hay horario pendiente';
+        let scheduleText = 'No requerida';
         const activeStateLabel = dashboard?.active_shift?.state || this.data.currentShift?.state || 'Activo';
 
         if (hasActiveShift) {
-            shiftTitle = 'Servicio en Progreso';
-            shiftHelper =
-                'Ya registraste el inicio del servicio. Desde aquí puedes continuarlo y completar las evidencias pendientes.';
-            shiftStatus = `Servicio ${String(activeStateLabel).toLowerCase()}`;
+            shiftTitle = t('shift.status.inprogress');
+            shiftHelper = t('shift.status.inprogress.helper');
+            shiftStatus = `${t('shift.status.activeprefix')} ${String(activeStateLabel).toLowerCase()}`;
             restaurantName = resolvedRestaurantName;
             scheduleText = this.getEmployeeShiftScheduleText(shift, { hasActiveShift: true });
         } else if (canStartShift) {
-            shiftTitle = isShiftToday ? 'Servicio del Día' : 'Próximo Servicio';
-            shiftHelper =
-                'Tienes un servicio disponible dentro de la ventana de acceso. Revisa la información y continúa cuando estés en el sitio.';
-            shiftStatus = 'Listo para iniciar';
+            shiftTitle = isShiftToday ? t('shift.status.canstart.today') : t('shift.status.canstart.next');
+            shiftHelper = t('shift.status.canstart.helper');
+            shiftStatus = t('shift.status.ready');
             restaurantName = resolvedRestaurantName;
             scheduleText = this.getEmployeeShiftScheduleText(shift);
         } else if (hasPendingShift) {
-            shiftTitle = isShiftToday ? 'Servicio Asignado' : 'Próximo Servicio';
-            shiftHelper = isShiftToday
-                ? this.getShiftStartWindowCopy(shift)
-                : 'Ya tienes un servicio asignado. Aquí verás sus datos cuando se acerque la ventana de acceso.';
-            shiftStatus = 'Asignado';
+            shiftTitle = isShiftToday ? t('shift.status.pending.today') : t('shift.status.canstart.next');
+            shiftHelper = isShiftToday ? this.getShiftStartWindowCopy(shift) : t('shift.status.pending.helper');
+            shiftStatus = t('shift.status.assigned');
             restaurantName = resolvedRestaurantName;
             scheduleText = this.getEmployeeShiftScheduleText(shift);
         } else if (justCompletedShift) {
-            shiftTitle = 'Servicio Completado';
-            shiftHelper = 'No tienes servicios pendientes por ahora. Cuando te asignen uno nuevo, aparecerá aquí.';
-            shiftStatus = 'Completado';
+            shiftTitle = t('shift.status.completed');
+            shiftHelper = t('shift.status.completed.helper');
+            shiftStatus = t('shift.status.completed.short');
             restaurantName = this.getResolvedShiftRestaurantName(
                 justCompletedShift,
-                'Servicio completado correctamente'
+                t('shift.status.completed.fallback')
             );
         } else {
-            shiftTitle = 'Sin Servicios Asignados';
+            shiftTitle = t('shift.status.none');
             shiftHelper = '';
-            shiftStatus = 'Sin servicios';
+            shiftStatus = t('shift.status.none.short');
         }
         const task = this.getPrimaryEmployeeTask();
 
@@ -5840,16 +5861,16 @@ const app = {
         const startLabel = document.getElementById('employee-start-shift-label');
         if (startButton && startLabel) {
             if (hasActiveShift) {
-                startLabel.textContent = 'Continuar Turno Activo';
+                startLabel.textContent = 'Continuar Servicio Activo';
                 startButton.disabled = false;
             } else if (canStartShift) {
-                startLabel.textContent = 'Iniciar Turno Programado';
+                startLabel.textContent = 'Iniciar Servicio Asignado';
                 startButton.disabled = false;
             } else if (hasPendingShift) {
                 startLabel.textContent = 'Aún No Disponible';
                 startButton.disabled = true;
             } else {
-                startLabel.textContent = 'Sin Turno Programado';
+                startLabel.textContent = 'Sin Servicios Asignados';
                 startButton.disabled = true;
             }
         }

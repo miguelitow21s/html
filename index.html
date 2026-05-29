@@ -35,7 +35,7 @@
     <div id="modal-pin-change" class="modal" data-locked="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Cambiar Contraseña</h3>
+                <h3 data-i18n="pin.title">Cambiar Contraseña</h3>
             </div>
             <form id="change-pin-form">
                 <input type="text" name="username" autocomplete="username" style="display:none" aria-hidden="true">
@@ -43,24 +43,24 @@
                     <div class="alert alert-warning">
                         <i class="fas fa-shield-alt"></i>
                         <div>
-                            <strong>Debe cambiar su contraseña temporal.</strong><br>
-                            <small id="change-pin-helper">Por seguridad, debe cambiar su contraseña temporal en el primer ingreso.</small>
+                            <strong data-i18n="pin.alert">Debe cambiar su contraseña temporal.</strong><br>
+                            <small id="change-pin-helper" data-i18n="pin.helper">Por seguridad, debe cambiar su contraseña temporal en el primer ingreso.</small>
                         </div>
                     </div>
                     <div id="change-pin-error" class="error-message hidden"></div>
                     <div class="form-group">
-                        <label>Nueva Contraseña Numérica</label>
-                        <input type="password" id="change-pin-new" class="dark-control" inputmode="numeric" autocomplete="new-password" placeholder="Mínimo 6 dígitos" required>
+                        <label data-i18n="pin.new.label">Nueva Contraseña Numérica</label>
+                        <input type="password" id="change-pin-new" class="dark-control" inputmode="numeric" autocomplete="new-password" data-i18n-placeholder="pin.new.placeholder" placeholder="Mínimo 6 dígitos" required>
                     </div>
                     <div class="form-group">
-                        <label>Confirmar Contraseña</label>
-                        <input type="password" id="change-pin-confirm" class="dark-control" inputmode="numeric" autocomplete="new-password" placeholder="Repita la contraseña" required>
+                        <label data-i18n="pin.confirm.label">Confirmar Contraseña</label>
+                        <input type="password" id="change-pin-confirm" class="dark-control" inputmode="numeric" autocomplete="new-password" data-i18n-placeholder="pin.confirm.placeholder" placeholder="Repita la contraseña" required>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary" id="change-pin-submit-btn">
                         <i class="fas fa-save"></i>
-                        Guardar Contraseña
+                        <span data-i18n="pin.submit">Guardar Contraseña</span>
                     </button>
                 </div>
             </form>
@@ -86,8 +86,8 @@
                     </div>
                     <div id="otp-error" class="error-message hidden"></div>
                     <div class="form-group">
-                        <label for="otp-code">Código OTP</label>
-                        <input type="password" id="otp-code" class="dark-control otp-code-input" inputmode="numeric" autocomplete="one-time-code" placeholder="Ingresa el código" required>
+                        <label for="otp-code" data-i18n="otp.code.label">Código de Acceso</label>
+                        <input type="password" id="otp-code" class="dark-control otp-code-input" inputmode="numeric" autocomplete="one-time-code" data-i18n-placeholder="otp.code.placeholder" placeholder="Ingresa el código" required>
                     </div>
                 </div>
                 <div class="modal-footer modal-footer-stack-sm">
@@ -111,11 +111,11 @@
     <div id="modal-camera-capture" class="modal camera-modal" data-locked="true">
         <div class="modal-content camera-modal-content">
             <div class="modal-header">
-                <h3 id="camera-capture-title">Capturar evidencia</h3>
+                <h3 id="camera-capture-title" data-i18n="camera.title">Capturar evidencia</h3>
                 <button class="btn-close" id="camera-close-btn" type="button">&times;</button>
             </div>
             <div class="modal-body">
-                <p id="camera-capture-helper" class="muted-copy">Usa la cámara del dispositivo para registrar la foto requerida.</p>
+                <p id="camera-capture-helper" class="muted-copy" data-i18n="camera.helper">Usa la cámara del dispositivo para registrar la foto requerida.</p>
                 <div class="camera-capture-frame">
                     <video id="camera-capture-video" autoplay playsinline muted></video>
                     <canvas id="camera-capture-canvas" class="hidden"></canvas>
@@ -138,15 +138,15 @@
     <div id="modal-scheduled-shift-cancel" class="modal" data-locked="true">
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
-                <h3>Eliminar turno programado</h3>
+                <h3>Cancelar servicio asignado</h3>
                 <button class="btn-close" type="button" onclick="app.closeCancelScheduledShiftModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-triangle-exclamation"></i>
                     <div>
-                        <strong>Esta acción cancela la programación.</strong><br>
-                        <small>El turno dejará de estar disponible para el empleado.</small>
+                        <strong data-i18n="modal.cancel.shift.alert">Esta acción cancela la asignación.</strong><br>
+                        <small data-i18n="modal.cancel.shift.small">El servicio dejará de estar disponible para el contratista.</small>
                     </div>
                 </div>
                 <div class="form-group">
@@ -166,18 +166,18 @@
     <div id="modal-restaurant-deactivate" class="modal" data-locked="true">
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
-                <h3>Eliminar restaurante</h3>
+                <h3>Eliminar sitio</h3>
                 <button class="btn-close" type="button" onclick="app.closeDeactivateRestaurantModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-store-slash"></i>
                     <div>
-                        <strong>Se desactivará este restaurante.</strong><br>
-                        <small>No aparecerá en nuevas programaciones ni en vistas operativas activas.</small>
+                        <strong data-i18n="modal.deactivate.restaurant.alert">Se desactivará este sitio.</strong><br>
+                        <small data-i18n="modal.deactivate.restaurant.small">No aparecerá en nuevas asignaciones ni en vistas operativas activas.</small>
                     </div>
                 </div>
-                <p id="restaurant-deactivate-copy" class="muted-copy">Confirma la eliminación del restaurante seleccionado.</p>
+                <p id="restaurant-deactivate-copy" class="muted-copy" data-i18n="modal.deactivate.restaurant.confirm">Confirma la eliminación del sitio seleccionado.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="app.closeDeactivateRestaurantModal()">Cancelar</button>
@@ -198,11 +198,11 @@
                 <div class="alert alert-warning">
                     <i class="fas fa-user-slash"></i>
                     <div>
-                        <strong>Se desactivará el acceso del usuario.</strong><br>
-                        <small>Eliminación lógica (no se borra físicamente del sistema).</small>
+                        <strong data-i18n="modal.deactivate.user.alert">Se desactivará el acceso del contratista.</strong><br>
+                        <small data-i18n="modal.deactivate.user.small">Eliminación lógica (no se borra físicamente del sistema).</small>
                     </div>
                 </div>
-                <p id="user-deactivate-copy" class="muted-copy">Confirma la eliminación del usuario seleccionado.</p>
+                <p id="user-deactivate-copy" class="muted-copy" data-i18n="modal.deactivate.user.confirm">Confirma la eliminación del contratista seleccionado.</p>
                 <div class="form-group">
                     <label for="user-deactivate-reason">Motivo (opcional)</label>
                     <textarea id="user-deactivate-reason" class="dark-control" placeholder="Ej: baja operativa, duplicado, retiro del equipo..."></textarea>
@@ -301,30 +301,30 @@
         
         <main class="content employee-dashboard-content">
             <div class="welcome-banner">
-                <h2 id="employee-welcome">¡Hola! 👋</h2>
-                <p id="current-date">Cargando fecha...</p>
+                <h2 id="employee-welcome" data-i18n="employee.welcome">¡Hola! 👋</h2>
+                <p id="current-date" data-i18n="employee.dashboard.loading">Cargando fecha...</p>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title" id="employee-shift-title">Turno de Hoy</div>
-                    <span class="badge badge-warning" id="employee-shift-status">Programado</span>
+                    <div class="card-title" id="employee-shift-title">Servicio del Día</div>
+                    <span class="badge badge-warning" id="employee-shift-status">Asignado</span>
                 </div>
-                <p class="employee-shift-helper" id="employee-shift-helper">Aquí verás el estado real de tu turno y cuándo puedes iniciarlo o continuarlo.</p>
+                <p class="employee-shift-helper" id="employee-shift-helper" data-i18n="employee.shift.helper">Aquí verás el estado real de tu servicio y cuándo puedes iniciarlo o continuarlo.</p>
 
                 <div id="shiftInfo" class="shift-info">
                     <div class="info-item">
                         <i class="fas fa-store"></i>
                         <div class="info-item-content">
-                            <span class="info-item-label">Restaurante</span>
-                            <span class="info-item-value" id="employee-shift-restaurant">Sin turno programado</span>
+                            <span class="info-item-label" data-i18n="employee.shift.restaurant">Cliente</span>
+                            <span class="info-item-value" id="employee-shift-restaurant">No hay servicios asignados en esta fecha</span>
                         </div>
                     </div>
 
                     <div class="info-item">
                         <i class="fas fa-calendar-alt"></i>
                         <div class="info-item-content">
-                            <span class="info-item-label">Fecha</span>
+                            <span class="info-item-label" data-i18n="employee.shift.date">Fecha</span>
                             <span class="info-item-value" id="employee-shift-date">-</span>
                         </div>
                     </div>
@@ -332,7 +332,7 @@
                     <div class="info-item">
                         <i class="fas fa-clock"></i>
                         <div class="info-item-content">
-                            <span class="info-item-label">Horario</span>
+                            <span class="info-item-label" data-i18n="employee.shift.schedule">Ventana de Servicio</span>
                             <span class="info-item-value" id="employee-shift-schedule">-</span>
                         </div>
                     </div>
@@ -340,7 +340,7 @@
                     <div class="info-item">
                         <i class="fas fa-map-marker-alt"></i>
                         <div class="info-item-content">
-                            <span class="info-item-label">Ubicación</span>
+                            <span class="info-item-label" data-i18n="employee.shift.location">Ubicación</span>
                             <span class="info-item-value" id="employee-shift-location">-</span>
                         </div>
                     </div>
@@ -349,10 +349,10 @@
             
             <div class="task-card" id="employee-task-card">
                 <h4><i class="fas fa-star"></i> <span id="employee-task-heading">Tarea Especial Asignada</span></h4>
-                <p id="employee-task-title">No hay tareas pendientes.</p>
+                <p id="employee-task-title" data-i18n="employee.task.empty">No hay tareas pendientes.</p>
                 <div class="task-observations">
                     <strong>Observaciones previas:</strong>
-                    <p id="employee-task-observations" class="task-observations-copy">Sin observaciones.</p>
+                    <p id="employee-task-observations" class="task-observations-copy" data-i18n="employee.task.noobs">Sin observaciones.</p>
                 </div>
             </div>
 
@@ -363,7 +363,7 @@
 
             <div class="action-buttons">
                 <button class="btn-large btn-success" id="employee-start-shift-btn" onclick="app.openEmployeeShiftStart()">
-                    <i class="fas fa-play-circle"></i> <span id="employee-start-shift-label">Iniciar Turno</span>
+                    <i class="fas fa-play-circle"></i> <span id="employee-start-shift-label">Iniciar Servicio</span>
                 </button>
             </div>
         </main>
@@ -415,7 +415,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="profile-upcoming-shifts">0</div>
-                    <div class="stat-label">Turnos próximos</div>
+                    <div class="stat-label" data-i18n="employee.profile.upcoming">Próximos servicios</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="profile-pending-tasks">0</div>
@@ -425,7 +425,7 @@
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">Información de Contacto</div>
+                    <div class="card-title" data-i18n="employee.profile.contact.title">Información de Contacto</div>
                 </div>
                 <div class="info-item">
                     <i class="fas fa-envelope"></i>
@@ -437,7 +437,7 @@
                 <div class="info-item">
                     <i class="fas fa-phone"></i>
                     <div class="info-item-content">
-                        <span class="info-item-label">Teléfono</span>
+                        <span class="info-item-label" data-i18n="employee.profile.phone">Teléfono</span>
                         <span class="info-item-value" id="profile-phone">-</span>
                     </div>
                 </div>
@@ -449,7 +449,7 @@
                 </div>
                 <div id="profile-special-tasks-list">
                     <div class="task-card">
-                        <p>No hay tareas especiales pendientes.</p>
+                        <p data-i18n="employee.profile.notasks">No hay tareas especiales pendientes.</p>
                     </div>
                 </div>
             </div>
@@ -478,17 +478,17 @@
                 <button class="header-btn" onclick="app.navigate('employee-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Iniciar Turno</span>
+                <span data-i18n="shift.start.title">Iniciar Servicio</span>
             </div>
         </header>
         
         <main class="content">
             <div class="gps-verification">
                 <i class="fas fa-map-marker-alt"></i>
-                <h4 style="color: white; margin-bottom: 10px;">Verificación de Ubicación</h4>
+                <h4 style="color: white; margin-bottom: 10px;" data-i18n="shift.start.gps.title">Verificación de Acceso al Sitio</h4>
                 <div id="gps-status" class="gps-status invalid">
                     <i class="fas fa-location-crosshairs"></i>
-                    <span>Ubicación lista para verificar</span>
+                    <span data-i18n="shift.start.gps.status">Ubicación lista para verificar</span>
                 </div>
                 <div class="gps-actions">
                     <button class="btn btn-secondary" onclick="app.verifyGPS()" id="gps-btn">
@@ -506,18 +506,18 @@
             </label>
             
             <div class="card">
-                <h4 style="color: var(--gray); font-size: 12px; text-transform: uppercase; margin-bottom: 15px;">Información del Turno</h4>
+                <h4 style="color: var(--gray); font-size: 12px; text-transform: uppercase; margin-bottom: 15px;">Detalles del Servicio</h4>
                 <div class="info-item">
                     <i class="fas fa-store"></i>
                     <div class="info-item-content">
-                        <span class="info-item-label">Restaurante</span>
-                        <span class="info-item-value" id="shift-start-restaurant">Sin turno programado</span>
+                        <span class="info-item-label" data-i18n="employee.shift.restaurant">Cliente</span>
+                        <span class="info-item-value" id="shift-start-restaurant" data-i18n="employee.shift.noshift">Sin servicios asignados</span>
                     </div>
                 </div>
                 <div class="info-item">
                     <i class="fas fa-clock"></i>
                     <div class="info-item-content">
-                        <span class="info-item-label">Horario</span>
+                        <span class="info-item-label" data-i18n="employee.shift.schedule">Ventana de Servicio</span>
                         <span class="info-item-value" id="shift-start-schedule">-</span>
                     </div>
                 </div>
@@ -544,23 +544,23 @@
             <div class="card">
                 <div class="card-header">
                     <div>
-                        <div class="card-title">Áreas a Fotografiar</div>
-                        <p class="card-subtitle">Tome fotos del estado inicial de cada área</p>
+                        <div class="card-title" data-i18n="shift.photos.card">Áreas a Fotografiar</div>
+                        <p class="card-subtitle" data-i18n="shift.photos.subtitle">Tome fotos del estado inicial de cada área</p>
                     </div>
                 </div>
 
                 <div class="area-selection-panel">
                     <div class="area-selection-header">
-                        <strong>Selecciona las áreas trabajadas hoy</strong>
-                        <p>Puedes elegir una o varias áreas. Solo se mostrarán sus subáreas para tomar evidencia.</p>
+                        <strong data-i18n="shift.photos.select.strong">Selecciona las áreas trabajadas hoy</strong>
+                        <p data-i18n="shift.photos.select.helper">Puedes elegir una o varias áreas. Solo se mostrarán sus subáreas para tomar evidencia.</p>
                     </div>
                     <div id="employee-area-selector" class="area-selector-chips">
                         <!-- Generated by JS -->
                     </div>
                     <div id="employee-area-focus-panel" class="area-focus-panel">
                         <div class="area-selection-header">
-                            <strong>Área que vas a fotografiar ahora</strong>
-                            <p>Elige una de las áreas seleccionadas para ver solo sus subáreas y evitar una vista cargada.</p>
+                            <strong data-i18n="shift.photos.focus.strong">Área que vas a fotografiar ahora</strong>
+                            <p data-i18n="shift.photos.focus.helper">Elige una de las áreas seleccionadas para ver solo sus subáreas.</p>
                         </div>
                         <div id="employee-area-focus" class="area-selector-chips">
                             <!-- Generated by JS -->
@@ -594,7 +594,7 @@
     <div id="page-employee-shift-cleaning" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <span>Turno en Progreso</span>
+                <span data-i18n="shift.cleaning.title">Servicio en Progreso</span>
             </div>
         </header>
         
@@ -610,7 +610,7 @@
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle"></i>
                     <div>
-                        <strong>No cierre la aplicación</strong><br>
+                        <strong data-i18n="shift.cleaning.alert.strong">No cierre la aplicación</strong><br>
                         <small>Mantenga la app abierta mientras realiza la limpieza.</small>
                     </div>
                 </div>
@@ -618,7 +618,7 @@
                 <div class="info-item">
                     <i class="fas fa-store"></i>
                     <div class="info-item-content">
-                        <span class="info-item-label">Restaurante</span>
+                        <span class="info-item-label" data-i18n="employee.shift.restaurant">Cliente</span>
                         <span class="info-item-value" id="cleaning-restaurant">-</span>
                     </div>
                 </div>
@@ -637,7 +637,7 @@
                 <button class="header-btn" onclick="app.navigate('employee-shift-cleaning')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Finalizar Turno</span>
+                <span data-i18n="shift.complete.title">Finalizar Servicio</span>
             </div>
         </header>
         
@@ -645,23 +645,23 @@
             <div class="card">
                 <div class="card-header">
                     <div>
-                        <div class="card-title">Fotos de Finalización</div>
-                        <p class="card-subtitle">Tome fotos del estado final de cada área</p>
+                        <div class="card-title" data-i18n="shift.complete.card">Evidencias de Cierre</div>
+                        <p class="card-subtitle" data-i18n="shift.complete.subtitle">Tome fotos del estado final de cada área</p>
                     </div>
                 </div>
 
                 <div class="area-selection-panel area-selection-panel-readonly">
                     <div class="area-selection-header">
-                        <strong>Mismas áreas seleccionadas al inicio</strong>
-                        <p>Debes registrar la evidencia final de las mismas áreas que trabajaste al comenzar el turno.</p>
+                        <strong data-i18n="shift.complete.select.strong">Mismas áreas registradas al inicio</strong>
+                        <p data-i18n="shift.complete.select.helper">Debes registrar la evidencia final de las mismas áreas que trabajaste al comenzar el servicio.</p>
                     </div>
                     <div id="employee-end-area-summary" class="area-selector-chips area-selector-chips-readonly">
                         <!-- Generated by JS -->
                     </div>
                     <div id="employee-end-area-focus-panel" class="area-focus-panel">
                         <div class="area-selection-header">
-                            <strong>Área que vas a fotografiar ahora</strong>
-                            <p>Selecciona una de las áreas trabajadas para registrar sus evidencias finales.</p>
+                            <strong data-i18n="shift.photos.focus.strong">Área que vas a fotografiar ahora</strong>
+                            <p data-i18n="shift.complete.focus.helper">Selecciona una de las áreas trabajadas para registrar sus evidencias finales.</p>
                         </div>
                         <div id="employee-end-area-focus" class="area-selector-chips">
                             <!-- Generated by JS -->
@@ -690,13 +690,13 @@
                 </div>
                 <label class="checkbox-wrapper shift-complete-special-task-toggle" onclick="app.toggleSpecialTask()">
                     <input type="checkbox" id="special-task-done">
-                    <span>¿Completó la tarea especial asignada?</span>
+                    <span data-i18n="shift.complete.task.check">¿Completó la tarea especial asignada?</span>
                 </label>
-                <p id="shift-special-task-requirement" class="muted-copy">Marca la casilla cuando la tarea esté completada.</p>
+                <p id="shift-special-task-requirement" class="muted-copy" data-i18n="shift.special.task.req">Marca la casilla cuando la tarea esté completada.</p>
                 <div id="special-task-evidence-section" class="shift-complete-task-evidence hidden">
                     <div class="shift-complete-task-evidence-row">
                         <strong>Evidencia de tarea</strong>
-                        <span id="special-task-evidence-status" class="badge badge-warning">Sin foto</span>
+                        <span id="special-task-evidence-status" class="badge badge-warning" data-i18n="shift.photos.evidence.nophoto">Sin foto</span>
                     </div>
                     <button type="button" class="btn btn-secondary btn-inline" onclick="app.triggerSpecialTaskEvidenceCapture()">
                         <i class="fas fa-camera"></i> Tomar foto de evidencia
@@ -730,7 +730,7 @@
                 <button class="header-btn" onclick="app.navigate('employee-shift-complete')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Resumen del Turno</span>
+                <span data-i18n="shift.summary.title">Resumen del Servicio</span>
             </div>
         </header>
         
@@ -739,7 +739,7 @@
                     <div class="stats-grid">
                         <div class="stat-card">
                         <div class="stat-value" id="summary-duration">0h</div>
-                        <div class="stat-label">Duración</div>
+                        <div class="stat-label" data-i18n="shift.summary.duration">Duración</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="summary-photos">0</div>
@@ -750,7 +750,7 @@
                 <div class="info-item">
                     <i class="fas fa-store"></i>
                     <div class="info-item-content">
-                        <span class="info-item-label">Restaurante</span>
+                        <span class="info-item-label" data-i18n="employee.shift.restaurant">Cliente</span>
                         <span class="info-item-value" id="summary-restaurant">-</span>
                     </div>
                 </div>
@@ -758,7 +758,7 @@
                 <div class="info-item">
                     <i class="fas fa-clock"></i>
                     <div class="info-item-content">
-                        <span class="info-item-label">Horario</span>
+                        <span class="info-item-label" data-i18n="employee.shift.schedule">Ventana de Servicio</span>
                         <span class="info-item-value" id="summary-schedule">-</span>
                     </div>
                 </div>
@@ -766,7 +766,7 @@
                 <div class="info-item">
                     <i class="fas fa-calendar"></i>
                     <div class="info-item-content">
-                        <span class="info-item-label">Fecha</span>
+                        <span class="info-item-label" data-i18n="employee.shift.date">Fecha</span>
                         <span class="info-item-value" id="summary-date">-</span>
                     </div>
                 </div>
@@ -789,9 +789,9 @@
         <div class="success-icon">
             <i class="fas fa-check"></i>
         </div>
-        <h2>¡Turno Completado!</h2>
+        <h2 data-i18n="success.title">¡Servicio Completado!</h2>
         <p style="color: var(--gray); margin-bottom: 30px; max-width: 400px;">
-            Su turno ha sido finalizado exitosamente. Todas las evidencias han sido guardadas.
+            <span data-i18n="success.message">El servicio ha sido finalizado exitosamente. Todas las evidencias han sido guardadas.</span>
         </p>
         <div style="display: flex; gap: 15px;">
             <button class="btn btn-secondary" onclick="app.navigate('employee-dashboard')">
@@ -813,7 +813,7 @@
         <header class="header">
             <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
                 <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
-                <span>WorkTrace Supervisor</span>
+                <span>WorkTrace</span>
             </button>
             <div class="header-actions">
                 <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
@@ -827,8 +827,8 @@
             <div class="page-title">Panel de Control</div>
 
             <div class="welcome-banner">
-                <h2 id="supervisor-welcome-title">¡Bienvenido, Supervisor!</h2>
-                <p id="supervisor-welcome-subtitle">Gestión de equipos de limpieza</p>
+                <h2 id="supervisor-welcome-title" data-i18n="supervisor.welcome.title">¡Bienvenido!</h2>
+                <p id="supervisor-welcome-subtitle" data-i18n="supervisor.welcome.subtitle">Gestión de operaciones</p>
             </div>
             
             <div class="quick-actions">
@@ -846,7 +846,7 @@
                 </button>
                 <button class="quick-action-btn" onclick="app.navigate('supervisor-reports')">
                     <i class="fas fa-chart-bar"></i>
-                    <span>Informes</span>
+                    <span data-i18n="supervisor.nav.reports">Reportes</span>
                 </button>
                 <button class="quick-action-btn" onclick="app.navigate('supervisor-supervision')">
                     <i class="fas fa-clipboard-check"></i>
@@ -862,8 +862,8 @@
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-circle"></i>
                         <div>
-                            <strong>Sin alertas críticas</strong><br>
-                            <small>Cuando haya novedades operativas aparecerán aquí.</small>
+                            <strong data-i18n="supervisor.dashboard.noalerts">Sin alertas operativas</strong><br>
+                            <small data-i18n="supervisor.dashboard.alerts.helper">Cuando haya novedades operativas aparecerán aquí.</small>
                         </div>
                     </div>
                 </div>
@@ -931,9 +931,9 @@
             <div class="employee-directory-filters hidden" id="supervisor-employees-filters">
                 <label for="supervisor-employees-status-filter">Estado</label>
                 <select id="supervisor-employees-status-filter" onchange="app.setSupervisorEmployeesStatusFilter(this.value)">
-                    <option value="all">Todos</option>
-                    <option value="active">Activos</option>
-                    <option value="inactive">Inactivos</option>
+                    <option value="all" data-i18n="supervisor.employees.filter.all">Todos</option>
+                    <option value="active" data-i18n="supervisor.employees.filter.active">Activos</option>
+                    <option value="inactive" data-i18n="supervisor.employees.filter.inactive">Inactivos</option>
                 </select>
             </div>
             <div class="toolbar-actions" style="margin-bottom: 20px;">
@@ -970,7 +970,7 @@
                         <button class="btn btn-secondary btn-inline" onclick="app.changeSupervisorWeek(-1)" aria-label="Semana anterior">
                             <i class="fas fa-chevron-left"></i>
                         </button>
-                        <span class="supervisor-week-label" id="supervisor-week-label">Cargando...</span>
+                        <span class="supervisor-week-label" id="supervisor-week-label" data-i18n="supervisor.week.loading">Cargando...</span>
                         <button class="btn btn-secondary btn-inline" onclick="app.changeSupervisorWeek(1)" aria-label="Semana siguiente">
                             <i class="fas fa-chevron-right"></i>
                         </button>
@@ -988,12 +988,12 @@
                 <!-- Filtros -->
                 <div class="supervisor-week-filters">
                     <select id="supervisor-shifts-filter-restaurant" class="dark-control">
-                        <option value="">Todos los restaurantes</option>
+                        <option value="">Todos los sitios</option>
                     </select>
                     <select id="supervisor-shifts-filter-employee" class="dark-control">
                         <option value="" data-i18n="supervisor.shifts.all.employees">Todos los contratistas</option>
                     </select>
-                    <input type="text" id="supervisor-shifts-filter-search" class="dark-control" placeholder="Buscar empleado...">
+                    <input type="text" id="supervisor-shifts-filter-search" class="dark-control" data-i18n-placeholder="supervisor.shifts.search" placeholder="Buscar contratista...">
                     <button type="button" class="btn btn-secondary btn-inline" onclick="app.clearSupervisorShiftFilters()">
                         Limpiar
                     </button>
@@ -1002,7 +1002,7 @@
                 <!-- Grid semanal -->
                 <div style="overflow-x: auto;">
                     <div id="supervisor-shifts-grid">
-                        <div class="empty-state">Cargando turnos programados...</div>
+                        <div class="empty-state" data-i18n="supervisor.shifts.loading">Cargando servicios asignados...</div>
                     </div>
                 </div>
             </div>
@@ -1016,7 +1016,7 @@
                 <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Informes y Reportes</span>
+                <span data-i18n="supervisor.reports.title">Reportes de Calidad</span>
             </div>
             <div class="header-actions">
                 <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
@@ -1056,14 +1056,14 @@
                     </div>
 
                     <div class="form-group report-filter-field">
-                        <label for="report-restaurant-select">Restaurante</label>
+                        <label for="report-restaurant-select" data-i18n="supervisor.reports.restaurant">Sitio / Cliente</label>
                         <select id="report-restaurant-select" class="dark-control">
-                            <option value="">Cargando restaurantes...</option>
+                            <option value="" data-i18n="supervisor.restaurants.loading">Cargando sitios...</option>
                         </select>
                     </div>
 
                     <div class="form-group report-filter-field">
-                        <label for="report-employee-select">Empleado</label>
+                        <label for="report-employee-select" data-i18n="supervisor.reports.employee">Contratista</label>
                         <select id="report-employee-select" class="dark-control">
                             <option value="" data-i18n="supervisor.shifts.all.employees">Todos los contratistas</option>
                         </select>
@@ -1077,7 +1077,7 @@
                 </div>
 
                 <div id="report-support-card" class="card report-support-card hidden">
-                    <div class="report-support-copy">Si el informe falla, toca aquí para copiar el detalle y compartirlo con soporte.</div>
+                    <div class="report-support-copy" data-i18n="supervisor.reports.support">Si el informe falla, toca aquí para copiar el detalle y compartirlo con soporte.</div>
                     <button type="button" class="btn btn-secondary btn-inline" onclick="app.copyLatestReportDebug()">
                         <i class="fas fa-copy"></i> Copiar detalle del error
                     </button>
@@ -1086,10 +1086,10 @@
             
             <div id="report-result" class="card report-result-card hidden">
                 <div class="card-header">
-                    <div class="card-title">Resumen del Período</div>
+                    <div class="card-title" data-i18n="supervisor.reports.result">Resumen del Período</div>
                 </div>
 
-                <p class="muted-copy" id="report-result-description">Genera el período para ver el resumen operativo y las descargas disponibles.</p>
+                <p class="muted-copy" id="report-result-description" data-i18n="supervisor.reports.result.desc">Genera el período para ver el resumen operativo y las descargas disponibles.</p>
 
                 <div class="chart-placeholder">
                     <i class="fas fa-chart-pie" style="font-size: 48px;"></i>
@@ -1116,11 +1116,11 @@
 
                 <div class="report-inline-summary-grid">
                     <div class="report-inline-summary-card">
-                        <strong>Horas del restaurante</strong>
-                        <p id="report-restaurant-totals-copy">Aquí verás cuánto se trabajó y cuánto se programó en el restaurante consultado.</p>
+                        <strong>Horas del sitio</strong>
+                        <p id="report-restaurant-totals-copy" data-i18n="supervisor.reports.totals">Aquí verás cuántas horas se acumularon en el sitio consultado.</p>
                     </div>
                     <div class="report-inline-summary-card">
-                        <strong>Estados del período</strong>
+                        <strong data-i18n="supervisor.reports.states">Estados del período</strong>
                         <div id="report-status-breakdown" class="report-pill-list">
                             <span class="report-pill report-pill-empty">Genera el informe para ver el estado de los turnos.</span>
                         </div>
@@ -1129,8 +1129,8 @@
 
                 <div id="report-day-evidence" class="report-day-evidence hidden">
                     <div class="report-day-evidence-header">
-                        <h4>Fotos del Antes y Después</h4>
-                        <p id="report-day-evidence-copy">Cuando el informe corresponde a un solo día, aquí verás las evidencias del turno.</p>
+                        <h4 data-i18n="supervisor.reports.evidence.title">Evidencias del Antes y Después</h4>
+                        <p id="report-day-evidence-copy" data-i18n="supervisor.reports.evidence.copy">Cuando el informe corresponde a un solo día, aquí verás las evidencias del servicio.</p>
                     </div>
                     <div id="report-day-evidence-list" class="report-day-evidence-list"></div>
                 </div>
@@ -1178,10 +1178,10 @@
         <main class="content">
             <div class="gps-verification">
                 <i class="fas fa-map-marker-alt"></i>
-                <h4 style="color: white; margin-bottom: 10px;">Verificación de Ubicación</h4>
+                <h4 style="color: white; margin-bottom: 10px;" data-i18n="shift.start.gps.title">Verificación de Acceso al Sitio</h4>
                 <div class="gps-status invalid" id="supervision-location-status-shell">
                     <i class="fas fa-location-crosshairs" id="supervision-location-status-icon"></i>
-                    <span id="supervision-location-status">Ubicación lista para verificar en sitio</span>
+                    <span id="supervision-location-status" data-i18n="supervisor.supervision.gps.status">Ubicación lista para verificar en sitio</span>
                 </div>
                 <div class="gps-actions">
                     <button type="button" class="btn btn-secondary" id="supervision-verify-location-btn" onclick="app.verifySupervisorSupervisionLocation()">
@@ -1191,9 +1191,9 @@
             </div>
 
             <div class="form-group supervision-restaurant-picker">
-                <label>Restaurante</label>
+                <label data-i18n="supervisor.supervision.restaurant">Sitio / Cliente</label>
                 <select id="supervision-restaurant-select">
-                    <option value="">Cargando restaurantes...</option>
+                    <option value="" data-i18n="supervisor.restaurants.loading">Cargando sitios...</option>
                 </select>
             </div>
 
@@ -1208,19 +1208,19 @@
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">Fotos de Supervisión</div>
+                    <div class="card-title" data-i18n="supervisor.supervision.photos">Evidencias de Auditoría</div>
                 </div>
 
                 <div class="area-selection-panel" style="margin-top: 0;">
                     <div class="area-selection-header">
-                        <strong>Área</strong>
+                        <strong data-i18n="supervisor.supervision.area.strong">Área</strong>
                     </div>
                     <div class="area-selection-select-wrap">
                         <span class="area-selection-select-icon">
                             <i class="fas fa-layer-group"></i>
                         </span>
                         <select id="supervision-area-select" class="dark-control area-selection-select">
-                            <option value="">Selecciona un área</option>
+                            <option value="" data-i18n="supervisor.supervision.area.placeholder">Selecciona un área</option>
                         </select>
                     </div>
                 </div>
@@ -1242,7 +1242,7 @@
             </button>
 
             <div id="supervision-support-card" class="card supervision-support-card hidden">
-                <div class="supervision-support-copy">Si vuelve a fallar, toca aquí para copiar el detalle y compartirlo con soporte.</div>
+                <div class="supervision-support-copy" data-i18n="supervisor.supervision.support">Si vuelve a fallar, toca aquí para copiar el detalle y compartirlo con soporte.</div>
                 <button type="button" class="btn btn-secondary" onclick="app.copyLatestSupervisionDebug()">
                     <i class="fas fa-copy"></i> Copiar detalle del error
                 </button>
@@ -1271,7 +1271,7 @@
             <form id="supervisor-shift-form">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="sched-shift-restaurant">Restaurante</label>
+                        <label for="sched-shift-restaurant" data-i18n="modal.shift.restaurant">Sitio / Cliente</label>
                         <select id="sched-shift-restaurant" class="dark-control" required>
                             <option value="">Selecciona un restaurante</option>
                         </select>
@@ -1302,11 +1302,11 @@
                     </div>
                     <div class="form-row two-col">
                         <div class="form-group">
-                            <label for="sched-shift-default-start">Hora entrada</label>
+                            <label for="sched-shift-default-start" data-i18n="modal.shift.start.time">Apertura de ventana</label>
                             <input type="time" id="sched-shift-default-start" class="dark-control" value="08:00">
                         </div>
                         <div class="form-group">
-                            <label for="sched-shift-default-end">Hora salida</label>
+                            <label for="sched-shift-default-end" data-i18n="modal.shift.end.time">Cierre de ventana</label>
                             <input type="time" id="sched-shift-default-end" class="dark-control" value="16:00">
                         </div>
                     </div>
@@ -1315,7 +1315,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-supervisor-schedule-shift')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-calendar-check"></i> Guardar Programación
+                        <i class="fas fa-calendar-check"></i> <span data-i18n="modal.shift.save">Guardar Asignación</span>
                     </button>
                 </div>
             </form>
@@ -1341,26 +1341,26 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="supervisor-restaurant-task-restaurant">Restaurante</label>
+                            <label for="supervisor-restaurant-task-restaurant" data-i18n="modal.task.restaurant">Sitio / Cliente</label>
                             <select id="supervisor-restaurant-task-restaurant" class="dark-control" required>
                                 <option value="">Selecciona un restaurante</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label for="supervisor-restaurant-task-title">Título de la tarea</label>
+                            <label for="supervisor-restaurant-task-title" data-i18n="modal.task.task.label">Título de la tarea</label>
                             <input type="text" id="supervisor-restaurant-task-title" placeholder="Ej: Limpieza profunda de campana" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="supervisor-restaurant-task-description">Descripción</label>
+                            <label for="supervisor-restaurant-task-description" data-i18n="modal.task.desc">Descripción</label>
                             <textarea id="supervisor-restaurant-task-description" placeholder="Explica qué debe revisar o completar el equipo en ese restaurante..." required></textarea>
                         </div>
 
                         <div class="shift-special-task-options">
                             <label class="checkbox-wrapper">
                                 <input type="checkbox" id="supervisor-restaurant-task-requires-evidence">
-                                <span>Solicitar evidencia fotográfica</span>
+                                <span data-i18n="modal.task.evidence">Solicitar evidencia fotográfica</span>
                             </label>
                             <div class="form-group">
                                 <label for="supervisor-restaurant-task-priority">Prioridad</label>
@@ -1389,13 +1389,13 @@
     <div id="modal-admin-restaurant" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Nuevo Restaurante</h3>
+                <h3 data-i18n="modal.restaurant.title">Nuevo Sitio</h3>
                 <button class="btn-close" onclick="app.closeModal('modal-admin-restaurant')">&times;</button>
             </div>
             <form id="admin-restaurant-form">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>Nombre del Restaurante</label>
+                        <label data-i18n="modal.restaurant.name">Nombre del Sitio / Cliente</label>
                         <input type="text" id="admin-restaurant-name" placeholder="Ej: Restaurant Don Juan" required>
                     </div>
                     <div class="restaurant-location-builder">
@@ -1419,7 +1419,7 @@
 
                         <div class="restaurant-map-shell">
                             <div class="restaurant-map-header">
-                                <strong>Verifica la ubicación</strong>
+                                <strong data-i18n="shift.start.verify.location">Verifica la ubicación</strong>
                                 <span class="restaurant-map-badge" id="admin-restaurant-map-badge">Pendiente</span>
                             </div>
                             <div id="admin-restaurant-map" class="restaurant-map"></div>
@@ -1434,13 +1434,13 @@
                     <input type="hidden" id="admin-restaurant-lng">
 
                     <div class="form-group">
-                        <label>Radio de verificación (m)</label>
+                        <label data-i18n="modal.restaurant.radius">Radio de verificación de acceso (m)</label>
                         <input type="number" id="admin-restaurant-radius" value="100" min="10" required>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-admin-restaurant')">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="btn.save">Guardar</button>
                 </div>
             </form>
         </div>
@@ -1450,34 +1450,34 @@
     <div id="modal-admin-employee" class="modal">
         <div class="modal-content admin-employee-modal-content">
             <div class="modal-header">
-                <h3>Nuevo Empleado</h3>
+                <h3 data-i18n="modal.employee.title">Nuevo Contratista</h3>
                 <button class="btn-close" onclick="app.closeModal('modal-admin-employee')">&times;</button>
             </div>
             <form id="admin-employee-form">
                 <div class="modal-body">
                     <div class="form-group">
                         <label>Nombre Completo</label>
-                        <input type="text" id="admin-employee-name" placeholder="Nombre del empleado" required>
+                        <input type="text" id="admin-employee-name" data-i18n-placeholder="modal.employee.name.placeholder" placeholder="Nombre del contratista" required>
                     </div>
                     <div class="form-group">
-                        <label>Correo Electrónico</label>
-                        <input type="email" id="admin-employee-email" placeholder="empleado@worktrace.com" required>
+                        <label data-i18n="modal.employee.email">Correo Electrónico</label>
+                        <input type="email" id="admin-employee-email" placeholder="contratista@ejemplo.com" required>
                     </div>
                     <div class="form-group">
-                        <label>Teléfono</label>
+                        <label data-i18n="modal.employee.phone">Teléfono</label>
                         <input type="tel" id="admin-employee-phone" placeholder="+573001112233" required>
                     </div>
                     <div class="alert alert-warning admin-employee-credential-note">
                         <i class="fas fa-key"></i>
                         <div class="admin-employee-credential-copy">
                             <strong>PIN inicial predeterminado</strong>
-                            <span>El empleado deberá configurar su PIN en su primer ingreso.</span>
+                            <span><span data-i18n="modal.employee.pin.span">El contratista deberá configurar su PIN en su primer ingreso.</span></span>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-admin-employee')">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="btn.save">Guardar</button>
                 </div>
             </form>
         </div>
@@ -1499,11 +1499,11 @@
         </header>
         
         <main class="content">
-            <div class="page-title">Panel de Superusuario</div>
+            <div class="page-title" data-i18n="admin.dashboard.page.title">Panel de Control Operativo</div>
 
             <div class="welcome-banner" style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);">
                 <h2 data-i18n="admin.dashboard.title">Control de Operaciones y Calidad</h2>
-                <p>Administración y supervisión</p>
+                <p data-i18n="admin.dashboard.welcome.subtitle">Administración y Auditoría</p>
             </div>
             
             <div class="quick-actions">
@@ -1523,7 +1523,7 @@
 
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">Supervisiones Realizadas Hoy</div>
+                    <div class="card-title" data-i18n="admin.dashboard.supervisions">Auditorías de Calidad Hoy</div>
                 </div>
                 <div id="admin-supervisions-list"></div>
             </div>
@@ -1564,7 +1564,7 @@
                 <button class="header-btn" onclick="app.navigate('admin-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span>Monitoreo de Supervisoras</span>
+                <span data-i18n="admin.monitor.title">Seguimiento de Inspecciones</span>
             </div>
         </header>
 
@@ -1635,13 +1635,13 @@
                             <input type="text" id="admin-supervisor-full-name" class="dark-control" placeholder="Ana Martínez" required>
                         </div>
                         <div class="form-group admin-panel-field">
-                            <label>Correo electrónico</label>
+                            <label data-i18n="admin.supervisors.email">Correo electrónico</label>
                             <input type="email" id="admin-supervisor-email" class="dark-control" placeholder="supervisora@worktrace.com" required>
                         </div>
                     </div>
                     <div class="toolbar-row two-col">
                         <div class="form-group admin-panel-field">
-                            <label>Teléfono E.164</label>
+                            <label data-i18n="admin.supervisors.phone">Teléfono E.164</label>
                             <input type="tel" id="admin-supervisor-phone" class="dark-control" placeholder="+573001112233" required>
                         </div>
                         <div class="admin-toggle-panel">
@@ -1649,7 +1649,7 @@
                                 <input type="checkbox" id="admin-supervisor-active" checked>
                                 <div class="checkbox-content">
                                     <span class="checkbox-title">Cuenta activa</span>
-                                    <span class="checkbox-desc">Permite que la supervisora inicie sesión al crearse o actualizarse.</span>
+                                    <span class="checkbox-desc" data-i18n="admin.supervisors.active.desc">Permite que el inspector inicie sesión al crearse o actualizarse.</span>
                                 </div>
                             </label>
                         </div>
@@ -1657,11 +1657,11 @@
                     <div class="toolbar-actions">
                         <button type="submit" class="btn btn-primary btn-inline">
                             <i class="fas fa-save"></i>
-                            <span id="admin-supervisor-submit-label">Guardar Supervisora</span>
+                            <span id="admin-supervisor-submit-label" data-i18n="admin.supervisors.save">Guardar Inspector</span>
                         </button>
                         <button type="button" class="btn btn-secondary btn-inline hidden" id="admin-supervisor-cancel-btn" onclick="app.resetAdminSupervisorForm()">
                             <i class="fas fa-times"></i>
-                            <span>Cancelar edición</span>
+                            <span data-i18n="admin.supervisors.cancel">Cancelar edición</span>
                         </button>
                     </div>
                 </form>
@@ -1669,13 +1669,13 @@
 
             <div class="card admin-supervisor-filters-card">
                 <div class="card-header">
-                    <div class="card-title">Filtros y Asignación</div>
+                    <div class="card-title" data-i18n="admin.supervisors.filters.title">Filtros y Asignación</div>
                 </div>
                 <form id="admin-supervisor-filters-form">
                     <div class="toolbar-row three-col">
                         <div class="form-group admin-panel-field">
-                            <label>Buscar</label>
-                            <input type="text" id="admin-supervisor-search" class="dark-control" placeholder="Nombre o correo">
+                            <label data-i18n="admin.supervisors.search.label">Buscar</label>
+                            <input type="text" id="admin-supervisor-search" class="dark-control" data-i18n-placeholder="admin.supervisors.search.placeholder" placeholder="Nombre o correo">
                         </div>
                         <div class="form-group admin-panel-field">
                             <label>Estado</label>
@@ -1686,9 +1686,9 @@
                             </select>
                         </div>
                         <div class="form-group admin-panel-field">
-                            <label>Restaurante</label>
+                            <label data-i18n="supervisor.supervision.restaurant">Sitio / Cliente</label>
                             <select id="admin-supervisor-restaurant-filter" class="dark-control">
-                                <option value="">Todos los restaurantes</option>
+                                <option value="">Todos los sitios</option>
                             </select>
                         </div>
                     </div>
@@ -1706,7 +1706,7 @@
                     <div class="card-title">Supervisoras Registradas</div>
                 </div>
                 <div id="admin-supervisors-list" class="admin-section-grid">
-                    <div class="empty-state">Cargando supervisoras...</div>
+                    <div class="empty-state" data-i18n="admin.supervisors.list.loading">Cargando inspectores...</div>
                 </div>
             </div>
         </main>
@@ -1718,7 +1718,7 @@
             </button>
             <button class="nav-item active" onclick="app.navigate('admin-supervisors')">
                 <i class="fas fa-user-shield"></i>
-                <span>Supervisoras</span>
+                <span data-i18n="admin.nav.supervisors">Inspectores</span>
             </button>
             <button class="nav-item" onclick="app.logout()">
                 <i class="fas fa-sign-out-alt"></i>

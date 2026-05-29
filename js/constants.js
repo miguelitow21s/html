@@ -18,19 +18,19 @@ export const ROLE_ROUTES = Object.freeze({
 });
 
 export const ROLE_LABELS = Object.freeze({
-    empleado: 'Empleado de Limpieza',
-    supervisora: 'Supervisora',
+    empleado: 'Contratista de Limpieza',
+    supervisora: 'Inspector de Calidad',
     super_admin: 'Super Admin',
-    employee: 'Empleado de Limpieza',
-    supervisor: 'Supervisora',
+    employee: 'Contratista de Limpieza',
+    supervisor: 'Inspector de Calidad',
     superuser: 'Super Admin',
 });
 
 export const REPORT_COLUMNS = [
-    'Turno',
-    'Restaurante',
-    'Empleado',
-    'Supervisora',
+    'Servicio',
+    'Sitio',
+    'Contratista',
+    'Inspector',
     'Inicio',
     'Fin',
     'Estado',
@@ -85,7 +85,7 @@ export const DEFAULT_SYSTEM_SETTINGS = Object.freeze({
     },
     legal: {
         consent_text:
-            'Autorizo el uso de mis datos personales, ubicacion GPS y camara para fines de verificacion de turnos laborales.',
+            'Autorizo el uso de mis datos personales, ubicacion GPS y camara para fines de verificacion de acceso a sitios de trabajo.',
         support_email: 'soporte@worktrace.com',
     },
     gps: {

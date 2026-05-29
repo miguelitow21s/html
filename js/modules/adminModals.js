@@ -1052,8 +1052,8 @@ export const adminModalMethods = {
     async handleClearPhoneUser(userId) {
         const employee = this.getKnownSupervisorEmployeeRecord(userId);
         await this.clearPhoneBindingRecord(employee, {
-            emptyMessage: 'No se pudo identificar el empleado seleccionado.',
-            subjectLabel: 'empleado',
+            emptyMessage: 'No se pudo identificar el contratista seleccionado.',
+            subjectLabel: 'contratista',
             refresh: async () => {
                 this.invalidateCache('supervisorEmployees');
                 await this.loadSupervisorEmployees(true);
@@ -1207,7 +1207,7 @@ export const adminModalMethods = {
         return null;
     },
 
-    getResolvedShiftEmployeeName(shift, fallback = 'Empleado') {
+    getResolvedShiftEmployeeName(shift, fallback = 'Contratista') {
         const employeeId =
             shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '';
         const employeeAliasCandidates = [
@@ -1237,7 +1237,7 @@ export const adminModalMethods = {
         );
     },
 
-    getResolvedShiftRestaurantName(shift, fallback = 'Restaurante') {
+    getResolvedShiftRestaurantName(shift, fallback = 'Sitio') {
         const restaurantId =
             shift?.restaurant_id ||
             shift?.restaurant?.restaurant_id ||
@@ -1335,7 +1335,7 @@ export const adminModalMethods = {
     },
 
     buildSupervisorShiftOptionLabel(shift) {
-        const employeeName = this.getResolvedShiftEmployeeName(shift, 'Empleado sin nombre');
+        const employeeName = this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre');
         const scheduleText = formatShiftRange(shift?.scheduled_start, shift?.scheduled_end);
         const statusText = getShiftStatusLabel(shift);
         return `${employeeName} • ${scheduleText} • ${statusText}`;
@@ -1360,7 +1360,7 @@ export const adminModalMethods = {
         if (shifts.length === 0) {
             this.selectedSupervisorShiftId = '';
             select.disabled = true;
-            select.innerHTML = '<option value="">No hay turnos hoy en este restaurante</option>';
+            select.innerHTML = '<option value="">No hay servicios hoy en este sitio</option>';
             return;
         }
 

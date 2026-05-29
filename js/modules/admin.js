@@ -398,7 +398,7 @@ export const adminMethods = {
                         const supervisorDetail = item.supervisor?.email || item.supervisor_email || '';
                         const restaurantName = getRestaurantDisplayName(
                             item,
-                            getRestaurantDisplayName(item.restaurant || null, 'Restaurante sin nombre visible')
+                            getRestaurantDisplayName(item.restaurant || null, 'Sitio sin nombre visible')
                         );
                         const observedAt = item.observed_at || item.created_at || item.registered_at || '';
                         const observationCount =
@@ -879,7 +879,7 @@ export const adminMethods = {
                         <div class="form-group admin-panel-field admin-supervisor-select-wrap">
                             <label>Asignar restaurante</label>
                             <select id="${escapeHtml(selectId)}" class="dark-control" ${assignDisabled}>
-                                <option value="">${availableRestaurants.length > 0 ? 'Selecciona un restaurante' : 'Sin restaurantes disponibles'}</option>
+                                <option value="">${availableRestaurants.length > 0 ? 'Selecciona un sitio' : 'Sin sitios disponibles'}</option>
                                 ${availableRestaurants
                                     .map(
                                         (restaurant) => `
@@ -967,14 +967,14 @@ export const adminMethods = {
         const restaurantId = select?.value;
 
         if (!restaurantId) {
-            this.showToast('Selecciona un restaurante para asignar.', {
+            this.showToast('Selecciona un sitio para asignar.', {
                 tone: 'warning',
-                title: 'Falta seleccionar restaurante',
+                title: 'Falta seleccionar sitio',
             });
             return;
         }
 
-        this.showLoading('Asignando restaurante...', 'Guardando el cambio.');
+        this.showLoading('Asignando sitio...', 'Guardando el cambio.');
 
         try {
             await apiClient.adminSupervisorsManage('assign', {
@@ -984,14 +984,14 @@ export const adminMethods = {
 
             this.invalidateCache('adminSupervisors');
             await this.loadAdminSupervisors(true);
-            this.showToast('Restaurante asignado correctamente.', {
+            this.showToast('Sitio asignado correctamente.', {
                 tone: 'success',
                 title: 'Asignación exitosa',
             });
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible asignar el restaurante.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible asignar el sitio.'), {
                 tone: 'error',
-                title: 'No fue posible asignar el restaurante',
+                title: 'No fue posible asignar el sitio',
             });
         } finally {
             this.hideLoading();
@@ -999,7 +999,7 @@ export const adminMethods = {
     },
 
     async unassignRestaurantFromSupervisor(supervisorId, restaurantId) {
-        this.showLoading('Desasignando restaurante...', 'Guardando el cambio.');
+        this.showLoading('Desasignando sitio...', 'Guardando el cambio.');
 
         try {
             await apiClient.adminSupervisorsManage('unassign', {
@@ -1009,14 +1009,14 @@ export const adminMethods = {
 
             this.invalidateCache('adminSupervisors');
             await this.loadAdminSupervisors(true);
-            this.showToast('Restaurante desasignado correctamente.', {
+            this.showToast('Sitio desasignado correctamente.', {
                 tone: 'success',
                 title: 'Cambio guardado',
             });
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible desasignar el restaurante.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible desasignar el sitio.'), {
                 tone: 'error',
-                title: 'No fue posible desasignar el restaurante',
+                title: 'No fue posible desasignar el sitio',
             });
         } finally {
             this.hideLoading();

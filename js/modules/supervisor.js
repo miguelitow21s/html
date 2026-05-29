@@ -610,8 +610,8 @@ export const supervisorMethods = {
             this.supervisorShiftMode === 'plan'
                 ? 'La misma tarea se repetirá en cada fecha que programes.'
                 : this.supervisorShiftMode === 'team'
-                  ? 'La misma tarea se repetirá para cada empleado incluido.'
-                  : 'Se creará junto con este turno puntual.';
+                  ? 'La misma tarea se repetirá para cada contratista incluido.'
+                  : 'Se creará junto con este servicio.';
 
         if (scopeCopy) {
             scopeCopy.textContent = scopeText;
@@ -698,7 +698,7 @@ export const supervisorMethods = {
         if (employees.length === 0) {
             const option = document.createElement('option');
             option.value = '';
-            option.textContent = 'No hay empleados disponibles';
+            option.textContent = 'No hay contratistas disponibles';
             fragment.appendChild(option);
             select.replaceChildren(fragment);
             return;
@@ -706,7 +706,7 @@ export const supervisorMethods = {
 
         const placeholder = document.createElement('option');
         placeholder.value = '';
-        placeholder.textContent = 'Selecciona un empleado';
+        placeholder.textContent = 'Selecciona un contratista';
         fragment.appendChild(placeholder);
 
         employees.forEach((employee) => {
@@ -732,7 +732,7 @@ export const supervisorMethods = {
         if (employees.length === 0) {
             const option = document.createElement('option');
             option.value = '';
-            option.textContent = 'No hay empleados disponibles';
+            option.textContent = 'No hay contratistas disponibles';
             fragment.appendChild(option);
             select.replaceChildren(fragment);
             return;
@@ -740,7 +740,7 @@ export const supervisorMethods = {
 
         const placeholder = document.createElement('option');
         placeholder.value = '';
-        placeholder.textContent = 'Selecciona un empleado';
+        placeholder.textContent = 'Selecciona un contratista';
         fragment.appendChild(placeholder);
 
         employees.forEach((employee) => {
@@ -809,7 +809,7 @@ export const supervisorMethods = {
         }
 
         if (!restaurantId) {
-            this.setShiftBatchPickerEmpty(container, 'Selecciona un restaurante para ver los empleados disponibles.');
+            this.setShiftBatchPickerEmpty(container, 'Selecciona un sitio para ver los contratistas disponibles.');
             this.supervisorBatchSelectedEmployees = [];
             return [];
         }
@@ -824,7 +824,7 @@ export const supervisorMethods = {
             if (employees.length === 0) {
                 this.setShiftBatchPickerEmpty(
                     container,
-                    'No hay empleados activos disponibles para programar en este restaurante.'
+                    'No hay contratistas activos disponibles para asignar en este sitio.'
                 );
                 return [];
             }
@@ -1355,7 +1355,7 @@ export const supervisorMethods = {
             asArray(this.data.supervisor.restaurants).find(
                 (item) => String(getRestaurantRecordId(item) || '') === restaurantId
             ) || null;
-        const restaurantName = restaurant ? getRestaurantDisplayName(restaurant) : 'Sin restaurante seleccionado';
+        const restaurantName = restaurant ? getRestaurantDisplayName(restaurant) : 'Sin sitio seleccionado';
 
         container.innerHTML = `
             <span class="shift-week-summary-pill"><strong>Semana</strong> ${escapeHtml(formatDate(weekStart, { day: '2-digit', month: 'short' }))} - ${escapeHtml(formatDate(weekEnd, { day: '2-digit', month: 'short', year: 'numeric' }))}</span>
@@ -1427,7 +1427,7 @@ export const supervisorMethods = {
             const employeeRecord = (this.data.supervisor.employees || []).find(
                 (item) => String(item?.id || '') === employeeId
             );
-            const employeeName = getEmployeeDisplayName(employeeRecord, 'el empleado seleccionado');
+            const employeeName = getEmployeeDisplayName(employeeRecord, 'el contratista seleccionado');
             const isEmployeeActive = employeeRecord?.is_active;
             if (isEmployeeActive === false) {
                 return {
@@ -1444,7 +1444,7 @@ export const supervisorMethods = {
             ) {
                 return {
                     ok: false,
-                    message: `No tienes acceso al restaurante seleccionado para crear tareas especiales en ese turno.`,
+                    message: `No tienes acceso al sitio seleccionado para crear tareas especiales en ese servicio.`,
                 };
             }
         }
@@ -1893,10 +1893,10 @@ export const supervisorMethods = {
         }
 
         return [
-            'turno programado no encontrado',
+            'servicio asignado no encontrado',
             'scheduled shift not found',
             'scheduled_shift_id',
-            'turno no encontrado',
+            'servicio no encontrado',
         ].some((token) => source.includes(token));
     },
 
@@ -1911,21 +1911,21 @@ export const supervisorMethods = {
 
         switch (diagnosticCode) {
             case 'SCHEDULED_SHIFT_NOT_FOUND':
-                return 'No se encontró el turno programado en este ambiente. Refresca turnos y vuelve a intentarlo.';
+                return 'No se encontró el servicio asignado en este ambiente. Refresca los servicios y vuelve a intentarlo.';
             case 'SCHEDULED_SHIFT_FORBIDDEN':
-                return 'No tienes permisos para acceder al turno programado seleccionado.';
+                return 'No tienes permisos para acceder al servicio seleccionado.';
             case 'SCHEDULED_SHIFT_INVALID_STATUS': {
                 const currentStatus = String(
                     error?.payload?.error?.details?.current_status || error?.payload?.details?.current_status || ''
                 ).trim();
                 return currentStatus
-                    ? `El turno está en estado "${currentStatus}" y no permite crear tarea especial.`
-                    : 'Solo se pueden crear tareas especiales para turnos en estado programado.';
+                    ? `El servicio está en estado "${currentStatus}" y no permite crear tarea especial.`
+                    : 'Solo se pueden crear tareas especiales para servicios en estado asignado.';
             }
             case 'SCHEDULED_SHIFT_EMPLOYEE_MISMATCH':
-                return 'El empleado enviado no coincide con el empleado del turno programado.';
+                return 'El empleado enviado no coincide con el contratista del servicio asignado.';
             case 'EMPLOYEE_NOT_IN_RESTAURANT':
-                return 'El empleado asignado no pertenece al restaurante del turno programado.';
+                return 'El empleado asignado no pertenece al sitio del servicio asignado.';
             default:
                 return '';
         }
@@ -2061,14 +2061,14 @@ export const supervisorMethods = {
             );
             if (!scheduledShiftId) {
                 failed += 1;
-                errors.push('No se pudo determinar el turno programado para crear la tarea especial.');
+                errors.push('No se pudo determinar el servicio asignado para crear la tarea especial.');
                 continue;
             }
 
             if (!assignedEmployeeId) {
                 failed += 1;
                 errors.push(
-                    'No se pudo determinar el empleado asignado del turno programado para crear la tarea especial.'
+                    'No se pudo determinar el contratista del servicio asignado para crear la tarea especial.'
                 );
                 continue;
             }
@@ -2155,7 +2155,7 @@ export const supervisorMethods = {
                     errors.push(diagnosticMessage);
                 } else if (this.isScheduledShiftNotFoundOnTaskCreate(lastError)) {
                     errors.push(
-                        'No se encontró el turno programado en este ambiente o no está dentro del alcance del usuario actual. Refresca turnos y vuelve a intentarlo.'
+                        'No se encontró el servicio asignado en este ambiente o no está dentro del alcance del usuario actual. Refresca los servicios y vuelve a intentarlo.'
                     );
                 } else {
                     errors.push(this.getErrorMessage(lastError, 'No fue posible enlazar una tarea especial.'));
@@ -2364,7 +2364,7 @@ export const supervisorMethods = {
         );
     },
 
-    getResolvedShiftRestaurantName(shift, fallback = 'Restaurante') {
+    getResolvedShiftRestaurantName(shift, fallback = 'Sitio') {
         const restaurantId =
             shift?.restaurant_id ||
             shift?.restaurant?.restaurant_id ||
@@ -2723,7 +2723,7 @@ export const supervisorMethods = {
         const firstName = (this.currentUser.full_name || this.currentUser.email).split(' ')[0];
         document.getElementById('supervisor-welcome-title').textContent = `Bienvenida, ${firstName}`;
         document.getElementById('supervisor-welcome-subtitle').textContent =
-            `${restaurants.length} restaurante(s) disponibles`;
+            `${restaurants.length} sitio(s) disponibles`;
 
         const now = Date.now();
         const graceMs = SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES * 60 * 1000;
@@ -2762,7 +2762,7 @@ export const supervisorMethods = {
                         <i class="fas fa-exclamation-circle"></i>
                         <div>
                             <strong>Turno no iniciado</strong><br>
-                            <small>${escapeHtml(this.getResolvedShiftEmployeeName(shift, 'Empleado sin nombre visible'))} - ${escapeHtml(this.getResolvedShiftRestaurantName(shift, 'Restaurante sin nombre visible'))} (${escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end))})</small>
+                            <small>${escapeHtml(this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible'))} - ${escapeHtml(this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible'))} (${escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end))})</small>
                         </div>
                     </div>
                 `
@@ -2796,7 +2796,7 @@ export const supervisorMethods = {
             card.className = 'card';
             const copy = document.createElement('p');
             copy.style.color = 'var(--gray)';
-            copy.textContent = 'No hay restaurantes disponibles.';
+            copy.textContent = 'No hay sitios disponibles.';
             card.appendChild(copy);
             container.replaceChildren(card);
             return;
@@ -2859,7 +2859,7 @@ export const supervisorMethods = {
             employeesLine.append(
                 employeesIcon,
                 document.createTextNode(
-                    ` ${availableEmployeeCount != null ? `${availableEmployeeCount} empleado(s) disponibles` : 'Empleados disponibles para programar'}`
+                    ` ${availableEmployeeCount != null ? `${availableEmployeeCount} contratista(s) disponibles` : 'Contratistas disponibles para asignar'}`
                 )
             );
 
@@ -2868,7 +2868,7 @@ export const supervisorMethods = {
             shiftsIcon.className = 'fas fa-calendar-alt';
             shiftsLine.append(
                 shiftsIcon,
-                document.createTextNode(` ${String(shiftsForRestaurantCount)} turno(s) en el período actual`)
+                document.createTextNode(` ${String(shiftsForRestaurantCount)} servicio(s) en el período actual`)
             );
 
             card.append(title, address, employeesLine, shiftsLine);
@@ -2907,9 +2907,9 @@ export const supervisorMethods = {
     confirmDeactivateRestaurant(restaurantId) {
         const normalizedRestaurantId = normalizeRestaurantId(restaurantId);
         if (normalizedRestaurantId == null) {
-            this.showToast('No se pudo identificar el restaurante a eliminar.', {
+            this.showToast('No se pudo identificar el sitio a eliminar.', {
                 tone: 'warning',
-                title: 'Restaurante inválido',
+                title: 'Sitio inválido',
             });
             return;
         }
@@ -2925,9 +2925,9 @@ export const supervisorMethods = {
     async submitDeactivateRestaurantModal() {
         const restaurantId = normalizeRestaurantId(this.pendingRestaurantDeactivateId);
         if (restaurantId == null) {
-            this.showToast('No se pudo identificar el restaurante a eliminar.', {
+            this.showToast('No se pudo identificar el sitio a eliminar.', {
                 tone: 'warning',
-                title: 'Restaurante inválido',
+                title: 'Sitio inválido',
             });
             this.closeDeactivateRestaurantModal();
             return;
@@ -2941,14 +2941,14 @@ export const supervisorMethods = {
     async deactivateRestaurant(restaurantId) {
         const normalizedRestaurantId = normalizeRestaurantId(restaurantId);
         if (normalizedRestaurantId == null) {
-            this.showToast('No se pudo identificar el restaurante a eliminar.', {
+            this.showToast('No se pudo identificar el sitio a eliminar.', {
                 tone: 'warning',
-                title: 'Restaurante inválido',
+                title: 'Sitio inválido',
             });
             return;
         }
 
-        this.showLoading('Eliminando restaurante...', 'Actualizando la configuración operativa.');
+        this.showLoading('Eliminando sitio...', 'Actualizando la configuración operativa.');
 
         try {
             await apiClient.adminRestaurantsManage('deactivate', {
@@ -2966,13 +2966,13 @@ export const supervisorMethods = {
                 this.isAdminRole() ? this.loadAdminDashboard() : Promise.resolve(),
             ]);
 
-            this.showToast('Restaurante eliminado correctamente.', {
+            this.showToast('Sitio eliminado correctamente.', {
                 tone: 'success',
                 title: 'Eliminación exitosa',
             });
         } catch (error) {
-            const title = this.isAdminRole() ? 'No fue posible eliminar el restaurante' : 'Permiso insuficiente';
-            this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el restaurante.'), {
+            const title = this.isAdminRole() ? 'No fue posible eliminar el sitio' : 'Permiso insuficiente';
+            this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el sitio.'), {
                 tone: 'error',
                 title,
             });
@@ -3026,7 +3026,7 @@ export const supervisorMethods = {
                         limit: 200,
                     })
                     .catch((error) => {
-                        console.warn('No fue posible cargar el directorio completo de empleados.', error);
+                        console.warn('No fue posible cargar el directorio completo de contratistas.', error);
                         return [];
                     });
 
@@ -3119,10 +3119,10 @@ export const supervisorMethods = {
             paragraph.style.color = 'var(--gray)';
             paragraph.textContent =
                 this.supervisorEmployeesStatusFilter === 'inactive'
-                    ? 'No hay empleados inactivos para mostrar.'
+                    ? 'No hay contratistas inactivos para mostrar.'
                     : this.supervisorEmployeesStatusFilter === 'active'
-                      ? 'No hay empleados activos disponibles para mostrar.'
-                      : 'No hay empleados disponibles para mostrar.';
+                      ? 'No hay contratistas activos disponibles para mostrar.'
+                      : 'No hay contratistas disponibles para mostrar.';
             card.appendChild(paragraph);
             container.replaceChildren(card);
             return;
@@ -3150,8 +3150,8 @@ export const supervisorMethods = {
             auditMeta.className = 'audit-meta';
             auditMeta.textContent =
                 employee.is_active === false
-                    ? 'Empleado inactivo para nuevas programaciones.'
-                    : 'Disponible para programarse en cualquier restaurante.';
+                    ? 'Contratista inactivo para nuevas asignaciones.'
+                    : 'Disponible para asignarse a cualquier sitio.';
 
             info.append(heading, contact, auditMeta);
 
@@ -3216,9 +3216,9 @@ export const supervisorMethods = {
     // Redirige a la página de informes y selecciona el empleado automáticamente
     goToReportPageWithEmployee(employee) {
         if (!employee || !employee.id) {
-            this.showToast('No se pudo identificar el empleado para el informe.', {
+            this.showToast('No se pudo identificar el contratista para el informe.', {
                 tone: 'warning',
-                title: 'Empleado inválido',
+                title: 'Contratista inválido',
             });
             return;
         }
@@ -3367,16 +3367,16 @@ export const supervisorMethods = {
         });
 
         if (lastWeekShifts.length === 0) {
-            this.showToast('No hay turnos en la semana anterior para replicar.', {
+            this.showToast('No hay servicios en el período anterior para replicar.', {
                 tone: 'warning',
                 title: 'Sin asignaciones anteriores',
             });
             return;
         }
 
-        if (!confirm(`¿Replicar ${lastWeekShifts.length} turno(s) de la semana anterior?`)) return;
+        if (!confirm(`¿Replicar ${lastWeekShifts.length} asignación(es) del período anterior??`)) return;
 
-        this.showLoading('Replicando turnos...', `Creando ${lastWeekShifts.length} programaciones.`);
+        this.showLoading('Replicando asignaciones...', `Creando ${lastWeekShifts.length} asignaciones.`);
 
         try {
             let success = 0;
@@ -3418,8 +3418,8 @@ export const supervisorMethods = {
             const tone = failed > 0 ? 'warning' : 'success';
             const msg =
                 failed > 0
-                    ? `${success} turno(s) replicado(s). ${failed} no se pudieron crear.`
-                    : `${success} turno(s) replicado(s) correctamente.`;
+                    ? `${success} asignación(es) replicada(s). ${failed} no se pudieron crear.`
+                    : `${success} asignación(es) replicada(s) correctamente.`;
             this.showToast(msg, { tone, title: 'Semana replicada' });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible replicar las asignaciones.'), {
@@ -3480,7 +3480,7 @@ export const supervisorMethods = {
         this.applySupervisorShiftFilters();
     },
 
-    normalizeSupervisorShiftEmployeeLabel(value, fallback = 'Empleado por confirmar') {
+    normalizeSupervisorShiftEmployeeLabel(value, fallback = 'Contratista por confirmar') {
         const text = String(value || '').trim();
         if (!text) {
             return fallback;
@@ -3543,7 +3543,7 @@ export const supervisorMethods = {
                 id: employeeId,
                 name: this.normalizeSupervisorShiftEmployeeLabel(
                     this.getResolvedShiftEmployeeName(shift, 'Contratista'),
-                    'Empleado por confirmar'
+                    'Contratista por confirmar'
                 ),
             });
         });
@@ -3574,10 +3574,10 @@ export const supervisorMethods = {
             const restaurantMap = new Map();
             asArray(this.data.supervisor.restaurants).forEach((r) => {
                 const id = String(r?.id || '').trim();
-                if (id) restaurantMap.set(id, getRestaurantDisplayName(r, 'Restaurante'));
+                if (id) restaurantMap.set(id, getRestaurantDisplayName(r, 'Sitio'));
             });
             restaurantFilter.innerHTML =
-                '<option value="">Todos los restaurantes</option>' +
+                '<option value="">Todos los sitios</option>' +
                 Array.from(restaurantMap.entries())
                     .map(
                         ([id, name]) =>
@@ -3838,7 +3838,7 @@ export const supervisorMethods = {
         const shiftsByKey = this.buildWeekShiftMap(weekShifts);
 
         let html = '<div class="ssg-grid">';
-        html += `<div class="ssg-header-cell ssg-employee-header">Empleado</div>`;
+        html += `<div class="ssg-header-cell ssg-employee-header">Contratista</div>`;
         weekDays.forEach(({ date, key }, i) => {
             const isToday = key === today;
             html += `<div class="ssg-header-cell ssg-day-header${isToday ? ' ssg-today' : ''}">${DAY_NAMES[i]}<br><span class="ssg-date-num">${date.getDate()}</span></div>`;
@@ -3862,7 +3862,7 @@ export const supervisorMethods = {
 
     confirmCancelScheduledShift(shiftId) {
         if (this.pendingShiftCancellationRequest) {
-            this.showToast('Ya estamos procesando la eliminación del turno. Espera un momento.', {
+            this.showToast('Ya estamos procesando la eliminación del servicio. Espera un momento.', {
                 tone: 'info',
                 title: 'Eliminación en progreso',
             });
@@ -3871,7 +3871,7 @@ export const supervisorMethods = {
 
         const normalizedShiftId = normalizeRestaurantId(shiftId);
         if (normalizedShiftId == null) {
-            this.showToast('No se pudo identificar el turno programado a eliminar.', {
+            this.showToast('No se pudo identificar el servicio asignado a eliminar.', {
                 tone: 'warning',
                 title: 'Servicio inválido',
             });
@@ -3893,7 +3893,7 @@ export const supervisorMethods = {
     async submitCancelScheduledShiftModal() {
         const shiftId = normalizeRestaurantId(this.pendingShiftCancellationId);
         if (shiftId == null) {
-            this.showToast('No se pudo identificar el turno programado a eliminar.', {
+            this.showToast('No se pudo identificar el servicio asignado a eliminar.', {
                 tone: 'warning',
                 title: 'Servicio inválido',
             });
@@ -3915,7 +3915,7 @@ export const supervisorMethods = {
 
     async cancelScheduledShift(shiftId, reason = '') {
         if (this.pendingShiftCancellationRequest) {
-            this.showToast('Ya estamos procesando la eliminación del turno. Espera un momento.', {
+            this.showToast('Ya estamos procesando la eliminación del servicio. Espera un momento.', {
                 tone: 'info',
                 title: 'Eliminación en progreso',
             });
@@ -3924,7 +3924,7 @@ export const supervisorMethods = {
 
         const normalizedShiftId = normalizeRestaurantId(shiftId);
         if (normalizedShiftId == null) {
-            this.showToast('No se pudo identificar el turno programado a eliminar.', {
+            this.showToast('No se pudo identificar el servicio asignado a eliminar.', {
                 tone: 'warning',
                 title: 'Servicio inválido',
             });
@@ -3933,7 +3933,7 @@ export const supervisorMethods = {
 
         this.pendingShiftCancellationRequest = true;
 
-        this.showLoading('Eliminando turno...', 'Quitando la programación del turno seleccionado.');
+        this.showLoading('Eliminando servicio...', 'Quitando la asignación del servicio seleccionado.');
 
         try {
             await apiClient.scheduledShiftsManage('cancel', {
@@ -3960,14 +3960,14 @@ export const supervisorMethods = {
                 });
             }
 
-            this.showToast('Turno eliminado correctamente.', {
+            this.showToast('Servicio eliminado correctamente.', {
                 tone: 'success',
                 title: 'Eliminación exitosa',
             });
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el turno programado.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el servicio asignado.'), {
                 tone: 'error',
-                title: 'No fue posible eliminar el turno',
+                title: 'No fue posible eliminar el servicio',
             });
         } finally {
             this.pendingShiftCancellationRequest = false;
@@ -3993,7 +3993,7 @@ export const supervisorMethods = {
         const currentEmployeeValue = employeeSelect?.value || '';
 
         if (restaurants.length === 0) {
-            restaurantSelect.innerHTML = '<option value="">Todos los restaurantes</option>';
+            restaurantSelect.innerHTML = '<option value="">Todos los sitios</option>';
             if (employeeSelect) {
                 employeeSelect.innerHTML = `
                     <option value="">Todos los empleados</option>
@@ -4013,7 +4013,7 @@ export const supervisorMethods = {
         }
 
         restaurantSelect.innerHTML = `
-            <option value="">Todos los restaurantes</option>
+            <option value="">Todos los sitios</option>
             ${restaurants
                 .map(
                     (restaurant, index) => `
@@ -4238,7 +4238,7 @@ export const supervisorMethods = {
                 </div>
                 <div class="supervision-target-item">
                     <span class="supervision-target-label">Observación</span>
-                    <span class="supervision-target-value">${escapeHtml(shifts.length > 0 ? 'La supervisión se guarda sobre el restaurante, no sobre un turno puntual.' : 'Puedes supervisar aunque hoy no haya turnos cargados en el resumen.')}</span>
+                    <span class="supervision-target-value">${escapeHtml(shifts.length > 0 ? 'La auditoría se guarda sobre el sitio, no sobre un servicio puntual.' : 'Puedes auditar aunque hoy no haya servicios cargados en el resumen.')}</span>
                 </div>
             </div>
         `;
@@ -4274,7 +4274,7 @@ export const supervisorMethods = {
 
         if (!restaurant) {
             shell.classList.add('warning');
-            label.textContent = 'Selecciona un restaurante para verificar la ubicación en sitio.';
+            label.textContent = 'Selecciona un sitio para verificar la ubicación.';
             if (button) {
                 button.disabled = true;
                 button.innerHTML = '<i class="fas fa-location-crosshairs"></i> Verificar en sitio';
@@ -4285,7 +4285,7 @@ export const supervisorMethods = {
 
         if (!geofence?.isReady) {
             shell.classList.add('warning');
-            label.textContent = `El restaurante ${restaurantName} todavía no tiene geocerca configurada.`;
+            label.textContent = `El sitio ${restaurantName} todavía no tiene geocerca configurada.`;
             if (button) {
                 button.disabled = true;
                 button.innerHTML = '<i class="fas fa-location-crosshairs"></i> Geocerca pendiente';
@@ -4545,7 +4545,7 @@ export const supervisorMethods = {
         if (code === 'TASK_SCOPE_NOT_SUPPORTED')
             return 'Falta información requerida para crear la tarea. Verifica que el restaurante esté seleccionado correctamente.';
         if (code === 'NO_ACTIVE_SHIFT')
-            return 'El empleado no tiene un turno activo en este restaurante. Debe activar su turno primero.';
+            return 'El contratista no tiene un servicio activo en este sitio. Debe iniciar el servicio primero.';
         return this.getErrorMessage(error, fallback);
     },
 
@@ -4720,7 +4720,7 @@ export const supervisorMethods = {
             })
             .filter(Boolean);
         return rows.length === 0
-            ? '<div class="report-day-phase-empty">No se recibieron fotos para este turno.</div>'
+            ? '<div class="report-day-phase-empty">No se recibieron evidencias para este servicio.</div>'
             : `<div class="report-day-pairs">${rows.join('')}</div>`;
     },
 
@@ -4743,8 +4743,8 @@ export const supervisorMethods = {
         wrapper.classList.remove('hidden');
 
         if (items.length === 0) {
-            copy.textContent = 'Ese día no tuvo turnos registrados para los filtros seleccionados.';
-            list.innerHTML = '<div class="report-day-phase-empty">No hay turnos que mostrar para esa fecha.</div>';
+            copy.textContent = 'Ese día no tuvo servicios registrados para los filtros seleccionados.';
+            list.innerHTML = '<div class="report-day-phase-empty">No hay servicios que mostrar para esa fecha.</div>';
             return;
         }
 
@@ -4753,8 +4753,8 @@ export const supervisorMethods = {
 
         list.innerHTML = items
             .map((shift) => {
-                const employeeName = this.getResolvedShiftEmployeeName(shift, 'Empleado sin nombre visible');
-                const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Restaurante sin nombre visible');
+                const employeeName = this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible');
+                const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible');
                 const scheduleText = formatShiftRange(
                     shift.scheduled_start || shift.start_time,
                     shift.scheduled_end || shift.end_time
@@ -4812,7 +4812,7 @@ export const supervisorMethods = {
             .join('');
 
         if (!foundEvidence) {
-            copy.textContent = 'Ese día sí tiene turnos, pero no se recibieron fotos de inicio y fin en este listado.';
+            copy.textContent = 'Ese día sí tiene servicios, pero no se recibieron evidencias de inicio y fin en este listado.';
         }
     },
 
@@ -4981,8 +4981,8 @@ export const supervisorMethods = {
             const description = document.getElementById('report-result-description');
             if (description) {
                 description.textContent = isSingleDay
-                    ? 'Resumen completo del día seleccionado, con estado del turno, horas y evidencias de antes y después.'
-                    : 'Resumen consolidado del período seleccionado, incluyendo horas trabajadas, horas programadas y estado operativo de los turnos.';
+                    ? 'Resumen completo del día seleccionado, con estado del servicio, horas y evidencias de antes y después.'
+                    : 'Resumen consolidado del período seleccionado, incluyendo horas de servicio, horas asignadas y estado operativo de los servicios.';
             }
 
             const restaurantTotalsCopy = document.getElementById('report-restaurant-totals-copy');
@@ -4997,7 +4997,7 @@ export const supervisorMethods = {
                 )
                     ? formatHours(this.data.lastGeneratedReport.resolved_totals.restaurant_scheduled_hours_total)
                     : formatHours(this.data.lastGeneratedReport.resolved_totals.total_scheduled_hours);
-                restaurantTotalsCopy.textContent = `En este rango el restaurante acumula ${restaurantWorkedText} trabajadas y ${restaurantScheduledText} programadas.`;
+                restaurantTotalsCopy.textContent = `En este rango el sitio acumula ${restaurantWorkedText} trabajadas y ${restaurantScheduledText} programadas.`;
             }
 
             const statusBreakdown = document.getElementById('report-status-breakdown');
@@ -5213,10 +5213,10 @@ export const supervisorMethods = {
             shiftItems.length > 0
                 ? shiftItems
                       .map((shift) => {
-                          const employeeName = this.getResolvedShiftEmployeeName(shift, 'Empleado sin nombre visible');
+                          const employeeName = this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible');
                           const restaurantName = this.getResolvedShiftRestaurantName(
                               shift,
-                              'Restaurante sin nombre visible'
+                              'Sitio sin nombre visible'
                           );
                           const scheduleText = formatShiftRange(
                               shift.scheduled_start || shift.start_time,
@@ -5636,7 +5636,7 @@ export const supervisorMethods = {
                 const startDate = new Date(startValue);
                 const endDate = new Date(endValue);
                 if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
-                    this.showToast('La fecha final del turno debe ser posterior a la fecha inicial.', {
+                    this.showToast('La fecha final del servicio debe ser posterior a la fecha inicial.', {
                         tone: 'warning',
                         title: 'Horario inválido',
                     });
@@ -5740,7 +5740,7 @@ export const supervisorMethods = {
                 const startDate = new Date(startValue);
                 const endDate = new Date(endValue);
                 if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
-                    this.showToast('La fecha final del turno debe ser posterior a la fecha inicial.', {
+                    this.showToast('La fecha final del servicio debe ser posterior a la fecha inicial.', {
                         tone: 'warning',
                         title: 'Horario inválido',
                     });
@@ -5804,7 +5804,7 @@ export const supervisorMethods = {
                         null;
                     const employeeName = getEmployeeDisplayName(
                         employeeRecord || { id: preConflict.employeeId },
-                        'el empleado seleccionado'
+                        'el contratista seleccionado'
                     );
 
                     if (preConflict.type === 'existing') {
@@ -6172,9 +6172,9 @@ export const supervisorMethods = {
                 : restaurants[0];
 
             if (!targetRestaurant) {
-                this.showToast('No hay restaurantes disponibles para registrar supervisión.', {
+                this.showToast('No hay sitios disponibles para registrar la auditoría.', {
                     tone: 'warning',
-                    title: 'Sin restaurantes disponibles',
+                    title: 'Sin sitios disponibles',
                 });
                 return;
             }
@@ -6302,7 +6302,7 @@ export const supervisorMethods = {
             restaurantEl.value = '';
         }
         if (pickerEl)
-            this.setShiftBatchPickerEmpty(pickerEl, 'Selecciona un restaurante para ver los empleados disponibles.');
+            this.setShiftBatchPickerEmpty(pickerEl, 'Selecciona un sitio para ver los contratistas disponibles.');
         if (startDateEl) startDateEl.value = today;
         if (endDateEl) endDateEl.value = today;
         if (defaultStartEl) defaultStartEl.value = '08:00';
@@ -6317,7 +6317,7 @@ export const supervisorMethods = {
         if (!container) return;
 
         if (!restaurantId) {
-            this.setShiftBatchPickerEmpty(container, 'Selecciona un restaurante para ver los empleados disponibles.');
+            this.setShiftBatchPickerEmpty(container, 'Selecciona un sitio para ver los contratistas disponibles.');
             this.schedShiftSelectedEmployees = [];
             return;
         }
@@ -6330,7 +6330,7 @@ export const supervisorMethods = {
             );
 
             if (employees.length === 0) {
-                this.setShiftBatchPickerEmpty(container, 'No hay empleados activos disponibles para este restaurante.');
+                this.setShiftBatchPickerEmpty(container, 'No hay contratistas activos disponibles para este sitio.');
                 return;
             }
 
@@ -6570,7 +6570,7 @@ export const supervisorMethods = {
                     null;
                 const empName = getEmployeeDisplayName(
                     empRecord || { id: conflict.employeeId },
-                    'el empleado seleccionado'
+                    'el contratista seleccionado'
                 );
                 if (conflict.type === 'existing') {
                     const cs = conflict.existingShift;
