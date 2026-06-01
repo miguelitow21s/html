@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { CACHE_TTLS, DEFAULT_SYSTEM_SETTINGS } from '../constants.js';
 import { apiClient } from '../api.js';
+import { t } from '../i18n.js';
 import {
     asArray,
     buildAreaMeta,
@@ -327,7 +328,7 @@ export const employeeMethods = {
     },
 
     async openEmployeeShiftStart() {
-        this.showLoading('Verificando servicio...', 'Consultando si tienes un servicio disponible para continuar.');
+        this.showLoading(t('toast.verifying.service'), t('toast.verifying.service.desc'));
 
         try {
             await this.loadEmployeeDashboard(true);
@@ -340,7 +341,7 @@ export const employeeMethods = {
             if (!hasShiftAvailable) {
                 this.showToast(this.getShiftStartWindowCopy(this.data.currentScheduledShift), {
                     tone: 'warning',
-                    title: 'Servicio no disponible',
+                    title: t('toast.service.unavailable'),
                 });
                 this.navigate('employee-dashboard');
                 return;
@@ -350,7 +351,7 @@ export const employeeMethods = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible validar tu servicio actual.'), {
                 tone: 'error',
-                title: 'No fue posible continuar',
+                title: t('toast.cannot.continue'),
             });
         } finally {
             this.hideLoading();
@@ -479,7 +480,7 @@ export const employeeMethods = {
         if (!shift || (!hasActiveShift && !canStartShift)) {
             this.showToast(this.getShiftStartWindowCopy(this.data.currentScheduledShift), {
                 tone: 'warning',
-                title: 'Servicio no disponible',
+                title: t('toast.service.unavailable'),
             });
             this.navigate('employee-dashboard');
             return;
@@ -559,17 +560,17 @@ export const employeeMethods = {
             !hasActiveShift && this.canEmployeeStartScheduledShift(scheduledShift, this.data.employee.dashboard);
 
         if (!this.gpsVerified) {
-            this.showToast('Tu ubicación no está verificada. Pulsa "Verificar Ubicación" para continuar.', {
+            this.showToast(t('toast.location.unverified'), {
                 tone: 'warning',
-                title: 'Ubicación pendiente',
+                title: t('toast.location.pending'),
             });
             return;
         }
 
         if (!this.healthCertified) {
-            this.showToast('Debes marcar el certificado de salud/aptitud antes de iniciar el servicio.', {
+            this.showToast(t('toast.health.required'), {
                 tone: 'warning',
-                title: 'Falta certificado de salud',
+                title: t('toast.health.missing'),
             });
             return;
         }
@@ -577,12 +578,12 @@ export const employeeMethods = {
         if (!hasActiveShift && !canStartShift) {
             this.showToast(this.getShiftStartWindowCopy(scheduledShift), {
                 tone: 'warning',
-                title: 'Servicio no disponible',
+                title: t('toast.service.unavailable'),
             });
             return;
         }
 
-        this.showLoading('Iniciando servicio...', 'Espera un momento.');
+        this.showLoading(t('toast.starting.service'), t('toast.wait'));
 
         try {
             await this.ensureOtpVerification();
@@ -626,13 +627,10 @@ export const employeeMethods = {
             }
 
             if (hasActiveShift && !resumeInCleaning) {
-                this.showToast(
-                    'Aún faltan evidencias iniciales del servicio activo. Completa las evidencias de inicio para continuar.',
-                    {
-                        tone: 'info',
-                        title: 'Faltan fotos iniciales',
-                    }
-                );
+                this.showToast(t('toast.evidence.initial.incomplete'), {
+                    tone: 'info',
+                    title: t('toast.photos.missing'),
+                });
             }
 
             this.navigate('employee-shift-photos');
@@ -640,23 +638,23 @@ export const employeeMethods = {
             if (this.isShiftStartOutsideWindow(error)) {
                 this.showToast(this.getShiftStartWindowOutsideMessage(error), {
                     tone: 'warning',
-                    title: 'Fuera de ventana de acceso',
+                    title: t('toast.window.outside'),
                 });
                 void this.loadEmployeeDashboard(true);
                 return;
             }
 
             if (this.isOutsideAllowedShiftArea(error)) {
-                this.showToast('No se puede iniciar el servicio porque no estás dentro del área de acceso autorizada.', {
+                this.showToast(t('toast.cannot.start.outside'), {
                     tone: 'warning',
-                    title: 'Área no permitida',
+                    title: t('toast.area.notallowed'),
                 });
                 return;
             }
 
             this.showToast(this.getErrorMessage(error, 'No fue posible iniciar el servicio.'), {
                 tone: 'error',
-                title: 'No fue posible iniciar el servicio',
+                title: t('toast.cannot.start.service'),
             });
         } finally {
             this.hideLoading();
@@ -720,9 +718,9 @@ export const employeeMethods = {
 
     async completeShiftStartPhotos() {
         if (this.getEmployeeSelectedAreas().length === 0) {
-            this.showToast('Selecciona al menos un área antes de registrar las fotos iniciales.', {
+            this.showToast(t('toast.select.areas.first'), {
                 tone: 'warning',
-                title: 'Selecciona áreas',
+                title: t('toast.select.areas'),
             });
             return;
         }
@@ -739,7 +737,7 @@ export const employeeMethods = {
                 : 'Debes tomar las fotos iniciales de todas las subáreas requeridas.';
             this.showToast(message, {
                 tone: 'warning',
-                title: 'Faltan evidencias',
+                title: t('toast.evidence.missing'),
             });
             return;
         }
@@ -772,7 +770,7 @@ export const employeeMethods = {
                                 : 'Aún faltan fotos iniciales por registrar.';
                         this.showToast(`${missingCopy} Toma las fotos de inicio antes de continuar.`, {
                             tone: 'warning',
-                            title: 'Evidencia inicial incompleta',
+                            title: t('toast.evidence.initial.incomplete'),
                         });
                         return;
                     }
@@ -790,7 +788,7 @@ export const employeeMethods = {
             return;
         }
 
-        this.showLoading('Subiendo imágenes', 'Espera');
+        this.showLoading(t('toast.uploading.images'), t('toast.wait.short'));
 
         try {
             await this.ensureOtpVerification();
@@ -801,7 +799,7 @@ export const employeeMethods = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible subir las fotos de inicio.'), {
                 tone: 'error',
-                title: 'No fue posible continuar',
+                title: t('toast.cannot.continue'),
             });
         } finally {
             this.hideLoading();
@@ -832,9 +830,9 @@ export const employeeMethods = {
         }
 
         if (this.getEmployeeSelectedAreas().length === 0) {
-            this.showToast('Primero debes seleccionar las áreas trabajadas y registrar sus evidencias.', {
+            this.showToast(t('toast.complete.select.first'), {
                 tone: 'warning',
-                title: 'Selecciona áreas',
+                title: t('toast.select.areas'),
             });
             return;
         }
@@ -844,14 +842,14 @@ export const employeeMethods = {
             DEFAULT_SYSTEM_SETTINGS.evidence.require_end_photos
         );
         if (requireEndPhotos && Object.keys(this.endPhotoFiles).length < this.employeePhotoSlots.length) {
-            this.showToast('Debes tomar las fotos finales de todas las subáreas antes de continuar.', {
+            this.showToast(t('toast.complete.evidence.missing'), {
                 tone: 'warning',
-                title: 'Faltan evidencias',
+                title: t('toast.evidence.missing'),
             });
             return;
         }
 
-        const openTasks = (this.data.employee.openTasks || []).filter((t) => !this.isRestaurantScopedTask(t));
+        const openTasks = (this.data.employee.openTasks || []).filter((task) => !this.isRestaurantScopedTask(task));
         const hasEvidenceRequiredTask = openTasks.some((task) => task?.requires_evidence === true);
         const completionCheckRequired = this.getSystemSetting(
             'tasks.require_special_task_completion_check',
@@ -866,7 +864,7 @@ export const employeeMethods = {
                 'La tarea especial requiere evidencia. Toma una foto de evidencia o adjunta una foto final antes de continuar.',
                 {
                     tone: 'warning',
-                    title: 'Evidencia obligatoria',
+                    title: t('toast.evidence.required'),
                 }
             );
             return;
@@ -1005,14 +1003,14 @@ export const employeeMethods = {
 
     async finalizeShift() {
         if (!this.data.currentShift?.id) {
-            this.showToast('No hay un servicio activo para finalizar.', {
+            this.showToast(t('toast.no.active.service'), {
                 tone: 'warning',
-                title: 'Sin servicio activo',
+                title: t('toast.no.active.service.title'),
             });
             return;
         }
 
-        this.showLoading('Subiendo imágenes', 'Espera');
+        this.showLoading(t('toast.uploading.images'), t('toast.wait.short'));
         const startEvidencePrecheck = {
             status: 'not-run',
             has_start_evidence: null,
@@ -1086,7 +1084,7 @@ export const employeeMethods = {
                     'Debes indicar el motivo para finalizar el servicio antes del cierre de la ventana de acceso.',
                     {
                         tone: 'warning',
-                        title: 'Falta el motivo',
+                        title: t('toast.reason.required'),
                     }
                 );
                 earlyEndReasonInput?.focus();
@@ -1163,7 +1161,7 @@ export const employeeMethods = {
                         'Backend exige motivo de salida anticipada para este cierre. Escríbelo y vuelve a finalizar.',
                         {
                             tone: 'warning',
-                            title: 'Motivo obligatorio',
+                            title: t('toast.reason.obligatory'),
                             keepLoginMessages: true,
                             duration: 9000,
                         }
@@ -1174,7 +1172,7 @@ export const employeeMethods = {
 
             this.showToast(visibleMessage, {
                 tone: 'error',
-                title: 'No fue posible finalizar el servicio',
+                title: t('toast.cannot.finish.service'),
                 duration: 12000,
                 action: {
                     label: 'Copiar error',
@@ -1405,11 +1403,11 @@ export const employeeMethods = {
                 (t) => (t.task_id || t.id) !== taskId
             );
             this.renderEmployeeRestaurantTasks();
-            this.showToast('Tarea marcada como completada.', { tone: 'success', title: 'Listo' });
+            this.showToast(t('toast.task.completed'), { tone: 'success', title: t('toast.done') });
         } catch (error) {
             this.showToast(this.getEmployeeRestaurantTaskErrorMessage(error, 'No fue posible completar la tarea.'), {
                 tone: 'error',
-                title: 'Error al completar',
+                title: t('toast.error.completing'),
             });
         }
     },
@@ -1421,14 +1419,14 @@ export const employeeMethods = {
         const notes = notesInput?.value?.trim() || undefined;
 
         if (!file) {
-            this.showToast('Selecciona una foto de evidencia antes de enviar.', {
+            this.showToast(t('toast.select.photo.first'), {
                 tone: 'warning',
-                title: 'Foto requerida',
+                title: t('toast.photo.required'),
             });
             return;
         }
 
-        this.showLoading('Subiendo evidencia...', 'Espera un momento.');
+        this.showLoading(t('toast.uploading.evidence'), t('toast.wait'));
         try {
             const evidencePath = await this.uploadTaskEvidence(taskId, file);
             await apiClient.operationalTasksManage('complete', {
@@ -1440,11 +1438,11 @@ export const employeeMethods = {
                 (t) => (t.task_id || t.id) !== taskId
             );
             this.renderEmployeeRestaurantTasks();
-            this.showToast('Tarea completada con evidencia.', { tone: 'success', title: 'Listo' });
+            this.showToast(t('toast.task.completed.evidence'), { tone: 'success', title: t('toast.done') });
         } catch (error) {
             this.showToast(this.getEmployeeRestaurantTaskErrorMessage(error, 'No fue posible completar la tarea.'), {
                 tone: 'error',
-                title: 'Error al completar',
+                title: t('toast.error.completing'),
             });
         } finally {
             this.hideLoading();
