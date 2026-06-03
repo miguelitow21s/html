@@ -271,7 +271,7 @@ const app = {
     },
     loadingState: {
         visible: false,
-        title: 'Procesando...',
+        title: t('app.toast.processing'),
         message: 'Un momento por favor.',
     },
 
@@ -514,7 +514,7 @@ const app = {
             }
             this.showToast(t('pin.initial.copied'), {
                 tone: 'success',
-                title: 'PIN',
+                title: t('app.toast.pin.label'),
                 duration: 2500,
             });
         } catch (error) {
@@ -531,7 +531,7 @@ const app = {
         );
         if (!confirmed) return;
 
-        this.showLoading('Reseteando PIN...', 'Generando un nuevo PIN aleatorio.');
+        this.showLoading(t('app.toast.resetting.pin'), t('app.toast.resetting.pin.desc'));
 
         try {
             const result = await apiClient.adminUsersManage('reset_password', { email });
@@ -552,7 +552,7 @@ const app = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, `No fue posible resetear el PIN del ${subjectLabel}.`), {
                 tone: 'error',
-                title: 'No fue posible resetear el PIN',
+                title: t('app.toast.reset.pin.fail'),
             });
         } finally {
             this.hideLoading();
@@ -585,7 +585,7 @@ const app = {
         console.log('WorkTrace App Initializing...');
         applyTranslations();
         this._updateLangButtons();
-        this.showLoading('Iniciando sesión...', 'Espera un momento.');
+        this.showLoading(t('app.toast.signing.in'), t('app.toast.signing.in.desc'));
         this.configureBackend();
         this.initSupabase();
         this.bindEvents();
@@ -1895,7 +1895,7 @@ const app = {
 
         const loginBtn = document.getElementById('login-btn');
         if (loginBtn) loginBtn.disabled = true;
-        this.showLoading('Iniciando sesión...', 'Espera un momento.');
+        this.showLoading(t('app.toast.signing.in'), t('app.toast.signing.in.desc'));
 
         try {
             try {
@@ -1965,7 +1965,7 @@ const app = {
 
         this.authBootstrapPromise = (async () => {
             if (!silent) {
-                this.showLoading('Iniciando sesión...', 'Espera un momento.');
+                this.showLoading(t('app.toast.signing.in'), t('app.toast.signing.in.desc'));
             }
 
             try {
@@ -1998,7 +1998,7 @@ const app = {
                     await this.ensurePinChangeIfRequired();
 
                     if (!silent) {
-                        this.showLoading('Iniciando sesión...', 'Espera un momento.');
+                        this.showLoading(t('app.toast.signing.in'), t('app.toast.signing.in.desc'));
                     }
                 }
 
@@ -2027,7 +2027,7 @@ const app = {
                                 'Activa la ubicación para ver tu posición actual y poder iniciar servicios sin fricción.',
                                 {
                                     tone: 'warning',
-                                    title: 'Permiso de ubicación recomendado',
+                                    title: t('app.toast.location.recommended'),
                                 }
                             );
                         }
@@ -2053,7 +2053,7 @@ const app = {
                 } else {
                     this.showToast(this.getErrorMessage(error, 'No fue posible completar la configuración inicial.'), {
                         tone: 'error',
-                        title: 'No fue posible continuar',
+                        title: t('toast.common.cannot.continue'),
                     });
                 }
                 await this.performLogout({ silent: true });
@@ -2183,7 +2183,7 @@ const app = {
             return;
         }
 
-        this.showLoading('Cambiando contraseña', 'Espera');
+        this.showLoading(t('app.toast.changing.pin'), t('app.toast.short.wait'));
         if (submitButton) {
             submitButton.disabled = true;
         }
@@ -2602,7 +2602,7 @@ const app = {
 
     async performLogout({ silent = false, scope = 'local' } = {}) {
         if (!silent) {
-            this.showLoading('Cerrando sesión', '');
+            this.showLoading(t('app.toast.signing.out'), '');
         }
 
         try {
@@ -2804,7 +2804,7 @@ const app = {
             console.error(`No fue posible cargar datos para ${page}.`, error);
             this.showToast(this.getErrorMessage(error, 'No fue posible cargar la página. Intenta de nuevo.'), {
                 tone: 'error',
-                title: 'Error al cargar',
+                title: t('app.toast.load.error'),
             });
         }
     },
@@ -3941,7 +3941,7 @@ const app = {
                     `Activa ${deniedPermissions.join(' y ')} para usar la app. En iPhone: Ajustes › Safari › ${document.title} y activa los permisos.`,
                     {
                         tone: 'warning',
-                        title: 'Permisos requeridos',
+                        title: t('app.toast.permissions.req'),
                         duration: 8000,
                     }
                 );
@@ -4482,7 +4482,7 @@ const app = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible abrir la cámara.'), {
                 tone: 'error',
-                title: 'Cámara no disponible',
+                title: t('app.toast.camera.unavailable'),
             });
         }
     },
@@ -4774,7 +4774,7 @@ const app = {
         void this.processPhotoFile(file, 'start', this.currentPhotoArea).catch((error) => {
             this.showToast(this.getErrorMessage(error, 'No fue posible procesar la imagen.'), {
                 tone: 'error',
-                title: 'Error de imagen',
+                title: t('app.toast.image.error'),
             });
         });
         event.target.value = '';
@@ -4789,7 +4789,7 @@ const app = {
         void this.processPhotoFile(file, 'end', this.currentPhotoArea).catch((error) => {
             this.showToast(this.getErrorMessage(error, 'No fue posible procesar la imagen final.'), {
                 tone: 'error',
-                title: 'Error de imagen',
+                title: t('app.toast.image.error'),
             });
         });
         event.target.value = '';
@@ -4804,7 +4804,7 @@ const app = {
         void this.processPhotoFile(file, 'supervision', this.currentPhotoArea).catch((error) => {
             this.showToast(this.getErrorMessage(error, 'No fue posible procesar la evidencia de supervisión.'), {
                 tone: 'error',
-                title: 'Error de imagen',
+                title: t('app.toast.image.error'),
             });
         });
         event.target.value = '';
@@ -4828,7 +4828,7 @@ const app = {
 
             this.showToast(this.getErrorMessage(error, 'No fue posible abrir la cámara para la tarea especial.'), {
                 tone: 'error',
-                title: 'Cámara no disponible',
+                title: t('app.toast.camera.unavailable'),
             });
         });
     },
@@ -4842,9 +4842,9 @@ const app = {
         this.services.images.revokeObjectUrl(this.specialTaskEvidencePreview);
         const previewUrl = this.services.images.createObjectUrl(file);
         if (!previewUrl) {
-            this.showToast('No fue posible leer la foto seleccionada para la tarea especial.', {
+            this.showToast(t('app.toast.photo.read.fail'), {
                 tone: 'error',
-                title: 'Error de evidencia',
+                title: t('app.toast.evidence.error'),
             });
             return false;
         }

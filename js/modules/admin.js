@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { apiClient } from '../api.js';
 import { CACHE_TTLS, ROLE_LABELS } from '../constants.js';
+import { t } from '../i18n.js';
 import {
     asArray,
     escapeHtml,
@@ -571,9 +572,9 @@ export const adminMethods = {
     beginEditAdminSupervisor(userId) {
         const supervisor = this.data.admin.supervisors.find((item) => String(item.id) === String(userId));
         if (!supervisor) {
-            this.showToast('No fue posible cargar la supervisora seleccionada.', {
+            this.showToast(t('admin.toast.cannot.load.supervisor'), {
                 tone: 'error',
-                title: 'No fue posible continuar',
+                title: t('toast.common.cannot.continue'),
             });
             return;
         }
@@ -598,17 +599,17 @@ export const adminMethods = {
         const isActive = document.getElementById('admin-supervisor-active')?.checked ?? true;
 
         if (!fullName || !email || !phone) {
-            this.showToast('Completa nombre, correo y teléfono de la supervisora.', {
+            this.showToast(t('admin.toast.fill.fields'), {
                 tone: 'warning',
-                title: 'Faltan datos',
+                title: t('toast.common.missing.data'),
             });
             return;
         }
 
         if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-            this.showToast('El teléfono debe estar en formato E.164, por ejemplo +573001112233.', {
+            this.showToast(t('toast.common.phone.format'), {
                 tone: 'warning',
-                title: 'Teléfono inválido',
+                title: t('toast.common.invalid.phone'),
             });
             return;
         }
@@ -630,7 +631,7 @@ export const adminMethods = {
                   is_active: isActive,
               };
 
-        this.showLoading(isEditing ? 'Actualizando inspector...' : 'Creando inspector...', 'Guardando los datos.');
+        this.showLoading(isEditing ? 'Actualizando inspector...' : 'Creando inspector...', t('toast.common.saving'));
 
         try {
             const result = await apiClient.adminUsersManage(isEditing ? 'update' : 'create', payload);
@@ -647,21 +648,21 @@ export const adminMethods = {
                         emailSent: Boolean(result?.pin_email_sent),
                     });
                 } else {
-                    this.showToast('Inspector creado correctamente.', {
+                    this.showToast(t('admin.toast.inspector.created'), {
                         tone: 'success',
-                        title: 'Creación exitosa',
+                        title: t('toast.common.created'),
                     });
                 }
             } else {
-                this.showToast('Inspector actualizado correctamente.', {
+                this.showToast(t('admin.toast.inspector.updated'), {
                     tone: 'success',
-                    title: 'Actualización exitosa',
+                    title: t('toast.common.updated'),
                 });
             }
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible guardar el inspector.'), {
                 tone: 'error',
-                title: 'No fue posible guardar el inspector',
+                title: t('admin.toast.inspector.cannot.save'),
             });
         } finally {
             this.hideLoading();
@@ -966,13 +967,13 @@ export const adminMethods = {
                 isCurrentlyActive ? 'Supervisora desactivada correctamente.' : 'Supervisora activada correctamente.',
                 {
                     tone: 'success',
-                    title: 'Cambio guardado',
+                    title: t('toast.common.saved'),
                 }
             );
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible actualizar el estado de la supervisora.'), {
                 tone: 'error',
-                title: 'No fue posible actualizar el estado',
+                title: t('admin.toast.cannot.update.status'),
             });
         } finally {
             this.hideLoading();
@@ -984,14 +985,14 @@ export const adminMethods = {
         const restaurantId = select?.value;
 
         if (!restaurantId) {
-            this.showToast('Selecciona un sitio para asignar.', {
+            this.showToast(t('admin.toast.select.site.assign'), {
                 tone: 'warning',
-                title: 'Falta seleccionar sitio',
+                title: t('admin.toast.missing.site.assign'),
             });
             return;
         }
 
-        this.showLoading('Asignando sitio...', 'Guardando el cambio.');
+        this.showLoading(t('admin.toast.assigning.site'), t('toast.common.saving.change'));
 
         try {
             await apiClient.adminSupervisorsManage('assign', {
@@ -1001,14 +1002,14 @@ export const adminMethods = {
 
             this.invalidateCache('adminSupervisors');
             await this.loadAdminSupervisors(true);
-            this.showToast('Sitio asignado correctamente.', {
+            this.showToast(t('admin.toast.site.assigned'), {
                 tone: 'success',
-                title: 'Asignación exitosa',
+                title: t('admin.toast.assign.success'),
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible asignar el sitio.'), {
                 tone: 'error',
-                title: 'No fue posible asignar el sitio',
+                title: t('admin.toast.cannot.assign.site'),
             });
         } finally {
             this.hideLoading();
@@ -1016,7 +1017,7 @@ export const adminMethods = {
     },
 
     async unassignRestaurantFromSupervisor(supervisorId, restaurantId) {
-        this.showLoading('Desasignando sitio...', 'Guardando el cambio.');
+        this.showLoading(t('admin.toast.unassigning.site'), t('toast.common.saving.change'));
 
         try {
             await apiClient.adminSupervisorsManage('unassign', {
@@ -1026,14 +1027,14 @@ export const adminMethods = {
 
             this.invalidateCache('adminSupervisors');
             await this.loadAdminSupervisors(true);
-            this.showToast('Sitio desasignado correctamente.', {
+            this.showToast(t('admin.toast.site.unassigned'), {
                 tone: 'success',
-                title: 'Cambio guardado',
+                title: t('toast.common.saved'),
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible desasignar el sitio.'), {
                 tone: 'error',
-                title: 'No fue posible desasignar el sitio',
+                title: t('admin.toast.cannot.unassign.site'),
             });
         } finally {
             this.hideLoading();
@@ -1055,7 +1056,7 @@ export const adminMethods = {
         this.setLoginError('');
         this.setLoginNotice('');
 
-        this.showLoading('Enviando recuperación...', 'Solicitando enlace de restablecimiento de contraseña.');
+        this.showLoading(t('admin.toast.sending.recovery'), t('admin.toast.sending.recovery.desc'));
 
         try {
             const result = await this.supabase.auth.resetPasswordForEmail(email, {
@@ -1082,9 +1083,9 @@ export const adminMethods = {
 
         const page = routes[action];
         if (!page) {
-            this.showToast('Acción administrativa en preparación.', {
+            this.showToast(t('admin.toast.action.preparing'), {
                 tone: 'info',
-                title: 'Próximamente',
+                title: t('toast.common.coming.soon'),
             });
             return;
         }
@@ -1097,7 +1098,7 @@ export const adminMethods = {
         const userRole = this.currentUser ? ROLE_LABELS[this.currentUser.role] || this.currentUser.role : 'Sin sesión';
         this.showToast(`• ${backendStatus}\n• Rol actual: ${userRole}\n• Sesión lista para operar.`, {
             tone: 'info',
-            title: 'Notificaciones',
+            title: t('toast.common.notifications'),
         });
     },
 

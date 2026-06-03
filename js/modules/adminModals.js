@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { CACHE_TTLS } from '../constants.js';
 import { apiClient } from '../api.js';
+import { t } from '../i18n.js';
 import {
     asArray,
     escapeHtml,
@@ -991,24 +992,24 @@ export const adminModalMethods = {
         if (!record) {
             this.showToast(emptyMessage, {
                 tone: 'warning',
-                title: 'Perfil inválido',
+                title: t('adm.toast.invalid.profile'),
             });
             return;
         }
 
         if (this.currentUser?.role !== 'super_admin') {
-            this.showToast('Solo una cuenta super_admin puede remover el teléfono de un usuario.', {
+            this.showToast(t('adm.toast.only.superadmin'), {
                 tone: 'warning',
-                title: 'Permiso insuficiente',
+                title: t('toast.common.no.permission'),
             });
             return;
         }
 
         const { userId, phoneNumber, enabled } = this.getPhoneBindingActionState(record);
         if (!enabled) {
-            this.showToast('El perfil seleccionado no tiene un teléfono removible en este momento.', {
+            this.showToast(t('adm.toast.no.removable.phone'), {
                 tone: 'warning',
-                title: 'Sin teléfono vinculado',
+                title: t('adm.toast.no.phone.linked'),
             });
             return;
         }
@@ -1021,7 +1022,7 @@ export const adminModalMethods = {
             return;
         }
 
-        this.showLoading('Removiendo teléfono...', 'Limpiando el teléfono del perfil seleccionado.');
+        this.showLoading(t('adm.toast.removing.phone'), t('adm.toast.removing.phone.desc'));
 
         try {
             const result = await apiClient.adminUserPhoneRemove(userId);
@@ -1036,13 +1037,13 @@ export const adminModalMethods = {
                 : 'Consentimiento legal pendiente.';
             this.showToast(`El teléfono de ${displayName} fue removido correctamente. ${consentStatus}`, {
                 tone: 'success',
-                title: 'Teléfono removido',
+                title: t('adm.toast.phone.removed'),
                 duration: 5200,
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible remover el teléfono de este perfil.'), {
                 tone: 'error',
-                title: 'No fue posible remover el teléfono',
+                title: t('adm.toast.phone.remove.fail'),
             });
         } finally {
             this.hideLoading();

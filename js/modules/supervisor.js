@@ -14,6 +14,7 @@ import {
     SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES,
 } from '../constants.js';
 import { apiClient, buildIdempotencyKey } from '../api.js';
+import { t } from '../i18n.js';
 import {
     asArray,
     buildJwtFullDebugSummary,
@@ -1037,17 +1038,17 @@ export const supervisorMethods = {
     replicateSupervisorShiftTemplate() {
         const template = this.readSupervisorShiftTemplate();
         if (!template || !Array.isArray(template.rows) || template.rows.length === 0) {
-            this.showToast('Todavía no hay una semana guardada para replicar.', {
+            this.showToast(t('sup.toast.no.prev.week'), {
                 tone: 'info',
-                title: 'Sin semana anterior',
+                title: t('sup.toast.no.prev.week.title'),
             });
             return;
         }
 
         this.applySupervisorShiftTemplate(template, { keepCurrentWeek: true });
-        this.showToast('Se replicó la última semana guardada en la semana que estás viendo.', {
+        this.showToast(t('sup.toast.week.replicated'), {
             tone: 'success',
-            title: 'Semana replicada',
+            title: t('sup.toast.week.replicated.title'),
         });
     },
 
@@ -1073,7 +1074,7 @@ export const supervisorMethods = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible importar el Excel de servicios.'), {
                 tone: 'error',
-                title: 'No fue posible importar el Excel',
+                title: t('sup.toast.excel.import.fail'),
             });
         } finally {
             if (input) {
@@ -1206,7 +1207,7 @@ export const supervisorMethods = {
                 : 'El Excel se importó, pero revisa los horarios antes de guardar.',
             {
                 tone: 'success',
-                title: 'Excel importado',
+                title: t('sup.toast.excel.imported'),
             }
         );
     },
@@ -1716,9 +1717,9 @@ export const supervisorMethods = {
     async copyLatestReportDebug() {
         const latestEntry = Array.isArray(window.__worktraceReportDebug) ? window.__worktraceReportDebug[0] : null;
         if (!latestEntry) {
-            this.showToast('Todavía no hay un error reciente para copiar.', {
+            this.showToast(t('sup.toast.no.recent.error'), {
                 tone: 'info',
-                title: 'Sin detalle disponible',
+                title: t('sup.toast.no.detail'),
             });
             return;
         }
@@ -1740,14 +1741,14 @@ export const supervisorMethods = {
                 document.body.removeChild(tempInput);
             }
 
-            this.showToast('Detalle copiado. Ya lo puedes compartir.', {
+            this.showToast(t('sup.toast.detail.copied'), {
                 tone: 'success',
-                title: 'Copia lista',
+                title: t('sup.toast.copy.ready'),
             });
         } catch (error) {
-            this.showToast('No se pudo copiar el detalle. Inténtalo de nuevo.', {
+            this.showToast(t('sup.toast.copy.failed'), {
                 tone: 'error',
-                title: 'No fue posible copiar',
+                title: t('toast.common.copy.failed'),
             });
         }
     },
@@ -1807,9 +1808,9 @@ export const supervisorMethods = {
             ? window.__worktraceSupervisionDebug[0]
             : null;
         if (!latestEntry) {
-            this.showToast('Todavía no hay un error reciente para copiar.', {
+            this.showToast(t('sup.toast.no.recent.error'), {
                 tone: 'info',
-                title: 'Sin detalle disponible',
+                title: t('sup.toast.no.detail'),
             });
             return;
         }
@@ -1831,14 +1832,14 @@ export const supervisorMethods = {
                 document.body.removeChild(tempInput);
             }
 
-            this.showToast('Detalle copiado. Ya lo puedes compartir.', {
+            this.showToast(t('sup.toast.detail.copied'), {
                 tone: 'success',
-                title: 'Copia lista',
+                title: t('sup.toast.copy.ready'),
             });
         } catch (error) {
-            this.showToast('No se pudo copiar el detalle. Inténtalo de nuevo.', {
+            this.showToast(t('sup.toast.copy.failed'), {
                 tone: 'error',
-                title: 'No fue posible copiar',
+                title: t('toast.common.copy.failed'),
             });
         }
     },
@@ -2907,9 +2908,9 @@ export const supervisorMethods = {
     confirmDeactivateRestaurant(restaurantId) {
         const normalizedRestaurantId = normalizeRestaurantId(restaurantId);
         if (normalizedRestaurantId == null) {
-            this.showToast('No se pudo identificar el sitio a eliminar.', {
+            this.showToast(t('sup.toast.site.invalid'), {
                 tone: 'warning',
-                title: 'Sitio inválido',
+                title: t('sup.toast.site.invalid.title'),
             });
             return;
         }
@@ -2925,9 +2926,9 @@ export const supervisorMethods = {
     async submitDeactivateRestaurantModal() {
         const restaurantId = normalizeRestaurantId(this.pendingRestaurantDeactivateId);
         if (restaurantId == null) {
-            this.showToast('No se pudo identificar el sitio a eliminar.', {
+            this.showToast(t('sup.toast.site.invalid'), {
                 tone: 'warning',
-                title: 'Sitio inválido',
+                title: t('sup.toast.site.invalid.title'),
             });
             this.closeDeactivateRestaurantModal();
             return;
@@ -2941,14 +2942,14 @@ export const supervisorMethods = {
     async deactivateRestaurant(restaurantId) {
         const normalizedRestaurantId = normalizeRestaurantId(restaurantId);
         if (normalizedRestaurantId == null) {
-            this.showToast('No se pudo identificar el sitio a eliminar.', {
+            this.showToast(t('sup.toast.site.invalid'), {
                 tone: 'warning',
-                title: 'Sitio inválido',
+                title: t('sup.toast.site.invalid.title'),
             });
             return;
         }
 
-        this.showLoading('Eliminando sitio...', 'Actualizando la configuración operativa.');
+        this.showLoading(t('sup.toast.deleting.site'), t('sup.toast.deleting.site.desc'));
 
         try {
             await apiClient.adminRestaurantsManage('deactivate', {
@@ -2966,9 +2967,9 @@ export const supervisorMethods = {
                 this.isAdminRole() ? this.loadAdminDashboard() : Promise.resolve(),
             ]);
 
-            this.showToast('Sitio eliminado correctamente.', {
+            this.showToast(t('sup.toast.site.deleted'), {
                 tone: 'success',
-                title: 'Eliminación exitosa',
+                title: t('toast.common.deleted'),
             });
         } catch (error) {
             const title = this.isAdminRole() ? 'No fue posible eliminar el sitio' : 'Permiso insuficiente';
@@ -3226,9 +3227,9 @@ export const supervisorMethods = {
     // Redirige a la página de informes y selecciona el empleado automáticamente
     goToReportPageWithEmployee(employee) {
         if (!employee || !employee.id) {
-            this.showToast('No se pudo identificar el contratista para el informe.', {
+            this.showToast(t('sup.toast.contractor.invalid.report'), {
                 tone: 'warning',
-                title: 'Contratista inválido',
+                title: t('sup.toast.contractor.invalid'),
             });
             return;
         }
@@ -3253,9 +3254,9 @@ export const supervisorMethods = {
     confirmDeactivateUser(userId) {
         const normalizedUserId = normalizeRestaurantId(userId);
         if (!normalizedUserId) {
-            this.showToast('No se pudo identificar el usuario a eliminar.', {
+            this.showToast(t('sup.toast.user.invalid'), {
                 tone: 'warning',
-                title: 'Usuario inválido',
+                title: t('sup.toast.user.invalid.title'),
             });
             return;
         }
@@ -3275,9 +3276,9 @@ export const supervisorMethods = {
     async submitDeactivateUserModal() {
         const userId = normalizeRestaurantId(this.pendingUserDeactivateId);
         if (!userId) {
-            this.showToast('No se pudo identificar el usuario a eliminar.', {
+            this.showToast(t('sup.toast.user.invalid'), {
                 tone: 'warning',
-                title: 'Usuario inválido',
+                title: t('sup.toast.user.invalid.title'),
             });
             this.closeDeactivateUserModal();
             return;
@@ -3298,14 +3299,14 @@ export const supervisorMethods = {
     async deactivateUser(userId, reason = '') {
         const normalizedUserId = normalizeRestaurantId(userId);
         if (!normalizedUserId) {
-            this.showToast('No se pudo identificar el usuario a eliminar.', {
+            this.showToast(t('sup.toast.user.invalid'), {
                 tone: 'warning',
-                title: 'Usuario inválido',
+                title: t('sup.toast.user.invalid.title'),
             });
             return;
         }
 
-        this.showLoading('Eliminando usuario...', 'Actualizando permisos y estado de acceso.');
+        this.showLoading(t('sup.toast.deleting.user'), t('sup.toast.deleting.user.desc'));
 
         try {
             await apiClient.adminUsersManage('deactivate', {
@@ -3322,9 +3323,9 @@ export const supervisorMethods = {
                 this.loadSupervisorDashboard(),
             ]);
 
-            this.showToast('Usuario eliminado correctamente.', {
+            this.showToast(t('sup.toast.user.deleted'), {
                 tone: 'success',
-                title: 'Eliminación exitosa',
+                title: t('toast.common.deleted'),
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el usuario.'), {
@@ -3377,16 +3378,16 @@ export const supervisorMethods = {
         });
 
         if (lastWeekShifts.length === 0) {
-            this.showToast('No hay servicios en el período anterior para replicar.', {
+            this.showToast(t('sup.toast.no.prev.assignments'), {
                 tone: 'warning',
-                title: 'Sin asignaciones anteriores',
+                title: t('sup.toast.no.prev.assignments.title'),
             });
             return;
         }
 
         if (!confirm(`¿Replicar ${lastWeekShifts.length} asignación(es) del período anterior??`)) return;
 
-        this.showLoading('Replicando asignaciones...', `Creando ${lastWeekShifts.length} asignaciones.`);
+        this.showLoading(t('sup.toast.replicating.assignments'), `${lastWeekShifts.length}`);
 
         try {
             let success = 0;
@@ -3430,11 +3431,11 @@ export const supervisorMethods = {
                 failed > 0
                     ? `${success} asignación(es) replicada(s). ${failed} no se pudieron crear.`
                     : `${success} asignación(es) replicada(s) correctamente.`;
-            this.showToast(msg, { tone, title: 'Semana replicada' });
+            this.showToast(msg, { tone, title: t('sup.toast.week.replicated.title') });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible replicar las asignaciones.'), {
                 tone: 'error',
-                title: 'Error al replicar',
+                title: t('sup.toast.replicate.error'),
             });
         } finally {
             this.hideLoading();
@@ -3872,18 +3873,18 @@ export const supervisorMethods = {
 
     confirmCancelScheduledShift(shiftId) {
         if (this.pendingShiftCancellationRequest) {
-            this.showToast('Ya estamos procesando la eliminación del servicio. Espera un momento.', {
+            this.showToast(t('sup.toast.deletion.in.progress'), {
                 tone: 'info',
-                title: 'Eliminación en progreso',
+                title: t('sup.toast.deletion.in.progress.title'),
             });
             return;
         }
 
         const normalizedShiftId = normalizeRestaurantId(shiftId);
         if (normalizedShiftId == null) {
-            this.showToast('No se pudo identificar el servicio asignado a eliminar.', {
+            this.showToast(t('sup.toast.service.invalid'), {
                 tone: 'warning',
-                title: 'Servicio inválido',
+                title: t('sup.toast.service.invalid.title'),
             });
             return;
         }
@@ -3903,9 +3904,9 @@ export const supervisorMethods = {
     async submitCancelScheduledShiftModal() {
         const shiftId = normalizeRestaurantId(this.pendingShiftCancellationId);
         if (shiftId == null) {
-            this.showToast('No se pudo identificar el servicio asignado a eliminar.', {
+            this.showToast(t('sup.toast.service.invalid'), {
                 tone: 'warning',
-                title: 'Servicio inválido',
+                title: t('sup.toast.service.invalid.title'),
             });
             this.closeCancelScheduledShiftModal();
             return;
@@ -3925,25 +3926,25 @@ export const supervisorMethods = {
 
     async cancelScheduledShift(shiftId, reason = '') {
         if (this.pendingShiftCancellationRequest) {
-            this.showToast('Ya estamos procesando la eliminación del servicio. Espera un momento.', {
+            this.showToast(t('sup.toast.deletion.in.progress'), {
                 tone: 'info',
-                title: 'Eliminación en progreso',
+                title: t('sup.toast.deletion.in.progress.title'),
             });
             return;
         }
 
         const normalizedShiftId = normalizeRestaurantId(shiftId);
         if (normalizedShiftId == null) {
-            this.showToast('No se pudo identificar el servicio asignado a eliminar.', {
+            this.showToast(t('sup.toast.service.invalid'), {
                 tone: 'warning',
-                title: 'Servicio inválido',
+                title: t('sup.toast.service.invalid.title'),
             });
             return;
         }
 
         this.pendingShiftCancellationRequest = true;
 
-        this.showLoading('Eliminando servicio...', 'Quitando la asignación del servicio seleccionado.');
+        this.showLoading(t('sup.toast.deleting.service'), t('sup.toast.deleting.service.desc'));
 
         try {
             await apiClient.scheduledShiftsManage('cancel', {
@@ -3970,14 +3971,14 @@ export const supervisorMethods = {
                 });
             }
 
-            this.showToast('Servicio eliminado correctamente.', {
+            this.showToast(t('sup.toast.service.deleted'), {
                 tone: 'success',
-                title: 'Eliminación exitosa',
+                title: t('toast.common.deleted'),
             });
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el servicio asignado.'), {
                 tone: 'error',
-                title: 'No fue posible eliminar el servicio',
+                title: t('sup.toast.service.delete.fail'),
             });
         } finally {
             this.pendingShiftCancellationRequest = false;
@@ -4340,9 +4341,9 @@ export const supervisorMethods = {
         const { restaurant, restaurantName, geofence } = this.getSupervisorSupervisionReference();
         const button = document.getElementById('supervision-verify-location-btn');
         if (!restaurant) {
-            this.showToast('Selecciona un restaurante antes de verificar la ubicación.', {
+            this.showToast(t('sup.toast.select.site.location'), {
                 tone: 'warning',
-                title: 'Falta el restaurante',
+                title: t('sup.toast.site.missing'),
             });
             return null;
         }
@@ -4365,7 +4366,7 @@ export const supervisorMethods = {
                     `El restaurante ${restaurantName} aún no tiene ubicación o radio configurados para validar presencia en sitio.`,
                     {
                         tone: 'warning',
-                        title: 'Geocerca pendiente',
+                        title: t('sup.toast.geofence.pending'),
                     }
                 );
                 return null;
@@ -4427,7 +4428,7 @@ export const supervisorMethods = {
             if (notify) {
                 this.showToast(this.getGeolocationMessage(error), {
                     tone: 'error',
-                    title: 'No fue posible verificar ubicación',
+                    title: t('sup.toast.location.verify.fail'),
                 });
                 return null;
             }
@@ -4566,25 +4567,25 @@ export const supervisorMethods = {
 
         const draft = this.getSupervisorRestaurantTaskDraft();
         if (!draft.restaurantId) {
-            this.showToast('Selecciona el restaurante al que vas a ligar la tarea especial.', {
+            this.showToast(t('sup.toast.select.site.task'), {
                 tone: 'warning',
-                title: 'Falta el restaurante',
+                title: t('sup.toast.site.missing'),
             });
             return;
         }
 
         if (draft.title.length < 3) {
-            this.showToast('Escribe un título de al menos 3 caracteres para la tarea especial.', {
+            this.showToast(t('sup.toast.task.title.missing'), {
                 tone: 'warning',
-                title: 'Falta el título',
+                title: t('sup.toast.task.title.missing.title'),
             });
             return;
         }
 
         if (draft.description.length < 5) {
-            this.showToast('Describe la tarea especial con al menos 5 caracteres.', {
+            this.showToast(t('sup.toast.task.desc.missing'), {
                 tone: 'warning',
-                title: 'Falta la descripción',
+                title: t('sup.toast.task.desc.missing.title'),
             });
             return;
         }
@@ -4609,7 +4610,7 @@ export const supervisorMethods = {
             : [payloadBase];
 
         this.setSupervisorRestaurantTaskSubmitState(true);
-        this.showLoading('Creando tarea especial...', 'Guardando la novedad operativa del restaurante.');
+        this.showLoading(t('sup.toast.creating.task'), t('sup.toast.creating.task.desc'));
 
         try {
             let created = false;
@@ -4632,7 +4633,7 @@ export const supervisorMethods = {
             this.closeModal('modal-supervisor-restaurant-task');
             this.showToast(`La tarea especial quedó abierta para ${restaurantName}.`, {
                 tone: 'success',
-                title: 'Tarea creada',
+                title: t('sup.toast.task.created'),
             });
         } catch (error) {
             this.registerTaskCreateDebug(payloadVariants[payloadVariants.length - 1], error, {
@@ -4644,7 +4645,7 @@ export const supervisorMethods = {
                 this.getRestaurantTaskErrorMessage(error, 'No fue posible crear la tarea especial del restaurante.'),
                 {
                     tone: 'error',
-                    title: 'No fue posible crear la tarea',
+                    title: t('sup.toast.task.create.fail'),
                 }
             );
         } finally {
@@ -4842,22 +4843,22 @@ export const supervisorMethods = {
         const employeeId = document.getElementById('report-employee-select')?.value;
 
         if (!startDate || !endDate) {
-            this.showToast('Selecciona el rango de fechas del informe.', {
+            this.showToast(t('sup.toast.report.range.missing'), {
                 tone: 'warning',
-                title: 'Filtros incompletos',
+                title: t('sup.toast.report.filters.incomplete'),
             });
             return;
         }
 
         if (startDate > endDate) {
-            this.showToast('La fecha de inicio no puede ser mayor que la fecha de fin.', {
+            this.showToast(t('sup.toast.report.range.invalid'), {
                 tone: 'warning',
-                title: 'Rango de fechas inválido',
+                title: t('sup.toast.report.range.invalid.title'),
             });
             return;
         }
 
-        this.showLoading('Generando informe...', 'Preparando el informe.');
+        this.showLoading(t('sup.toast.report.generating'), t('sup.toast.report.generating.desc'));
         let reportRequestContext = null;
 
         try {
@@ -5055,7 +5056,7 @@ export const supervisorMethods = {
             );
             this.showToast(this.getErrorMessage(error, 'No fue posible generar el informe.'), {
                 tone: 'error',
-                title: 'No fue posible generar el informe',
+                title: t('sup.toast.report.fail'),
             });
         } finally {
             this.hideLoading();
@@ -5065,9 +5066,9 @@ export const supervisorMethods = {
     downloadGeneratedReport(type) {
         const report = this.data.lastGeneratedReport;
         if (!report) {
-            this.showToast('Primero genera un informe.', {
+            this.showToast(t('sup.toast.report.first'), {
                 tone: 'warning',
-                title: 'Aún no hay resultados',
+                title: t('sup.toast.report.no.results'),
             });
             return;
         }
@@ -5076,7 +5077,7 @@ export const supervisorMethods = {
         if (!url) {
             this.showToast(`No fue posible preparar la descarga en ${type.toUpperCase()}.`, {
                 tone: 'error',
-                title: 'Descarga no disponible',
+                title: t('sup.toast.download.unavailable'),
             });
             return;
         }
@@ -5109,9 +5110,9 @@ export const supervisorMethods = {
     openGeneratedReportPreview() {
         const report = this.data.lastGeneratedReport;
         if (!report) {
-            this.showToast('Primero genera un informe.', {
+            this.showToast(t('sup.toast.report.first'), {
                 tone: 'warning',
-                title: 'Aún no hay resultados',
+                title: t('sup.toast.report.no.results'),
             });
             return;
         }
@@ -5615,9 +5616,9 @@ export const supervisorMethods = {
 
     async submitSupervisorShiftForm() {
         if (this.supervisorShiftSubmitPending) {
-            this.showToast('Ya estamos guardando la programación. Espera un momento.', {
+            this.showToast(t('sup.toast.saving.schedule'), {
                 tone: 'info',
-                title: 'Procesando programación',
+                title: t('sup.toast.saving.schedule.title'),
             });
             return;
         }
@@ -5636,9 +5637,9 @@ export const supervisorMethods = {
                 const notes = document.getElementById('supervisor-shift-single-notes')?.value?.trim();
 
                 if (!employeeId || !restaurantId || !startValue || !endValue) {
-                    this.showToast('Completa empleado, restaurante y horario para programar este turno.', {
+                    this.showToast(t('sup.toast.fill.shift'), {
                         tone: 'warning',
-                        title: 'Faltan datos',
+                        title: t('toast.common.missing.data'),
                     });
                     return;
                 }
@@ -5646,9 +5647,9 @@ export const supervisorMethods = {
                 const startDate = new Date(startValue);
                 const endDate = new Date(endValue);
                 if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
-                    this.showToast('La fecha final del servicio debe ser posterior a la fecha inicial.', {
+                    this.showToast(t('sup.toast.end.after.start'), {
                         tone: 'warning',
-                        title: 'Horario inválido',
+                        title: t('sup.toast.invalid.schedule.title'),
                     });
                     return;
                 }
@@ -5666,34 +5667,34 @@ export const supervisorMethods = {
                 const rows = this.supervisorShiftPlanRows || [];
 
                 if (!employeeId) {
-                    this.showToast('Selecciona el empleado al que le vas a programar la semana.', {
+                    this.showToast(t('sup.toast.select.contractor.week'), {
                         tone: 'warning',
-                        title: 'Falta el empleado',
+                        title: t('sup.toast.missing.contractor'),
                     });
                     return;
                 }
 
                 if (!restaurantId) {
-                    this.showToast('Selecciona el restaurante base de esta semana.', {
+                    this.showToast(t('sup.toast.select.site.week'), {
                         tone: 'warning',
-                        title: 'Falta el restaurante',
+                        title: t('sup.toast.site.missing'),
                     });
                     return;
                 }
 
                 if (rows.length === 0) {
-                    this.showToast('No encontramos los días de la semana para programar.', {
+                    this.showToast(t('sup.toast.no.week.days'), {
                         tone: 'warning',
-                        title: 'Sin turnos por programar',
+                        title: t('sup.toast.no.shifts.title'),
                     });
                     return;
                 }
 
                 const activeRows = rows.filter((row) => row.enabled === true);
                 if (activeRows.length === 0) {
-                    this.showToast('Activa al menos un día de la semana antes de guardar.', {
+                    this.showToast(t('sup.toast.activate.day'), {
                         tone: 'warning',
-                        title: 'Sin días seleccionados',
+                        title: t('sup.toast.no.days.selected'),
                     });
                     return;
                 }
@@ -5702,7 +5703,7 @@ export const supervisorMethods = {
                     if (!row.startTime || !row.endTime) {
                         this.showToast(`Completa entrada y salida para ${row.dayLabel || 'el día seleccionado'}.`, {
                             tone: 'warning',
-                            title: 'Faltan datos',
+                            title: t('toast.common.missing.data'),
                         });
                         return;
                     }
@@ -5712,7 +5713,7 @@ export const supervisorMethods = {
                     if (!startDate || !endDate) {
                         this.showToast(`Revisa el formato de hora en ${row.dayLabel || 'el día seleccionado'}.`, {
                             tone: 'warning',
-                            title: 'Horario inválido',
+                            title: t('sup.toast.invalid.schedule.title'),
                         });
                         return;
                     }
@@ -5741,7 +5742,7 @@ export const supervisorMethods = {
                         'Selecciona restaurante, horario y al menos un empleado para este turno compartido.',
                         {
                             tone: 'warning',
-                            title: 'Faltan datos',
+                            title: t('toast.common.missing.data'),
                         }
                     );
                     return;
@@ -5750,9 +5751,9 @@ export const supervisorMethods = {
                 const startDate = new Date(startValue);
                 const endDate = new Date(endValue);
                 if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
-                    this.showToast('La fecha final del servicio debe ser posterior a la fecha inicial.', {
+                    this.showToast(t('sup.toast.end.after.start'), {
                         tone: 'warning',
-                        title: 'Horario inválido',
+                        title: t('sup.toast.invalid.schedule.title'),
                     });
                     return;
                 }
@@ -5769,17 +5770,17 @@ export const supervisorMethods = {
             }
 
             if (taskTemplate.enabled && taskTemplate.title.length < 3) {
-                this.showToast('Escribe un título de al menos 3 caracteres para la tarea especial.', {
+                this.showToast(t('sup.toast.task.title.missing'), {
                     tone: 'warning',
-                    title: 'Falta el título de la tarea',
+                    title: t('sup.toast.task.title.req'),
                 });
                 return;
             }
 
             if (taskTemplate.enabled && taskTemplate.description.length < 5) {
-                this.showToast('Describe la tarea especial con al menos 5 caracteres.', {
+                this.showToast(t('sup.toast.task.desc.missing'), {
                     tone: 'warning',
-                    title: 'Falta la descripción',
+                    title: t('sup.toast.task.desc.missing.title'),
                 });
                 return;
             }
@@ -5833,7 +5834,7 @@ export const supervisorMethods = {
                             `${employeeName} ya tiene un turno (${conflictDate} ${conflictRange}) que se cruza con ese horario.`,
                             {
                                 tone: 'warning',
-                                title: 'Conflicto de horario detectado',
+                                title: t('sup.toast.schedule.conflict'),
                             }
                         );
                         return;
@@ -5841,7 +5842,7 @@ export const supervisorMethods = {
 
                     this.showToast(`${employeeName} tiene dos turnos en esta programación que se cruzan entre sí.`, {
                         tone: 'warning',
-                        title: 'Conflicto de horario detectado',
+                        title: t('sup.toast.schedule.conflict'),
                     });
                     return;
                 }
@@ -5858,7 +5859,7 @@ export const supervisorMethods = {
                                 'Revisa el empleado y el restaurante antes de crear la tarea especial.',
                             {
                                 tone: 'warning',
-                                title: 'Tarea especial no disponible',
+                                title: t('sup.toast.task.unavailable'),
                             }
                         );
                         return;
@@ -5871,7 +5872,7 @@ export const supervisorMethods = {
                         ),
                         {
                             tone: 'error',
-                            title: 'No fue posible validar la tarea especial',
+                            title: t('sup.toast.task.validate.fail'),
                         }
                     );
                     return;
@@ -5984,7 +5985,7 @@ export const supervisorMethods = {
                           : `${successCount} turnos programados correctamente.`;
                     this.showToast(successMessage, {
                         tone: 'success',
-                        title: 'Programación exitosa',
+                        title: t('sup.toast.schedule.success'),
                     });
                 } else {
                     const firstTaskIssue =
@@ -5997,22 +5998,22 @@ export const supervisorMethods = {
                             : `${successCount} de ${assignments.length} turnos quedaron programados. Revisa el resto.`,
                         {
                             tone: 'warning',
-                            title: 'Programación parcial',
+                            title: t('sup.toast.schedule.partial'),
                         }
                     );
                 }
             } catch (error) {
                 if (this.isEmployeeUnavailableInSchedule(error)) {
-                    this.showToast('El empleado no está disponible en ese horario.', {
+                    this.showToast(t('sup.toast.contractor.unavailable'), {
                         tone: 'warning',
-                        title: 'Horario no disponible',
+                        title: t('sup.toast.schedule.unavailable'),
                     });
                     return;
                 }
 
                 this.showToast(this.getErrorMessage(error, 'No fue posible programar los turnos.'), {
                     tone: 'error',
-                    title: 'No fue posible programar los turnos',
+                    title: t('sup.toast.schedule.fail'),
                 });
             } finally {
                 this.hideLoading();
@@ -6034,30 +6035,30 @@ export const supervisorMethods = {
         const isActive = true;
 
         if (!name) {
-            this.showToast('Escribe el nombre del restaurante.', {
+            this.showToast(t('sup.toast.site.name.req'), {
                 tone: 'warning',
-                title: 'Falta el nombre',
+                title: t('sup.toast.site.name.missing'),
             });
             return;
         }
 
         if (!addressLine || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-            this.showToast('Busca una dirección completa y verifica el punto en el mapa antes de guardar.', {
+            this.showToast(t('sup.toast.address.req'), {
                 tone: 'warning',
-                title: 'Ubicación pendiente',
+                title: t('sup.toast.address.pending'),
             });
             return;
         }
 
         if (!Number.isFinite(radius)) {
-            this.showToast('Define el radio de verificación del restaurante.', {
+            this.showToast(t('sup.toast.radius.req'), {
                 tone: 'warning',
-                title: 'Falta el radio',
+                title: t('sup.toast.radius.missing'),
             });
             return;
         }
 
-        this.showLoading('Creando restaurante...', 'Espera un momento.');
+        this.showLoading(t('sup.toast.creating.site'), t('toast.common.loading.wait'));
 
         try {
             await apiClient.adminRestaurantsManage('create', {
@@ -6080,21 +6081,21 @@ export const supervisorMethods = {
                 this.loadSupervisorRestaurants(true),
                 this.isAdminRole() ? this.loadAdminDashboard() : Promise.resolve(),
             ]);
-            this.showToast('Restaurante creado correctamente.', {
+            this.showToast(t('sup.toast.site.created'), {
                 tone: 'success',
-                title: 'Creación exitosa',
+                title: t('toast.common.created'),
             });
         } catch (error) {
             if (!this.isAdminRole() && error?.status === 403) {
                 this.showToast(this.getErrorMessage(error, 'Tu cuenta de supervisora no pudo crear el restaurante.'), {
                     tone: 'error',
-                    title: 'Permiso insuficiente',
+                    title: t('toast.common.no.permission'),
                 });
                 return;
             }
             this.showToast(this.getErrorMessage(error, 'No fue posible crear el restaurante.'), {
                 tone: 'error',
-                title: 'No fue posible crear el restaurante',
+                title: t('sup.toast.site.create.fail'),
             });
         } finally {
             this.hideLoading();
@@ -6108,22 +6109,22 @@ export const supervisorMethods = {
         const isActive = true;
 
         if (!fullName || !email || !phone) {
-            this.showToast('Completa nombre, correo y teléfono del empleado.', {
+            this.showToast(t('sup.toast.fill.contractor'), {
                 tone: 'warning',
-                title: 'Faltan datos',
+                title: t('toast.common.missing.data'),
             });
             return;
         }
 
         if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-            this.showToast('El teléfono debe estar en formato E.164, por ejemplo +573001112233.', {
+            this.showToast(t('toast.common.phone.format'), {
                 tone: 'warning',
-                title: 'Teléfono inválido',
+                title: t('toast.common.invalid.phone'),
             });
             return;
         }
 
-        this.showLoading('Creando contratista...', 'Registrando cuenta y credenciales iniciales.');
+        this.showLoading(t('sup.toast.creating.contractor'), t('sup.toast.creating.contractor.desc'));
 
         try {
             const result = await apiClient.adminUsersManage('create', {
@@ -6147,22 +6148,22 @@ export const supervisorMethods = {
                     emailSent: Boolean(result?.pin_email_sent),
                 });
             } else {
-                this.showToast('Contratista creado correctamente.', {
+                this.showToast(t('sup.toast.contractor.created'), {
                     tone: 'success',
-                    title: 'Creación exitosa',
+                    title: t('toast.common.created'),
                 });
             }
         } catch (error) {
             if (!this.isAdminRole() && error?.status === 403) {
                 this.showToast(this.getErrorMessage(error, 'Tu cuenta no pudo crear el contratista.'), {
                     tone: 'error',
-                    title: 'Permiso insuficiente',
+                    title: t('toast.common.no.permission'),
                 });
                 return;
             }
             this.showToast(this.getErrorMessage(error, 'No fue posible crear el contratista.'), {
                 tone: 'error',
-                title: 'No fue posible crear el contratista',
+                title: t('sup.toast.contractor.create.fail'),
             });
         } finally {
             this.hideLoading();
@@ -6188,9 +6189,9 @@ export const supervisorMethods = {
                 : restaurants[0];
 
             if (!targetRestaurant) {
-                this.showToast('No hay sitios disponibles para registrar la auditoría.', {
+                this.showToast(t('sup.toast.no.sites.audit'), {
                     tone: 'warning',
-                    title: 'Sin sitios disponibles',
+                    title: t('sup.toast.no.sites.audit.title'),
                 });
                 return;
             }
@@ -6200,14 +6201,14 @@ export const supervisorMethods = {
                 DEFAULT_SYSTEM_SETTINGS.evidence.require_supervision_photos
             );
             if (requireSupervisionPhotos && Object.keys(this.supervisionPhotoFiles).length === 0) {
-                this.showToast('Debes adjuntar al menos una foto de supervisión antes de guardar.', {
+                this.showToast(t('sup.toast.audit.photo.req'), {
                     tone: 'warning',
-                    title: 'Faltan evidencias',
+                    title: t('sup.toast.audit.evidence.missing'),
                 });
                 return;
             }
 
-            this.showLoading('Subiendo imágenes', 'Espera');
+            this.showLoading(t('sup.toast.audit.uploading'), t('toast.wait.short'));
 
             let supervisionPayload = null;
 
@@ -6255,7 +6256,7 @@ export const supervisorMethods = {
                         : 'Supervisión registrada correctamente.',
                     {
                         tone: 'success',
-                        title: 'Registro exitoso',
+                        title: t('sup.toast.audit.success'),
                     }
                 );
                 this.clearSupervisionRegisterRetryState();
@@ -6283,7 +6284,7 @@ export const supervisorMethods = {
                 ).trim();
                 this.showToast(supervisionErrorMessage || 'No fue posible registrar la supervisión.', {
                     tone: 'error',
-                    title: 'No fue posible guardar la supervisión',
+                    title: t('sup.toast.audit.fail'),
                 });
             } finally {
                 this.hideLoading();
@@ -6501,9 +6502,9 @@ export const supervisorMethods = {
 
     async submitSchedShiftForm() {
         if (this.supervisorShiftSubmitPending) {
-            this.showToast('Ya estamos guardando la programación. Espera un momento.', {
+            this.showToast(t('sup.toast.saving.schedule'), {
                 tone: 'info',
-                title: 'Procesando',
+                title: t('sup.toast.processing'),
             });
             return;
         }
@@ -6514,20 +6515,20 @@ export const supervisorMethods = {
         const activeRows = rows.filter((r) => r.enabled);
 
         if (!restaurantId) {
-            this.showToast('Selecciona un restaurante antes de guardar.', {
+            this.showToast(t('sup.toast.select.site.assign'), {
                 tone: 'warning',
-                title: 'Falta el restaurante',
+                title: t('sup.toast.site.missing'),
             });
             return;
         }
         if (selectedEmployees.length === 0) {
-            this.showToast('Selecciona al menos un empleado.', { tone: 'warning', title: 'Falta el empleado' });
+            this.showToast(t('sup.toast.select.contractor'), { tone: 'warning', title: t('sup.toast.missing.contractor') });
             return;
         }
         if (activeRows.length === 0) {
-            this.showToast('Activa al menos un día antes de guardar.', {
+            this.showToast(t('sup.toast.activate.day'), {
                 tone: 'warning',
-                title: 'Sin días seleccionados',
+                title: t('sup.toast.no.days.selected'),
             });
             return;
         }
@@ -6537,7 +6538,7 @@ export const supervisorMethods = {
             if (!row.startTime || !row.endTime) {
                 this.showToast(`Completa la hora de entrada y salida para el ${row.dayLabel} ${row.dateKey}.`, {
                     tone: 'warning',
-                    title: 'Faltan horas',
+                    title: t('sup.toast.missing.hours'),
                 });
                 return;
             }
@@ -6546,7 +6547,7 @@ export const supervisorMethods = {
             if (!startDate || !endDate) {
                 this.showToast(`Revisa el formato de hora para el ${row.dayLabel} ${row.dateKey}.`, {
                     tone: 'warning',
-                    title: 'Horario inválido',
+                    title: t('sup.toast.invalid.schedule.title'),
                 });
                 return;
             }
@@ -6592,12 +6593,12 @@ export const supervisorMethods = {
                     const cs = conflict.existingShift;
                     this.showToast(
                         `${empName} ya tiene un turno (${formatDate(cs?.scheduled_start, { day: '2-digit', month: 'short' })} ${formatShiftRange(cs?.scheduled_start, cs?.scheduled_end)}) que se cruza con ese horario.`,
-                        { tone: 'warning', title: 'Conflicto de horario' }
+                        { tone: 'warning', title: t('sup.toast.schedule.conflict.short') }
                     );
                 } else {
                     this.showToast(`${empName} tiene dos turnos en esta programación que se cruzan entre sí.`, {
                         tone: 'warning',
-                        title: 'Conflicto de horario',
+                        title: t('sup.toast.schedule.conflict.short'),
                     });
                 }
                 return;
@@ -6607,7 +6608,7 @@ export const supervisorMethods = {
         }
 
         this.setSupervisorShiftSubmitState(true);
-        this.showLoading('Programando turnos...', `Guardando ${assignments.length} programaciones.`);
+        this.showLoading(t('sup.toast.scheduling'), `Guardando ${assignments.length} programaciones.`);
 
         try {
             let successCount = 0;
@@ -6634,7 +6635,7 @@ export const supervisorMethods = {
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible guardar los turnos.'), {
                 tone: 'error',
-                title: 'Error al guardar',
+                title: t('sup.toast.save.error'),
             });
         } finally {
             this.setSupervisorShiftSubmitState(false);
