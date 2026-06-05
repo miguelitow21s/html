@@ -1354,7 +1354,7 @@ export const adminModalMethods = {
         if (!restaurant) {
             this.selectedSupervisorShiftId = '';
             select.disabled = true;
-            select.innerHTML = '<option value="">Selecciona primero un restaurante</option>';
+            select.innerHTML = '<option value="">Selecciona primero un sitio</option>';
             return;
         }
 
@@ -1531,7 +1531,7 @@ export const adminModalMethods = {
                         restaurants = mapRestaurantList(result);
                     } catch (error) {
                         console.warn(
-                            'No fue posible cargar todos los restaurantes para supervisora. Se usará el listado disponible como respaldo.',
+                            'No fue posible cargar todos los sitios para el inspector. Se usará el listado disponible como respaldo.',
                             error
                         );
                         const assignments = await apiClient.restaurantStaffManage('list_my_restaurants');

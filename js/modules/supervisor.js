@@ -355,7 +355,7 @@ export const supervisorMethods = {
         }
 
         const currentValue = select.value;
-        const placeholder = includePlaceholder ? '<option value="">Selecciona un restaurante</option>' : '';
+        const placeholder = includePlaceholder ? '<option value="">Selecciona un sitio</option>' : '';
         const restaurants = this.data.supervisor.restaurants.filter(
             (restaurant) => getRestaurantRecordId(restaurant) != null
         );
@@ -1204,7 +1204,7 @@ export const supervisorMethods = {
         this.showToast(
             loadedCount > 0
                 ? `Se cargaron ${loadedCount} día(s) desde el Excel.`
-                : 'El Excel se importó, pero revisa los horarios antes de guardar.',
+                : 'El Excel se importó, pero revisa las ventanas antes de guardar.',
             {
                 tone: 'success',
                 title: t('sup.toast.excel.imported'),
@@ -1924,9 +1924,9 @@ export const supervisorMethods = {
                     : 'Solo se pueden crear tareas especiales para servicios en estado asignado.';
             }
             case 'SCHEDULED_SHIFT_EMPLOYEE_MISMATCH':
-                return 'El empleado enviado no coincide con el contratista del servicio asignado.';
+                return 'El contratista enviado no coincide con el del servicio asignado.';
             case 'EMPLOYEE_NOT_IN_RESTAURANT':
-                return 'El empleado asignado no pertenece al sitio del servicio asignado.';
+                return 'El contratista asignado no pertenece al sitio del servicio.';
             default:
                 return '';
         }
@@ -2111,7 +2111,7 @@ export const supervisorMethods = {
                         const normalizedBackendMessage = backendFailure.message.toLowerCase();
                         const isInvalidShiftRace =
                             backendFailure.code === 'P0001' ||
-                            normalizedBackendMessage.includes('turno invalido para crear tarea');
+                            normalizedBackendMessage.includes('servicio invalido para crear tarea');
                         const isAlreadyExists =
                             normalizedMessage.includes('already exists') || normalizedMessage.includes('ya existe');
 
@@ -3842,7 +3842,7 @@ export const supervisorMethods = {
 
         if (displayEmployees.length === 0 && weekShifts.length === 0) {
             container.innerHTML =
-                '<div class="empty-state">No hay empleados disponibles. Agrega empleados para ver la grilla semanal.</div>';
+                '<div class="empty-state">No hay contratistas disponibles. Agrega contratistas para ver la grilla semanal.</div>';
             return;
         }
 
@@ -4191,7 +4191,7 @@ export const supervisorMethods = {
 
         if (!restaurantName) {
             container.innerHTML =
-                '<div class="empty-state">Selecciona un restaurante para preparar la supervisión en sitio.</div>';
+                '<div class="empty-state">Selecciona un sitio para preparar la auditoría.</div>';
             return;
         }
 
@@ -4211,7 +4211,7 @@ export const supervisorMethods = {
                 ? 'badge-danger'
                 : 'badge-warning';
         const locationSummary = !geofence?.isReady
-            ? 'Este restaurante todavía no tiene coordenadas verificables.'
+            ? 'Este sitio todavía no tiene coordenadas verificables.'
             : locationCheck?.ok
               ? `${Math.round(locationCheck.distanceMeters || 0)} m del punto de control`
               : locationCheck?.attemptedAt
@@ -4222,7 +4222,7 @@ export const supervisorMethods = {
             <div class="supervision-target-top">
                 <div>
                     <strong>${escapeHtml(restaurantName)}</strong>
-                    <p class="muted-copy">${escapeHtml(addressText || 'Ubicación del restaurante pendiente de detalle')}</p>
+                    <p class="muted-copy">${escapeHtml(addressText || 'Ubicación del sitio pendiente de detalle')}</p>
                 </div>
                 <span class="badge ${locationStatusClass}">${escapeHtml(locationStatusLabel)}</span>
             </div>
@@ -4363,7 +4363,7 @@ export const supervisorMethods = {
                     radiusMeters: geofence?.radiusMeters || 0,
                 });
                 this.showToast(
-                    `El restaurante ${restaurantName} aún no tiene ubicación o radio configurados para validar presencia en sitio.`,
+                    `El sitio ${restaurantName} aún no tiene ubicación o radio configurados para validar presencia.`,
                     {
                         tone: 'warning',
                         title: t('sup.toast.geofence.pending'),
@@ -4402,8 +4402,8 @@ export const supervisorMethods = {
             if (notify) {
                 this.showToast(
                     result.ok
-                        ? `Ubicación validada para ${restaurantName}. Ya puedes registrar la supervisión.`
-                        : `No estás dentro del radio permitido de ${restaurantName}. Acércate al restaurante para registrar la supervisión.`,
+                        ? `Ubicación validada para ${restaurantName}. Ya puedes registrar la auditoría.`
+                        : `No estás dentro del radio permitido de ${restaurantName}. Acércate al sitio para registrar la auditoría.`,
                     {
                         tone: result.ok ? 'success' : 'warning',
                         title: result.ok ? 'Ubicación validada' : 'Fuera de rango',
@@ -4443,7 +4443,7 @@ export const supervisorMethods = {
         const { restaurantName, geofence } = this.getSupervisorSupervisionReference();
         if (!geofence?.isReady) {
             throw new Error(
-                `No puedes registrar la supervisión porque ${restaurantName || 'el restaurante seleccionado'} no tiene geocerca configurada.`
+                `No puedes registrar la auditoría porque ${restaurantName || 'el sitio seleccionado'} no tiene geocerca configurada.`
             );
         }
 
@@ -5295,7 +5295,7 @@ export const supervisorMethods = {
                 `;
                       })
                       .join('')
-                : '<div class="empty-block">No hay turnos para los filtros seleccionados.</div>';
+                : '<div class="empty-block">No hay servicios para los filtros seleccionados.</div>';
 
         return `<!doctype html>
 <html lang="es">
@@ -5739,7 +5739,7 @@ export const supervisorMethods = {
 
                 if (!restaurantId || !startValue || !endValue || selectedEmployees.length === 0) {
                     this.showToast(
-                        'Selecciona restaurante, horario y al menos un empleado para este turno compartido.',
+                        'Selecciona sitio, ventana de servicio y al menos un contratista para este servicio compartido.',
                         {
                             tone: 'warning',
                             title: t('toast.common.missing.data'),
@@ -5831,7 +5831,7 @@ export const supervisorMethods = {
                         );
 
                         this.showToast(
-                            `${employeeName} ya tiene un turno (${conflictDate} ${conflictRange}) que se cruza con ese horario.`,
+                            `${employeeName} ya tiene un servicio (${conflictDate} ${conflictRange}) que se cruza con esa ventana.`,
                             {
                                 tone: 'warning',
                                 title: t('sup.toast.schedule.conflict'),
@@ -5840,7 +5840,7 @@ export const supervisorMethods = {
                         return;
                     }
 
-                    this.showToast(`${employeeName} tiene dos turnos en esta programación que se cruzan entre sí.`, {
+                    this.showToast(`${employeeName} tiene dos servicios en esta asignación que se cruzan entre sí.`, {
                         tone: 'warning',
                         title: t('sup.toast.schedule.conflict'),
                     });
@@ -5856,7 +5856,7 @@ export const supervisorMethods = {
                     if (!assignmentValidation.ok) {
                         this.showToast(
                             assignmentValidation.message ||
-                                'Revisa el empleado y el restaurante antes de crear la tarea especial.',
+                                'Revisa el contratista y el sitio antes de crear la tarea especial.',
                             {
                                 tone: 'warning',
                                 title: t('sup.toast.task.unavailable'),
@@ -5880,7 +5880,7 @@ export const supervisorMethods = {
             }
 
             this.showLoading(
-                'Programando turnos...',
+                t('sup.toast.scheduling'),
                 assignments.length === 1
                     ? 'Guardando la programación.'
                     : `Guardando ${assignments.length} programaciones.`
@@ -5922,7 +5922,7 @@ export const supervisorMethods = {
                         firstError = new Error(
                             bulkResult.errors[0]?.message ||
                                 bulkResult.errors[0]?.error ||
-                                'No fue posible programar algunos turnos.'
+                                'No fue posible programar algunos servicios.'
                         );
                     }
                     if (createdItems.length > 0) {
@@ -5952,7 +5952,7 @@ export const supervisorMethods = {
                 }
 
                 if (successCount === 0) {
-                    throw firstError || new Error('No fue posible programar los turnos.');
+                    throw firstError || new Error('No fue posible programar los servicios.');
                 }
 
                 let taskCreationResult = { created: 0, failed: 0 };
@@ -5975,14 +5975,14 @@ export const supervisorMethods = {
                     const successMessage = taskTemplate.enabled
                         ? taskCreationResult.created === successCount
                             ? successCount === 1
-                                ? 'Turno y tarea especial creados correctamente.'
-                                : `${successCount} turnos y sus tareas especiales quedaron creados correctamente.`
+                                ? 'Servicio y tarea especial creados correctamente.'
+                                : `${successCount} servicios y sus tareas especiales quedaron creados correctamente.`
                             : successCount === 1
-                              ? 'Turno programado correctamente.'
-                              : `${successCount} turnos programados correctamente.`
+                              ? 'Servicio asignado correctamente.'
+                              : `${successCount} servicios asignados correctamente.`
                         : successCount === 1
-                          ? 'Turno programado correctamente.'
-                          : `${successCount} turnos programados correctamente.`;
+                          ? 'Servicio asignado correctamente.'
+                          : `${successCount} servicios asignados correctamente.`;
                     this.showToast(successMessage, {
                         tone: 'success',
                         title: t('sup.toast.schedule.success'),
@@ -5994,8 +5994,8 @@ export const supervisorMethods = {
                             : '';
                     this.showToast(
                         taskTemplate.enabled
-                            ? `${successCount} de ${assignments.length} turnos quedaron programados. Revisa también las tareas especiales del resto.${firstTaskIssue}`
-                            : `${successCount} de ${assignments.length} turnos quedaron programados. Revisa el resto.`,
+                            ? `${successCount} de ${assignments.length} servicios quedaron asignados. Revisa también las tareas especiales del resto.${firstTaskIssue}`
+                            : `${successCount} de ${assignments.length} servicios quedaron asignados. Revisa el resto.`,
                         {
                             tone: 'warning',
                             title: t('sup.toast.schedule.partial'),
@@ -6011,7 +6011,7 @@ export const supervisorMethods = {
                     return;
                 }
 
-                this.showToast(this.getErrorMessage(error, 'No fue posible programar los turnos.'), {
+                this.showToast(this.getErrorMessage(error, 'No fue posible programar los servicios.'), {
                     tone: 'error',
                     title: t('sup.toast.schedule.fail'),
                 });
@@ -6309,7 +6309,7 @@ export const supervisorMethods = {
         if (restaurantEl) {
             const restaurants = this.data.supervisor.restaurants || [];
             restaurantEl.innerHTML =
-                '<option value="">Selecciona un restaurante</option>' +
+                '<option value="">Selecciona un sitio</option>' +
                 restaurants
                     .map(
                         (r) =>
@@ -6391,7 +6391,7 @@ export const supervisorMethods = {
             container.replaceChildren(fragment);
         } catch (error) {
             console.warn('No fue posible cargar empleados para programación.', error);
-            this.setShiftBatchPickerEmpty(container, 'No fue posible cargar los empleados disponibles.');
+            this.setShiftBatchPickerEmpty(container, 'No fue posible cargar los contratistas disponibles.');
             this.schedShiftSelectedEmployees = [];
         }
     },
@@ -6592,11 +6592,11 @@ export const supervisorMethods = {
                 if (conflict.type === 'existing') {
                     const cs = conflict.existingShift;
                     this.showToast(
-                        `${empName} ya tiene un turno (${formatDate(cs?.scheduled_start, { day: '2-digit', month: 'short' })} ${formatShiftRange(cs?.scheduled_start, cs?.scheduled_end)}) que se cruza con ese horario.`,
+                        `${empName} ya tiene un servicio (${formatDate(cs?.scheduled_start, { day: '2-digit', month: 'short' })} ${formatShiftRange(cs?.scheduled_start, cs?.scheduled_end)}) que se cruza con esa ventana.`,
                         { tone: 'warning', title: t('sup.toast.schedule.conflict.short') }
                     );
                 } else {
-                    this.showToast(`${empName} tiene dos turnos en esta programación que se cruzan entre sí.`, {
+                    this.showToast(`${empName} tiene dos servicios en esta asignación que se cruzan entre sí.`, {
                         tone: 'warning',
                         title: t('sup.toast.schedule.conflict.short'),
                     });
@@ -6604,11 +6604,11 @@ export const supervisorMethods = {
                 return;
             }
         } catch (precheckError) {
-            console.warn('No fue posible validar conflictos de horario.', precheckError);
+            console.warn('No fue posible validar conflictos de ventana.', precheckError);
         }
 
         this.setSupervisorShiftSubmitState(true);
-        this.showLoading(t('sup.toast.scheduling'), `Guardando ${assignments.length} programaciones.`);
+        this.showLoading(t('sup.toast.scheduling'), `Guardando ${assignments.length} asignaciones.`);
 
         try {
             let successCount = 0;
@@ -6629,11 +6629,11 @@ export const supervisorMethods = {
             const tone = failedCount > 0 ? 'warning' : 'success';
             const msg =
                 failedCount > 0
-                    ? `${successCount} turno(s) creado(s). ${failedCount} no se pudieron guardar.`
-                    : `${successCount} turno(s) programado(s) correctamente.`;
-            this.showToast(msg, { tone, title: tone === 'success' ? 'Turnos guardados' : 'Guardado parcial' });
+                    ? `${successCount} servicio(s) creado(s). ${failedCount} no se pudieron guardar.`
+                    : `${successCount} servicio(s) asignado(s) correctamente.`;
+            this.showToast(msg, { tone, title: tone === 'success' ? 'Servicios guardados' : 'Guardado parcial' });
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible guardar los turnos.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible guardar los servicios.'), {
                 tone: 'error',
                 title: t('sup.toast.save.error'),
             });

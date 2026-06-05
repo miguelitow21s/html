@@ -392,7 +392,7 @@
             </div>
 
             <div id="employee-restaurant-tasks-section" class="hidden">
-                <h3 class="section-heading"><i class="fas fa-store"></i> Tareas del Restaurante</h3>
+                <h3 class="section-heading"><i class="fas fa-store"></i> <span data-i18n="employee.tasks.section">Tareas del Sitio</span></h3>
                 <div id="employee-restaurant-tasks-list"></div>
             </div>
 
@@ -436,7 +436,7 @@
                     <i class="fas fa-user"></i>
                 </div>
                 <div id="profile-name" class="profile-name">Usuario</div>
-                <div id="profile-role-label" class="profile-role">Empleado de Limpieza</div>
+                <div id="profile-role-label" class="profile-role" data-i18n="employee.profile.role">Contratista de Limpieza</div>
             </div>
             
             <div class="stats-grid">
@@ -446,7 +446,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="profile-total-shifts">0</div>
-                    <div class="stat-label">Turnos realizados</div>
+                    <div class="stat-label" data-i18n="employee.profile.shifts">Servicios realizados</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="profile-upcoming-shifts">0</div>
@@ -814,7 +814,7 @@
             </div>
             
             <button class="btn-large btn-success" onclick="app.finalizeShift()">
-                <i class="fas fa-check"></i> Confirmar y Finalizar Turno
+                <i class="fas fa-check"></i> <span data-i18n="shift.summary.finalize">Confirmar y Finalizar Servicio</span>
             </button>
         </main>
     </div>
@@ -937,7 +937,7 @@
         <main class="content">
             <div class="toolbar-actions" style="margin-bottom: 20px;">
                 <button class="btn btn-primary btn-inline hidden" id="supervisor-create-restaurant-btn" onclick="app.openModal('modal-admin-restaurant')">
-                    <i class="fas fa-plus"></i> Nuevo Restaurante
+                    <i class="fas fa-plus"></i> <span data-i18n="supervisor.restaurants.new">Nuevo Sitio</span>
                 </button>
             </div>
             
@@ -973,7 +973,7 @@
             </div>
             <div class="toolbar-actions" style="margin-bottom: 20px;">
                 <button class="btn btn-primary btn-inline hidden" id="supervisor-create-employee-btn" onclick="app.openModal('modal-admin-employee')">
-                    <i class="fas fa-user-plus"></i> Nuevo Empleado
+                    <i class="fas fa-user-plus"></i> <span data-i18n="supervisor.employees.new">Nuevo Contratista</span>
                 </button>
             </div>
             <div id="supervisor-employees-list"></div>
@@ -1015,7 +1015,7 @@
                             <i class="fas fa-copy"></i> Replicar semana anterior
                         </button>
                         <button class="btn btn-primary btn-inline" onclick="app.openScheduleShiftModal()">
-                            <i class="fas fa-plus"></i> Programar Turnos
+                            <i class="fas fa-plus"></i> <span data-i18n="supervisor.shifts.schedule">Asignar Servicios</span>
                         </button>
                     </div>
                 </div>
@@ -1141,7 +1141,7 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="report-summary-shifts">0</div>
-                        <div class="stat-label">Turnos del informe</div>
+                        <div class="stat-label" data-i18n="supervisor.reports.shifts">Servicios del informe</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="report-summary-ended-early">0</div>
@@ -1157,7 +1157,7 @@
                     <div class="report-inline-summary-card">
                         <strong data-i18n="supervisor.reports.states">Estados del período</strong>
                         <div id="report-status-breakdown" class="report-pill-list">
-                            <span class="report-pill report-pill-empty">Genera el informe para ver el estado de los turnos.</span>
+                            <span class="report-pill report-pill-empty" data-i18n="supervisor.reports.states.empty">Genera el informe para ver el estado de los servicios.</span>
                         </div>
                     </div>
                 </div>
@@ -1234,7 +1234,7 @@
 
             <div class="card supervision-task-card">
                 <div class="card-header">
-                    <div class="card-title">Tarea Especial del Restaurante</div>
+                    <div class="card-title" data-i18n="supervisor.supervision.task">Tarea Especial del Sitio</div>
                 </div>
                 <button type="button" class="btn btn-secondary btn-inline" id="supervision-create-restaurant-task-btn" onclick="app.openSupervisorRestaurantTaskModalFromSupervision()">
                     <i class="fas fa-star"></i> Crear tarea especial

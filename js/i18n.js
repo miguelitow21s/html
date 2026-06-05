@@ -292,8 +292,8 @@ export const TRANSLATIONS = {
         // Supervisor — Schedule shifts (modal)
         'sup.toast.saving.schedule': 'Ya estamos guardando la programación. Espera un momento.',
         'sup.toast.saving.schedule.title': 'Procesando programación',
-        'sup.toast.fill.shift': 'Completa contratista, sitio y horario para programar este servicio.',
-        'sup.toast.invalid.schedule.title': 'Horario inválido',
+        'sup.toast.fill.shift': 'Completa contratista, sitio y ventana para asignar este servicio.',
+        'sup.toast.invalid.schedule.title': 'Ventana inválida',
         'sup.toast.end.after.start': 'La fecha final del servicio debe ser posterior a la fecha inicial.',
         'sup.toast.select.contractor.week': 'Selecciona el contratista al que le vas a programar la semana.',
         'sup.toast.missing.contractor': 'Falta el contratista',
@@ -303,14 +303,14 @@ export const TRANSLATIONS = {
         'sup.toast.activate.day': 'Activa al menos un día de la semana antes de guardar.',
         'sup.toast.no.days.selected': 'Sin días seleccionados',
         'sup.toast.task.title.req': 'Falta el título de la tarea',
-        'sup.toast.schedule.conflict': 'Conflicto de horario detectado',
-        'sup.toast.schedule.conflict.short': 'Conflicto de horario',
+        'sup.toast.schedule.conflict': 'Conflicto de ventana detectado',
+        'sup.toast.schedule.conflict.short': 'Conflicto de ventana',
         'sup.toast.task.unavailable': 'Tarea especial no disponible',
         'sup.toast.task.validate.fail': 'No fue posible validar la tarea especial',
         'sup.toast.schedule.success': 'Programación exitosa',
         'sup.toast.schedule.partial': 'Programación parcial',
-        'sup.toast.contractor.unavailable': 'El contratista no está disponible en ese horario.',
-        'sup.toast.schedule.unavailable': 'Horario no disponible',
+        'sup.toast.contractor.unavailable': 'El contratista no está disponible en esa ventana.',
+        'sup.toast.schedule.unavailable': 'Ventana no disponible',
         'sup.toast.schedule.fail': 'No fue posible programar los servicios',
 
         // Supervisor — Restaurant create
@@ -430,6 +430,7 @@ export const TRANSLATIONS = {
         'supervisor.reports.result.desc': 'Genera el período para ver el resumen operativo y las descargas disponibles.',
         'supervisor.reports.totals': 'Aquí verás cuántas horas se acumularon en el sitio consultado.',
         'supervisor.reports.states': 'Estados del período',
+        'supervisor.reports.states.empty': 'Genera el informe para ver el estado de los servicios.',
         'supervisor.reports.evidence.title': 'Evidencias del Antes y Después',
         'supervisor.reports.evidence.copy': 'Cuando el informe corresponde a un solo día, aquí verás las evidencias del servicio.',
         'supervisor.supervision.gps.status': 'Ubicación lista para verificar en sitio',
@@ -524,6 +525,8 @@ export const TRANSLATIONS = {
         'admin.dashboard.summary': 'Resumen Ejecutivo',
         'admin.dashboard.restaurants': 'Sitios',
         'admin.dashboard.shifts': 'Servicios',
+        'admin.metrics.scheduled.hours': 'Horas asignadas',
+        'admin.metrics.incidents': 'Novedades',
 
         // Admin monitor
         'admin.monitor.title': 'Seguimiento de Inspecciones',
@@ -1047,6 +1050,7 @@ export const TRANSLATIONS = {
         'supervisor.reports.result.desc': 'Generate the period to see the operational summary and available downloads.',
         'supervisor.reports.totals': "Here you'll see how many hours accumulated for the consulted site.",
         'supervisor.reports.states': 'Period statuses',
+        'supervisor.reports.states.empty': 'Generate the report to see the status of services.',
         'supervisor.reports.evidence.title': 'Before and After Evidence',
         'supervisor.reports.evidence.copy': "When the report covers a single day, you'll see the service evidence here.",
         'supervisor.supervision.gps.status': 'Location ready to verify on-site',
@@ -1141,6 +1145,8 @@ export const TRANSLATIONS = {
         'admin.dashboard.summary': 'Executive Summary',
         'admin.dashboard.restaurants': 'Sites',
         'admin.dashboard.shifts': 'Services',
+        'admin.metrics.scheduled.hours': 'Assigned hours',
+        'admin.metrics.incidents': 'Notes',
 
         // Admin monitor
         'admin.monitor.title': 'Inspection Tracking',

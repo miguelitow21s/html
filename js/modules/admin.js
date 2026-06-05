@@ -111,19 +111,19 @@ export const adminMethods = {
         container.innerHTML = `
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(String(totalRestaurants))}</div>
-                <div class="stat-label">Restaurantes</div>
+                <div class="stat-label">${escapeHtml(t('admin.dashboard.restaurants'))}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(String(totalShifts))}</div>
-                <div class="stat-label">Turnos programados</div>
+                <div class="stat-label">${escapeHtml(t('admin.dashboard.shifts'))}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(formatHours(totalHours))}</div>
-                <div class="stat-label">Horas programadas</div>
+                <div class="stat-label">${escapeHtml(t('admin.metrics.scheduled.hours'))}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(String(incidents))}</div>
-                <div class="stat-label">Novedades</div>
+                <div class="stat-label">${escapeHtml(t('admin.metrics.incidents'))}</div>
             </div>
         `;
     },
@@ -878,7 +878,7 @@ export const adminMethods = {
                                     .join('')}
                             </div>
                         `
-                                : '<p class="muted-copy">Sin restaurantes asignados todavía.</p>'
+                                : '<p class="muted-copy">Sin sitios asignados todavía.</p>'
                         }
                     </div>
 
