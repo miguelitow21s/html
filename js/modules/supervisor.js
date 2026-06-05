@@ -2782,12 +2782,31 @@ export const supervisorMethods = {
             this.invalidateScopedCache('supervisorAssignableEmployees');
         }
 
-        const [restaurants, shifts] = await Promise.all([
-            this.getSupervisorRestaurants(force),
-            this.getSupervisorShiftList({ forceRestaurants: force }),
-        ]);
-
         const container = document.getElementById('supervisor-restaurants-list');
+        if (container) {
+            container.innerHTML = '<div class="empty-state">Cargando sitios...</div>';
+        }
+
+        let restaurants = [];
+        let shifts = [];
+        try {
+            const [r, s] = await Promise.all([
+                this.getSupervisorRestaurants(force),
+                this.getSupervisorShiftList({ forceRestaurants: force }).catch((shiftErr) => {
+                    console.warn('No fue posible cargar servicios para el render de sitios.', shiftErr);
+                    return [];
+                }),
+            ]);
+            restaurants = r;
+            shifts = s;
+        } catch (error) {
+            console.error('No fue posible cargar los sitios.', error);
+            if (container) {
+                container.innerHTML = `<div class="card"><p style="color: var(--gray);">No fue posible cargar los sitios. ${escapeHtml(this.getErrorMessage(error, 'Intenta nuevamente.'))}</p></div>`;
+            }
+            return;
+        }
+
         if (!container) {
             return;
         }
