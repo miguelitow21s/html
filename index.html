@@ -1012,7 +1012,7 @@
                     </div>
                     <div class="supervisor-week-actions">
                         <button class="btn btn-secondary btn-inline" onclick="app.replicateSupervisorLastWeek()">
-                            <i class="fas fa-copy"></i> Replicar semana anterior
+                            <i class="fas fa-copy"></i> <span data-i18n="supervisor.shifts.replicate">Replicar asignaciones</span>
                         </button>
                         <button class="btn btn-primary btn-inline" onclick="app.openScheduleShiftModal()">
                             <i class="fas fa-plus"></i> <span data-i18n="supervisor.shifts.schedule">Asignar Servicios</span>
@@ -1023,13 +1023,13 @@
                 <!-- Filtros -->
                 <div class="supervisor-week-filters">
                     <select id="supervisor-shifts-filter-restaurant" class="dark-control">
-                        <option value="">Todos los sitios</option>
+                        <option value="" data-i18n="supervisor.shifts.all.sites">Todos los sitios</option>
                     </select>
                     <select id="supervisor-shifts-filter-employee" class="dark-control">
                         <option value="" data-i18n="supervisor.shifts.all.employees">Todos los contratistas</option>
                     </select>
                     <input type="text" id="supervisor-shifts-filter-search" class="dark-control" data-i18n-placeholder="supervisor.shifts.search" placeholder="Buscar contratista...">
-                    <button type="button" class="btn btn-secondary btn-inline" onclick="app.clearSupervisorShiftFilters()">
+                    <button type="button" class="btn btn-secondary btn-inline" onclick="app.clearSupervisorShiftFilters()" data-i18n="supervisor.shifts.clear">
                         Limpiar
                     </button>
                 </div>
@@ -1308,7 +1308,7 @@
                     <div class="form-group">
                         <label for="sched-shift-restaurant" data-i18n="modal.shift.restaurant">Sitio / Cliente</label>
                         <select id="sched-shift-restaurant" class="dark-control" required>
-                            <option value="">Selecciona un restaurante</option>
+                            <option value="" data-i18n="modal.shift.select.site">Selecciona un sitio</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -1317,7 +1317,7 @@
                     </div>
                     <div class="form-row two-col">
                         <div class="form-group">
-                            <label for="sched-shift-start-date">Fecha inicio</label>
+                            <label for="sched-shift-start-date" data-i18n="modal.shift.start.date">Fecha inicio</label>
                             <div class="date-control">
                                 <input type="date" id="sched-shift-start-date" class="compact-picker" required inputmode="none" lang="en-GB">
                                 <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('sched-shift-start-date')" aria-label="Abrir selector de fecha inicio">
@@ -1326,7 +1326,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="sched-shift-end-date">Fecha fin</label>
+                            <label for="sched-shift-end-date" data-i18n="modal.shift.end.date">Fecha fin</label>
                             <div class="date-control">
                                 <input type="date" id="sched-shift-end-date" class="compact-picker" required inputmode="none" lang="en-GB">
                                 <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('sched-shift-end-date')" aria-label="Abrir selector de fecha fin">
@@ -1345,10 +1345,17 @@
                             <input type="time" id="sched-shift-default-end" class="dark-control" value="16:00">
                         </div>
                     </div>
+                    <div class="alert alert-info shift-window-note">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong data-i18n="modal.shift.window.note.strong">Ventana de acceso al sitio</strong><br>
+                            <small data-i18n="modal.shift.window.note">El contratista decide la hora exacta de inicio y fin dentro de esta ventana. R3 solo coordina el plazo de entrega del servicio.</small>
+                        </div>
+                    </div>
                     <div id="sched-shift-day-rows" class="shift-plan-rows"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-supervisor-schedule-shift')">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-supervisor-schedule-shift')" data-i18n="btn.cancel">Cancelar</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-calendar-check"></i> <span data-i18n="modal.shift.save">Guardar Asignación</span>
                     </button>
@@ -1723,7 +1730,7 @@
                         <div class="form-group admin-panel-field">
                             <label data-i18n="supervisor.supervision.restaurant">Sitio / Cliente</label>
                             <select id="admin-supervisor-restaurant-filter" class="dark-control">
-                                <option value="">Todos los sitios</option>
+                                <option value="" data-i18n="supervisor.shifts.all.sites">Todos los sitios</option>
                             </select>
                         </div>
                     </div>

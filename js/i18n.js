@@ -479,6 +479,7 @@ export const TRANSLATIONS = {
         'supervisor.shifts.search': 'Buscar contratista...',
         'supervisor.shifts.clear': 'Limpiar',
         'supervisor.shifts.all.employees': 'Todos los contratistas',
+        'supervisor.shifts.all.sites': 'Todos los sitios',
 
         // Supervisor reports
         'supervisor.reports.title': 'Reportes de Calidad',
@@ -555,10 +556,13 @@ export const TRANSLATIONS = {
         // Modals - schedule shift
         'modal.shift.title': 'Asignar Servicios',
         'modal.shift.restaurant': 'Sitio / Cliente',
+        'modal.shift.select.site': 'Selecciona un sitio',
         'modal.shift.start.date': 'Fecha inicio',
         'modal.shift.end.date': 'Fecha fin',
         'modal.shift.start.time': 'Apertura de ventana',
         'modal.shift.end.time': 'Cierre de ventana',
+        'modal.shift.window.note.strong': 'Ventana de acceso al sitio',
+        'modal.shift.window.note': 'El contratista decide la hora exacta de inicio y fin dentro de esta ventana. R3 solo coordina el plazo de entrega del servicio.',
         'modal.shift.cancel': 'Cancelar',
         'modal.shift.save': 'Guardar Asignación',
 
@@ -1101,6 +1105,7 @@ export const TRANSLATIONS = {
         'supervisor.shifts.search': 'Search contractor...',
         'supervisor.shifts.clear': 'Clear',
         'supervisor.shifts.all.employees': 'All contractors',
+        'supervisor.shifts.all.sites': 'All sites',
 
         // Supervisor reports
         'supervisor.reports.title': 'Quality Reports',
@@ -1177,10 +1182,13 @@ export const TRANSLATIONS = {
         // Modals - schedule shift
         'modal.shift.title': 'Assign Services',
         'modal.shift.restaurant': 'Site / Client',
+        'modal.shift.select.site': 'Select a site',
         'modal.shift.start.date': 'Start date',
         'modal.shift.end.date': 'End date',
         'modal.shift.start.time': 'Window opens',
         'modal.shift.end.time': 'Window closes',
+        'modal.shift.window.note.strong': 'Site access window',
+        'modal.shift.window.note': 'The contractor decides the exact start and end times within this window. R3 only coordinates the service delivery deadline.',
         'modal.shift.cancel': 'Cancel',
         'modal.shift.save': 'Save Assignment',
 
