@@ -563,6 +563,7 @@ const app = {
         setLang(lang);
         applyTranslations();
         this._updateLangButtons();
+        this.updateDate();
         try {
             if (typeof this.renderEmployeeDashboard === 'function' && this.currentPage === 'employee-dashboard') {
                 this.renderEmployeeDashboard();
@@ -2698,6 +2699,9 @@ const app = {
         this.currentPage = page;
         this.removeLegacyUiArtifacts();
         applyTranslations();
+        if (page === 'employee-dashboard') {
+            this.updateDate();
+        }
 
         if (page === 'employee-shift-cleaning') {
             this.startTimerFromCurrentShift();
@@ -3869,7 +3873,8 @@ const app = {
             return;
         }
 
-        dateElement.textContent = new Date().toLocaleDateString('es-CO', {
+        const locale = getLang() === 'en' ? 'en-US' : 'es-CO';
+        dateElement.textContent = new Date().toLocaleDateString(locale, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
