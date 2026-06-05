@@ -2722,9 +2722,9 @@ export const supervisorMethods = {
 
         const alertsContainer = document.getElementById('supervisor-alerts-container');
         const firstName = (this.currentUser.full_name || this.currentUser.email).split(' ')[0];
-        document.getElementById('supervisor-welcome-title').textContent = `Bienvenida, ${firstName}`;
+        document.getElementById('supervisor-welcome-title').textContent = `${t('supervisor.welcome.greeting')}, ${firstName}`;
         document.getElementById('supervisor-welcome-subtitle').textContent =
-            `${restaurants.length} sitio(s) disponibles`;
+            `${restaurants.length} ${t('supervisor.welcome.sites.suffix')}`;
 
         const now = Date.now();
         const graceMs = SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES * 60 * 1000;
