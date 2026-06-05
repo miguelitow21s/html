@@ -92,6 +92,14 @@ export const TRANSLATIONS = {
         'employee.task.noobs': 'Sin observaciones.',
         'employee.tasks.section': 'Tareas del Sitio',
         'employee.btn.start': 'Iniciar Servicio',
+        'employee.btn.continue.active': 'Continuar Servicio Activo',
+        'employee.btn.start.assigned': 'Iniciar Servicio Asignado',
+        'employee.btn.not.available': 'Aún No Disponible',
+        'employee.shift.site.assigned': 'Sitio asignado',
+        'employee.shift.no.services.date': 'No hay servicios asignados en esta fecha',
+        'employee.shift.window.notrequired': 'No requerida',
+        'employee.shift.active': 'Activo',
+        'employee.task.none.urgent': 'Sin tareas urgentes',
 
         // Employee profile
         'employee.profile.title': 'Mi Perfil',
@@ -718,6 +726,14 @@ export const TRANSLATIONS = {
         'employee.task.noobs': 'No observations.',
         'employee.tasks.section': 'Site Tasks',
         'employee.btn.start': 'Start Service',
+        'employee.btn.continue.active': 'Continue Active Service',
+        'employee.btn.start.assigned': 'Start Assigned Service',
+        'employee.btn.not.available': 'Not Available Yet',
+        'employee.shift.site.assigned': 'Assigned site',
+        'employee.shift.no.services.date': 'No services assigned on this date',
+        'employee.shift.window.notrequired': 'Not required',
+        'employee.shift.active': 'Active',
+        'employee.task.none.urgent': 'No urgent tasks',
 
         // Employee profile
         'employee.profile.title': 'My Profile',

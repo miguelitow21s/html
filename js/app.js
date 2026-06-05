@@ -5873,7 +5873,7 @@ const app = {
             ? new Date(shiftReferenceDate).toDateString() === new Date().toDateString()
             : false;
         const resolvedRestaurantName = shift
-            ? this.getEmployeeResolvedShiftRestaurantName(shift, 'Sitio asignado')
+            ? this.getEmployeeResolvedShiftRestaurantName(shift, t('employee.shift.site.assigned'))
             : '';
 
         if (hasActiveShift || hasPendingShift) {
@@ -5900,10 +5900,11 @@ const app = {
         let shiftTitle;
         let shiftHelper;
         let shiftStatus;
-        let restaurantName = 'No hay servicios asignados en esta fecha';
+        let restaurantName = t('employee.shift.no.services.date');
         const restaurantAddress = this.getEmployeeCurrentLocationText();
-        let scheduleText = 'No requerida';
-        const activeStateLabel = dashboard?.active_shift?.state || this.data.currentShift?.state || 'Activo';
+        let scheduleText = t('employee.shift.window.notrequired');
+        const activeStateLabel =
+            dashboard?.active_shift?.state || this.data.currentShift?.state || t('employee.shift.active');
 
         if (hasActiveShift) {
             shiftTitle = t('shift.status.inprogress');
@@ -5959,27 +5960,28 @@ const app = {
         document.getElementById('employee-shift-date').textContent = this.getEmployeeShiftDateText(shift);
         document.getElementById('employee-shift-schedule').textContent = scheduleText;
         document.getElementById('employee-shift-location').textContent = restaurantAddress;
-        document.getElementById('employee-task-title').textContent = task?.title || 'No hay tareas pendientes.';
-        document.getElementById('employee-task-observations').textContent = task?.description || 'Sin observaciones.';
+        document.getElementById('employee-task-title').textContent = task?.title || t('employee.task.empty');
+        document.getElementById('employee-task-observations').textContent =
+            task?.description || t('employee.task.noobs');
         document.getElementById('employee-task-heading').textContent = task
-            ? 'Tarea Especial Asignada'
-            : 'Sin tareas urgentes';
+            ? t('employee.task.title')
+            : t('employee.task.none.urgent');
         document.getElementById('employee-task-card').style.display = task ? '' : 'none';
 
         const startButton = document.getElementById('employee-start-shift-btn');
         const startLabel = document.getElementById('employee-start-shift-label');
         if (startButton && startLabel) {
             if (hasActiveShift) {
-                startLabel.textContent = 'Continuar Servicio Activo';
+                startLabel.textContent = t('employee.btn.continue.active');
                 startButton.disabled = false;
             } else if (canStartShift) {
-                startLabel.textContent = 'Iniciar Servicio Asignado';
+                startLabel.textContent = t('employee.btn.start.assigned');
                 startButton.disabled = false;
             } else if (hasPendingShift) {
-                startLabel.textContent = 'Aún No Disponible';
+                startLabel.textContent = t('employee.btn.not.available');
                 startButton.disabled = true;
             } else {
-                startLabel.textContent = 'Sin Servicios Asignados';
+                startLabel.textContent = t('shift.status.none');
                 startButton.disabled = true;
             }
         }
