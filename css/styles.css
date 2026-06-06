@@ -239,6 +239,25 @@
             user-select: none;
         }
 
+        @media (max-width: 480px) {
+            .login-lang-toggle {
+                gap: 10px;
+                margin-bottom: 18px;
+            }
+            .lang-btn {
+                padding: 8px 14px;
+                font-size: 14px;
+                min-height: 40px;
+                min-width: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .lang-sep {
+                font-size: 14px;
+            }
+        }
+
         .login-legal-box {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -2192,29 +2211,42 @@
         }
 
         .initial-pin-code-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             margin: 8px 0 4px;
+            min-width: 0;
         }
 
         .initial-pin-code {
-            flex: 1;
             font-family: 'Courier New', monospace;
-            font-size: 32px;
+            font-size: clamp(22px, 6vw, 32px);
             font-weight: 700;
-            letter-spacing: 8px;
+            letter-spacing: clamp(3px, 1.2vw, 8px);
             text-align: center;
-            padding: 18px 12px;
+            padding: 16px 8px;
             background: rgba(14, 165, 233, 0.12);
             border: 2px dashed rgba(14, 165, 233, 0.45);
             border-radius: 12px;
             color: var(--white);
             user-select: all;
+            min-width: 0;
+            overflow-wrap: anywhere;
         }
 
         #initial-pin-copy-btn {
-            min-width: 100px;
+            min-width: 84px;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 380px) {
+            .initial-pin-code-row {
+                grid-template-columns: 1fr;
+            }
+            #initial-pin-copy-btn {
+                width: 100%;
+            }
         }
 
         .status-badge {
@@ -4799,14 +4831,17 @@
             }
 
             .admin-return-btn {
-                min-width: 114px;
-                padding: 0 12px;
-                gap: 6px;
+                min-width: 44px;
+                padding: 0 10px;
+                gap: 0;
             }
 
             .admin-return-btn span {
-                display: inline;
-                font-size: 11px;
+                display: none;
+            }
+
+            .header-brand span {
+                font-size: 15px;
             }
 
             .report-visual {
@@ -5698,4 +5733,14 @@
 
         .opacity-50 {
             opacity: 0.5;
+        }
+
+        @media (max-width: 360px) {
+            .header-brand span {
+                font-size: 14px;
+            }
+            .admin-return-btn {
+                min-width: 40px;
+                padding: 0 6px;
+            }
         }
