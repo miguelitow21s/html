@@ -3583,7 +3583,7 @@ export const supervisorMethods = {
         );
 
         employeeFilter.innerHTML = `
-            <option value="">Todos los empleados</option>
+            <option value="">${escapeHtml(t('supervisor.shifts.all.employees'))}</option>
             ${options
                 .map(
                     (option) => `
@@ -4026,7 +4026,7 @@ export const supervisorMethods = {
             restaurantSelect.innerHTML = '<option value="">Todos los sitios</option>';
             if (employeeSelect) {
                 employeeSelect.innerHTML = `
-                    <option value="">Todos los empleados</option>
+                    <option value="">${escapeHtml(t("supervisor.shifts.all.employees"))}</option>
                     ${this.data.supervisor.employees
                         .map(
                             (employee) => `
@@ -4064,7 +4064,7 @@ export const supervisorMethods = {
 
         if (employeeSelect) {
             employeeSelect.innerHTML = `
-                <option value="">Todos los empleados</option>
+                <option value="">${escapeHtml(t("supervisor.shifts.all.employees"))}</option>
                 ${this.data.supervisor.employees
                     .map(
                         (employee) => `
