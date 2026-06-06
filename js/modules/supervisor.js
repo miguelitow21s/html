@@ -2750,8 +2750,8 @@ export const supervisorMethods = {
                     <div class="alert alert-warning">
                         <i class="fas fa-check-circle"></i>
                         <div>
-                            <strong>Sin alertas críticas</strong><br>
-                            <small>La operación está al día.</small>
+                            <strong>${escapeHtml(t('sup.alerts.no.critical'))}</strong><br>
+                            <small>${escapeHtml(t('sup.alerts.up.to.date'))}</small>
                         </div>
                     </div>
                 `;
@@ -2879,7 +2879,7 @@ export const supervisorMethods = {
             employeesLine.append(
                 employeesIcon,
                 document.createTextNode(
-                    ` ${availableEmployeeCount != null ? `${availableEmployeeCount} contratista(s) disponibles` : 'Contratistas disponibles para asignar'}`
+                    ` ${availableEmployeeCount != null ? `${availableEmployeeCount} ${t('site.card.contractors.available')}` : t('site.card.contractors.to.assign')}`
                 )
             );
 
@@ -2888,7 +2888,7 @@ export const supervisorMethods = {
             shiftsIcon.className = 'fas fa-calendar-alt';
             shiftsLine.append(
                 shiftsIcon,
-                document.createTextNode(` ${String(shiftsForRestaurantCount)} servicio(s) en el período actual`)
+                document.createTextNode(` ${String(shiftsForRestaurantCount)} ${t('site.card.services.period')}`)
             );
 
             card.append(title, address, employeesLine, shiftsLine);
@@ -2902,7 +2902,7 @@ export const supervisorMethods = {
                     taskBtn.className = 'btn btn-secondary btn-inline';
                     taskBtn.dataset.action = 'open-restaurant-special-task';
                     taskBtn.dataset.restaurantId = String(restaurantId || '');
-                    taskBtn.innerHTML = '<i class="fas fa-star"></i> Tarea especial';
+                    taskBtn.innerHTML = `<i class="fas fa-star"></i> ${escapeHtml(t('site.card.special.task'))}`;
                     actions.appendChild(taskBtn);
                 }
 
@@ -2912,7 +2912,7 @@ export const supervisorMethods = {
                     removeBtn.className = 'btn btn-danger btn-inline';
                     removeBtn.dataset.action = 'confirm-deactivate-restaurant';
                     removeBtn.dataset.restaurantId = String(restaurantId || '');
-                    removeBtn.textContent = 'Eliminar';
+                    removeBtn.textContent = t('site.card.delete');
                     actions.appendChild(removeBtn);
                 }
                 card.appendChild(actions);
@@ -3179,7 +3179,7 @@ export const supervisorMethods = {
             actions.className = 'employee-list-actions';
             const badge = document.createElement('span');
             badge.className = `badge ${employee.is_active === false ? 'badge-danger' : 'badge-success'}`;
-            badge.textContent = employee.is_active === false ? 'Inactivo' : 'Activo';
+            badge.textContent = employee.is_active === false ? t('contractor.badge.inactive') : t('contractor.badge.active');
             actions.appendChild(badge);
 
             const phoneBindingAction = this.getPhoneBindingActionState(employee);
@@ -3189,7 +3189,7 @@ export const supervisorMethods = {
                 clearPhoneBtn.className = 'btn btn-warning btn-inline';
                 clearPhoneBtn.dataset.action = 'clear-phone-user';
                 clearPhoneBtn.dataset.userId = String(employee.id || '');
-                clearPhoneBtn.textContent = 'Desvincular Teléfono';
+                clearPhoneBtn.textContent = t('contractor.btn.unlink.phone');
                 clearPhoneBtn.title = 'Remover el teléfono actual del perfil para poder registrar otro.';
                 actions.appendChild(clearPhoneBtn);
             }
@@ -3201,7 +3201,7 @@ export const supervisorMethods = {
                 resetPinBtn.dataset.action = 'reset-pin-user';
                 resetPinBtn.dataset.email = String(employee.email || '');
                 resetPinBtn.dataset.userId = String(employee.id || '');
-                resetPinBtn.textContent = 'Resetear PIN';
+                resetPinBtn.textContent = t('contractor.btn.reset.pin');
                 resetPinBtn.title = 'Genera un nuevo PIN y obliga al contratista a cambiarlo al ingresar.';
                 actions.appendChild(resetPinBtn);
 
@@ -3210,7 +3210,7 @@ export const supervisorMethods = {
                 removeBtn.className = 'btn btn-danger btn-inline';
                 removeBtn.dataset.action = 'confirm-deactivate-user';
                 removeBtn.dataset.userId = String(employee.id || '');
-                removeBtn.textContent = 'Eliminar';
+                removeBtn.textContent = t('contractor.btn.delete');
                 actions.appendChild(removeBtn);
             } else {
                 const reportBtn = document.createElement('button');
@@ -4346,7 +4346,7 @@ export const supervisorMethods = {
             }
         } else {
             shell.classList.add('warning');
-            label.textContent = `Ubicación lista para verificar en ${restaurantName}.`;
+            label.textContent = `${t('audit.location.ready')} ${restaurantName}.`;
             if (button) {
                 button.disabled = false;
                 button.innerHTML = '<i class="fas fa-location-crosshairs"></i> Verificar en sitio';

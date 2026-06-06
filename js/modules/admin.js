@@ -377,7 +377,7 @@ export const adminMethods = {
         const {
             containerId = 'admin-supervisions-list',
             maxItems = 6,
-            emptyMessage = 'Aún no hay auditorías de calidad registradas para hoy.',
+            emptyMessage = t('admin.audits.none.today'),
         } = options;
         const container = document.getElementById(containerId);
         if (!container) {

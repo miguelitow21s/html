@@ -297,6 +297,38 @@ export const TRANSLATIONS = {
         'sup.toast.report.no.results': 'Aún no hay resultados',
         'sup.toast.download.unavailable': 'Descarga no disponible',
 
+        // Site cards (dynamic UI)
+        'site.card.contractors.available': 'contratista(s) disponibles',
+        'site.card.contractors.to.assign': 'Contratistas disponibles para asignar',
+        'site.card.services.period': 'servicio(s) en el período actual',
+        'site.card.special.task': 'Tarea especial',
+        'site.card.delete': 'Eliminar',
+
+        // Contractor cards (dynamic UI)
+        'contractor.badge.active': 'Activo',
+        'contractor.badge.inactive': 'Inactivo',
+        'contractor.btn.unlink.phone': 'Desvincular Teléfono',
+        'contractor.btn.reset.pin': 'Resetear PIN',
+        'contractor.btn.delete': 'Eliminar',
+        'contractor.btn.report': 'Generar Informe',
+
+        // Alerts
+        'sup.alerts.no.critical': 'Sin alertas críticas',
+        'sup.alerts.up.to.date': 'La operación está al día.',
+        'admin.audits.none.today': 'Aún no hay auditorías de calidad registradas para hoy.',
+
+        // Admin nav
+        'admin.return.btn': 'Inicio Admin',
+
+        // Audit page
+        'audit.btn.verify.onsite': 'Verificar en sitio',
+        'audit.btn.create.task': 'Crear tarea especial',
+        'audit.special.task.label': 'Tarea especial',
+        'audit.location.ready': 'Ubicación lista para verificar en',
+
+        // Reports / Admin dashboard
+        'admin.exec.summary': 'Resumen Ejecutivo',
+
         // Supervisor — Schedule shifts (modal)
         'sup.toast.saving.schedule': 'Ya estamos guardando la programación. Espera un momento.',
         'sup.toast.saving.schedule.title': 'Procesando programación',
@@ -930,6 +962,38 @@ export const TRANSLATIONS = {
         'sup.toast.report.first': 'Generate a report first.',
         'sup.toast.report.no.results': 'No results yet',
         'sup.toast.download.unavailable': 'Download unavailable',
+
+        // Site cards (dynamic UI)
+        'site.card.contractors.available': 'contractor(s) available',
+        'site.card.contractors.to.assign': 'Contractors available to assign',
+        'site.card.services.period': 'service(s) in current period',
+        'site.card.special.task': 'Special task',
+        'site.card.delete': 'Delete',
+
+        // Contractor cards (dynamic UI)
+        'contractor.badge.active': 'Active',
+        'contractor.badge.inactive': 'Inactive',
+        'contractor.btn.unlink.phone': 'Unlink Phone',
+        'contractor.btn.reset.pin': 'Reset PIN',
+        'contractor.btn.delete': 'Delete',
+        'contractor.btn.report': 'Generate Report',
+
+        // Alerts
+        'sup.alerts.no.critical': 'No critical alerts',
+        'sup.alerts.up.to.date': 'Operation is up to date.',
+        'admin.audits.none.today': 'No quality audits registered for today yet.',
+
+        // Admin nav
+        'admin.return.btn': 'Admin Home',
+
+        // Audit page
+        'audit.btn.verify.onsite': 'Verify on-site',
+        'audit.btn.create.task': 'Create special task',
+        'audit.special.task.label': 'Special task',
+        'audit.location.ready': 'Location ready to verify at',
+
+        // Reports / Admin dashboard
+        'admin.exec.summary': 'Executive Summary',
 
         // Supervisor — Schedule shifts (modal)
         'sup.toast.saving.schedule': 'We are already saving the schedule. Please wait.',
