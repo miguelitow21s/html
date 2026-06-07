@@ -804,9 +804,13 @@ const app = {
 
         const supervisorShiftSearchFilter = document.getElementById('supervisor-shifts-filter-search');
         if (supervisorShiftSearchFilter) {
+            let shiftSearchDebounce;
             supervisorShiftSearchFilter.addEventListener('input', () => {
+                clearTimeout(shiftSearchDebounce);
                 this.supervisorShiftFilters.search = supervisorShiftSearchFilter.value || '';
-                this.applySupervisorShiftFilters();
+                shiftSearchDebounce = setTimeout(() => {
+                    this.applySupervisorShiftFilters();
+                }, 250);
             });
         }
 

@@ -285,17 +285,20 @@
 
         .consent-box label {
             display: grid;
-            grid-template-columns: 18px minmax(0, 1fr);
-            gap: 10px;
+            grid-template-columns: 22px minmax(0, 1fr);
+            gap: 12px;
             align-items: start;
             cursor: pointer;
+            padding: 6px 0;
         }
 
         .consent-box input[type="checkbox"] {
-            margin-top: 2px;
-            width: 18px;
-            height: 18px;
+            margin-top: 1px;
+            width: 22px;
+            height: 22px;
+            min-width: 22px;
             accent-color: var(--primary);
+            cursor: pointer;
         }
 
         .consent-box span {
@@ -450,9 +453,9 @@
 
         .app-toast-stack {
             position: fixed;
-            top: 18px;
-            left: 18px;
-            right: 18px;
+            top: max(18px, env(safe-area-inset-top, 18px));
+            left: max(18px, env(safe-area-inset-left, 18px));
+            right: max(18px, env(safe-area-inset-right, 18px));
             display: grid;
             gap: 12px;
             justify-items: end;
@@ -2298,7 +2301,7 @@
             border-radius: 20px;
             width: 100%;
             max-width: 500px;
-            max-height: calc(100dvh - 40px);
+            max-height: calc(100dvh - 40px - env(safe-area-inset-bottom, 0px));
             overflow-y: auto;
             animation: slideIn 0.3s ease-out;
             margin: auto;
@@ -5065,6 +5068,11 @@
 
             .modal-footer-stack-sm {
                 flex-direction: column;
+            }
+
+            .modal-footer-stack-sm .btn {
+                width: 100%;
+                min-height: 48px;
             }
 
             .shift-complete-special-task {
