@@ -1041,40 +1041,6 @@ export const adminMethods = {
         }
     },
 
-    async requestPasswordReset() {
-        if (!this.supabase) {
-            this.setLoginError('Supabase Auth no está disponible para recuperar la contraseña.');
-            return;
-        }
-
-        const email = document.getElementById('login-email')?.value?.trim();
-        if (!email) {
-            this.setLoginError('Escribe primero tu correo electrónico para enviar el enlace de recuperación.');
-            return;
-        }
-
-        this.setLoginError('');
-        this.setLoginNotice('');
-
-        this.showLoading(t('admin.toast.sending.recovery'), t('admin.toast.sending.recovery.desc'));
-
-        try {
-            const result = await this.supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.href,
-            });
-
-            if (result.error) {
-                throw result.error;
-            }
-
-            this.setLoginNotice(`Si el correo ${email} existe, Supabase enviará las instrucciones de recuperación.`);
-        } catch (error) {
-            this.setLoginError(this.getErrorMessage(error, 'No fue posible solicitar la recuperación de contraseña.'));
-        } finally {
-            this.hideLoading();
-        }
-    },
-
     adminAction(action) {
         const routes = {
             supervisores: 'admin-supervisors',

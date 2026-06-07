@@ -12,6 +12,8 @@ export const TRANSLATIONS = {
         'login.password.helper': 'Solo números. Debe tener exactamente 6 dígitos.',
         'login.btn': 'Iniciar Sesión',
         'login.forgot': '¿Olvidé mi contraseña?',
+        'login.reset.no.email': 'Escribe primero tu correo en el campo de arriba para que podamos identificar tu cuenta.',
+        'login.reset.notice': 'Contacta a tu Inspector de Calidad o al Administrador para que genere un nuevo PIN. Te lo entregarán de forma segura para que puedas ingresar y cambiarlo en tu primer ingreso.',
         'login.legal': 'Esta aplicación es una plataforma tecnológica de uso exclusivo para contratistas independientes comerciales de R3 Service & Solutions Inc. El uso de esta herramienta tiene como único fin la coordinación comercial, la entrega de evidencias de calidad (Anexo A) y la validación de acceso de seguridad a las locaciones de los clientes. El contratista retiene en todo momento su autonomía operativa, de horarios y de personal.',
 
         // OTP
@@ -678,6 +680,8 @@ export const TRANSLATIONS = {
         'login.password.helper': 'Numbers only. Must be exactly 6 digits.',
         'login.btn': 'Sign In',
         'login.forgot': 'Forgot my password?',
+        'login.reset.no.email': 'First enter your email above so we can identify your account.',
+        'login.reset.notice': 'Contact your Quality Inspector or Administrator to generate a new PIN. They will deliver it securely so you can sign in and change it on your first login.',
         'login.legal': 'This application is a technology platform for the exclusive use of independent commercial contractors of R3 Service & Solutions Inc. The sole purpose of this tool is commercial coordination, delivery of quality evidence (Exhibit A), and validation of security access to client locations. The contractor retains at all times their operational, scheduling, and personnel autonomy.',
 
         // OTP

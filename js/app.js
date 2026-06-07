@@ -1403,6 +1403,19 @@ const app = {
         noticeDiv.classList.toggle('hidden', !message);
     },
 
+    requestPasswordReset() {
+        const email = document.getElementById('login-email')?.value?.trim();
+        this.setLoginError('');
+        this.setLoginNotice('');
+
+        if (!email) {
+            this.setLoginError(t('login.reset.no.email'));
+            return;
+        }
+
+        this.setLoginNotice(t('login.reset.notice'));
+    },
+
     showToast(message, { tone = 'info', title = '', duration, keepLoginMessages = false, action = null } = {}) {
         const toastStack = document.getElementById('app-toast-stack');
         if (!toastStack || !message) {
