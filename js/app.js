@@ -2502,9 +2502,15 @@ const app = {
         this.setOtpBusy('');
 
         if (contextMessage) {
-            contextMessage.textContent = loginFlow
-                ? 'Ingresa el código de acceso para continuar.'
-                : 'Ingresa el código de acceso para continuar con esta operación.';
+            const maskedEmail = String(sendResult?.masked_email || '').trim();
+            const maskedPhone = String(sendResult?.masked_phone || '').trim();
+            if (maskedEmail) {
+                contextMessage.textContent = t('otp.context.email').replace('{email}', maskedEmail);
+            } else if (maskedPhone) {
+                contextMessage.textContent = t('otp.context.phone').replace('{phone}', maskedPhone);
+            } else {
+                contextMessage.textContent = loginFlow ? t('otp.context.login') : t('otp.context.action');
+            }
         }
 
         if (debugBox) {

@@ -22,6 +22,10 @@ export const TRANSLATIONS = {
         // OTP
         'otp.title': 'Verificación de Seguridad del Sitio',
         'otp.context': 'Ingresa el código de verificación para confirmar el acceso.',
+        'otp.context.login': 'Ingresa el código de acceso para continuar.',
+        'otp.context.action': 'Ingresa el código de acceso para continuar con esta operación.',
+        'otp.context.email': 'Enviamos un código de acceso a {email}. Revisa tu correo y escríbelo aquí para continuar.',
+        'otp.context.phone': 'Enviamos un código de acceso a {phone}. Escríbelo aquí para continuar.',
         'otp.debug.label': 'Código de prueba',
         'otp.code.label': 'Código de Acceso',
         'otp.code.placeholder': 'Ingresa el código',
@@ -695,6 +699,10 @@ export const TRANSLATIONS = {
         // OTP
         'otp.title': 'Site Security Verification',
         'otp.context': 'Enter the verification code to confirm site access.',
+        'otp.context.login': 'Enter the access code to continue.',
+        'otp.context.action': 'Enter the access code to continue with this operation.',
+        'otp.context.email': 'We sent an access code to {email}. Check your inbox and type it here to continue.',
+        'otp.context.phone': 'We sent an access code to {phone}. Type it here to continue.',
         'otp.debug.label': 'Test code',
         'otp.code.label': 'Access Code',
         'otp.code.placeholder': 'Enter the code',
