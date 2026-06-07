@@ -470,6 +470,16 @@ const app = {
 
     showInitialPinModal({ pin, email = '', emailSent = false } = {}) {
         if (!pin) return;
+
+        if (emailSent) {
+            this.showToast(t('pin.initial.email.delivered').replace('{email}', email || ''), {
+                tone: 'success',
+                title: t('pin.initial.email.delivered.title'),
+                duration: 6000,
+            });
+            return;
+        }
+
         const modal = document.getElementById('modal-initial-pin');
         const codeEl = document.getElementById('initial-pin-code');
         const emailEl = document.getElementById('initial-pin-email');
@@ -480,7 +490,7 @@ const app = {
         if (emailEl) emailEl.textContent = email || '';
 
         if (statusEl) {
-            statusEl.textContent = emailSent ? t('pin.initial.email.sent') : t('pin.initial.email.notsent');
+            statusEl.textContent = t('pin.initial.email.notsent');
             statusEl.classList.remove('hidden');
         }
 

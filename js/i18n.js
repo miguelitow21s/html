@@ -46,6 +46,8 @@ export const TRANSLATIONS = {
         'pin.initial.copied': '¡PIN copiado al portapapeles!',
         'pin.initial.done': 'Listo, ya lo guardé',
         'pin.initial.email.sent': 'También se envió por correo automáticamente.',
+        'pin.initial.email.delivered.title': 'PIN enviado por correo',
+        'pin.initial.email.delivered': 'Le enviamos las credenciales a {email}. El contratista deberá cambiar el PIN en su primer ingreso.',
         'pin.initial.email.notsent': 'El envío por correo aún no está disponible. Cópialo y compártelo manualmente.',
 
         // Camera
@@ -717,6 +719,8 @@ export const TRANSLATIONS = {
         'pin.initial.copied': 'PIN copied to clipboard!',
         'pin.initial.done': 'Done, I saved it',
         'pin.initial.email.sent': 'Also sent by email automatically.',
+        'pin.initial.email.delivered.title': 'PIN sent by email',
+        'pin.initial.email.delivered': 'Credentials were sent to {email}. The contractor must change the PIN on their first login.',
         'pin.initial.email.notsent': 'Email delivery is not yet available. Copy it and share it manually.',
 
         // Camera
