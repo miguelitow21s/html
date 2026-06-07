@@ -659,6 +659,23 @@ const app = {
             if (event === 'SIGNED_OUT') {
                 this.handleSignedOut();
             }
+
+            if (event === 'PASSWORD_RECOVERY') {
+                this._passwordRecoveryFlow = true;
+                try {
+                    window.history.replaceState(null, '', window.location.pathname);
+                } catch (replaceError) {
+                    console.warn('No fue posible limpiar el hash de recovery.', replaceError);
+                }
+                if (this.currentUser) {
+                    this.currentUser.must_change_pin = true;
+                    try {
+                        await this.ensurePinChangeIfRequired();
+                    } catch (pinError) {
+                        console.warn('No fue posible abrir el modal de cambio de PIN desde recovery.', pinError);
+                    }
+                }
+            }
         });
     },
 
@@ -2031,6 +2048,9 @@ const app = {
 
                 const me = await apiClient.getCurrentUserProfile();
                 this.currentUser = this.normalizeCurrentUser(me);
+                if (this._passwordRecoveryFlow) {
+                    this.currentUser.must_change_pin = true;
+                }
                 apiClient.setCurrentRole(this.currentUser?.role || '');
                 localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(this.currentUser));
 
@@ -2183,7 +2203,9 @@ const app = {
         }
 
         if (helper) {
-            helper.textContent = 'Por seguridad, debe cambiar su contraseña temporal en el primer ingreso.';
+            helper.textContent = this._passwordRecoveryFlow
+                ? 'Por seguridad, ingresa un nuevo PIN para tu cuenta. Este será el que uses para iniciar sesión a partir de ahora.'
+                : 'Por seguridad, debe cambiar su contraseña temporal en el primer ingreso.';
         }
 
         if (submitButton) {
@@ -2266,6 +2288,7 @@ const app = {
                     must_change_pin: false,
                     pin_updated_at: new Date().toISOString(),
                 };
+                this._passwordRecoveryFlow = false;
                 localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(this.currentUser));
                 setError('');
                 document.getElementById('modal-pin-change')?.classList.remove('active');
@@ -2683,6 +2706,8 @@ const app = {
             apiClient.setCurrentRole('');
             return;
         }
+
+        this._passwordRecoveryFlow = false;
 
         if (this.pinChangeGate?.reject) {
             this.pinChangeGate.reject(new Error('La sesión se cerró antes de completar el cambio de PIN.'));
