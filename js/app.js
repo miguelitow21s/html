@@ -1403,7 +1403,7 @@ const app = {
         noticeDiv.classList.toggle('hidden', !message);
     },
 
-    requestPasswordReset() {
+    async requestPasswordReset() {
         const email = document.getElementById('login-email')?.value?.trim();
         this.setLoginError('');
         this.setLoginNotice('');
@@ -1413,7 +1413,29 @@ const app = {
             return;
         }
 
-        this.setLoginNotice(t('login.reset.notice'));
+        if (!this.supabase) {
+            this.setLoginNotice(t('login.reset.notice'));
+            return;
+        }
+
+        this.showLoading(t('login.reset.sending'), t('login.reset.sending.desc'));
+
+        try {
+            const result = await this.supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin,
+            });
+
+            if (result.error) {
+                throw result.error;
+            }
+
+            this.setLoginNotice(t('login.reset.email.sent').replace('{email}', email));
+        } catch (error) {
+            console.warn('Reset password por email no disponible, usando fallback.', error);
+            this.setLoginNotice(t('login.reset.notice'));
+        } finally {
+            this.hideLoading();
+        }
     },
 
     showToast(message, { tone = 'info', title = '', duration, keepLoginMessages = false, action = null } = {}) {

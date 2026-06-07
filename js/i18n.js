@@ -13,7 +13,10 @@ export const TRANSLATIONS = {
         'login.btn': 'Iniciar Sesión',
         'login.forgot': '¿Olvidé mi contraseña?',
         'login.reset.no.email': 'Escribe primero tu correo en el campo de arriba para que podamos identificar tu cuenta.',
-        'login.reset.notice': 'Contacta a tu Inspector de Calidad o al Administrador para que genere un nuevo PIN. Te lo entregarán de forma segura para que puedas ingresar y cambiarlo en tu primer ingreso.',
+        'login.reset.sending': 'Enviando recuperación...',
+        'login.reset.sending.desc': 'Solicitando un nuevo PIN para tu cuenta.',
+        'login.reset.email.sent': 'Si {email} existe, te enviaremos las instrucciones para recuperar el acceso. Revisa tu bandeja de entrada y la carpeta de spam.',
+        'login.reset.notice': 'No pudimos enviarte un correo en este momento. Contacta a tu Inspector de Calidad o al Administrador para que genere un nuevo PIN y te lo entregue de forma segura. Podrás cambiarlo en tu primer ingreso.',
         'login.legal': 'Esta aplicación es una plataforma tecnológica de uso exclusivo para contratistas independientes comerciales de R3 Service & Solutions Inc. El uso de esta herramienta tiene como único fin la coordinación comercial, la entrega de evidencias de calidad (Anexo A) y la validación de acceso de seguridad a las locaciones de los clientes. El contratista retiene en todo momento su autonomía operativa, de horarios y de personal.',
 
         // OTP
@@ -681,7 +684,10 @@ export const TRANSLATIONS = {
         'login.btn': 'Sign In',
         'login.forgot': 'Forgot my password?',
         'login.reset.no.email': 'First enter your email above so we can identify your account.',
-        'login.reset.notice': 'Contact your Quality Inspector or Administrator to generate a new PIN. They will deliver it securely so you can sign in and change it on your first login.',
+        'login.reset.sending': 'Sending recovery...',
+        'login.reset.sending.desc': 'Requesting a new PIN for your account.',
+        'login.reset.email.sent': 'If {email} exists, we will send you the instructions to recover access. Check your inbox and spam folder.',
+        'login.reset.notice': 'We could not send an email at this time. Contact your Quality Inspector or Administrator to generate a new PIN and deliver it securely. You will be able to change it on your first login.',
         'login.legal': 'This application is a technology platform for the exclusive use of independent commercial contractors of R3 Service & Solutions Inc. The sole purpose of this tool is commercial coordination, delivery of quality evidence (Exhibit A), and validation of security access to client locations. The contractor retains at all times their operational, scheduling, and personnel autonomy.',
 
         // OTP
