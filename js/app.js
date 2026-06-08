@@ -2185,6 +2185,8 @@ const app = {
             return;
         }
 
+        this.hideLoading();
+
         const modal = document.getElementById('modal-pin-change');
         const form = document.getElementById('change-pin-form');
         const errorBox = document.getElementById('change-pin-error');
