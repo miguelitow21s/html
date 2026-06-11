@@ -6351,8 +6351,8 @@ export const supervisorMethods = {
             this.setShiftBatchPickerEmpty(pickerEl, 'Selecciona un sitio para ver los contratistas disponibles.');
         if (startDateEl) startDateEl.value = today;
         if (endDateEl) endDateEl.value = today;
-        if (defaultStartEl) defaultStartEl.value = '08:00';
-        if (defaultEndEl) defaultEndEl.value = '16:00';
+        if (defaultStartEl) defaultStartEl.value = '00:00';
+        if (defaultEndEl) defaultEndEl.value = '08:00';
 
         this.renderSchedShiftRows();
         this.openModal('modal-supervisor-schedule-shift');
@@ -6425,7 +6425,7 @@ export const supervisorMethods = {
         }
     },
 
-    buildSchedShiftRows(startDate, endDate, defaultStart = '08:00', defaultEnd = '16:00') {
+    buildSchedShiftRows(startDate, endDate, defaultStart = '00:00', defaultEnd = '08:00') {
         const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
         const DAY_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         const start = new Date(`${startDate}T00:00:00`);
@@ -6490,8 +6490,8 @@ export const supervisorMethods = {
     onSchedShiftDatesChange() {
         const startDate = document.getElementById('sched-shift-start-date')?.value;
         const endDate = document.getElementById('sched-shift-end-date')?.value;
-        const defaultStart = document.getElementById('sched-shift-default-start')?.value || '08:00';
-        const defaultEnd = document.getElementById('sched-shift-default-end')?.value || '16:00';
+        const defaultStart = document.getElementById('sched-shift-default-start')?.value || '00:00';
+        const defaultEnd = document.getElementById('sched-shift-default-end')?.value || '08:00';
 
         if (!startDate || !endDate || startDate > endDate) {
             this.schedShiftRows = [];
@@ -6504,8 +6504,8 @@ export const supervisorMethods = {
     },
 
     onSchedShiftDefaultTimeChange() {
-        const defaultStart = document.getElementById('sched-shift-default-start')?.value || '08:00';
-        const defaultEnd = document.getElementById('sched-shift-default-end')?.value || '16:00';
+        const defaultStart = document.getElementById('sched-shift-default-start')?.value || '00:00';
+        const defaultEnd = document.getElementById('sched-shift-default-end')?.value || '08:00';
 
         if (!this.schedShiftRows) return;
         this.schedShiftRows = this.schedShiftRows.map((row) => {

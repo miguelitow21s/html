@@ -619,8 +619,8 @@ export const TRANSLATIONS = {
         'modal.shift.end.date': 'Fecha fin',
         'modal.shift.start.time': 'Apertura de ventana',
         'modal.shift.end.time': 'Cierre de ventana',
-        'modal.shift.window.note.strong': 'Ventana de acceso al sitio',
-        'modal.shift.window.note': 'El contratista decide la hora exacta de inicio y fin dentro de esta ventana. R3 solo coordina el plazo de entrega del servicio.',
+        'modal.shift.window.note.strong': 'Ventana de acceso estándar: 12:00 AM – 8:00 AM',
+        'modal.shift.window.note': 'Todos los sitios usan esta ventana nocturna por defecto. El contratista decide la hora exacta de inicio y fin dentro de la ventana. R3 solo coordina el plazo de entrega del servicio (antes de que el sitio abra). Si este sitio requiere otra ventana, edítala arriba.',
         'modal.shift.cancel': 'Cancelar',
         'modal.shift.save': 'Guardar Asignación',
 
@@ -1303,8 +1303,8 @@ export const TRANSLATIONS = {
         'modal.shift.end.date': 'End date',
         'modal.shift.start.time': 'Window opens',
         'modal.shift.end.time': 'Window closes',
-        'modal.shift.window.note.strong': 'Site access window',
-        'modal.shift.window.note': 'The contractor decides the exact start and end times within this window. R3 only coordinates the service delivery deadline.',
+        'modal.shift.window.note.strong': 'Standard access window: 12:00 AM – 8:00 AM',
+        'modal.shift.window.note': 'All sites use this overnight window by default. The contractor decides the exact start and end times within the window. R3 only coordinates the service delivery deadline (before the site opens). If this site requires a different window, edit it above.',
         'modal.shift.cancel': 'Cancel',
         'modal.shift.save': 'Save Assignment',
 
