@@ -581,7 +581,7 @@ const app = {
         this.showLoading(t('app.toast.revoking.device'), t('app.toast.revoking.device.desc'));
 
         try {
-            await apiClient.trustedDeviceRevoke({ user_id: userId });
+            await apiClient.trustedDeviceRevoke({ target_user_id: userId });
             this.showToast(t('app.toast.device.revoked'), {
                 tone: 'success',
                 title: t('app.toast.device.revoked.title'),
