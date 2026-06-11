@@ -320,11 +320,13 @@ export const TRANSLATIONS = {
         'contractor.badge.inactive': 'Inactivo',
         'contractor.btn.unlink.phone': 'Desvincular Teléfono',
         'contractor.btn.reset.pin': 'Resetear PIN',
+        'contractor.btn.revoke.device': 'Desvincular Dispositivo',
         'contractor.btn.delete': 'Eliminar',
         'contractor.btn.report': 'Generar Informe',
 
         // Alerts
         'sup.alerts.no.critical': 'Sin alertas críticas',
+        'sup.alert.service.not.started': 'Servicio no iniciado',
         'sup.alerts.up.to.date': 'La operación está al día.',
         'admin.audits.none.today': 'Aún no hay auditorías de calidad registradas para hoy.',
 
@@ -405,6 +407,11 @@ export const TRANSLATIONS = {
         'app.toast.resetting.pin': 'Reseteando PIN...',
         'app.toast.resetting.pin.desc': 'Generando un nuevo PIN aleatorio.',
         'app.toast.reset.pin.fail': 'No fue posible resetear el PIN',
+        'app.toast.revoking.device': 'Desvinculando dispositivo...',
+        'app.toast.revoking.device.desc': 'Liberando el registro del dispositivo confiable.',
+        'app.toast.device.revoked': 'El contratista ya puede ingresar desde un dispositivo nuevo.',
+        'app.toast.device.revoked.title': 'Dispositivo desvinculado',
+        'app.toast.device.revoke.fail': 'No fue posible desvincular el dispositivo',
         'app.toast.signing.in': 'Iniciando sesión...',
         'app.toast.signing.in.desc': 'Espera un momento.',
         'app.toast.location.recommended': 'Permiso de ubicación recomendado',
@@ -997,11 +1004,13 @@ export const TRANSLATIONS = {
         'contractor.badge.inactive': 'Inactive',
         'contractor.btn.unlink.phone': 'Unlink Phone',
         'contractor.btn.reset.pin': 'Reset PIN',
+        'contractor.btn.revoke.device': 'Unlink Device',
         'contractor.btn.delete': 'Delete',
         'contractor.btn.report': 'Generate Report',
 
         // Alerts
         'sup.alerts.no.critical': 'No critical alerts',
+        'sup.alert.service.not.started': 'Service not started',
         'sup.alerts.up.to.date': 'Operation is up to date.',
         'admin.audits.none.today': 'No quality audits registered for today yet.',
 
@@ -1082,6 +1091,11 @@ export const TRANSLATIONS = {
         'app.toast.resetting.pin': 'Resetting PIN...',
         'app.toast.resetting.pin.desc': 'Generating a new random PIN.',
         'app.toast.reset.pin.fail': 'Could not reset the PIN',
+        'app.toast.revoking.device': 'Unlinking device...',
+        'app.toast.revoking.device.desc': 'Releasing the trusted device registration.',
+        'app.toast.device.revoked': 'The contractor can now sign in from a new device.',
+        'app.toast.device.revoked.title': 'Device unlinked',
+        'app.toast.device.revoke.fail': 'Could not unlink the device',
         'app.toast.signing.in': 'Signing in...',
         'app.toast.signing.in.desc': 'Please wait a moment.',
         'app.toast.location.recommended': 'Location permission recommended',

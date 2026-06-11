@@ -2762,7 +2762,7 @@ export const supervisorMethods = {
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-circle"></i>
                         <div>
-                            <strong>Turno no iniciado</strong><br>
+                            <strong>${escapeHtml(t('sup.alert.service.not.started'))}</strong><br>
                             <small>${escapeHtml(this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible'))} - ${escapeHtml(this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible'))} (${escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end))})</small>
                         </div>
                     </div>
@@ -3195,6 +3195,16 @@ export const supervisorMethods = {
             }
 
             if (employee.is_active !== false) {
+                const revokeDeviceBtn = document.createElement('button');
+                revokeDeviceBtn.type = 'button';
+                revokeDeviceBtn.className = 'btn btn-warning btn-inline';
+                revokeDeviceBtn.dataset.action = 'revoke-device-user';
+                revokeDeviceBtn.dataset.userId = String(employee.id || '');
+                revokeDeviceBtn.dataset.userName = String(employee.full_name || employee.email || '');
+                revokeDeviceBtn.textContent = t('contractor.btn.revoke.device');
+                revokeDeviceBtn.title = 'Libera el dispositivo registrado para que el contratista pueda ingresar desde un dispositivo nuevo.';
+                actions.appendChild(revokeDeviceBtn);
+
                 const resetPinBtn = document.createElement('button');
                 resetPinBtn.type = 'button';
                 resetPinBtn.className = 'btn btn-secondary btn-inline';

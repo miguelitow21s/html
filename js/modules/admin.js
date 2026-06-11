@@ -914,6 +914,17 @@ export const adminMethods = {
                         ${clearPhoneButton}
                         <button
                             type="button"
+                            class="btn btn-warning btn-inline"
+                            data-action="admin-revoke-device-supervisor"
+                            data-supervisor-id="${escapeHtml(supervisorId)}"
+                            data-user-name="${escapeHtml(supervisor.full_name || supervisor.email || '')}"
+                            title="Libera el dispositivo registrado para que el inspector pueda ingresar desde un dispositivo nuevo."
+                        >
+                            <i class="fas fa-mobile-screen"></i>
+                            <span>${escapeHtml(t('contractor.btn.revoke.device'))}</span>
+                        </button>
+                        <button
+                            type="button"
                             class="btn btn-secondary btn-inline"
                             data-action="admin-reset-pin-supervisor"
                             data-supervisor-id="${escapeHtml(supervisorId)}"

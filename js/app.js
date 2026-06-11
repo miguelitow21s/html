@@ -569,6 +569,33 @@ const app = {
         }
     },
 
+    async revokeTrustedDevice(userId, { subjectName = '' } = {}) {
+        if (!userId) return;
+
+        const label = subjectName || 'el contratista';
+        const confirmed = window.confirm(
+            `¿Desvincular el dispositivo registrado de ${label}?\n\nDespués de esto, el contratista podrá ingresar desde un dispositivo nuevo. El siguiente acceso le pedirá registrar el dispositivo otra vez.`
+        );
+        if (!confirmed) return;
+
+        this.showLoading(t('app.toast.revoking.device'), t('app.toast.revoking.device.desc'));
+
+        try {
+            await apiClient.trustedDeviceRevoke({ user_id: userId });
+            this.showToast(t('app.toast.device.revoked'), {
+                tone: 'success',
+                title: t('app.toast.device.revoked.title'),
+            });
+        } catch (error) {
+            this.showToast(this.getErrorMessage(error, 'No fue posible desvincular el dispositivo.'), {
+                tone: 'error',
+                title: t('app.toast.device.revoke.fail'),
+            });
+        } finally {
+            this.hideLoading();
+        }
+    },
+
     setLanguage(lang) {
         setLang(lang);
         applyTranslations();
@@ -1017,6 +1044,16 @@ const app = {
                 void this.handleClearPhoneUser(userId);
                 return;
             }
+            case 'revoke-device-user': {
+                const userId = String(source.dataset.userId || '').trim();
+                const userName = String(source.dataset.userName || '').trim();
+                if (!userId) {
+                    return;
+                }
+                event.preventDefault();
+                void this.revokeTrustedDevice(userId, { subjectName: userName });
+                return;
+            }
             case 'reset-pin-user': {
                 const email = String(source.dataset.email || '').trim();
                 if (!email) {
@@ -1033,6 +1070,16 @@ const app = {
                 }
                 event.preventDefault();
                 void this.resetUserPin(email, { subjectLabel: 'inspector' });
+                return;
+            }
+            case 'admin-revoke-device-supervisor': {
+                const supervisorId = String(source.dataset.supervisorId || '').trim();
+                const userName = String(source.dataset.userName || '').trim();
+                if (!supervisorId) {
+                    return;
+                }
+                event.preventDefault();
+                void this.revokeTrustedDevice(supervisorId, { subjectName: userName });
                 return;
             }
             case 'confirm-cancel-scheduled-shift': {
