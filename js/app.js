@@ -43,6 +43,7 @@ import {
     getBadgeClass,
     asArray,
     getScheduledHours,
+    getShiftRestaurantName,
 } from './utils.js';
 
 const console = createScopedConsole();
@@ -5667,6 +5668,58 @@ const app = {
             .filter((restaurant) => getRestaurantRecordId(restaurant) != null);
     },
 
+    getKnownEmployeeRestaurantRecord(restaurantId) {
+        const normalizedRestaurantId = String(restaurantId || '').trim();
+        if (!normalizedRestaurantId) return null;
+        return this.resolveEmployeeRestaurantRecord(normalizedRestaurantId, this.data.employee.dashboard || {});
+    },
+
+    getKnownSupervisorRestaurantRecord(restaurantId) {
+        const normalizedRestaurantId = String(restaurantId || '').trim();
+        if (!normalizedRestaurantId) return null;
+        return (
+            asArray(this.data.supervisor?.restaurants).find(
+                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
+            ) || null
+        );
+    },
+
+    getKnownAdminRestaurantRecord(restaurantId) {
+        const normalizedRestaurantId = String(restaurantId || '').trim();
+        if (!normalizedRestaurantId) return null;
+        return (
+            asArray(this.data.admin?.restaurants).find(
+                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
+            ) || null
+        );
+    },
+
+    getKnownRestaurantRecord(restaurantId) {
+        return (
+            this.getKnownEmployeeRestaurantRecord(restaurantId) ||
+            this.getKnownSupervisorRestaurantRecord(restaurantId) ||
+            this.getKnownAdminRestaurantRecord(restaurantId) ||
+            null
+        );
+    },
+
+    getResolvedShiftRestaurantName(shift, fallback = 'Sitio') {
+        const restaurantId =
+            shift?.restaurant_id ||
+            shift?.restaurant?.restaurant_id ||
+            shift?.restaurant?.id ||
+            shift?.location_id ||
+            shift?.location?.id ||
+            shift?.site_id ||
+            shift?.site?.id ||
+            '';
+        return (
+            getShiftRestaurantName(shift, {
+                restaurantRecord: this.getKnownRestaurantRecord(restaurantId),
+            }) || fallback
+        );
+    },
+
     resolveEmployeeRestaurantRecord(restaurantId, dashboard = this.data.employee.dashboard || {}) {
         const normalizedRestaurantId = normalizeRestaurantId(restaurantId);
         if (normalizedRestaurantId == null) {
@@ -5942,7 +5995,7 @@ const app = {
 
     getEmployeeShiftScheduleText(shift, { hasActiveShift = false } = {}) {
         if (!shift) {
-            return 'No requerida';
+            return t('employee.schedule.notrequired');
         }
 
         const scheduledStart = shift?.scheduled_start || null;
@@ -5958,31 +6011,31 @@ const app = {
                 year: 'numeric',
             });
             if (hasActiveShift && actualStart) {
-                return `${dateText} • ${rangeText} • iniciado ${formatTime(actualStart)}`;
+                return `${dateText} • ${rangeText} • ${t('employee.schedule.startedat')} ${formatTime(actualStart)}`;
             }
 
             return `${dateText} • ${rangeText}`;
         }
 
         if (hasActiveShift && actualStart) {
-            return `Servicio iniciado a las ${formatTime(actualStart)}`;
+            return `${t('employee.schedule.service.startedat')} ${formatTime(actualStart)}`;
         }
 
         if (scheduledStart) {
-            return `Asignado para ${formatDateTime(scheduledStart)}`;
+            return `${t('employee.schedule.assignedfor')} ${formatDateTime(scheduledStart)}`;
         }
 
-        return 'Ventana de servicio por confirmar';
+        return t('employee.schedule.window.pending');
     },
 
     getEmployeeShiftDateText(shift) {
         if (!shift) {
-            return 'Sin asignación pendiente';
+            return t('employee.shift.date.none');
         }
 
         const shiftDate = shift?.scheduled_start || shift?.start_time || shift?.started_at || null;
         if (!shiftDate) {
-            return 'Sin asignación pendiente';
+            return t('employee.shift.date.none');
         }
 
         return formatDate(shiftDate, {
