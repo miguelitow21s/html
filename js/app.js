@@ -5338,7 +5338,28 @@ const app = {
     getEmployeeShiftStartWindowState(shift, now = Date.now()) {
         const startWindow = shift?.start_window || shift?.startWindow || null;
 
+        // Fallback: si el backend no manda start_window, derivar de scheduled_start/end.
+        // Regla del producto: el contratista puede iniciar el servicio desde 1 hora antes
+        // del scheduled_start y hasta el scheduled_end (cuando abre el sitio).
         if (!startWindow || typeof startWindow !== 'object') {
+            const scheduledStartMs = shift?.scheduled_start ? new Date(shift.scheduled_start).getTime() : Number.NaN;
+            const scheduledEndMs = shift?.scheduled_end ? new Date(shift.scheduled_end).getTime() : Number.NaN;
+
+            if (Number.isFinite(scheduledStartMs) && Number.isFinite(scheduledEndMs)) {
+                const earliestMs = scheduledStartMs - 60 * 60 * 1000;
+                const tooEarly = now < earliestMs;
+                const expired = now > scheduledEndMs;
+                return {
+                    tooEarly,
+                    expired,
+                    withinWindow: !tooEarly && !expired,
+                    hasWindowContract: true,
+                    earliest: new Date(earliestMs).toISOString(),
+                    latest: new Date(scheduledEndMs).toISOString(),
+                    serverNow: '',
+                };
+            }
+
             return {
                 tooEarly: false,
                 expired: false,
