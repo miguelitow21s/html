@@ -1516,67 +1516,15 @@ export const adminModalMethods = {
                         }))
                         .filter((item) => item.is_active !== false && getRestaurantRecordId(item) != null);
 
-                if (this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser') {
+                try {
                     const result = await apiClient.adminRestaurantsManage('list', {
                         is_active: true,
-                        limit: 200,
+                        limit: 500,
                     });
                     restaurants = mapRestaurantList(result);
-                } else {
-                    try {
-                        const result = await apiClient.adminRestaurantsManage('list', {
-                            is_active: true,
-                            limit: 200,
-                        });
-                        restaurants = mapRestaurantList(result);
-                    } catch (error) {
-                        console.warn(
-                            'No fue posible cargar todos los sitios para el inspector. Se usará el listado disponible como respaldo.',
-                            error
-                        );
-                        const assignments = await apiClient.restaurantStaffManage('list_my_restaurants');
-                        const items = asArray(assignments);
-
-                        restaurants = items
-                            .map((item) => ({
-                                id: getRestaurantRecordId(item),
-                                restaurant_id: getRestaurantRecordId(item),
-                                name:
-                                    pickMeaningfulRestaurantName(
-                                        [
-                                            item.restaurant_name,
-                                            item.restaurant_visible_name,
-                                            item.restaurant_label,
-                                            item.restaurant?.restaurant_name,
-                                            item.restaurant?.restaurant_visible_name,
-                                            item.restaurant?.restaurant_label,
-                                            item.name,
-                                            item.display_name,
-                                            item.label,
-                                            item.title,
-                                            item.restaurant?.name,
-                                            item.restaurant?.display_name,
-                                            item.restaurant?.label,
-                                            item.restaurant?.title,
-                                        ],
-                                        item
-                                    ) || '',
-                                address_line: item.restaurant?.address_line || item.address_line,
-                                city: item.restaurant?.city || item.city,
-                                state: item.restaurant?.state || item.state,
-                                country: item.restaurant?.country || item.country,
-                                is_active: item.is_active !== false && item.restaurant?.is_active !== false,
-                                cleaning_areas: item.restaurant?.cleaning_areas || item.cleaning_areas,
-                                effective_cleaning_areas:
-                                    item.restaurant?.effective_cleaning_areas ||
-                                    item.effective_cleaning_areas ||
-                                    item.restaurant?.cleaning_areas ||
-                                    item.cleaning_areas,
-                                assigned_at: item.assigned_at,
-                                raw: item,
-                            }))
-                            .filter((item) => item.is_active !== false && getRestaurantRecordId(item) != null);
-                    }
+                } catch (error) {
+                    console.warn('No fue posible cargar el listado global de sitios para supervisora.', error);
+                    restaurants = [];
                 }
 
                 this.data.supervisor.restaurants = restaurants;
