@@ -4219,33 +4219,51 @@ export const supervisorMethods = {
             this.getSupervisorSupervisionReference();
 
         if (!restaurantName) {
-            container.innerHTML =
-                '<div class="empty-state">Selecciona un sitio para preparar la auditoría.</div>';
+            container.innerHTML = '<div class="empty-state">Selecciona un sitio para preparar la auditoría.</div>';
             return;
         }
 
         const availableAreas = this.getSupervisorAvailableAreas();
-        const locationStatusLabel = !geofence?.isReady
-            ? 'Geocerca pendiente'
-            : locationCheck?.ok
-              ? 'En sitio'
-              : locationCheck?.attemptedAt
-                ? 'Fuera de rango'
-                : 'Pendiente';
-        const locationStatusClass = !geofence?.isReady
-            ? 'badge-warning'
-            : locationCheck?.ok
-              ? 'badge-success'
-              : locationCheck?.attemptedAt
-                ? 'badge-danger'
-                : 'badge-warning';
-        const locationSummary = !geofence?.isReady
-            ? 'Este sitio todavía no tiene coordenadas verificables.'
-            : locationCheck?.ok
-              ? `${Math.round(locationCheck.distanceMeters || 0)} m del punto de control`
-              : locationCheck?.attemptedAt
-                ? `${Math.round(locationCheck.distanceMeters || 0)} m del punto de control`
-                : 'Verifica tu ubicación para validar presencia en sitio';
+        const checkedDistanceMeters = Number(locationCheck?.distanceMeters);
+        const hasCheckedDistance = Number.isFinite(checkedDistanceMeters);
+        const checkedRadiusMeters = Number(locationCheck?.radiusMeters);
+        const checkedEffectiveRadiusMeters = Number(locationCheck?.effectiveRadiusMeters);
+        const checkedAllowedRadiusMeters = Number.isFinite(checkedEffectiveRadiusMeters)
+            ? checkedEffectiveRadiusMeters
+            : checkedRadiusMeters;
+        const isCheckedOutsideRange =
+            hasCheckedDistance &&
+            Number.isFinite(checkedAllowedRadiusMeters) &&
+            checkedDistanceMeters > checkedAllowedRadiusMeters;
+        const hasLocationError = Boolean(locationCheck?.errorMessage);
+        let locationStatusLabel = 'Pendiente';
+        let locationStatusClass = 'badge-warning';
+        let locationSummary = 'Verifica tu ubicación para validar presencia en sitio';
+
+        if (!geofence?.isReady) {
+            locationStatusLabel = 'Geocerca pendiente';
+            locationSummary = 'Este sitio todavía no tiene coordenadas verificables.';
+        } else if (locationCheck?.ok) {
+            locationStatusLabel = 'En sitio';
+            locationStatusClass = 'badge-success';
+            locationSummary = `${Math.round(checkedDistanceMeters)} m del punto de control`;
+        } else if (locationCheck?.blockedByPermission) {
+            locationStatusLabel = 'GPS bloqueado';
+            locationSummary = 'Permiso GPS bloqueado en el navegador.';
+        } else if (hasLocationError) {
+            locationStatusLabel = 'GPS no verificado';
+            locationSummary = locationCheck.errorMessage;
+        } else if (locationCheck?.attemptedAt && isCheckedOutsideRange) {
+            locationStatusLabel = 'Fuera de rango';
+            locationStatusClass = 'badge-danger';
+            locationSummary = `${Math.round(checkedDistanceMeters)} m del punto de control`;
+        } else if (locationCheck?.attemptedAt && hasCheckedDistance) {
+            locationStatusLabel = 'Verificación fallida';
+            locationSummary = `${Math.round(checkedDistanceMeters)} m detectados dentro del radio; reintenta la verificación.`;
+        } else if (locationCheck?.attemptedAt) {
+            locationStatusLabel = 'Verificación fallida';
+            locationSummary = 'No fue posible calcular la distancia al sitio.';
+        }
 
         container.innerHTML = `
             <div class="supervision-target-top">
@@ -4339,17 +4357,44 @@ export const supervisorMethods = {
             if (icon) {
                 icon.className = 'fas fa-check-circle';
             }
-            label.textContent = `Ubicación validada en ${restaurantName}: ${Math.round(activeResult.distanceMeters || 0)} m del punto de control.`;
+            const distanceMeters = Number(activeResult.distanceMeters);
+            const distanceText = Number.isFinite(distanceMeters)
+                ? `${Math.round(distanceMeters)} m`
+                : 'distancia validada';
+            label.textContent = `Ubicación validada en ${restaurantName}: ${distanceText} del punto de control.`;
             if (button) {
                 button.disabled = false;
                 button.innerHTML = '<i class="fas fa-check"></i> Revalidar ubicación';
             }
-        } else if (activeResult?.attemptedAt) {
-            shell.classList.add('invalid');
+        } else if (activeResult?.errorMessage) {
+            shell.classList.add(activeResult.blockedByPermission ? 'warning' : 'invalid');
             if (icon) {
-                icon.className = 'fas fa-times-circle';
+                icon.className = activeResult.blockedByPermission
+                    ? 'fas fa-triangle-exclamation'
+                    : 'fas fa-times-circle';
             }
-            label.textContent = `Fuera de rango para ${restaurantName}: ${Math.round(activeResult.distanceMeters || 0)} m de distancia con radio de ${Math.round(activeResult.radiusMeters || 0)} m.`;
+            label.textContent = activeResult.errorMessage;
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-rotate-right"></i> Reintentar GPS';
+            }
+        } else if (activeResult?.attemptedAt) {
+            const distanceMeters = Number(activeResult.distanceMeters);
+            const radiusMeters = Number(activeResult.radiusMeters);
+            const hasRangeDetails = Number.isFinite(distanceMeters) && Number.isFinite(radiusMeters);
+            const effectiveRadiusMeters = Number(activeResult.effectiveRadiusMeters);
+            const allowedRadiusMeters = Number.isFinite(effectiveRadiusMeters) ? effectiveRadiusMeters : radiusMeters;
+            const isOutsideRange =
+                hasRangeDetails && Number.isFinite(allowedRadiusMeters) && distanceMeters > allowedRadiusMeters;
+            shell.classList.add(isOutsideRange ? 'invalid' : 'warning');
+            if (icon) {
+                icon.className = isOutsideRange ? 'fas fa-times-circle' : 'fas fa-triangle-exclamation';
+            }
+            label.textContent = isOutsideRange
+                ? `Fuera de rango para ${restaurantName}: ${Math.round(distanceMeters)} m de distancia con radio de ${Math.round(radiusMeters)} m.`
+                : hasRangeDetails
+                  ? `La ubicación detectada para ${restaurantName} está dentro del radio configurado (${Math.round(distanceMeters)} m de ${Math.round(radiusMeters)} m), pero la validación no se completó. Reintenta la verificación GPS.`
+                  : `No fue posible calcular la distancia para ${restaurantName}. Reintenta la verificación GPS.`;
             if (button) {
                 button.disabled = false;
                 button.innerHTML = '<i class="fas fa-rotate-right"></i> Reintentar verificación';
@@ -4410,13 +4455,14 @@ export const supervisorMethods = {
                 lat: geofence.lat,
                 lng: geofence.lng,
             });
+            const hasDistanceMeters = Number.isFinite(Number(distanceMeters));
             const accuracyMeters = Math.max(0, Number(location?.accuracy || 0));
             const effectiveRadiusMeters = Math.max(geofence.radiusMeters || 0, 0) + Math.min(accuracyMeters, 35);
             const result = {
                 restaurantId: String(getRestaurantRecordId(restaurant) || ''),
                 restaurantName,
                 attemptedAt: new Date().toISOString(),
-                ok: distanceMeters != null && distanceMeters <= effectiveRadiusMeters,
+                ok: hasDistanceMeters && distanceMeters <= effectiveRadiusMeters,
                 location,
                 distanceMeters,
                 radiusMeters: geofence.radiusMeters || 0,
@@ -4442,6 +4488,8 @@ export const supervisorMethods = {
 
             return result;
         } catch (error) {
+            const blockedByPermission = this.isGeolocationPermissionDenied(error);
+            const errorMessage = this.getGeolocationMessage(error);
             this.supervisionLocationVerified = false;
             this.supervisionLocationCheck = {
                 restaurantId: String(getRestaurantRecordId(restaurant) || ''),
@@ -4450,19 +4498,23 @@ export const supervisorMethods = {
                 ok: false,
                 distanceMeters: null,
                 radiusMeters: geofence?.radiusMeters || 0,
-                errorMessage: this.getGeolocationMessage(error),
+                errorMessage,
+                blockedByPermission,
             };
             this.updateSupervisorSupervisionLocationUi(this.supervisionLocationCheck);
 
             if (notify) {
-                this.showToast(this.getGeolocationMessage(error), {
-                    tone: 'error',
-                    title: t('sup.toast.location.verify.fail'),
+                this.showToast(errorMessage, {
+                    tone: blockedByPermission ? 'warning' : 'error',
+                    title: blockedByPermission ? 'Permiso GPS bloqueado' : t('sup.toast.location.verify.fail'),
                 });
                 return null;
             }
 
-            throw error;
+            const locationError = new Error(errorMessage);
+            locationError.code = error?.code;
+            locationError.cause = error;
+            throw locationError;
         } finally {
             this.updateSupervisorSupervisionLocationUi();
         }
@@ -4487,15 +4539,20 @@ export const supervisorMethods = {
 
         if (!result?.ok) {
             const resolvedRestaurantName = result?.restaurantName || restaurantName || 'el restaurante seleccionado';
-            const distanceText = Number.isFinite(Number(result.distanceMeters))
-                ? `${Math.round(result.distanceMeters)} m`
-                : 'una distancia no disponible';
+            const distanceMeters = Number(result.distanceMeters);
+            if (!Number.isFinite(distanceMeters)) {
+                throw new Error(
+                    result?.errorMessage ||
+                        `No fue posible verificar la ubicación para registrar la supervisión en ${resolvedRestaurantName}.`
+                );
+            }
+
             const radiusText = Number.isFinite(Number(result.radiusMeters))
                 ? `${Math.round(result.radiusMeters)} m`
                 : 'el radio configurado';
 
             throw new Error(
-                `No puedes registrar la supervisión porque tu ubicación está fuera del rango permitido de ${resolvedRestaurantName}. Distancia detectada: ${distanceText}. Radio base: ${radiusText}.`
+                `No puedes registrar la supervisión porque tu ubicación está fuera del rango permitido de ${resolvedRestaurantName}. Distancia detectada: ${Math.round(distanceMeters)} m. Radio base: ${radiusText}.`
             );
         }
 
@@ -5616,10 +5673,11 @@ export const supervisorMethods = {
             }
 
             const slot = this.getPhotoSlotDefinition(slotKey, 'supervision');
+            const mimeType = this.getEvidenceFileContentType(file) || 'image/jpeg';
 
             const requestUpload = await apiClient.supervisorPresenceManage('request_evidence_upload', {
                 phase: 'start',
-                mime_type: file.type || 'image/jpeg',
+                mime_type: mimeType,
             });
 
             const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
@@ -5629,13 +5687,13 @@ export const supervisorMethods = {
                 throw new Error('No fue posible preparar la subida de la foto de supervisión.');
             }
 
-            await apiClient.uploadToSignedUrl(signedUrl, file, file.type);
+            await apiClient.uploadToSignedUrl(signedUrl, file, mimeType);
             await apiClient.supervisorPresenceManage('finalize_evidence_upload', { path });
 
             evidences.push({
                 path,
                 label: slot?.title || slotKey,
-                mime_type: file.type || 'image/jpeg',
+                mime_type: mimeType,
                 size_bytes: file.size || undefined,
             });
         }
@@ -5812,71 +5870,6 @@ export const supervisorMethods = {
                     title: t('sup.toast.task.desc.missing.title'),
                 });
                 return;
-            }
-
-            try {
-                const assignmentRanges = assignments
-                    .map((assignment) => this.toShiftIntervalRange(assignment))
-                    .filter(Boolean);
-                const minStartMs =
-                    assignmentRanges.length > 0 ? Math.min(...assignmentRanges.map((item) => item.startMs)) : null;
-                const maxEndMs =
-                    assignmentRanges.length > 0 ? Math.max(...assignmentRanges.map((item) => item.endMs)) : null;
-
-                const nearbyShifts =
-                    Number.isFinite(minStartMs) && Number.isFinite(maxEndMs)
-                        ? await this.getSupervisorShiftList({
-                              from: toIsoDate(new Date(minStartMs - 24 * 60 * 60 * 1000)),
-                              to: toIsoDate(new Date(maxEndMs + 24 * 60 * 60 * 1000)),
-                              limit: 500,
-                              forceRestaurants: false,
-                          })
-                        : asArray(this.data.supervisor.shifts);
-
-                const preConflict = this.findShiftAssignmentConflict(assignments, nearbyShifts);
-                if (preConflict) {
-                    const employeeRecord =
-                        this.getKnownEmployeeRecord(preConflict.employeeId) ||
-                        asArray(this.data.supervisor.employees).find(
-                            (employee) =>
-                                String(employee?.id || '').trim() === String(preConflict.employeeId || '').trim()
-                        ) ||
-                        null;
-                    const employeeName = getEmployeeDisplayName(
-                        employeeRecord || { id: preConflict.employeeId },
-                        'el contratista seleccionado'
-                    );
-
-                    if (preConflict.type === 'existing') {
-                        const conflictShift = preConflict.existingShift;
-                        const conflictDate = formatDate(conflictShift?.scheduled_start || conflictShift?.start_time, {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                        });
-                        const conflictRange = formatShiftRange(
-                            conflictShift?.scheduled_start,
-                            conflictShift?.scheduled_end
-                        );
-
-                        this.showToast(
-                            `${employeeName} ya tiene un servicio (${conflictDate} ${conflictRange}) que se cruza con esa ventana.`,
-                            {
-                                tone: 'warning',
-                                title: t('sup.toast.schedule.conflict'),
-                            }
-                        );
-                        return;
-                    }
-
-                    this.showToast(`${employeeName} tiene dos servicios en esta asignación que se cruzan entre sí.`, {
-                        tone: 'warning',
-                        title: t('sup.toast.schedule.conflict'),
-                    });
-                    return;
-                }
-            } catch (precheckError) {
-                console.warn('No fue posible ejecutar la validación previa de conflictos de turnos.', precheckError);
             }
 
             if (taskTemplate.enabled) {
@@ -6589,51 +6582,6 @@ export const supervisorMethods = {
                     scheduled_end: endDate.toISOString(),
                 });
             }
-        }
-
-        try {
-            const assignmentRanges = assignments.map((a) => this.toShiftIntervalRange(a)).filter(Boolean);
-            const minStartMs = assignmentRanges.length > 0 ? Math.min(...assignmentRanges.map((r) => r.startMs)) : null;
-            const maxEndMs = assignmentRanges.length > 0 ? Math.max(...assignmentRanges.map((r) => r.endMs)) : null;
-
-            const nearbyShifts =
-                Number.isFinite(minStartMs) && Number.isFinite(maxEndMs)
-                    ? await this.getSupervisorShiftList({
-                          from: toIsoDate(new Date(minStartMs - 86400000)),
-                          to: toIsoDate(new Date(maxEndMs + 86400000)),
-                          limit: 500,
-                          forceRestaurants: false,
-                      })
-                    : asArray(this.data.supervisor.shifts);
-
-            const conflict = this.findShiftAssignmentConflict(assignments, nearbyShifts);
-            if (conflict) {
-                const empRecord =
-                    this.getKnownEmployeeRecord(conflict.employeeId) ||
-                    asArray(this.data.supervisor.employees).find(
-                        (e) => String(e?.id || '') === String(conflict.employeeId || '')
-                    ) ||
-                    null;
-                const empName = getEmployeeDisplayName(
-                    empRecord || { id: conflict.employeeId },
-                    'el contratista seleccionado'
-                );
-                if (conflict.type === 'existing') {
-                    const cs = conflict.existingShift;
-                    this.showToast(
-                        `${empName} ya tiene un servicio (${formatDate(cs?.scheduled_start, { day: '2-digit', month: 'short' })} ${formatShiftRange(cs?.scheduled_start, cs?.scheduled_end)}) que se cruza con esa ventana.`,
-                        { tone: 'warning', title: t('sup.toast.schedule.conflict.short') }
-                    );
-                } else {
-                    this.showToast(`${empName} tiene dos servicios en esta asignación que se cruzan entre sí.`, {
-                        tone: 'warning',
-                        title: t('sup.toast.schedule.conflict.short'),
-                    });
-                }
-                return;
-            }
-        } catch (precheckError) {
-            console.warn('No fue posible validar conflictos de ventana.', precheckError);
         }
 
         this.setSupervisorShiftSubmitState(true);

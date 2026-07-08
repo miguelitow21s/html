@@ -12,6 +12,7 @@ import {
     DEFAULT_SYSTEM_SETTINGS,
     CACHE_TTLS,
     createScopedConsole,
+    SUPPORTED_EVIDENCE_IMAGE_TYPES,
 } from './constants.js';
 import {
     getMonthStart,
@@ -4304,13 +4305,40 @@ const app = {
         }
     },
 
+    getGeolocationErrorCode(error) {
+        const code = Number(error?.code);
+        return Number.isFinite(code) ? code : 0;
+    },
+
+    isGeolocationPermissionDenied(error) {
+        const code = this.getGeolocationErrorCode(error);
+        const source = String(
+            [error?.message, error?.name, error?.code, error?.payload?.message, error?.payload?.error?.message]
+                .filter(Boolean)
+                .join(' ')
+        ).toLowerCase();
+
+        return (
+            code === 1 ||
+            source.includes('permission denied') ||
+            source.includes('user denied') ||
+            source.includes('denied geolocation') ||
+            source.includes('permiso de ubicación denegado') ||
+            source.includes('permiso de ubicacion denegado') ||
+            source.includes('ubicación bloqueada') ||
+            source.includes('ubicacion bloqueada')
+        );
+    },
+
     getGeolocationMessage(error) {
-        switch (error.code) {
-            case error.PERMISSION_DENIED:
-                return 'Permiso de ubicación denegado';
-            case error.POSITION_UNAVAILABLE:
+        if (this.isGeolocationPermissionDenied(error)) {
+            return 'Permiso GPS bloqueado. Activa la ubicación del navegador y vuelve a intentar.';
+        }
+
+        switch (this.getGeolocationErrorCode(error)) {
+            case 2:
                 return 'Ubicación no disponible';
-            case error.TIMEOUT:
+            case 3:
                 return 'Tiempo de espera agotado';
             default:
                 return 'No fue posible verificar la ubicación';
@@ -4823,6 +4851,33 @@ const app = {
         }
     },
 
+    getEvidenceFileContentType(file) {
+        const rawType = String(file?.type || '')
+            .trim()
+            .toLowerCase();
+        if (rawType === 'image/jpg') {
+            return 'image/jpeg';
+        }
+        if (SUPPORTED_EVIDENCE_IMAGE_TYPES.includes(rawType)) {
+            return rawType;
+        }
+
+        const name = String(file?.name || '')
+            .trim()
+            .toLowerCase();
+        if (/\.(jpe?g)$/.test(name)) return 'image/jpeg';
+        if (/\.png$/.test(name)) return 'image/png';
+        if (/\.webp$/.test(name)) return 'image/webp';
+        if (/\.heic$/.test(name)) return 'image/heic';
+        if (/\.heif$/.test(name)) return 'image/heif';
+
+        return rawType || '';
+    },
+
+    isSupportedEvidenceImageFile(file) {
+        return SUPPORTED_EVIDENCE_IMAGE_TYPES.includes(this.getEvidenceFileContentType(file));
+    },
+
     async compressImage(file, maxWidth = 1280, quality = 0.78) {
         if (!file || !file.type?.startsWith('image/')) return file;
         return new Promise((resolve) => {
@@ -4857,6 +4912,10 @@ const app = {
     async processPhotoFile(file, type, area) {
         if (!file || !area) {
             return;
+        }
+
+        if (!this.isSupportedEvidenceImageFile(file)) {
+            throw new Error('Formato de imagen no soportado. Usa JPG, PNG, WebP, HEIC o HEIF.');
         }
 
         const fileCollections = {
@@ -4970,6 +5029,14 @@ const app = {
 
     setSpecialTaskEvidenceFile(file) {
         if (!file) {
+            return false;
+        }
+
+        if (!this.isSupportedEvidenceImageFile(file)) {
+            this.showToast('Formato de imagen no soportado. Usa JPG, PNG, WebP, HEIC o HEIF.', {
+                tone: 'warning',
+                title: t('app.toast.evidence.error'),
+            });
             return false;
         }
 

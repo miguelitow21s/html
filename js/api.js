@@ -703,18 +703,19 @@ export class WorkTraceApiClient {
         );
     }
 
-    requestShiftEvidenceUpload(shiftId, type) {
-        return this.callAction(
-            '/evidence_upload',
-            'request_upload',
-            {
-                shift_id: shiftId,
-                type,
-            },
-            {
-                requiresOtp: true,
-            }
-        );
+    requestShiftEvidenceUpload(shiftId, type, mimeType = '') {
+        const payload = {
+            shift_id: shiftId,
+            type,
+        };
+
+        if (mimeType) {
+            payload.mime_type = mimeType;
+        }
+
+        return this.callAction('/evidence_upload', 'request_upload', payload, {
+            requiresOtp: true,
+        });
     }
 
     finalizeShiftEvidenceUpload(payload) {

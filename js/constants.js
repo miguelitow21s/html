@@ -131,6 +131,16 @@ export const CACHE_TTLS = Object.freeze({
 
 export const SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES = 15;
 
+export const SUPPORTED_EVIDENCE_IMAGE_TYPES = Object.freeze([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+]);
+
+export const SUPPORTED_EVIDENCE_IMAGE_ACCEPT = SUPPORTED_EVIDENCE_IMAGE_TYPES.join(',');
+
 export function createScopedConsole() {
     const baseConsole = globalThis.console || {};
     const host = globalThis.location?.hostname || '';

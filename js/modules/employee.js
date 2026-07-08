@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { CACHE_TTLS, DEFAULT_SYSTEM_SETTINGS } from '../constants.js';
+import { CACHE_TTLS, DEFAULT_SYSTEM_SETTINGS, SUPPORTED_EVIDENCE_IMAGE_ACCEPT } from '../constants.js';
 import { apiClient } from '../api.js';
 import { t } from '../i18n.js';
 import {
@@ -675,10 +675,9 @@ export const employeeMethods = {
 
         await Promise.all(
             entries.map(async ([area, file]) => {
-                const [requestUpload, compressed] = await Promise.all([
-                    apiClient.requestShiftEvidenceUpload(shiftId, type),
-                    this.compressImage(file),
-                ]);
+                const compressed = await this.compressImage(file);
+                const mimeType = this.getEvidenceFileContentType(compressed) || 'image/jpeg';
+                const requestUpload = await apiClient.requestShiftEvidenceUpload(shiftId, type, mimeType);
 
                 const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
                 const path = requestUpload?.path || requestUpload?.upload?.path;
@@ -687,7 +686,7 @@ export const employeeMethods = {
                     throw new Error('No fue posible preparar la subida de la foto.');
                 }
 
-                await apiClient.uploadToSignedUrl(signedUrl, compressed, 'image/jpeg');
+                await apiClient.uploadToSignedUrl(signedUrl, compressed, mimeType);
 
                 const slot = this.getPhotoSlotDefinition(area, 'start');
                 const areaMeta = buildAreaMeta(slot?.groupLabel || area);
@@ -928,9 +927,14 @@ export const employeeMethods = {
     },
 
     async uploadTaskEvidence(taskId, file) {
+        if (!this.isSupportedEvidenceImageFile(file)) {
+            throw new Error('Formato de imagen no soportado. Usa JPG, PNG, WebP, HEIC o HEIF.');
+        }
+
+        const mimeType = this.getEvidenceFileContentType(file) || 'image/jpeg';
         const requestUpload = await apiClient.operationalTasksManage('request_evidence_upload', {
             task_id: taskId,
-            mime_type: file.type || 'image/jpeg',
+            mime_type: mimeType,
         });
 
         const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
@@ -940,7 +944,7 @@ export const employeeMethods = {
             throw new Error('No fue posible preparar la subida de la foto de la tarea.');
         }
 
-        await apiClient.uploadToSignedUrl(signedUrl, file, file.type);
+        await apiClient.uploadToSignedUrl(signedUrl, file, mimeType);
         return path;
     },
 
@@ -1337,7 +1341,7 @@ export const employeeMethods = {
             <div class="rtask-actions">
                 <button type="button" class="btn btn-primary btn-sm" data-rtask-action="show-evidence" data-task-id="${taskId}">Completar tarea</button>
                 <div class="rtask-evidence-wrap hidden" id="rtask-evidence-wrap-${taskId}">
-                    <input type="file" accept="image/*" capture="environment" class="rtask-file-input" id="rtask-file-${taskId}">
+                    <input type="file" accept="${SUPPORTED_EVIDENCE_IMAGE_ACCEPT}" capture="environment" class="rtask-file-input" id="rtask-file-${taskId}">
                     <input type="text" placeholder="Observaciones (opcional)" class="rtask-notes-input dark-control" id="rtask-notes-${taskId}">
                     <button type="button" class="btn btn-primary btn-sm" data-rtask-action="submit-evidence" data-task-id="${taskId}">Enviar evidencia</button>
                     <button type="button" class="btn btn-secondary btn-sm" data-rtask-action="cancel-evidence" data-task-id="${taskId}">Cancelar</button>
