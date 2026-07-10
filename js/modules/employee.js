@@ -933,8 +933,9 @@ export const employeeMethods = {
         }
 
         const mimeType = this.getEvidenceFileContentType(file) || 'image/jpeg';
+        const numericTaskId = Number(taskId);
         const requestUpload = await apiClient.operationalTasksManage('request_evidence_upload', {
-            task_id: taskId,
+            task_id: Number.isFinite(numericTaskId) ? numericTaskId : taskId,
             mime_type: mimeType,
         });
 
@@ -972,8 +973,9 @@ export const employeeMethods = {
 
         await Promise.all(
             tasks.map(async (task) => {
-                const taskId = task.task_id || task.id;
-                if (!taskId) {
+                const rawTaskId = task.task_id || task.id;
+                const numericTaskId = Number(rawTaskId);
+                if (!Number.isFinite(numericTaskId)) {
                     return;
                 }
 
@@ -989,9 +991,9 @@ export const employeeMethods = {
                         );
                     }
 
-                    const evidencePath = await this.uploadTaskEvidence(taskId, file);
+                    const evidencePath = await this.uploadTaskEvidence(numericTaskId, file);
                     await apiClient.operationalTasksManage('complete', {
-                        task_id: taskId,
+                        task_id: numericTaskId,
                         evidence_path: evidencePath,
                         notes,
                     });
@@ -999,7 +1001,7 @@ export const employeeMethods = {
                 }
 
                 await apiClient.operationalTasksManage('close', {
-                    task_id: taskId,
+                    task_id: numericTaskId,
                     notes,
                 });
             })
@@ -1429,10 +1431,18 @@ export const employeeMethods = {
     },
 
     async employeeCloseRestaurantTask(taskId) {
+        const numericTaskId = Number(taskId);
+        if (!Number.isFinite(numericTaskId)) {
+            this.showToast('No se pudo identificar la tarea.', {
+                tone: 'error',
+                title: t('toast.error.completing'),
+            });
+            return;
+        }
         try {
-            await apiClient.operationalTasksManage('close', { task_id: taskId });
+            await apiClient.operationalTasksManage('close', { task_id: numericTaskId });
             this.data.employee.openTasks = (this.data.employee.openTasks || []).filter(
-                (t) => (t.task_id || t.id) !== taskId
+                (task) => String(task.task_id || task.id || '') !== String(numericTaskId)
             );
             this.renderEmployeeRestaurantTasks();
             this.showToast(t('toast.task.completed'), { tone: 'success', title: t('toast.done') });
@@ -1458,8 +1468,8 @@ export const employeeMethods = {
             return;
         }
 
-        const normalizedTaskId = String(taskId || '').trim();
-        if (!normalizedTaskId) {
+        const numericTaskId = Number(taskId);
+        if (!Number.isFinite(numericTaskId)) {
             this.showToast('No se pudo identificar la tarea.', {
                 tone: 'error',
                 title: t('toast.error.completing'),
@@ -1469,12 +1479,12 @@ export const employeeMethods = {
 
         this.showLoading(t('toast.uploading.evidence'), t('toast.wait'));
         try {
-            const evidencePath = await this.uploadTaskEvidence(normalizedTaskId, file);
+            const evidencePath = await this.uploadTaskEvidence(numericTaskId, file);
             if (!evidencePath) {
                 throw new Error('No se recibió la ruta de la evidencia subida.');
             }
             const completePayload = {
-                task_id: normalizedTaskId,
+                task_id: numericTaskId,
                 evidence_path: evidencePath,
             };
             if (notes) {
@@ -1483,13 +1493,13 @@ export const employeeMethods = {
             console.info('[rtask] complete payload', completePayload);
             await apiClient.operationalTasksManage('complete', completePayload);
             this.data.employee.openTasks = (this.data.employee.openTasks || []).filter(
-                (task) => String(task.task_id || task.id || '') !== normalizedTaskId
+                (task) => String(task.task_id || task.id || '') !== numericTaskId
             );
             this.renderEmployeeRestaurantTasks();
             this.showToast(t('toast.task.completed.evidence'), { tone: 'success', title: t('toast.done') });
         } catch (error) {
             console.error('[rtask] complete failed', {
-                taskId: normalizedTaskId,
+                taskId: numericTaskId,
                 error,
                 payload: error?.payload,
                 message: error?.message,
