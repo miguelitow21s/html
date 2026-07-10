@@ -1458,21 +1458,52 @@ export const employeeMethods = {
             return;
         }
 
+        const normalizedTaskId = String(taskId || '').trim();
+        if (!normalizedTaskId) {
+            this.showToast('No se pudo identificar la tarea.', {
+                tone: 'error',
+                title: t('toast.error.completing'),
+            });
+            return;
+        }
+
         this.showLoading(t('toast.uploading.evidence'), t('toast.wait'));
         try {
-            const evidencePath = await this.uploadTaskEvidence(taskId, file);
-            await apiClient.operationalTasksManage('complete', {
-                task_id: taskId,
+            const evidencePath = await this.uploadTaskEvidence(normalizedTaskId, file);
+            if (!evidencePath) {
+                throw new Error('No se recibió la ruta de la evidencia subida.');
+            }
+            const completePayload = {
+                task_id: normalizedTaskId,
                 evidence_path: evidencePath,
-                notes,
-            });
+            };
+            if (notes) {
+                completePayload.notes = notes;
+            }
+            console.info('[rtask] complete payload', completePayload);
+            await apiClient.operationalTasksManage('complete', completePayload);
             this.data.employee.openTasks = (this.data.employee.openTasks || []).filter(
-                (t) => (t.task_id || t.id) !== taskId
+                (task) => String(task.task_id || task.id || '') !== normalizedTaskId
             );
             this.renderEmployeeRestaurantTasks();
             this.showToast(t('toast.task.completed.evidence'), { tone: 'success', title: t('toast.done') });
         } catch (error) {
-            this.showToast(this.getEmployeeRestaurantTaskErrorMessage(error, 'No fue posible completar la tarea.'), {
+            console.error('[rtask] complete failed', {
+                taskId: normalizedTaskId,
+                error,
+                payload: error?.payload,
+                message: error?.message,
+            });
+            const detailedMessage =
+                error?.payload?.error?.details?.message ||
+                error?.payload?.error?.message ||
+                error?.payload?.message ||
+                '';
+            const baseMessage = this.getEmployeeRestaurantTaskErrorMessage(error, 'No fue posible completar la tarea.');
+            const finalMessage = detailedMessage && !baseMessage.includes(detailedMessage)
+                ? `${baseMessage} (${detailedMessage})`
+                : baseMessage;
+            this.showToast(finalMessage, {
                 tone: 'error',
                 title: t('toast.error.completing'),
             });
