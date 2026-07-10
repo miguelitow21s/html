@@ -1340,17 +1340,29 @@ export const employeeMethods = {
             : requiresEvidence
               ? `
             <div class="rtask-actions">
-                <button type="button" class="btn btn-primary btn-sm" data-rtask-action="show-evidence" data-task-id="${taskId}">Completar tarea</button>
+                <button type="button" class="btn btn-primary btn-sm" data-rtask-action="show-evidence" data-task-id="${taskId}">
+                    <i class="fas fa-camera"></i> Completar tarea
+                </button>
                 <div class="rtask-evidence-wrap hidden" id="rtask-evidence-wrap-${taskId}">
                     <input type="file" accept="${SUPPORTED_EVIDENCE_IMAGE_ACCEPT}" capture="environment" class="rtask-file-input" id="rtask-file-${taskId}">
+                    <label for="rtask-file-${taskId}" class="rtask-file-label" id="rtask-file-label-${taskId}">
+                        <i class="fas fa-camera"></i>
+                        <span class="rtask-file-label-text">Tomar foto de evidencia</span>
+                    </label>
                     <input type="text" placeholder="Observaciones (opcional)" class="rtask-notes-input dark-control" id="rtask-notes-${taskId}">
-                    <button type="button" class="btn btn-primary btn-sm" data-rtask-action="submit-evidence" data-task-id="${taskId}">Enviar evidencia</button>
-                    <button type="button" class="btn btn-secondary btn-sm" data-rtask-action="cancel-evidence" data-task-id="${taskId}">Cancelar</button>
+                    <div class="rtask-evidence-buttons">
+                        <button type="button" class="btn btn-primary btn-sm" data-rtask-action="submit-evidence" data-task-id="${taskId}">
+                            <i class="fas fa-paper-plane"></i> Enviar evidencia
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-rtask-action="cancel-evidence" data-task-id="${taskId}">Cancelar</button>
+                    </div>
                 </div>
             </div>`
               : `
             <div class="rtask-actions">
-                <button type="button" class="btn btn-success btn-sm" data-rtask-action="close" data-task-id="${taskId}">Marcar completada</button>
+                <button type="button" class="btn btn-success btn-sm" data-rtask-action="close" data-task-id="${taskId}">
+                    <i class="fas fa-check"></i> Marcar completada
+                </button>
             </div>`;
 
         return `<div class="rtask-card" data-task-id="${taskId}">
@@ -1379,6 +1391,21 @@ export const employeeMethods = {
                 document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.remove('hidden');
             else if (action === 'cancel-evidence')
                 document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.add('hidden');
+        });
+        list.addEventListener('change', (e) => {
+            const fileInput = e.target.closest('.rtask-file-input');
+            if (!fileInput) return;
+            const taskId = fileInput.id.replace('rtask-file-', '');
+            const label = document.getElementById(`rtask-file-label-${taskId}`);
+            const textSpan = label?.querySelector('.rtask-file-label-text');
+            const file = fileInput.files?.[0];
+            if (file && textSpan) {
+                textSpan.textContent = `📷 Foto lista: ${file.name.slice(0, 24)}${file.name.length > 24 ? '...' : ''}`;
+                label?.classList.add('rtask-file-label-has-file');
+            } else if (textSpan) {
+                textSpan.textContent = 'Tomar foto de evidencia';
+                label?.classList.remove('rtask-file-label-has-file');
+            }
         });
     },
 
