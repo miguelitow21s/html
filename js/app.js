@@ -2894,7 +2894,7 @@ const app = {
         try {
             switch (page) {
                 case 'employee-dashboard':
-                    await this.loadEmployeeDashboard();
+                    await this.loadEmployeeDashboard(true);
                     break;
                 case 'employee-profile':
                     await this.loadEmployeeProfile();
@@ -5751,9 +5751,59 @@ const app = {
     },
 
     getEmployeeAssignedRestaurants(dashboard = this.data.employee.dashboard || {}) {
-        return asArray(dashboard?.assigned_restaurants)
-            .map((item) => item?.restaurant || item || null)
-            .filter((restaurant) => getRestaurantRecordId(restaurant) != null);
+        const restaurantsById = new Map();
+        const addRestaurant = (restaurant, source = '') => {
+            if (!restaurant || typeof restaurant !== 'object') {
+                return;
+            }
+
+            const restaurantId = getRestaurantRecordId(restaurant);
+            if (restaurantId == null) {
+                return;
+            }
+
+            const key = String(restaurantId);
+            const current = restaurantsById.get(key) || {};
+            restaurantsById.set(key, {
+                ...current,
+                ...restaurant,
+                id: restaurant.id ?? current.id ?? restaurantId,
+                restaurant_id: restaurant.restaurant_id ?? current.restaurant_id ?? restaurantId,
+                access_source: restaurant.access_source || current.access_source || source,
+            });
+        };
+
+        asArray(dashboard?.assigned_restaurants).forEach((item) => {
+            const accessSource = String(item?.access_source || item?.accessSource || 'assignment').trim();
+            addRestaurant(
+                {
+                    ...(item?.restaurant || item || {}),
+                    access_source: accessSource || 'assignment',
+                },
+                'assignment'
+            );
+        });
+
+        asArray(dashboard?.scheduled_shifts).forEach((shift) => {
+            const scheduledRestaurant = shift?.restaurant || null;
+            const restaurantId =
+                getRestaurantRecordId(scheduledRestaurant) ?? normalizeRestaurantId(shift?.restaurant_id);
+            if (restaurantId == null) {
+                return;
+            }
+
+            addRestaurant(
+                {
+                    ...(scheduledRestaurant || {}),
+                    id: scheduledRestaurant?.id ?? restaurantId,
+                    restaurant_id: scheduledRestaurant?.restaurant_id ?? restaurantId,
+                    access_source: scheduledRestaurant?.access_source || 'schedule',
+                },
+                'schedule'
+            );
+        });
+
+        return Array.from(restaurantsById.values());
     },
 
     getKnownEmployeeRestaurantRecord(restaurantId) {
