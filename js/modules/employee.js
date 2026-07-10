@@ -588,6 +588,13 @@ export const employeeMethods = {
 
         try {
             await this.ensureOtpVerification();
+            const otpTokenLength = String(apiClient.getConfig()?.shiftOtpToken || '').length;
+            console.info('[shifts_start] pre-request diagnostic', {
+                otpTokenPresent: otpTokenLength > 0,
+                otpTokenLength,
+                scheduledShiftId: scheduledShift.id,
+                restaurantId: scheduledShift.restaurant_id,
+            });
             const location = this.location || (await this.captureLocation({ updateUi: false }));
 
             if (!this.data.currentShift) {
@@ -636,6 +643,18 @@ export const employeeMethods = {
 
             this.navigate('employee-shift-photos');
         } catch (error) {
+            console.error('[shifts_start] failed', {
+                error_code: this.getErrorCode?.(error),
+                request_id: this.getErrorRequestIds?.(error),
+                status: error?.status,
+                payload: error?.payload,
+            });
+
+            // Backend contract v2: si viene error_code con acción específica, dispatchamos.
+            if (this.handleErrorCodeAction?.(error)) {
+                return;
+            }
+
             if (this.isShiftStartOutsideWindow(error)) {
                 this.showToast(this.getShiftStartWindowOutsideMessage(error), {
                     tone: 'warning',
@@ -1131,6 +1150,18 @@ export const employeeMethods = {
                 console.warn('No fue posible refrescar el dashboard después de finalizar el servicio.', error);
             });
         } catch (error) {
+            console.error('[shifts_end] failed', {
+                error_code: this.getErrorCode?.(error),
+                request_id: this.getErrorRequestIds?.(error),
+                status: error?.status,
+                payload: error?.payload,
+            });
+
+            // Backend contract v2: si viene error_code con acción específica, dispatchamos.
+            if (this.handleErrorCodeAction?.(error)) {
+                return;
+            }
+
             const detailedMessage = this.getShiftFinalizeDetailedErrorMessage(error);
             const visibleMessage = detailedMessage || this.getErrorMessage(error, 'No fue posible finalizar el servicio.');
             const requestId = String(
