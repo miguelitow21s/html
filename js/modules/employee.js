@@ -5,6 +5,7 @@ import { t } from '../i18n.js';
 import {
     asArray,
     buildAreaMeta,
+    escapeHtml,
     formatDate,
     formatDateTime,
     formatHours,
