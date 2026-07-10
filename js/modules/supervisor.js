@@ -4315,22 +4315,26 @@ export const supervisorMethods = {
                 button.disabled = false;
                 button.innerHTML = '<i class="fas fa-check"></i> Revalidar ubicación';
             }
-        } else if (activeResult?.errorMessage) {
-            shell.classList.add(activeResult.blockedByPermission ? 'warning' : 'invalid');
+        } else if (activeResult?.errorMessage || activeResult?.blockedByPermission) {
+            const blocked = Boolean(activeResult?.blockedByPermission);
+            shell.classList.add(blocked ? 'warning' : 'invalid');
             if (icon) {
-                icon.className = activeResult.blockedByPermission
-                    ? 'fas fa-triangle-exclamation'
-                    : 'fas fa-times-circle';
+                icon.className = blocked ? 'fas fa-triangle-exclamation' : 'fas fa-times-circle';
             }
-            label.textContent = activeResult.errorMessage;
+            label.textContent = blocked
+                ? 'Permiso de ubicación bloqueado. Habilita el GPS en Ajustes › Safari/Chrome › Ubicación, luego reintenta.'
+                : activeResult.errorMessage || 'No fue posible obtener tu ubicación. Reintenta.';
             if (button) {
                 button.disabled = false;
-                button.innerHTML = '<i class="fas fa-rotate-right"></i> Reintentar GPS';
+                button.innerHTML = blocked
+                    ? '<i class="fas fa-location-crosshairs"></i> Reintentar con GPS activo'
+                    : '<i class="fas fa-rotate-right"></i> Reintentar GPS';
             }
         } else if (activeResult?.attemptedAt) {
             const distanceMeters = Number(activeResult.distanceMeters);
             const radiusMeters = Number(activeResult.radiusMeters);
-            const hasRangeDetails = Number.isFinite(distanceMeters) && Number.isFinite(radiusMeters);
+            const hasValidDistance = Number.isFinite(distanceMeters) && distanceMeters > 0;
+            const hasRangeDetails = hasValidDistance && Number.isFinite(radiusMeters);
             const effectiveRadiusMeters = Number(activeResult.effectiveRadiusMeters);
             const allowedRadiusMeters = Number.isFinite(effectiveRadiusMeters) ? effectiveRadiusMeters : radiusMeters;
             const isOutsideRange =
@@ -4339,11 +4343,11 @@ export const supervisorMethods = {
             if (icon) {
                 icon.className = isOutsideRange ? 'fas fa-times-circle' : 'fas fa-triangle-exclamation';
             }
-            label.textContent = isOutsideRange
-                ? `Fuera de rango para ${restaurantName}: ${Math.round(distanceMeters)} m de distancia con radio de ${Math.round(radiusMeters)} m.`
-                : hasRangeDetails
-                  ? `La ubicación detectada para ${restaurantName} está dentro del radio configurado (${Math.round(distanceMeters)} m de ${Math.round(radiusMeters)} m), pero la validación no se completó. Reintenta la verificación GPS.`
-                  : `No fue posible calcular la distancia para ${restaurantName}. Reintenta la verificación GPS.`;
+            label.textContent = !hasValidDistance
+                ? `No pudimos leer tu ubicación para ${restaurantName}. Verifica que el GPS esté activo y reintenta.`
+                : isOutsideRange
+                  ? `Fuera de rango para ${restaurantName}: ${Math.round(distanceMeters)} m de distancia con radio de ${Math.round(radiusMeters)} m.`
+                  : `La ubicación detectada para ${restaurantName} está dentro del radio configurado (${Math.round(distanceMeters)} m de ${Math.round(radiusMeters)} m), pero la validación no se completó. Reintenta la verificación GPS.`;
             if (button) {
                 button.disabled = false;
                 button.innerHTML = '<i class="fas fa-rotate-right"></i> Reintentar verificación';
