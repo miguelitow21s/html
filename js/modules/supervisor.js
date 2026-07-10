@@ -929,7 +929,38 @@ export const supervisorMethods = {
         this.renderSupervisorShiftPlanRows();
     },
 
-    buildSupervisorShiftDateTime(dateKey = '', timeValue = '') {
+    updateSchedShiftTimezoneHint(restaurantId) {
+        const hint = document.getElementById('sched-shift-timezone-hint');
+        if (!hint) return;
+        const timezone = this.getRestaurantTimezoneById(restaurantId);
+        if (!timezone) {
+            hint.textContent = '';
+            hint.style.display = 'none';
+            return;
+        }
+        const restaurants = asArray(this.data.supervisor?.restaurants);
+        const match = restaurants.find(
+            (r) => String(getRestaurantRecordId(r) || r?.id || '').trim() === String(restaurantId).trim()
+        );
+        const name = match ? getRestaurantDisplayName(match) : '';
+        hint.style.display = '';
+        hint.textContent = name
+            ? `Hora local de ${name} · ${timezone}`
+            : `Zona horaria del sitio: ${timezone}`;
+    },
+
+    getRestaurantTimezoneById(restaurantId) {
+        if (!restaurantId) return '';
+        const normalizedId = String(restaurantId).trim();
+        const restaurants = asArray(this.data.supervisor?.restaurants);
+        const match = restaurants.find(
+            (r) => String(getRestaurantRecordId(r) || r?.id || '').trim() === normalizedId
+        );
+        if (!match) return '';
+        return String(match.timezone || match.restaurant_timezone || match.raw?.timezone || '').trim();
+    },
+
+    buildSupervisorShiftDateTime(dateKey = '', timeValue = '', timezone = '') {
         const dateMatch = String(dateKey || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
         const timeMatch = String(timeValue || '').match(/^(\d{2}):(\d{2})$/);
         if (!dateMatch || !timeMatch) {
@@ -941,9 +972,55 @@ export const supervisorMethods = {
         const day = Number(dateMatch[3]);
         const hour = Number(timeMatch[1]);
         const minute = Number(timeMatch[2]);
-        const date = new Date(year, month, day, hour, minute, 0, 0);
 
+        if (timezone) {
+            const date = this.zonedTimeToUtc(year, month, day, hour, minute, timezone);
+            return date && !Number.isNaN(date.getTime()) ? date : null;
+        }
+
+        const date = new Date(year, month, day, hour, minute, 0, 0);
         return Number.isNaN(date.getTime()) ? null : date;
+    },
+
+    /**
+     * Convierte una fecha/hora expresada en una zona horaria específica (IANA)
+     * a un objeto Date en UTC. Necesario para agendar correctamente cuando
+     * el admin y el sitio están en zonas distintas.
+     * Ej. admin en Bogotá agenda 12:00 AM en Culver City (LA):
+     *   zonedTimeToUtc(2026, 5, 10, 0, 0, 'America/Los_Angeles')
+     *   → Date que representa 07:00 UTC (equivalente a 00:00 LA en verano).
+     */
+    zonedTimeToUtc(year, month, day, hour, minute, timezone) {
+        // 1. Construimos la fecha como si fuera UTC directo — sirve como semilla.
+        let utcMs = Date.UTC(year, month, day, hour, minute, 0);
+        // 2. Iteramos 2 veces para converger (basta con DST).
+        for (let i = 0; i < 2; i += 1) {
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+            }).formatToParts(new Date(utcMs));
+            const map = {};
+            for (const p of parts) map[p.type] = p.value;
+            const zonedMs = Date.UTC(
+                Number(map.year),
+                Number(map.month) - 1,
+                Number(map.day),
+                Number(map.hour === '24' ? 0 : map.hour),
+                Number(map.minute),
+                Number(map.second)
+            );
+            const desiredMs = Date.UTC(year, month, day, hour, minute, 0);
+            const offset = desiredMs - zonedMs;
+            if (offset === 0) break;
+            utcMs += offset;
+        }
+        return new Date(utcMs);
     },
 
     getSupervisorShiftPlanRowDurationMinutes(row = {}) {
@@ -5739,6 +5816,7 @@ export const supervisorMethods = {
                     return;
                 }
 
+                const planTimezone = this.getRestaurantTimezoneById(restaurantId);
                 for (const row of activeRows) {
                     if (!row.startTime || !row.endTime) {
                         this.showToast(`Completa entrada y salida para ${row.dayLabel || 'el día seleccionado'}.`, {
@@ -5748,8 +5826,8 @@ export const supervisorMethods = {
                         return;
                     }
 
-                    const startDate = this.buildSupervisorShiftDateTime(row.dateKey, row.startTime);
-                    const endDate = this.buildSupervisorShiftDateTime(row.dateKey, row.endTime);
+                    const startDate = this.buildSupervisorShiftDateTime(row.dateKey, row.startTime, planTimezone);
+                    const endDate = this.buildSupervisorShiftDateTime(row.dateKey, row.endTime, planTimezone);
                     if (!startDate || !endDate) {
                         this.showToast(`Revisa el formato de hora en ${row.dayLabel || 'el día seleccionado'}.`, {
                             tone: 'warning',
@@ -6508,6 +6586,7 @@ export const supervisorMethods = {
             return;
         }
 
+        const restaurantTimezone = this.getRestaurantTimezoneById(restaurantId);
         const assignments = [];
         for (const row of activeRows) {
             if (!row.startTime || !row.endTime) {
@@ -6517,8 +6596,8 @@ export const supervisorMethods = {
                 });
                 return;
             }
-            const startDate = this.buildSupervisorShiftDateTime(row.dateKey, row.startTime);
-            const endDate = this.buildSupervisorShiftDateTime(row.dateKey, row.endTime);
+            const startDate = this.buildSupervisorShiftDateTime(row.dateKey, row.startTime, restaurantTimezone);
+            const endDate = this.buildSupervisorShiftDateTime(row.dateKey, row.endTime, restaurantTimezone);
             if (!startDate || !endDate) {
                 this.showToast(`Revisa el formato de hora para el ${row.dayLabel} ${row.dateKey}.`, {
                     tone: 'warning',

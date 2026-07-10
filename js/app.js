@@ -827,6 +827,7 @@ const app = {
         if (schedShiftRestaurant) {
             schedShiftRestaurant.addEventListener('change', async () => {
                 await this.renderSchedShiftEmployeePicker(schedShiftRestaurant.value);
+                this.updateSchedShiftTimezoneHint?.(schedShiftRestaurant.value);
             });
         }
 
@@ -1666,6 +1667,17 @@ const app = {
         return '';
     },
 
+    getErrorCode(error) {
+        return String(
+            error?.error_code ||
+                error?.payload?.error?.error_code ||
+                error?.payload?.error_code ||
+                error?.payload?.error?.details?.error_code ||
+                error?.payload?.details?.error_code ||
+                ''
+        ).trim();
+    },
+
     getErrorMessage(error, fallback = 'Ocurrió un error inesperado.') {
         if (!error) {
             return fallback;
@@ -1675,27 +1687,9 @@ const app = {
         const payloadMessage = String(error?.payload?.error?.message || error?.payload?.message || '').trim();
         const rawMessage = String(error?.message || payloadMessage || fallback).trim();
         const normalizedMessage = rawMessage.toLowerCase();
+        const errorCode = this.getErrorCode(error);
 
-        const trustedDeviceConflict =
-            status === 409 &&
-            (normalizedMessage.includes('dispositivo') ||
-                normalizedMessage.includes('device') ||
-                normalizedMessage.includes('vinculad') ||
-                normalizedMessage.includes('linked') ||
-                normalizedMessage.includes('trusted'));
-
-        if (trustedDeviceConflict) {
-            return 'Esta cuenta ya está vinculada a otro dispositivo. Revoca el dispositivo actual para poder registrar este equipo.';
-        }
-
-        if (normalizedMessage.includes('rate limit') || status === 429) {
-            return 'Se detectaron demasiados intentos en poco tiempo. Espera unos segundos y vuelve a intentarlo.';
-        }
-
-        if (normalizedMessage.includes('invalid jwt') || normalizedMessage.includes('jwt') || status === 401) {
-            return 'Tu sesión ya no es válida o expiró. Inicia sesión nuevamente.';
-        }
-
+        // Errores de red/conexión — mensajes específicos del cliente
         if (normalizedMessage.includes('timeout') || normalizedMessage.includes('tiempo de espera')) {
             return 'La operación tardó demasiado. Verifica tu conexión e inténtalo de nuevo.';
         }
@@ -1704,8 +1698,42 @@ const app = {
             return 'No se pudo conectar con el servicio. Verifica tu conexión e inténtalo de nuevo.';
         }
 
+        // Códigos con acción específica del backend (mostrar mensaje enriquecido)
+        if (errorCode === 'SHIFT_START_OUTSIDE_WINDOW') {
+            const earliest = error?.payload?.error?.details?.earliest || error?.payload?.details?.earliest;
+            const latest = error?.payload?.error?.details?.latest || error?.payload?.details?.latest;
+            if (earliest && latest) {
+                return `El servicio se habilita entre ${formatDateTime(earliest)} y ${formatDateTime(latest)}.`;
+            }
+        }
+
+        if (errorCode === 'GPS_OUT_OF_RANGE') {
+            const details = error?.payload?.error?.details || error?.payload?.details || {};
+            const distance = Number(details.distance_m);
+            const radius = Number(details.radius_m);
+            const name = details.restaurant_name || '';
+            if (Number.isFinite(distance) && Number.isFinite(radius)) {
+                return `Estás fuera del radio permitido${name ? ` de ${name}` : ''}: ${Math.round(distance)} m del punto de control (radio configurado: ${Math.round(radius)} m).`;
+            }
+        }
+
+        // Si el backend nos manda un mensaje específico, priorizarlo
+        // (backend ya devuelve mensajes en español bien redactados via error.message)
+        if (payloadMessage && !this._looksTechnicalMessage(payloadMessage)) {
+            return payloadMessage;
+        }
+
+        // Errores 4xx/5xx sin mensaje específico del backend → mensajes genéricos
+        if (normalizedMessage.includes('rate limit') || status === 429) {
+            return 'Se detectaron demasiados intentos en poco tiempo. Espera unos segundos y vuelve a intentarlo.';
+        }
+
+        if (normalizedMessage.includes('invalid jwt') || normalizedMessage.includes('jwt') || status === 401) {
+            return 'Tu sesión ya no es válida o expiró. Inicia sesión nuevamente.';
+        }
+
         if (status === 403) {
-            return 'No tienes permisos para realizar esta acción.';
+            return 'No puedes ejecutar esta acción en este momento. Verifica tu sesión y estado de dispositivo.';
         }
 
         if (status === 404) {
@@ -1724,15 +1752,110 @@ const app = {
             return 'Ocurrió un problema interno del servicio. Inténtalo de nuevo en unos minutos.';
         }
 
-        const looksTechnical =
-            /endpoint|request_id|payload|stack|trace|\/|http|https|\bcode\b|\bstatus\b/i.test(rawMessage) ||
-            rawMessage.length > 220;
-
-        if (looksTechnical) {
+        if (this._looksTechnicalMessage(rawMessage)) {
             return fallback;
         }
 
         return rawMessage || fallback;
+    },
+
+    _looksTechnicalMessage(message) {
+        const value = String(message || '').trim();
+        if (!value) return true;
+        return /endpoint|request_id|payload|stack|trace|\/|http|https|\bstatus\b/i.test(value) || value.length > 260;
+    },
+
+    buildErrorReportBundle(error, { endpoint = '', extra = null } = {}) {
+        const status = Number(error?.status);
+        const errorCode = this.getErrorCode(error);
+        const requestId = this.getErrorRequestIds(error);
+        const message = error?.payload?.error?.message || error?.payload?.message || error?.message || '';
+        const details = error?.payload?.error?.details || error?.payload?.details || null;
+
+        const bundle = {
+            timestamp: new Date().toISOString(),
+            endpoint: endpoint || error?.endpoint || error?.payload?.endpoint || '',
+            http_status: Number.isFinite(status) ? status : null,
+            error_code: errorCode || null,
+            request_id: requestId || null,
+            message,
+            details,
+        };
+
+        if (extra && typeof extra === 'object') {
+            bundle.extra = extra;
+        }
+
+        return bundle;
+    },
+
+    handleErrorCodeAction(error) {
+        const code = this.getErrorCode(error);
+        if (!code) return false;
+
+        if (code === 'OTP_SESSION_REQUIRED' || code === 'OTP_SESSION_EXPIRED') {
+            apiClient.setShiftOtpToken('');
+            this.showToast('Vuelve a verificar tu código de acceso para continuar.', {
+                tone: 'warning',
+                title: 'Verificación requerida',
+                duration: 5000,
+            });
+            return true;
+        }
+
+        if (code === 'DEVICE_NOT_TRUSTED' || code === 'DEVICE_REGISTRATION_REQUIRED') {
+            this.showToast('Este dispositivo no está registrado. Vuelve a iniciar sesión para registrarlo.', {
+                tone: 'warning',
+                title: 'Dispositivo no registrado',
+                duration: 6000,
+            });
+            return true;
+        }
+
+        if (code === 'LEGAL_NOT_ACCEPTED') {
+            void this.ensureLegalConsent?.();
+            return true;
+        }
+
+        if (code === 'PIN_CHANGE_REQUIRED') {
+            if (this.currentUser) {
+                this.currentUser.must_change_pin = true;
+            }
+            void this.ensurePinChangeIfRequired?.();
+            return true;
+        }
+
+        return false;
+    },
+
+    async copyErrorReport(error, options = {}) {
+        const bundle = this.buildErrorReportBundle(error, options);
+        const text = JSON.stringify(bundle, null, 2);
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const tmp = document.createElement('textarea');
+                tmp.value = text;
+                document.body.appendChild(tmp);
+                tmp.select();
+                document.execCommand('copy');
+                document.body.removeChild(tmp);
+            }
+            this.showToast('Detalle copiado al portapapeles. Compártelo con soporte.', {
+                tone: 'success',
+                title: 'Detalle copiado',
+                duration: 3000,
+            });
+            return true;
+        } catch (copyError) {
+            console.warn('No fue posible copiar el detalle del error.', copyError);
+            this.showToast('No fue posible copiar. Toma un screenshot y envíalo a soporte.', {
+                tone: 'error',
+                title: 'No se pudo copiar',
+            });
+            return false;
+        }
     },
 
     getShiftFinalizeDetailedErrorMessage(error) {
@@ -4330,18 +4453,36 @@ const app = {
         );
     },
 
+    _detectPlatform() {
+        const ua = navigator.userAgent || '';
+        if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+        if (/Android/i.test(ua)) return 'android';
+        return 'desktop';
+    },
+
+    _getGpsPermissionInstructions() {
+        const platform = this._detectPlatform();
+        if (platform === 'ios') {
+            return 'iOS: Ajustes → Privacidad y Seguridad → Servicios de ubicación → Safari (o Chrome) → activa Ubicación mientras usas la app.';
+        }
+        if (platform === 'android') {
+            return 'Android: Ajustes de Chrome → Permisos del sitio → Ubicación → Permitir para turnos-front-three.vercel.app.';
+        }
+        return 'Habilita el permiso de ubicación en la barra de dirección del navegador y recarga la página.';
+    },
+
     getGeolocationMessage(error) {
         if (this.isGeolocationPermissionDenied(error)) {
-            return 'Permiso GPS bloqueado. Activa la ubicación del navegador y vuelve a intentar.';
+            return `Permiso de ubicación bloqueado. ${this._getGpsPermissionInstructions()}`;
         }
 
         switch (this.getGeolocationErrorCode(error)) {
             case 2:
-                return 'Ubicación no disponible';
+                return 'No pudimos obtener tu ubicación. Verifica que el GPS esté encendido y que no estés dentro de un edificio con mala señal.';
             case 3:
-                return 'Tiempo de espera agotado';
+                return 'La lectura de ubicación tardó demasiado. Sal a un lugar con vista al cielo y vuelve a intentar.';
             default:
-                return 'No fue posible verificar la ubicación';
+                return 'No fue posible leer tu ubicación. Verifica que el GPS esté activo y vuelve a intentar.';
         }
     },
 
