@@ -1405,6 +1405,19 @@
                             <textarea id="supervisor-restaurant-task-description" placeholder="Explica qué debe revisar o completar el equipo en ese restaurante..." required></textarea>
                         </div>
 
+                        <div class="form-group">
+                            <label for="supervisor-restaurant-task-video">Video de instrucciones (opcional)</label>
+                            <input type="file" id="supervisor-restaurant-task-video" accept="video/*" capture="environment" style="opacity:0;position:absolute;pointer-events:none;width:1px;height:1px;">
+                            <label for="supervisor-restaurant-task-video" id="supervisor-restaurant-task-video-label" class="rtask-file-label">
+                                <i class="fas fa-video"></i>
+                                <span class="rtask-file-label-text">Grabar o adjuntar video (máx. 60s recomendado)</span>
+                            </label>
+                            <video id="supervisor-restaurant-task-video-preview" class="hidden" controls playsinline style="width:100%;margin-top:8px;border-radius:8px;background:#000;max-height:220px;"></video>
+                            <p class="muted-copy" style="font-size:12px;margin:6px 0 0;">
+                                El contratista podrá reproducir este video antes de completar la tarea.
+                            </p>
+                        </div>
+
                         <div class="shift-special-task-options">
                             <label class="checkbox-wrapper">
                                 <input type="checkbox" id="supervisor-restaurant-task-requires-evidence">

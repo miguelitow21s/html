@@ -2743,6 +2743,10 @@ export const supervisorMethods = {
                 );
             }),
         ]);
+        // Si la sesión se cerró mientras las requests estaban en vuelo, abortar sin tocar el DOM/currentUser.
+        if (!this.currentUser) {
+            return;
+        }
         const todayShifts = this.getTodayShifts(shifts);
         this.data.supervisor.shifts = todayShifts;
 
@@ -4618,6 +4622,9 @@ export const supervisorMethods = {
         const form = document.getElementById('supervisor-restaurant-task-form');
         form?.reset();
 
+        this.resetSupervisorRestaurantTaskVideoUi();
+        this.bindSupervisorRestaurantTaskVideoOnce();
+
         const select = document.getElementById('supervisor-restaurant-task-restaurant');
         if (select) {
             this.populateSupervisorRestaurantOptions('supervisor-restaurant-task-restaurant', true);
@@ -4645,8 +4652,83 @@ export const supervisorMethods = {
             description: document.getElementById('supervisor-restaurant-task-description')?.value?.trim() || '',
             requiresEvidence: document.getElementById('supervisor-restaurant-task-requires-evidence')?.checked === true,
             priority: document.getElementById('supervisor-restaurant-task-priority')?.value?.trim() || '',
+            videoFile: document.getElementById('supervisor-restaurant-task-video')?.files?.[0] || null,
             source: this.restaurantTaskDraftSource || 'restaurants',
         };
+    },
+
+    resetSupervisorRestaurantTaskVideoUi() {
+        const input = document.getElementById('supervisor-restaurant-task-video');
+        if (input) input.value = '';
+
+        const preview = document.getElementById('supervisor-restaurant-task-video-preview');
+        if (preview) {
+            preview.pause?.();
+            if (preview.src) URL.revokeObjectURL?.(preview.src);
+            preview.removeAttribute('src');
+            preview.load?.();
+            preview.classList.add('hidden');
+        }
+
+        const label = document.getElementById('supervisor-restaurant-task-video-label');
+        const text = label?.querySelector('.rtask-file-label-text');
+        if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s recomendado)';
+        label?.classList.remove('rtask-file-label-has-file');
+    },
+
+    bindSupervisorRestaurantTaskVideoOnce() {
+        const input = document.getElementById('supervisor-restaurant-task-video');
+        if (!input || input.dataset.videoBound === '1') return;
+        input.dataset.videoBound = '1';
+
+        input.addEventListener('change', () => {
+            const preview = document.getElementById('supervisor-restaurant-task-video-preview');
+            const label = document.getElementById('supervisor-restaurant-task-video-label');
+            const text = label?.querySelector('.rtask-file-label-text');
+            const file = input.files?.[0];
+
+            if (preview?.src) URL.revokeObjectURL?.(preview.src);
+
+            if (!file) {
+                if (preview) {
+                    preview.removeAttribute('src');
+                    preview.classList.add('hidden');
+                }
+                if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s recomendado)';
+                label?.classList.remove('rtask-file-label-has-file');
+                return;
+            }
+
+            if (preview) {
+                preview.src = URL.createObjectURL(file);
+                preview.classList.remove('hidden');
+            }
+            if (text) {
+                const shortName = file.name.length > 24 ? `${file.name.slice(0, 24)}…` : file.name;
+                text.textContent = `🎬 Video listo: ${shortName}`;
+            }
+            label?.classList.add('rtask-file-label-has-file');
+        });
+    },
+
+    async uploadRestaurantTaskInstructionsVideo(videoFile, restaurantId) {
+        // Contract con backend: operational_tasks_manage.request_instructions_upload
+        // devuelve { signedUrl, path } para storage. Después la ruta se envía en
+        // instructions_video_path al crear la tarea.
+        const requestUpload = await apiClient.operationalTasksManage('request_instructions_upload', {
+            restaurant_id: this.normalizeTaskCreatePayloadValue(restaurantId),
+            content_type: videoFile.type || 'video/mp4',
+            filename: videoFile.name || 'instructions.mp4',
+        });
+
+        const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
+        const path = requestUpload?.path || requestUpload?.upload?.path;
+        if (!signedUrl || !path) {
+            throw new Error('No fue posible preparar la subida del video de instrucciones.');
+        }
+
+        await apiClient.uploadToSignedUrl(signedUrl, videoFile, videoFile.type || 'video/mp4');
+        return path;
     },
 
     setSupervisorRestaurantTaskSubmitState(isSubmitting = false) {
@@ -4711,6 +4793,32 @@ export const supervisorMethods = {
                 (item) => String(getRestaurantRecordId(item) || '').trim() === draft.restaurantId
             ) || null;
         const restaurantName = restaurant ? getRestaurantDisplayName(restaurant) : 'el restaurante seleccionado';
+
+        this.setSupervisorRestaurantTaskSubmitState(true);
+        this.showLoading(t('sup.toast.creating.task'), t('sup.toast.creating.task.desc'));
+
+        let instructionsVideoPath = null;
+        if (draft.videoFile) {
+            try {
+                instructionsVideoPath = await this.uploadRestaurantTaskInstructionsVideo(
+                    draft.videoFile,
+                    draft.restaurantId
+                );
+            } catch (uploadError) {
+                console.error('[rtask.create] instructions video upload failed', uploadError);
+                this.hideLoading();
+                this.setSupervisorRestaurantTaskSubmitState(false);
+                this.showToast(
+                    this.getErrorMessage(
+                        uploadError,
+                        'No fue posible subir el video de instrucciones. Puedes quitar el video o intentar de nuevo.'
+                    ),
+                    { tone: 'error', title: 'Video no subido' }
+                );
+                return;
+            }
+        }
+
         const payloadBase = {
             restaurant_id: this.normalizeTaskCreatePayloadValue(draft.restaurantId),
             task_scope: 'restaurant',
@@ -4720,13 +4828,11 @@ export const supervisorMethods = {
             requires_evidence: draft.requiresEvidence,
             priority: draft.priority || undefined,
             origin_page: draft.source,
+            instructions_video_path: instructionsVideoPath || undefined,
         };
         const payloadVariants = payloadBase.priority
             ? [payloadBase, { ...payloadBase, priority: undefined }]
             : [payloadBase];
-
-        this.setSupervisorRestaurantTaskSubmitState(true);
-        this.showLoading(t('sup.toast.creating.task'), t('sup.toast.creating.task.desc'));
 
         try {
             let created = false;

@@ -221,7 +221,32 @@ export const employeeMethods = {
     },
 
     getEmployeeRestaurantOpenTasks() {
-        return (this.data.employee.openTasks || []).filter((t) => this.isRestaurantScopedTask(t));
+        // Solo mostrar tareas del sitio al que pertenece el turno visible (activo o próximo agendado).
+        // Si no hay ningún turno visible, no debe mostrarse ninguna tarea de restaurante.
+        const activeRestaurantId = String(
+            this.data.currentShift?.restaurant_id ||
+                this.data.currentShift?.restaurant?.id ||
+                this.data.currentScheduledShift?.restaurant_id ||
+                this.data.currentScheduledShift?.restaurant?.id ||
+                ''
+        ).trim();
+
+        if (!activeRestaurantId) {
+            return [];
+        }
+
+        return (this.data.employee.openTasks || []).filter((task) => {
+            if (!this.isRestaurantScopedTask(task)) return false;
+            const taskRestaurantId = String(
+                task?.restaurant_id ||
+                    task?.restaurant?.restaurant_id ||
+                    task?.restaurant?.id ||
+                    task?.meta?.restaurant_id ||
+                    task?.metadata?.restaurant_id ||
+                    ''
+            ).trim();
+            return taskRestaurantId && taskRestaurantId === activeRestaurantId;
+        });
     },
 
     getVisibleEmployeeTasks(dashboard = this.data.employee.dashboard || {}) {
@@ -1430,12 +1455,29 @@ export const employeeMethods = {
                 </button>
             </div>`;
 
+        const instructionsVideoUrl = String(
+            task.instructions_video_url ||
+                task.instructions_video?.url ||
+                task.meta?.instructions_video_url ||
+                task.metadata?.instructions_video_url ||
+                ''
+        ).trim();
+        const videoHtml = instructionsVideoUrl
+            ? `<div class="rtask-video-wrap" style="margin:8px 0;">
+                <video controls playsinline preload="metadata" style="width:100%;border-radius:8px;background:#000;max-height:240px;" src="${escapeHtml(instructionsVideoUrl)}"></video>
+                <p class="muted-copy" style="font-size:12px;margin:4px 0 0;">
+                    <i class="fas fa-video"></i> Video de instrucciones del inspector
+                </p>
+            </div>`
+            : '';
+
         return `<div class="rtask-card" data-task-id="${taskId}">
             <div class="rtask-header">
                 <span class="rtask-title">${escapeHtml(task.title || 'Tarea del sitio')}</span>
                 <span class="badge ${getBadgeClass(status)}">${escapeHtml(status)}</span>
             </div>
             ${task.description ? `<p class="rtask-desc">${escapeHtml(task.description)}</p>` : ''}
+            ${videoHtml}
             <p class="rtask-meta">${metaParts.join(' · ')}</p>
             ${actionsHtml}
         </div>`;

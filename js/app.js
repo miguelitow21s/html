@@ -3075,6 +3075,13 @@ const app = {
                     break;
             }
         } catch (error) {
+            // Si el usuario cerró sesión mientras la request estaba en vuelo, los datos
+            // resuelven contra `this.currentUser === null` y estallan con "null is not an object".
+            // No tiene sentido mostrar un toast de error para una sesión que ya no existe.
+            if (!this.currentUser) {
+                console.warn(`Ignorando error de carga de ${page}: la sesión ya no está activa.`, error);
+                return;
+            }
             console.error(`No fue posible cargar datos para ${page}.`, error);
             this.showToast(this.getErrorMessage(error, 'No fue posible cargar la página. Intenta de nuevo.'), {
                 tone: 'error',
