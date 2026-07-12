@@ -1789,20 +1789,36 @@ const app = {
         return bundle;
     },
 
+    isOtpSessionError(error) {
+        const code = this.getErrorCode(error);
+        return code === 'OTP_SESSION_REQUIRED' || code === 'OTP_SESSION_EXPIRED' || code === 'OTP_SESSION_INVALID';
+    },
+
+    /**
+     * Cuando el backend responde con OTP_SESSION_*, este helper:
+     * 1. Limpia el token viejo.
+     * 2. Fuerza un nuevo OTP verify (send + verify modal).
+     * 3. Ejecuta el retryFn() con el token nuevo ya en headers.
+     * Devuelve el resultado del retryFn o lanza el error del retry.
+     */
+    async retryWithFreshOtp(retryFn, { purpose = 'action' } = {}) {
+        apiClient.setShiftOtpToken('');
+        localStorage.removeItem(STORAGE_KEYS.shiftOtpExpiresAt);
+        this.showToast('Tu código de acceso expiró. Vamos a verificarlo de nuevo para continuar.', {
+            tone: 'info',
+            title: 'Verificación requerida',
+            duration: 3500,
+        });
+        await this.ensureOtpVerification({ force: true, purpose });
+        return retryFn();
+    },
+
     handleErrorCodeAction(error) {
         const code = this.getErrorCode(error);
         if (!code) return false;
 
-        if (code === 'OTP_SESSION_REQUIRED' || code === 'OTP_SESSION_EXPIRED') {
-            apiClient.setShiftOtpToken('');
-            this.showToast('Vuelve a verificar tu código de acceso para continuar.', {
-                tone: 'warning',
-                title: 'Verificación requerida',
-                duration: 5000,
-            });
-            return true;
-        }
-
+        // OTP_SESSION_* NO se maneja aquí — el caller debe usar retryWithFreshOtp
+        // para reintentar la acción con un token nuevo.
         if (code === 'DEVICE_NOT_TRUSTED' || code === 'DEVICE_REGISTRATION_REQUIRED') {
             this.showToast('Este dispositivo no está registrado. Vuelve a iniciar sesión para registrarlo.', {
                 tone: 'warning',

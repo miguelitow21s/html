@@ -586,8 +586,7 @@ export const employeeMethods = {
 
         this.showLoading(t('toast.starting.service'), t('toast.wait'));
 
-        try {
-            await this.ensureOtpVerification();
+        const performStartShiftRequest = async () => {
             const otpTokenLength = String(apiClient.getConfig()?.shiftOtpToken || '').length;
             console.info('[shifts_start] pre-request diagnostic', {
                 otpTokenPresent: otpTokenLength > 0,
@@ -620,6 +619,22 @@ export const employeeMethods = {
                     this.data.employee.dashboard
                 );
                 this.data.currentScheduledShift = null;
+            }
+        };
+
+        try {
+            await this.ensureOtpVerification();
+            try {
+                await performStartShiftRequest();
+            } catch (firstError) {
+                if (this.isOtpSessionError?.(firstError)) {
+                    console.warn('[shifts_start] OTP session invalido/expirado; reintentando tras re-verificar', {
+                        error_code: this.getErrorCode?.(firstError),
+                    });
+                    await this.retryWithFreshOtp(() => performStartShiftRequest(), { purpose: 'shift_start' });
+                } else {
+                    throw firstError;
+                }
             }
 
             this.persistCurrentShiftAreaSelection();
@@ -1123,14 +1138,31 @@ export const employeeMethods = {
                 this.resolveOpenEmployeeTasks(notes),
             ]);
 
-            const endShiftPayload = await apiClient.endShift({
-                shift_id: this.data.currentShift.id,
-                lat: location.lat,
-                lng: location.lng,
-                fit_for_work: true,
-                declaration: notes,
-                early_end_reason: earlyEndReason,
-            });
+            const performEndShiftRequest = () =>
+                apiClient.endShift({
+                    shift_id: this.data.currentShift.id,
+                    lat: location.lat,
+                    lng: location.lng,
+                    fit_for_work: true,
+                    declaration: notes,
+                    early_end_reason: earlyEndReason,
+                });
+
+            let endShiftPayload;
+            try {
+                endShiftPayload = await performEndShiftRequest();
+            } catch (firstError) {
+                if (this.isOtpSessionError?.(firstError)) {
+                    console.warn('[shifts_end] OTP session invalido/expirado; reintentando tras re-verificar', {
+                        error_code: this.getErrorCode?.(firstError),
+                    });
+                    endShiftPayload = await this.retryWithFreshOtp(() => performEndShiftRequest(), {
+                        purpose: 'shift_end',
+                    });
+                } else {
+                    throw firstError;
+                }
+            }
             this.recordShiftRequestTrace(
                 'shifts_end',
                 this.extractRequestId(endShiftPayload, apiClient.lastResponseMeta),
