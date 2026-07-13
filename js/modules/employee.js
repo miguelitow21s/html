@@ -612,39 +612,43 @@ export const employeeMethods = {
         this.showLoading(t('toast.starting.service'), t('toast.wait'));
 
         const performStartShiftRequest = async () => {
+            // Si ya hay turno activo (usuario reentró después de un start exitoso pero fotos pendientes),
+            // NO tocamos scheduledShift (que en ese caso es null): el turno ya está corriendo en el backend.
+            if (this.data.currentShift) {
+                return;
+            }
+
             const otpTokenLength = String(apiClient.getConfig()?.shiftOtpToken || '').length;
             console.info('[shifts_start] pre-request diagnostic', {
                 otpTokenPresent: otpTokenLength > 0,
                 otpTokenLength,
-                scheduledShiftId: scheduledShift.id,
-                restaurantId: scheduledShift.restaurant_id,
+                scheduledShiftId: scheduledShift?.id,
+                restaurantId: scheduledShift?.restaurant_id,
             });
             const location = this.location || (await this.captureLocation({ updateUi: false }));
 
-            if (!this.data.currentShift) {
-                const result = await apiClient.startShift({
-                    restaurant_id: scheduledShift.restaurant_id,
-                    scheduled_shift_id: scheduledShift.id,
-                    lat: location.lat,
-                    lng: location.lng,
-                    fit_for_work: true,
-                    declaration: 'Me encuentro en condiciones de iniciar labores.',
-                });
+            const result = await apiClient.startShift({
+                restaurant_id: scheduledShift.restaurant_id,
+                scheduled_shift_id: scheduledShift.id,
+                lat: location.lat,
+                lng: location.lng,
+                fit_for_work: true,
+                declaration: 'Me encuentro en condiciones de iniciar labores.',
+            });
 
-                this.data.currentShift = this.enrichEmployeeShiftRecord(
-                    {
-                        ...scheduledShift,
-                        id: result?.shift_id,
-                        scheduled_shift_id: scheduledShift.id,
-                        restaurant_id: scheduledShift.restaurant_id,
-                        restaurant: scheduledShift.restaurant,
-                        start_time: new Date().toISOString(),
-                        state: 'activo',
-                    },
-                    this.data.employee.dashboard
-                );
-                this.data.currentScheduledShift = null;
-            }
+            this.data.currentShift = this.enrichEmployeeShiftRecord(
+                {
+                    ...scheduledShift,
+                    id: result?.shift_id,
+                    scheduled_shift_id: scheduledShift.id,
+                    restaurant_id: scheduledShift.restaurant_id,
+                    restaurant: scheduledShift.restaurant,
+                    start_time: new Date().toISOString(),
+                    state: 'activo',
+                },
+                this.data.employee.dashboard
+            );
+            this.data.currentScheduledShift = null;
         };
 
         try {
