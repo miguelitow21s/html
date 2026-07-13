@@ -4713,11 +4713,12 @@ export const supervisorMethods = {
 
     async uploadRestaurantTaskInstructionsVideo(videoFile, restaurantId) {
         // Contract con backend: operational_tasks_manage.request_instructions_upload
-        // devuelve { signedUrl, path } para storage. Después la ruta se envía en
-        // instructions_video_path al crear la tarea.
+        // devuelve { signedUrl, path, max_bytes, allowed_mime } para storage.
+        // Después la ruta se envía en instructions_video_path al crear la tarea.
+        const contentType = videoFile.type || 'video/mp4';
         const requestUpload = await apiClient.operationalTasksManage('request_instructions_upload', {
             restaurant_id: this.normalizeTaskCreatePayloadValue(restaurantId),
-            content_type: videoFile.type || 'video/mp4',
+            content_type: contentType,
             filename: videoFile.name || 'instructions.mp4',
         });
 
@@ -4727,7 +4728,23 @@ export const supervisorMethods = {
             throw new Error('No fue posible preparar la subida del video de instrucciones.');
         }
 
-        await apiClient.uploadToSignedUrl(signedUrl, videoFile, videoFile.type || 'video/mp4');
+        const maxBytes = Number(requestUpload?.max_bytes || requestUpload?.upload?.max_bytes || 0);
+        if (maxBytes > 0 && videoFile.size > maxBytes) {
+            const maxMb = Math.floor(maxBytes / (1024 * 1024));
+            const fileMb = Math.round((videoFile.size / (1024 * 1024)) * 10) / 10;
+            throw new Error(
+                `El video pesa ${fileMb} MB y el máximo permitido es ${maxMb} MB. Graba uno más corto o comprímelo.`
+            );
+        }
+
+        const allowedMime = asArray(requestUpload?.allowed_mime || requestUpload?.upload?.allowed_mime);
+        if (allowedMime.length > 0 && !allowedMime.includes(contentType)) {
+            throw new Error(
+                `Formato ${contentType || 'desconocido'} no soportado. Usa uno de: ${allowedMime.join(', ')}.`
+            );
+        }
+
+        await apiClient.uploadToSignedUrl(signedUrl, videoFile, contentType);
         return path;
     },
 
