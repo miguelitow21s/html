@@ -4681,7 +4681,9 @@ export const supervisorMethods = {
         if (!input || input.dataset.videoBound === '1') return;
         input.dataset.videoBound = '1';
 
-        input.addEventListener('change', () => {
+        const MAX_VIDEO_SECONDS = 60;
+
+        input.addEventListener('change', async () => {
             const preview = document.getElementById('supervisor-restaurant-task-video-preview');
             const label = document.getElementById('supervisor-restaurant-task-video-label');
             const text = label?.querySelector('.rtask-file-label-text');
@@ -4694,21 +4696,81 @@ export const supervisorMethods = {
                     preview.removeAttribute('src');
                     preview.classList.add('hidden');
                 }
-                if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s recomendado)';
+                if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s)';
                 label?.classList.remove('rtask-file-label-has-file');
                 return;
             }
 
+            const objectUrl = URL.createObjectURL(file);
+            let durationSeconds = 0;
+            try {
+                durationSeconds = await this.probeVideoDurationSeconds(objectUrl);
+            } catch (probeError) {
+                console.warn('No fue posible medir la duración del video de instrucciones.', probeError);
+            }
+
+            if (durationSeconds > MAX_VIDEO_SECONDS) {
+                URL.revokeObjectURL(objectUrl);
+                input.value = '';
+                if (preview) {
+                    preview.removeAttribute('src');
+                    preview.classList.add('hidden');
+                }
+                if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s)';
+                label?.classList.remove('rtask-file-label-has-file');
+                const mmss = this.formatSecondsAsMmSs(durationSeconds);
+                this.showToast(
+                    `El video dura ${mmss} y el máximo permitido es 1:00. Graba uno más corto.`,
+                    { tone: 'warning', title: 'Video demasiado largo', duration: 6000 }
+                );
+                return;
+            }
+
             if (preview) {
-                preview.src = URL.createObjectURL(file);
+                preview.src = objectUrl;
                 preview.classList.remove('hidden');
             }
             if (text) {
                 const shortName = file.name.length > 24 ? `${file.name.slice(0, 24)}…` : file.name;
-                text.textContent = `🎬 Video listo: ${shortName}`;
+                const durationText = durationSeconds > 0 ? ` · ${this.formatSecondsAsMmSs(durationSeconds)}` : '';
+                text.textContent = `🎬 Video listo: ${shortName}${durationText}`;
             }
             label?.classList.add('rtask-file-label-has-file');
         });
+    },
+
+    probeVideoDurationSeconds(objectUrl) {
+        return new Promise((resolve, reject) => {
+            const probe = document.createElement('video');
+            probe.preload = 'metadata';
+            probe.muted = true;
+            probe.playsInline = true;
+            const cleanup = () => {
+                probe.removeAttribute('src');
+                probe.load?.();
+            };
+            probe.addEventListener('loadedmetadata', () => {
+                const seconds = Number(probe.duration);
+                cleanup();
+                if (!Number.isFinite(seconds) || seconds <= 0) {
+                    reject(new Error('Duración no disponible.'));
+                } else {
+                    resolve(seconds);
+                }
+            });
+            probe.addEventListener('error', () => {
+                cleanup();
+                reject(new Error('No se pudo leer el video.'));
+            });
+            probe.src = objectUrl;
+        });
+    },
+
+    formatSecondsAsMmSs(totalSeconds) {
+        const rounded = Math.max(0, Math.round(Number(totalSeconds) || 0));
+        const minutes = Math.floor(rounded / 60);
+        const seconds = rounded % 60;
+        return `${minutes}:${String(seconds).padStart(2, '0')}`;
     },
 
     async uploadRestaurantTaskInstructionsVideo(videoFile, restaurantId) {
