@@ -12,6 +12,7 @@ import {
     DEFAULT_SYSTEM_SETTINGS,
     CACHE_TTLS,
     createScopedConsole,
+    SHIFT_MATCH_WINDOW_MS,
     SUPPORTED_EVIDENCE_IMAGE_TYPES,
 } from './constants.js';
 import {
@@ -5532,7 +5533,7 @@ const app = {
                     return null;
                 }
 
-                if (!Number.isFinite(endMs) && Number.isFinite(startMs) && startMs < now - 12 * 60 * 60 * 1000) {
+                if (!Number.isFinite(endMs) && Number.isFinite(startMs) && startMs < now - SHIFT_MATCH_WINDOW_MS) {
                     return null;
                 }
 
@@ -6256,8 +6257,8 @@ const app = {
                     candidateStartAt > 0 &&
                     Number.isFinite(candidateEndAt) &&
                     candidateEndAt > 0 &&
-                    activeStartAt >= candidateStartAt - 12 * 60 * 60 * 1000 &&
-                    activeStartAt <= candidateEndAt + 12 * 60 * 60 * 1000
+                    activeStartAt >= candidateStartAt - SHIFT_MATCH_WINDOW_MS &&
+                    activeStartAt <= candidateEndAt + SHIFT_MATCH_WINDOW_MS
                 ) {
                     score += 80;
                 }

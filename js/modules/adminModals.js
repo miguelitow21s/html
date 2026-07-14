@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { CACHE_TTLS } from '../constants.js';
+import { CACHE_TTLS, SHIFT_MATCH_WINDOW_MS } from '../constants.js';
 import { apiClient } from '../api.js';
 import { t } from '../i18n.js';
 import {
@@ -1537,8 +1537,8 @@ export const adminModalMethods = {
     async getSupervisorShiftList(options = {}) {
         const todayStart = getTodayStart();
         const todayEnd = getTodayEnd();
-        const defaultFrom = toIsoDate(new Date(todayStart.getTime() - 12 * 60 * 60 * 1000));
-        const defaultTo = toIsoDate(new Date(todayEnd.getTime() + 12 * 60 * 60 * 1000));
+        const defaultFrom = toIsoDate(new Date(todayStart.getTime() - SHIFT_MATCH_WINDOW_MS));
+        const defaultTo = toIsoDate(new Date(todayEnd.getTime() + SHIFT_MATCH_WINDOW_MS));
 
         const {
             forceRestaurants = false,

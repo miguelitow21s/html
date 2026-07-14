@@ -11,6 +11,7 @@ import {
     CACHE_TTLS,
     DEFAULT_SYSTEM_SETTINGS,
     REPORT_COLUMNS,
+    SHIFT_MATCH_WINDOW_MS,
     SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES,
 } from '../constants.js';
 import { apiClient, buildIdempotencyKey } from '../api.js';
@@ -2615,8 +2616,8 @@ export const supervisorMethods = {
     async getSupervisorShiftList(options = {}) {
         const todayStart = getTodayStart();
         const todayEnd = getTodayEnd();
-        const defaultFrom = toIsoDate(new Date(todayStart.getTime() - 12 * 60 * 60 * 1000));
-        const defaultTo = toIsoDate(new Date(todayEnd.getTime() + 12 * 60 * 60 * 1000));
+        const defaultFrom = toIsoDate(new Date(todayStart.getTime() - SHIFT_MATCH_WINDOW_MS));
+        const defaultTo = toIsoDate(new Date(todayEnd.getTime() + SHIFT_MATCH_WINDOW_MS));
 
         const {
             forceRestaurants = false,

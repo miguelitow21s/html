@@ -137,6 +137,12 @@ export const CACHE_TTLS = Object.freeze({
 
 export const SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES = 15;
 
+// Tolerancia de 12h para: (a) matchear un turno activo contra un scheduled_shift
+// cuyo start/end cruza medianoche, y (b) rango por defecto de filtros de fecha
+// (± 12h del día visible) en admin/supervisor. Cambiar aquí y se propaga a los
+// 5 call-sites en app.js / adminModals.js / supervisor.js.
+export const SHIFT_MATCH_WINDOW_MS = 12 * 60 * 60 * 1000;
+
 export const SUPPORTED_EVIDENCE_IMAGE_TYPES = Object.freeze([
     'image/jpeg',
     'image/png',
