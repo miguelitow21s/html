@@ -2409,6 +2409,22 @@ const app = {
         });
     },
 
+    async cancelPinChangeFromModal() {
+        // Escape hatch del modal de cambio de PIN (que está data-locked=true).
+        // El usuario NO puede continuar en la app sin cambiar el PIN, pero sí
+        // puede cerrar sesión y volver al login, por ejemplo si el backend falla
+        // repetidamente o si se equivocó de cuenta.
+        const modal = document.getElementById('modal-pin-change');
+        modal?.classList.remove('active');
+
+        if (this.pinChangeGate?.reject) {
+            this.pinChangeGate.reject(new Error('El usuario canceló el cambio de PIN.'));
+        }
+        this.pinChangeGate = null;
+
+        await this.performLogout({ scope: 'local' });
+    },
+
     async submitChangePinForm() {
         if (this.pinChangeSubmitPromise) {
             return this.pinChangeSubmitPromise;
