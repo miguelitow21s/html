@@ -58,7 +58,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="change-pin-back-btn" onclick="app.cancelPinChangeFromModal()">
+                    <button type="button" class="btn btn-secondary" id="change-pin-back-btn" data-action="cancelPinChangeFromModal">
                         <i class="fas fa-arrow-left"></i>
                         <span data-i18n="pin.back">Volver al login</span>
                     </button>
@@ -158,7 +158,7 @@
                 </div>
                 <div class="initial-pin-code-row">
                     <code id="initial-pin-code" class="initial-pin-code">000000</code>
-                    <button type="button" id="initial-pin-copy-btn" class="btn btn-secondary" onclick="app.copyInitialPin()">
+                    <button type="button" id="initial-pin-copy-btn" class="btn btn-secondary" data-action="copyInitialPin">
                         <i class="fas fa-copy"></i>
                         <span data-i18n="pin.initial.copy">Copiar</span>
                     </button>
@@ -166,7 +166,7 @@
                 <p id="initial-pin-email-status" class="muted-copy hidden"></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="app.closeInitialPinModal()">
+                <button type="button" class="btn btn-primary" data-action="closeInitialPinModal">
                     <i class="fas fa-check"></i>
                     <span data-i18n="pin.initial.done">Listo, ya lo guardé</span>
                 </button>
@@ -178,7 +178,7 @@
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
                 <h3>Cancelar servicio asignado</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" onclick="app.closeCancelScheduledShiftModal()">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" data-action="closeCancelScheduledShiftModal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -194,8 +194,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="app.closeCancelScheduledShiftModal()">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="app.submitCancelScheduledShiftModal()">
+                <button type="button" class="btn btn-secondary" data-action="closeCancelScheduledShiftModal">Cancelar</button>
+                <button type="button" class="btn btn-danger" data-action="submitCancelScheduledShiftModal">
                     Eliminar
                 </button>
             </div>
@@ -206,7 +206,7 @@
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
                 <h3>Eliminar sitio</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" onclick="app.closeDeactivateRestaurantModal()">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" data-action="closeDeactivateRestaurantModal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -219,8 +219,8 @@
                 <p id="restaurant-deactivate-copy" class="muted-copy" data-i18n="modal.deactivate.restaurant.confirm">Confirma la eliminación del sitio seleccionado.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="app.closeDeactivateRestaurantModal()">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="app.submitDeactivateRestaurantModal()">
+                <button type="button" class="btn btn-secondary" data-action="closeDeactivateRestaurantModal">Cancelar</button>
+                <button type="button" class="btn btn-danger" data-action="submitDeactivateRestaurantModal">
                     Eliminar
                 </button>
             </div>
@@ -231,7 +231,7 @@
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
                 <h3>Eliminar usuario</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" onclick="app.closeDeactivateUserModal()">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" data-action="closeDeactivateUserModal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -248,8 +248,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="app.closeDeactivateUserModal()">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="app.submitDeactivateUserModal()">
+                <button type="button" class="btn btn-secondary" data-action="closeDeactivateUserModal">Cancelar</button>
+                <button type="button" class="btn btn-danger" data-action="submitDeactivateUserModal">
                     Eliminar
                 </button>
             </div>
@@ -262,9 +262,9 @@
     <div id="page-login" class="login-container">
         <div class="login-box">
             <div class="login-lang-toggle">
-                <button class="lang-btn" id="lang-es-btn" onclick="app.setLanguage('es')">ES</button>
+                <button class="lang-btn" id="lang-es-btn" data-action="setLanguage" data-args="es">ES</button>
                 <span class="lang-sep">|</span>
-                <button class="lang-btn" id="lang-en-btn" onclick="app.setLanguage('en')">EN</button>
+                <button class="lang-btn" id="lang-en-btn" data-action="setLanguage" data-args="en">EN</button>
             </div>
 
             <div class="logo">
@@ -317,7 +317,7 @@
             </form>
 
             <div class="forgot-password">
-                <a href="#" onclick="app.requestPasswordReset(); return false;" data-i18n="login.forgot">¿Olvidé mi contraseña?</a>
+                <a href="#" data-action="requestPasswordReset" data-i18n="login.forgot">¿Olvidé mi contraseña?</a>
             </div>
         </div>
     </div>
@@ -330,12 +330,12 @@
          ============================================================ -->
     <div id="page-employee-dashboard" class="app-container hidden">
         <header class="header">
-            <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
+            <button class="header-brand" data-action="navigateToRoleDashboard" aria-label="Inicio">
                 <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
                 <span>WorkTrace</span>
             </button>
             <div class="header-actions">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-profile')" aria-label="Mi perfil">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="employee-profile" aria-label="Mi perfil">
                     <span id="user-initial">U</span>
                 </button>
             </div>
@@ -404,22 +404,22 @@
             </div>
 
             <div class="action-buttons">
-                <button class="btn-large btn-success" id="employee-start-shift-btn" onclick="app.openEmployeeShiftStart()">
+                <button class="btn-large btn-success" id="employee-start-shift-btn" data-action="openEmployeeShiftStart">
                     <i class="fas fa-play-circle"></i> <span id="employee-start-shift-label">Iniciar Servicio</span>
                 </button>
             </div>
         </main>
         
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="app.navigate('employee-dashboard')">
+            <button class="nav-item active" data-action="navigate" data-args="employee-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item" onclick="app.navigate('employee-profile')">
+            <button class="nav-item" data-action="navigate" data-args="employee-profile">
                 <i class="fas fa-user"></i>
                 <span data-i18n="nav.profile">Perfil</span>
             </button>
-            <button class="nav-item" onclick="app.logout()">
+            <button class="nav-item" data-action="logout">
                 <i class="fas fa-sign-out-alt"></i>
                 <span data-i18n="nav.logout">Salir</span>
             </button>
@@ -430,7 +430,7 @@
     <div id="page-employee-profile" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="employee-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span>Mi Perfil</span>
@@ -498,15 +498,15 @@
         </main>
         
         <nav class="bottom-nav">
-            <button class="nav-item" onclick="app.navigate('employee-dashboard')">
+            <button class="nav-item" data-action="navigate" data-args="employee-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item active" onclick="app.navigate('employee-profile')">
+            <button class="nav-item active" data-action="navigate" data-args="employee-profile">
                 <i class="fas fa-user"></i>
                 <span data-i18n="nav.profile">Perfil</span>
             </button>
-            <button class="nav-item" onclick="app.logout()">
+            <button class="nav-item" data-action="logout">
                 <i class="fas fa-sign-out-alt"></i>
                 <span data-i18n="nav.logout">Salir</span>
             </button>
@@ -517,7 +517,7 @@
     <div id="page-employee-shift-start" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="employee-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="shift.start.title">Iniciar Servicio</span>
@@ -533,13 +533,13 @@
                     <span data-i18n="shift.start.gps.status">Ubicación lista para verificar</span>
                 </div>
                 <div class="gps-actions">
-                    <button class="btn btn-secondary" onclick="app.verifyGPS()" id="gps-btn">
+                    <button class="btn btn-secondary" data-action="verifyGPS" id="gps-btn">
                         <i class="fas fa-location-crosshairs"></i> Verificar ubicación
                     </button>
                 </div>
             </div>
             
-            <label class="checkbox-wrapper" onclick="app.toggleHealthCert()">
+            <label class="checkbox-wrapper" data-action="toggleHealthCert">
                 <input type="checkbox" id="health-cert">
                 <div class="checkbox-content">
                     <span class="checkbox-title">Certificado de Actitud</span>
@@ -565,7 +565,7 @@
                 </div>
             </div>
             
-            <button class="btn btn-primary" onclick="app.startShiftFlow()" id="continue-btn" disabled>
+            <button class="btn btn-primary" data-action="startShiftFlow" id="continue-btn" disabled>
                 Continuar a Fotos <i class="fas fa-arrow-right"></i>
             </button>
         </main>
@@ -575,7 +575,7 @@
     <div id="page-employee-shift-photos" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-shift-start')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="employee-shift-start">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span>Fotos de Inicio</span>
@@ -626,7 +626,7 @@
                 </div>
             </div>
             
-            <button class="btn-large btn-success" onclick="app.completeShiftStartPhotos()" id="start-cleaning-btn" disabled>
+            <button class="btn-large btn-success" data-action="completeShiftStartPhotos" id="start-cleaning-btn" disabled>
                 <i class="fas fa-broom"></i> Iniciar Limpieza
             </button>
         </main>
@@ -666,7 +666,7 @@
                 </div>
             </div>
             
-            <button class="btn-large btn-success" onclick="app.navigateToShiftCompletion()">
+            <button class="btn-large btn-success" data-action="navigateToShiftCompletion">
                 <i class="fas fa-check-circle"></i> He Terminado la Limpieza
             </button>
         </main>
@@ -676,7 +676,7 @@
     <div id="page-employee-shift-complete" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-shift-cleaning')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="employee-shift-cleaning">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="shift.complete.title">Finalizar Servicio</span>
@@ -730,7 +730,7 @@
                         </div>
                     </div>
                 </div>
-                <label class="checkbox-wrapper shift-complete-special-task-toggle" onclick="app.toggleSpecialTask()">
+                <label class="checkbox-wrapper shift-complete-special-task-toggle" data-action="toggleSpecialTask">
                     <input type="checkbox" id="special-task-done">
                     <span data-i18n="shift.complete.task.check">¿Completó la tarea especial asignada?</span>
                 </label>
@@ -740,7 +740,7 @@
                         <strong>Evidencia de tarea</strong>
                         <span id="special-task-evidence-status" class="badge badge-warning" data-i18n="shift.photos.evidence.nophoto">Sin foto</span>
                     </div>
-                    <button type="button" class="btn btn-secondary btn-inline" onclick="app.triggerSpecialTaskEvidenceCapture()">
+                    <button type="button" class="btn btn-secondary btn-inline" data-action="triggerSpecialTaskEvidenceCapture">
                         <i class="fas fa-camera"></i> Tomar foto de evidencia
                     </button>
                     <img id="special-task-evidence-preview" class="shift-complete-task-evidence-preview hidden" alt="Evidencia de tarea especial">
@@ -759,7 +759,7 @@
                 </div>
             </div>
             
-            <button class="btn-large btn-success" onclick="app.prepareShiftSummary()">
+            <button class="btn-large btn-success" data-action="prepareShiftSummary">
                 <i class="fas fa-clipboard-check"></i> Ver Resumen y Finalizar
             </button>
         </main>
@@ -769,7 +769,7 @@
     <div id="page-employee-shift-summary" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-shift-complete')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="employee-shift-complete">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="shift.summary.title">Resumen del Servicio</span>
@@ -820,7 +820,7 @@
                 </div>
             </div>
             
-            <button class="btn-large btn-success" onclick="app.finalizeShift()">
+            <button class="btn-large btn-success" data-action="finalizeShift">
                 <i class="fas fa-check"></i> <span data-i18n="shift.summary.finalize">Confirmar y Finalizar Servicio</span>
             </button>
         </main>
@@ -836,10 +836,10 @@
             <span data-i18n="success.message">El servicio ha sido finalizado exitosamente. Todas las evidencias han sido guardadas.</span>
         </p>
         <div style="display: flex; gap: 15px;">
-            <button class="btn btn-secondary" onclick="app.navigate('employee-dashboard')">
+            <button class="btn btn-secondary" data-action="navigate" data-args="employee-dashboard">
                 <i class="fas fa-home"></i> Ir al Inicio
             </button>
-            <button class="btn btn-primary" onclick="app.navigate('employee-profile')">
+            <button class="btn btn-primary" data-action="navigate" data-args="employee-profile">
                 <i class="fas fa-user"></i> Ver Perfil
             </button>
         </div>
@@ -853,12 +853,12 @@
          ============================================================ -->
     <div id="page-supervisor-dashboard" class="app-container hidden">
         <header class="header">
-            <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
+            <button class="header-brand" data-action="navigateToRoleDashboard" aria-label="Inicio">
                 <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
                 <span>WorkTrace</span>
             </button>
             <div class="header-actions">
-                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
                     <i class="fas fa-house"></i>
                     <span data-i18n="admin.return.btn">Inicio Admin</span>
                 </button>
@@ -874,23 +874,23 @@
             </div>
             
             <div class="quick-actions">
-                <button class="quick-action-btn" onclick="app.navigate('supervisor-restaurants')">
+                <button class="quick-action-btn" data-action="navigate" data-args="supervisor-restaurants">
                     <i class="fas fa-store"></i>
                     <span data-i18n="supervisor.nav.restaurants">Sitios</span>
                 </button>
-                <button class="quick-action-btn" onclick="app.navigate('supervisor-employees')">
+                <button class="quick-action-btn" data-action="navigate" data-args="supervisor-employees">
                     <i class="fas fa-users"></i>
                     <span data-i18n="supervisor.nav.employees">Contratistas</span>
                 </button>
-                <button class="quick-action-btn" onclick="app.navigate('supervisor-shifts')">
+                <button class="quick-action-btn" data-action="navigate" data-args="supervisor-shifts">
                     <i class="fas fa-calendar-alt"></i>
                     <span data-i18n="supervisor.nav.shifts">Proyectos</span>
                 </button>
-                <button class="quick-action-btn" onclick="app.navigate('supervisor-reports')">
+                <button class="quick-action-btn" data-action="navigate" data-args="supervisor-reports">
                     <i class="fas fa-chart-bar"></i>
                     <span data-i18n="supervisor.nav.reports">Reportes</span>
                 </button>
-                <button class="quick-action-btn" onclick="app.navigate('supervisor-supervision')">
+                <button class="quick-action-btn" data-action="navigate" data-args="supervisor-supervision">
                     <i class="fas fa-clipboard-check"></i>
                     <span data-i18n="supervisor.nav.supervision">Auditar</span>
                 </button>
@@ -913,11 +913,11 @@
         </main>
         
         <nav class="bottom-nav">
-            <button class="nav-item" onclick="app.navigate('supervisor-dashboard')">
+            <button class="nav-item" data-action="navigate" data-args="supervisor-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item" onclick="app.logout()">
+            <button class="nav-item" data-action="logout">
                 <i class="fas fa-sign-out-alt"></i>
                 <span data-i18n="nav.logout">Salir</span>
             </button>
@@ -928,13 +928,13 @@
     <div id="page-supervisor-restaurants" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="supervisor-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.restaurants.title">Gestión de Sitios</span>
             </div>
             <div class="header-actions">
-                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
                     <i class="fas fa-house"></i>
                     <span data-i18n="admin.return.btn">Inicio Admin</span>
                 </button>
@@ -943,7 +943,7 @@
         
         <main class="content">
             <div class="toolbar-actions" style="margin-bottom: 20px;">
-                <button class="btn btn-primary btn-inline hidden" id="supervisor-create-restaurant-btn" onclick="app.openModal('modal-admin-restaurant')">
+                <button class="btn btn-primary btn-inline hidden" id="supervisor-create-restaurant-btn" data-action="openModal" data-args="modal-admin-restaurant">
                     <i class="fas fa-plus"></i> <span data-i18n="supervisor.restaurants.new">Nuevo Sitio</span>
                 </button>
             </div>
@@ -958,13 +958,13 @@
     <div id="page-supervisor-employees" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="supervisor-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.employees.title">Gestión de Contratistas</span>
             </div>
             <div class="header-actions">
-                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
                     <i class="fas fa-house"></i>
                     <span data-i18n="admin.return.btn">Inicio Admin</span>
                 </button>
@@ -981,7 +981,7 @@
                 </select>
             </div>
             <div class="toolbar-actions" style="margin-bottom: 20px;">
-                <button class="btn btn-primary btn-inline hidden" id="supervisor-create-employee-btn" onclick="app.openModal('modal-admin-employee')">
+                <button class="btn btn-primary btn-inline hidden" id="supervisor-create-employee-btn" data-action="openModal" data-args="modal-admin-employee">
                     <i class="fas fa-user-plus"></i> <span data-i18n="supervisor.employees.new">Nuevo Contratista</span>
                 </button>
             </div>
@@ -993,13 +993,13 @@
     <div id="page-supervisor-shifts" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="supervisor-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.shifts.title">Asignación de Proyectos</span>
             </div>
             <div class="header-actions">
-                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
                     <i class="fas fa-house"></i>
                     <span data-i18n="admin.return.btn">Inicio Admin</span>
                 </button>
@@ -1011,19 +1011,19 @@
                 <!-- Navegación de semana + acciones -->
                 <div class="supervisor-week-toolbar">
                     <div class="supervisor-week-nav">
-                        <button class="btn btn-secondary btn-inline" onclick="app.changeSupervisorWeek(-1)" aria-label="Semana anterior">
+                        <button class="btn btn-secondary btn-inline" data-action="changeSupervisorWeek" data-args="-1" aria-label="Semana anterior">
                             <i class="fas fa-chevron-left"></i>
                         </button>
                         <span class="supervisor-week-label" id="supervisor-week-label" data-i18n="supervisor.week.loading">Cargando...</span>
-                        <button class="btn btn-secondary btn-inline" onclick="app.changeSupervisorWeek(1)" aria-label="Semana siguiente">
+                        <button class="btn btn-secondary btn-inline" data-action="changeSupervisorWeek" data-args="1" aria-label="Semana siguiente">
                             <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
                     <div class="supervisor-week-actions">
-                        <button class="btn btn-secondary btn-inline" onclick="app.replicateSupervisorLastWeek()">
+                        <button class="btn btn-secondary btn-inline" data-action="replicateSupervisorLastWeek">
                             <i class="fas fa-copy"></i> <span data-i18n="supervisor.shifts.replicate">Replicar asignaciones</span>
                         </button>
-                        <button class="btn btn-primary btn-inline" onclick="app.openScheduleShiftModal()">
+                        <button class="btn btn-primary btn-inline" data-action="openScheduleShiftModal">
                             <i class="fas fa-plus"></i> <span data-i18n="supervisor.shifts.schedule">Asignar Servicios</span>
                         </button>
                     </div>
@@ -1038,7 +1038,7 @@
                         <option value="" data-i18n="supervisor.shifts.all.employees">Todos los contratistas</option>
                     </select>
                     <input type="text" id="supervisor-shifts-filter-search" class="dark-control" data-i18n-placeholder="supervisor.shifts.search" placeholder="Buscar contratista...">
-                    <button type="button" class="btn btn-secondary btn-inline" onclick="app.clearSupervisorShiftFilters()" data-i18n="supervisor.shifts.clear">
+                    <button type="button" class="btn btn-secondary btn-inline" data-action="clearSupervisorShiftFilters" data-i18n="supervisor.shifts.clear">
                         Limpiar
                     </button>
                 </div>
@@ -1057,13 +1057,13 @@
     <div id="page-supervisor-reports" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="supervisor-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.reports.title">Reportes de Calidad</span>
             </div>
             <div class="header-actions">
-                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
                     <i class="fas fa-house"></i>
                     <span data-i18n="admin.return.btn">Inicio Admin</span>
                 </button>
@@ -1083,7 +1083,7 @@
                         <label for="report-start-date">Fecha Inicio</label>
                         <div class="date-control">
                             <input type="date" id="report-start-date" class="dark-control compact-picker" value="2026-03-01" inputmode="none" lang="en-GB">
-                            <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('report-start-date')" aria-label="Abrir selector de fecha de inicio">
+                            <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="report-start-date" aria-label="Abrir selector de fecha de inicio">
                                 <i class="fas fa-calendar-alt"></i>
                             </button>
                         </div>
@@ -1092,7 +1092,7 @@
                         <label for="report-end-date">Fecha Fin</label>
                         <div class="date-control">
                             <input type="date" id="report-end-date" class="dark-control compact-picker" value="2026-03-24" inputmode="none" lang="en-GB">
-                            <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('report-end-date')" aria-label="Abrir selector de fecha fin">
+                            <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="report-end-date" aria-label="Abrir selector de fecha fin">
                                 <i class="fas fa-calendar-alt"></i>
                             </button>
                         </div>
@@ -1115,14 +1115,14 @@
                 </div>
 
                 <div class="toolbar-actions report-actions-row">
-                    <button class="btn btn-primary" onclick="app.generateReport()">
+                    <button class="btn btn-primary" data-action="generateReport">
                         <i class="fas fa-sync-alt"></i> Generar Informe
                     </button>
                 </div>
 
                 <div id="report-support-card" class="card report-support-card hidden">
                     <div class="report-support-copy" data-i18n="supervisor.reports.support">Si el informe falla, toca aquí para copiar el detalle y compartirlo con soporte.</div>
-                    <button type="button" class="btn btn-secondary btn-inline" onclick="app.copyLatestReportDebug()">
+                    <button type="button" class="btn btn-secondary btn-inline" data-action="copyLatestReportDebug">
                         <i class="fas fa-copy"></i> Copiar detalle del error
                     </button>
                 </div>
@@ -1180,18 +1180,18 @@
                 </div>
                 
                 <div class="report-downloads">
-                    <button class="btn btn-secondary btn-inline" id="report-preview-html" onclick="app.openGeneratedReportPreview()">
+                    <button class="btn btn-secondary btn-inline" id="report-preview-html" data-action="openGeneratedReportPreview">
                         <i class="fas fa-eye"></i> Visualizar
                     </button>
                     <div class="report-download-menu">
-                        <button class="btn btn-secondary btn-inline" id="report-download-trigger" type="button" onclick="app.toggleReportDownloadMenu()">
+                        <button class="btn btn-secondary btn-inline" id="report-download-trigger" type="button" data-action="toggleReportDownloadMenu">
                             <i class="fas fa-download"></i> Descargar
                         </button>
                         <div id="report-download-options" class="report-download-options hidden">
-                            <button class="btn btn-secondary btn-inline" type="button" onclick="app.downloadGeneratedReport('pdf')">
+                            <button class="btn btn-secondary btn-inline" type="button" data-action="downloadGeneratedReport" data-args="pdf">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
-                            <button class="btn btn-secondary btn-inline" type="button" onclick="app.downloadGeneratedReport('excel')">
+                            <button class="btn btn-secondary btn-inline" type="button" data-action="downloadGeneratedReport" data-args="excel">
                                 <i class="fas fa-file-excel"></i> Excel
                             </button>
                         </div>
@@ -1206,13 +1206,13 @@
     <div id="page-supervisor-supervision" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="supervisor-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.supervision.title">Auditoría de Calidad en Sitio</span>
             </div>
             <div class="header-actions">
-                <button class="header-btn header-pill-btn hidden admin-return-btn" onclick="app.navigate('admin-dashboard')" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
                     <i class="fas fa-house"></i>
                     <span data-i18n="admin.return.btn">Inicio Admin</span>
                 </button>
@@ -1228,7 +1228,7 @@
                     <span id="supervision-location-status" data-i18n="supervisor.supervision.gps.status">Ubicación lista para verificar en sitio</span>
                 </div>
                 <div class="gps-actions">
-                    <button type="button" class="btn btn-secondary" id="supervision-verify-location-btn" onclick="app.verifySupervisorSupervisionLocation()">
+                    <button type="button" class="btn btn-secondary" id="supervision-verify-location-btn" data-action="verifySupervisorSupervisionLocation">
                         <i class="fas fa-location-crosshairs"></i> <span data-i18n="audit.btn.verify.onsite">Verificar en sitio</span>
                     </button>
                 </div>
@@ -1245,7 +1245,7 @@
                 <div class="card-header">
                     <div class="card-title" data-i18n="supervisor.supervision.task">Tarea Especial del Sitio</div>
                 </div>
-                <button type="button" class="btn btn-secondary btn-inline" id="supervision-create-restaurant-task-btn" onclick="app.openSupervisorRestaurantTaskModalFromSupervision()">
+                <button type="button" class="btn btn-secondary btn-inline" id="supervision-create-restaurant-task-btn" data-action="openSupervisorRestaurantTaskModalFromSupervision">
                     <i class="fas fa-star"></i> <span data-i18n="audit.btn.create.task">Crear tarea especial</span>
                 </button>
             </div>
@@ -1281,24 +1281,24 @@
                 <textarea id="supervision-observations" placeholder="Registre sus observaciones de la supervisión..."></textarea>
             </div>
             
-            <button id="supervision-save-button" class="btn btn-success" onclick="app.saveSupervision()">
+            <button id="supervision-save-button" class="btn btn-success" data-action="saveSupervision">
                 <i class="fas fa-save"></i> <span data-i18n="supervisor.supervision.save">Guardar Auditoría</span>
             </button>
 
             <div id="supervision-support-card" class="card supervision-support-card hidden">
                 <div class="supervision-support-copy" data-i18n="supervisor.supervision.support">Si vuelve a fallar, toca aquí para copiar el detalle y compartirlo con soporte.</div>
-                <button type="button" class="btn btn-secondary" onclick="app.copyLatestSupervisionDebug()">
+                <button type="button" class="btn btn-secondary" data-action="copyLatestSupervisionDebug">
                     <i class="fas fa-copy"></i> Copiar detalle del error
                 </button>
             </div>
         </main>
         
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="app.navigate('supervisor-dashboard')">
+            <button class="nav-item active" data-action="navigate" data-args="supervisor-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item" onclick="app.logout()">
+            <button class="nav-item" data-action="logout">
                 <i class="fas fa-sign-out-alt"></i>
                 <span data-i18n="nav.logout">Salir</span>
             </button>
@@ -1310,7 +1310,7 @@
         <div class="modal-content shift-scheduler-modal-content">
             <div class="modal-header">
                 <h3 data-i18n="modal.shift.title">Asignar Servicios</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" onclick="app.closeModal('modal-supervisor-schedule-shift')">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" data-action="closeModal" data-args="modal-supervisor-schedule-shift">&times;</button>
             </div>
             <form id="supervisor-shift-form">
                 <div class="modal-body">
@@ -1329,7 +1329,7 @@
                             <label for="sched-shift-start-date" data-i18n="modal.shift.start.date">Fecha inicio</label>
                             <div class="date-control">
                                 <input type="date" id="sched-shift-start-date" class="compact-picker" required inputmode="none" lang="en-GB">
-                                <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('sched-shift-start-date')" aria-label="Abrir selector de fecha inicio">
+                                <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="sched-shift-start-date" aria-label="Abrir selector de fecha inicio">
                                     <i class="fas fa-calendar-alt"></i>
                                 </button>
                             </div>
@@ -1338,7 +1338,7 @@
                             <label for="sched-shift-end-date" data-i18n="modal.shift.end.date">Fecha fin</label>
                             <div class="date-control">
                                 <input type="date" id="sched-shift-end-date" class="compact-picker" required inputmode="none" lang="en-GB">
-                                <button type="button" class="date-control-btn" onclick="app.openDateControlPicker('sched-shift-end-date')" aria-label="Abrir selector de fecha fin">
+                                <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="sched-shift-end-date" aria-label="Abrir selector de fecha fin">
                                     <i class="fas fa-calendar-alt"></i>
                                 </button>
                             </div>
@@ -1365,7 +1365,7 @@
                     <div id="sched-shift-day-rows" class="shift-plan-rows"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-supervisor-schedule-shift')" data-i18n="btn.cancel">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-action="closeModal" data-args="modal-supervisor-schedule-shift" data-i18n="btn.cancel">Cancelar</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-calendar-check"></i> <span data-i18n="modal.shift.save">Guardar Asignación</span>
                     </button>
@@ -1378,7 +1378,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Nueva Tarea Especial</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" onclick="app.closeModal('modal-supervisor-restaurant-task')">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" data-action="closeModal" data-args="modal-supervisor-restaurant-task">&times;</button>
             </div>
             <form id="supervisor-restaurant-task-form">
                 <div class="modal-body">
@@ -1438,7 +1438,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-supervisor-restaurant-task')">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-action="closeModal" data-args="modal-supervisor-restaurant-task">Cancelar</button>
                     <button type="submit" class="btn btn-primary" id="supervisor-restaurant-task-submit-btn">
                         <i class="fas fa-paper-plane"></i> Crear tarea
                     </button>
@@ -1455,7 +1455,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 data-i18n="modal.restaurant.title">Nuevo Sitio</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" onclick="app.closeModal('modal-admin-restaurant')">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" data-action="closeModal" data-args="modal-admin-restaurant">&times;</button>
             </div>
             <form id="admin-restaurant-form">
                 <div class="modal-body">
@@ -1504,7 +1504,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-admin-restaurant')">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-action="closeModal" data-args="modal-admin-restaurant">Cancelar</button>
                     <button type="submit" class="btn btn-primary" data-i18n="btn.save">Guardar</button>
                 </div>
             </form>
@@ -1516,7 +1516,7 @@
         <div class="modal-content admin-employee-modal-content">
             <div class="modal-header">
                 <h3 data-i18n="modal.employee.title">Nuevo Contratista</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" onclick="app.closeModal('modal-admin-employee')">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" data-action="closeModal" data-args="modal-admin-employee">&times;</button>
             </div>
             <form id="admin-employee-form">
                 <div class="modal-body">
@@ -1541,7 +1541,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-admin-employee')">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-action="closeModal" data-args="modal-admin-employee">Cancelar</button>
                     <button type="submit" class="btn btn-primary" data-i18n="btn.save">Guardar</button>
                 </div>
             </form>
@@ -1555,7 +1555,7 @@
     <!-- ADMIN DASHBOARD -->
     <div id="page-admin-dashboard" class="app-container hidden">
         <header class="header">
-            <button class="header-brand" onclick="app.navigateToRoleDashboard()" aria-label="Inicio">
+            <button class="header-brand" data-action="navigateToRoleDashboard" aria-label="Inicio">
                 <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
                 <span>WorkTrace Admin</span>
             </button>
@@ -1572,15 +1572,15 @@
             </div>
             
             <div class="quick-actions">
-                <button class="quick-action-btn" onclick="app.navigate('supervisor-dashboard')">
+                <button class="quick-action-btn" data-action="navigate" data-args="supervisor-dashboard">
                     <i class="fas fa-user-tie"></i>
                     <span data-i18n="admin.dashboard.supervisor.btn">Módulo de Inspectores de Calidad</span>
                 </button>
-                <button class="quick-action-btn" onclick="app.adminAction('monitoreo-supervisoras')">
+                <button class="quick-action-btn" data-action="adminAction" data-args="monitoreo-supervisoras">
                     <i class="fas fa-clipboard-check"></i>
                     <span data-i18n="admin.dashboard.monitor.btn">Seguimiento de Inspecciones</span>
                 </button>
-                <button class="quick-action-btn" onclick="app.adminAction('supervisores')">
+                <button class="quick-action-btn" data-action="adminAction" data-args="supervisores">
                     <i class="fas fa-user-shield"></i>
                     <span data-i18n="admin.dashboard.manage.btn">Administrar Inspectores</span>
                 </button>
@@ -1611,11 +1611,11 @@
         </main>
         
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="app.navigate('admin-dashboard')">
+            <button class="nav-item active" data-action="navigate" data-args="admin-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item" onclick="app.logout()">
+            <button class="nav-item" data-action="logout">
                 <i class="fas fa-sign-out-alt"></i>
                 <span data-i18n="nav.logout">Salir</span>
             </button>
@@ -1626,7 +1626,7 @@
     <div id="page-admin-supervision-monitor" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('admin-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="admin-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="admin.monitor.title">Seguimiento de Inspecciones</span>
@@ -1661,15 +1661,15 @@
         </main>
 
         <nav class="bottom-nav">
-            <button class="nav-item" onclick="app.navigate('admin-dashboard')">
+            <button class="nav-item" data-action="navigate" data-args="admin-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item active" onclick="app.navigate('admin-supervision-monitor')">
+            <button class="nav-item active" data-action="navigate" data-args="admin-supervision-monitor">
                 <i class="fas fa-clipboard-check"></i>
                 <span data-i18n="supervisor.nav.supervision">Auditar</span>
             </button>
-            <button class="nav-item" onclick="app.logout()">
+            <button class="nav-item" data-action="logout">
                 <i class="fas fa-sign-out-alt"></i>
                 <span data-i18n="nav.logout">Salir</span>
             </button>
@@ -1680,7 +1680,7 @@
     <div id="page-admin-supervisors" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('admin-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="admin-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="admin.dashboard.manage.btn">Administrar Inspectores</span>
@@ -1724,7 +1724,7 @@
                             <i class="fas fa-save"></i>
                             <span id="admin-supervisor-submit-label" data-i18n="admin.supervisors.save">Guardar Inspector</span>
                         </button>
-                        <button type="button" class="btn btn-secondary btn-inline hidden" id="admin-supervisor-cancel-btn" onclick="app.resetAdminSupervisorForm()">
+                        <button type="button" class="btn btn-secondary btn-inline hidden" id="admin-supervisor-cancel-btn" data-action="resetAdminSupervisorForm">
                             <i class="fas fa-times"></i>
                             <span data-i18n="admin.supervisors.cancel">Cancelar edición</span>
                         </button>
@@ -1777,32 +1777,22 @@
         </main>
 
         <nav class="bottom-nav">
-            <button class="nav-item" onclick="app.navigate('admin-dashboard')">
+            <button class="nav-item" data-action="navigate" data-args="admin-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item active" onclick="app.navigate('admin-supervisors')">
+            <button class="nav-item active" data-action="navigate" data-args="admin-supervisors">
                 <i class="fas fa-user-shield"></i>
                 <span data-i18n="admin.nav.supervisors">Inspectores</span>
             </button>
-            <button class="nav-item" onclick="app.logout()">
+            <button class="nav-item" data-action="logout">
                 <i class="fas fa-sign-out-alt"></i>
                 <span data-i18n="nav.logout">Salir</span>
             </button>
         </nav>
     </div>
 
-    <script>
-        window.WORKTRACE_CONFIG = window.WORKTRACE_CONFIG || {
-            supabaseUrl: 'https://orwingqtwoqfhcogggac.supabase.co',
-            apiBaseUrl: 'https://orwingqtwoqfhcogggac.supabase.co/functions/v1',
-            supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yd2luZ3F0d29xZmhjb2dnZ2FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NzEyMzcsImV4cCI6MjA4NjI0NzIzN30.QA86sHHsgN2K96YetNnafJdKWZffT1FugDTRB7E_drA',
-            googleMapsApiKey: 'AIzaSyAugcqnN-QxUH2mRmgPH_hA5zo-5_RBtX0',
-            accessToken: '',
-            shiftOtpToken: '',
-            timeoutMs: 15000
-        };
-    </script>
+    <script src="/config.js"></script>
     <script type="module" src="js/app.js"></script>
 </body>
 </html>

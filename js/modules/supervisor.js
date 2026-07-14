@@ -3859,7 +3859,7 @@ export const supervisorMethods = {
                 return `<div class="ssg-shift-entry">
                 <div class="ssg-shift-rest">${restName}</div>
                 <div class="ssg-shift-time">${timeRange}</div>
-                ${shiftId ? `<button class="ssg-del-btn" onclick="event.stopPropagation();app.confirmCancelScheduledShift('${shiftId}')" title="Eliminar"><i class="fas fa-times"></i></button>` : ''}
+                ${shiftId ? `<button class="ssg-del-btn" type="button" data-action="confirmCancelScheduledShift" data-args="${shiftId}" data-stop-propagation="1" title="Eliminar"><i class="fas fa-times"></i></button>` : ''}
             </div>`;
             })
             .join('');

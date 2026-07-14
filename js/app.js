@@ -710,6 +710,34 @@ const app = {
     },
 
     bindEvents() {
+        // Delegador global de acciones — reemplaza los antiguos `onclick="app.xxx(...)"`
+        // por `data-action="xxx"` (+ opcional `data-args="a|b|c"`). Necesario para
+        // poder endurecer CSP a script-src 'self' sin 'unsafe-inline'.
+        // Los args se separan con `|` (raro en payloads reales); números se coercen
+        // automáticamente. Cualquier elemento dentro de <form> hace preventDefault
+        // para no disparar submits accidentales cuando el botón sea type=submit.
+        document.addEventListener('click', (event) => {
+            const target = event.target.closest('[data-action]');
+            if (!target) return;
+            const action = target.dataset.action;
+            const handler = this[action];
+            if (typeof handler !== 'function') {
+                console.warn(`[data-action] método no encontrado: ${action}`);
+                return;
+            }
+            const rawArgs = target.dataset.args || '';
+            const args = rawArgs
+                ? rawArgs.split('|').map((raw) => (/^-?\d+(\.\d+)?$/.test(raw) ? Number(raw) : raw))
+                : [];
+            if (target.closest('form') && target.type !== 'submit') {
+                event.preventDefault();
+            }
+            if (target.dataset.stopPropagation === '1') {
+                event.stopPropagation();
+            }
+            void handler.apply(this, args);
+        });
+
         const loginForm = document.getElementById('login-form');
         if (loginForm) {
             loginForm.addEventListener('submit', async (event) => {
