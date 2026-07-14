@@ -1528,15 +1528,6 @@ canvas {
     overflow: hidden;
 }
 
-.shift-board-heading {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 14px;
-    flex-wrap: wrap;
-    width: 100%;
-}
-
 #supervisor-shifts-filters {
     min-width: 0;
     max-width: 100%;
@@ -1666,11 +1657,7 @@ canvas {
 
 .shift-mode-switch,
 .shift-mode-btn,
-.shift-mode-panel,
 .shift-special-task-builder,
-.shift-special-task-toggle,
-.shift-special-task-fields,
-.shift-special-task-fields > *,
 .shift-plan-rows,
 .shift-plan-row,
 .shift-plan-row > *,
@@ -1711,66 +1698,11 @@ canvas {
     font-size: 18px;
 }
 
-.shift-mode-btn-copy {
-    display: grid;
-    gap: 2px;
-    min-width: 0;
-}
-
-.shift-mode-btn-copy strong {
-    color: inherit;
-    font-size: 15px;
-    line-height: 1.25;
-}
-
-.shift-mode-btn-copy small {
-    color: var(--gray);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.35;
-}
-
-.shift-mode-btn.active .shift-mode-btn-copy small {
-    color: #cbeafe;
-}
-
 .shift-mode-btn.active {
     background: rgba(var(--primary-rgb), 0.14);
     border-color: rgba(var(--primary-rgb), 0.55);
     color: var(--white);
     box-shadow: 0 18px 34px -28px rgba(var(--primary-rgb), 0.95);
-}
-
-.shift-mode-panel {
-    display: grid;
-    gap: 16px;
-    padding: 20px;
-    border-radius: 22px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    min-width: 0;
-    overflow: visible;
-}
-
-.shift-mode-intro {
-    display: grid;
-    gap: 8px;
-    padding-bottom: 4px;
-}
-
-.shift-mode-intro strong {
-    color: var(--white);
-    font-size: 20px;
-    line-height: 1.35;
-    overflow-wrap: anywhere;
-}
-
-.shift-mode-intro p {
-    color: var(--gray);
-    font-size: 14px;
-    line-height: 1.55;
-    overflow-wrap: anywhere;
 }
 
 .shift-batch-picker {
@@ -1872,29 +1804,9 @@ canvas {
     overflow-wrap: anywhere;
 }
 
-.shift-plan-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    padding-bottom: 6px;
-}
-
-.shift-plan-title {
-    display: block;
-    margin-bottom: 6px;
-}
-
 .shift-plan-rows {
     display: grid;
     gap: 14px;
-}
-
-.shift-plan-add-row {
-    display: flex;
-    justify-content: flex-start;
-    padding-top: 2px;
 }
 
 .shift-plan-row {
@@ -1904,13 +1816,6 @@ canvas {
     border-radius: 18px;
     background: rgba(15, 23, 42, 0.42);
     border: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.shift-week-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 10px;
 }
 
 .shift-week-summary {
@@ -2009,19 +1914,6 @@ canvas {
     resize: vertical;
 }
 
-.shift-plan-row-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.shift-plan-row-label {
-    color: var(--white);
-    font-size: 15px;
-    font-weight: 700;
-}
-
 .shift-plan-remove {
     min-height: 40px;
     padding: 10px 14px;
@@ -2069,29 +1961,6 @@ canvas {
 
 .shift-special-task-copy p {
     overflow-wrap: anywhere;
-}
-
-.shift-special-task-toggle {
-    margin-bottom: 0;
-}
-
-.shift-special-task-status,
-.shift-special-task-note {
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.36);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    color: var(--light-gray);
-    font-size: 13px;
-    line-height: 1.55;
-    width: fit-content;
-    max-width: 100%;
-}
-
-.shift-special-task-fields {
-    display: grid;
-    gap: 14px;
-    padding-top: 4px;
 }
 
 .shift-special-task-options {
