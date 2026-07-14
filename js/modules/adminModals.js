@@ -1065,8 +1065,8 @@ export const adminModalMethods = {
     async handleClearPhoneSupervisor(supervisorId) {
         const supervisor = this.getKnownAdminSupervisorRecord(supervisorId);
         await this.clearPhoneBindingRecord(supervisor, {
-            emptyMessage: 'No se pudo identificar la supervisora seleccionada.',
-            subjectLabel: 'supervisora',
+            emptyMessage: 'No se pudo identificar el inspector de calidad seleccionado.',
+            subjectLabel: 'inspector de calidad',
             refresh: async () => {
                 this.invalidateCache('adminSupervisors');
                 await this.loadAdminSupervisors(true);

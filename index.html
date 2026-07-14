@@ -1639,9 +1639,9 @@
                     <div class="card-title">Seguimiento de Hoy</div>
                 </div>
                 <div class="form-group admin-supervision-monitor-filter">
-                    <label for="admin-supervision-supervisor-filter">Supervisora</label>
+                    <label for="admin-supervision-supervisor-filter" data-i18n="admin.supervision.monitor.filter.label">Inspector de Calidad</label>
                     <select id="admin-supervision-supervisor-filter" class="dark-control" onchange="app.applyAdminSupervisionMonitorFilter()">
-                        <option value="">Todas las supervisoras</option>
+                        <option value="" data-i18n="admin.supervision.monitor.filter.all">Todos los inspectores</option>
                     </select>
                 </div>
                 <div class="stats-grid" id="admin-supervision-monitor-summary">
@@ -1654,7 +1654,7 @@
 
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">Actividad de Supervisoras</div>
+                    <div class="card-title" data-i18n="admin.supervision.monitor.activity">Actividad de Inspectores</div>
                 </div>
                 <div id="admin-supervision-monitor-list"></div>
             </div>
@@ -1690,7 +1690,7 @@
         <main class="content admin-section-grid admin-supervisors-page">
             <div class="card admin-supervisor-form-card">
                 <div class="card-header">
-                    <div class="card-title" id="admin-supervisor-form-title">Nueva Supervisora</div>
+                    <div class="card-title" id="admin-supervisor-form-title" data-i18n="admin.supervisors.new.title">Nuevo Inspector de Calidad</div>
                 </div>
                 <form id="admin-supervisor-form">
                     <input type="hidden" id="admin-supervisor-edit-id">
@@ -1701,7 +1701,7 @@
                         </div>
                         <div class="form-group admin-panel-field">
                             <label data-i18n="admin.supervisors.email">Correo electrónico</label>
-                            <input type="email" id="admin-supervisor-email" class="dark-control" placeholder="supervisora@worktrace.com" required>
+                            <input type="email" id="admin-supervisor-email" class="dark-control" data-i18n-placeholder="admin.supervisors.email.placeholder" placeholder="inspector@worktrace.com" required>
                         </div>
                     </div>
                     <div class="toolbar-row two-col">
@@ -1768,7 +1768,7 @@
 
             <div class="card admin-supervisor-list-card">
                 <div class="card-header">
-                    <div class="card-title">Supervisoras Registradas</div>
+                    <div class="card-title" data-i18n="admin.supervisors.list">Inspectores Registrados</div>
                 </div>
                 <div id="admin-supervisors-list" class="admin-section-grid">
                     <div class="empty-state" data-i18n="admin.supervisors.list.loading">Cargando inspectores...</div>

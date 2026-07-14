@@ -6389,7 +6389,7 @@ export const supervisorMethods = {
             });
         } catch (error) {
             if (!this.isAdminRole() && error?.status === 403) {
-                this.showToast(this.getErrorMessage(error, 'Tu cuenta de supervisora no pudo crear el restaurante.'), {
+                this.showToast(this.getErrorMessage(error, t('supervisor.error.create.restaurant')), {
                     tone: 'error',
                     title: t('toast.common.no.permission'),
                 });

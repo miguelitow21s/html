@@ -258,7 +258,7 @@ export const adminMethods = {
             if (!force && this.data.admin.supervisors.length > 0) {
                 supervisors = this.data.admin.supervisors.map((item) => ({
                     id: item.id,
-                    full_name: item.full_name || item.email || 'Supervisora',
+                    full_name: item.full_name || item.email || t('admin.supervisors.role.fallback'),
                     email: item.email || '',
                 }));
             } else {
@@ -275,7 +275,7 @@ export const adminMethods = {
                             item.name ||
                             `${item.first_name || ''} ${item.last_name || ''}`.trim() ||
                             item.email ||
-                            'Supervisora',
+                            t('admin.supervisors.role.fallback'),
                         email: item.email || '',
                     }))
                     .filter((item) => item.id);
@@ -308,7 +308,7 @@ export const adminMethods = {
 
             optionMap.set(id, {
                 id,
-                label: item.full_name || item.email || 'Supervisora',
+                label: item.full_name || item.email || t('admin.supervisors.role.fallback'),
             });
         });
 
@@ -320,7 +320,11 @@ export const adminMethods = {
 
             optionMap.set(id, {
                 id,
-                label: item?.supervisor?.full_name || item?.supervisor_name || item?.supervisor?.email || 'Supervisora',
+                label:
+                    item?.supervisor?.full_name ||
+                    item?.supervisor_name ||
+                    item?.supervisor?.email ||
+                    t('admin.supervisors.role.fallback'),
             });
         });
 
@@ -329,7 +333,7 @@ export const adminMethods = {
         );
 
         select.innerHTML = `
-            <option value="">Todas las supervisoras</option>
+            <option value="">${escapeHtml(t('admin.supervision.monitor.filter.all'))}</option>
             ${options
                 .map(
                     (item) => `
@@ -395,7 +399,10 @@ export const adminMethods = {
             <div class="admin-supervisions-stack">
                 ${visibleItems
                     .map((item) => {
-                        const supervisorName = item.supervisor?.full_name || item.supervisor_name || 'Supervisora';
+                        const supervisorName =
+                            item.supervisor?.full_name ||
+                            item.supervisor_name ||
+                            t('admin.supervisors.role.fallback');
                         const supervisorDetail = item.supervisor?.email || item.supervisor_email || '';
                         const restaurantName = getRestaurantDisplayName(
                             item,
@@ -483,7 +490,7 @@ export const adminMethods = {
             </div>
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(String(uniqueSupervisors.size))}</div>
-                <div class="stat-label">Supervisoras activas</div>
+                <div class="stat-label">${escapeHtml(t('admin.supervisors.stat.active'))}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(String(uniqueRestaurants.size))}</div>
@@ -553,11 +560,11 @@ export const adminMethods = {
         }
 
         if (formTitle) {
-            formTitle.textContent = 'Nueva Supervisora';
+            formTitle.textContent = t('admin.supervisors.new.title');
         }
 
         if (submitLabel) {
-            submitLabel.textContent = 'Guardar Supervisora';
+            submitLabel.textContent = t('admin.supervisors.save.new');
         }
 
         if (cancelButton) {
@@ -584,8 +591,8 @@ export const adminMethods = {
         document.getElementById('admin-supervisor-email').value = supervisor.email || '';
         document.getElementById('admin-supervisor-phone').value = supervisor.phone_e164 || '';
         document.getElementById('admin-supervisor-active').checked = supervisor.is_active !== false;
-        document.getElementById('admin-supervisor-form-title').textContent = 'Editar Supervisora';
-        document.getElementById('admin-supervisor-submit-label').textContent = 'Actualizar Supervisora';
+        document.getElementById('admin-supervisor-form-title').textContent = t('admin.supervisors.edit.title');
+        document.getElementById('admin-supervisor-submit-label').textContent = t('admin.supervisors.save.update');
         document.getElementById('admin-supervisor-cancel-btn').classList.remove('hidden');
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -672,7 +679,7 @@ export const adminMethods = {
     async loadAdminSupervisors(force = false) {
         const container = document.getElementById('admin-supervisors-list');
         if (container && (force || this.data.admin.supervisors.length === 0)) {
-            container.innerHTML = '<div class="empty-state">Cargando supervisoras...</div>';
+            container.innerHTML = `<div class="empty-state">${escapeHtml(t('admin.supervisors.list.loading'))}</div>`;
         }
 
         await this.ensureAdminRestaurants(force);
@@ -768,7 +775,7 @@ export const adminMethods = {
                                 item.full_name ||
                                 item.name ||
                                 `${item.first_name || ''} ${item.last_name || ''}`.trim() ||
-                                'Supervisora',
+                                t('admin.supervisors.role.fallback'),
                             email: item.email || '-',
                             phone_e164: item.phone_e164 || item.phone_number || '-',
                             is_active: item.is_active !== false,
@@ -800,8 +807,7 @@ export const adminMethods = {
         }
 
         if (supervisors.length === 0) {
-            container.innerHTML =
-                '<div class="empty-state">No hay supervisoras que coincidan con el filtro actual.</div>';
+            container.innerHTML = `<div class="empty-state">${escapeHtml(t('admin.supervisors.empty'))}</div>`;
             return;
         }
 
@@ -844,7 +850,7 @@ export const adminMethods = {
                         <div class="admin-supervisor-identity">
                             <div class="employee-avatar admin-supervisor-avatar">${escapeHtml(initials(supervisor.full_name || supervisor.email))}</div>
                             <div class="admin-supervisor-copy">
-                                <h4>${escapeHtml(supervisor.full_name || 'Supervisora')}</h4>
+                                <h4>${escapeHtml(supervisor.full_name || t('admin.supervisors.role.fallback'))}</h4>
                                 <p>${escapeHtml(supervisor.email || '-')} • ${escapeHtml(supervisor.phone_e164 || '-')}</p>
                                 <div class="audit-meta">ID: ${escapeHtml(supervisorId || '-')}</div>
                             </div>
@@ -962,7 +968,9 @@ export const adminMethods = {
 
     async toggleAdminSupervisorStatus(userId, isCurrentlyActive) {
         this.showLoading(
-            isCurrentlyActive ? 'Desactivando supervisora...' : 'Activando supervisora...',
+            isCurrentlyActive
+                ? t('admin.supervisors.status.deactivating')
+                : t('admin.supervisors.status.activating'),
             'Actualizando el acceso.'
         );
 
@@ -975,14 +983,16 @@ export const adminMethods = {
             this.invalidateCache('adminSupervisors');
             await this.loadAdminSupervisors(true);
             this.showToast(
-                isCurrentlyActive ? 'Supervisora desactivada correctamente.' : 'Supervisora activada correctamente.',
+                isCurrentlyActive
+                    ? t('admin.supervisors.status.deactivated')
+                    : t('admin.supervisors.status.activated'),
                 {
                     tone: 'success',
                     title: t('toast.common.saved'),
                 }
             );
         } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible actualizar el estado de la supervisora.'), {
+            this.showToast(this.getErrorMessage(error, t('admin.supervisors.status.error')), {
                 tone: 'error',
                 title: t('admin.toast.cannot.update.status'),
             });
