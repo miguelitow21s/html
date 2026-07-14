@@ -4683,13 +4683,41 @@ export const supervisorMethods = {
 
         const MAX_VIDEO_SECONDS = 60;
 
+        const rejectFile = ({ preview, label, text, objectUrl, toastMsg, toastTitle }) => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            input.value = '';
+            if (preview) {
+                preview.removeAttribute('src');
+                preview.classList.add('hidden');
+            }
+            if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s)';
+            label?.classList.remove('rtask-file-label-has-file');
+            if (toastMsg) {
+                this.showToast(toastMsg, {
+                    tone: 'warning',
+                    title: toastTitle || 'Video no válido',
+                    duration: 6000,
+                });
+            }
+        };
+
         input.addEventListener('change', async () => {
             const preview = document.getElementById('supervisor-restaurant-task-video-preview');
             const label = document.getElementById('supervisor-restaurant-task-video-label');
             const text = label?.querySelector('.rtask-file-label-text');
             const file = input.files?.[0];
 
-            if (preview?.src) URL.revokeObjectURL?.(preview.src);
+            // Token de generación: cada change bump-ea el token. Si el user elige otro archivo
+            // mientras el probe del anterior aún corre, cuando resuelva veremos que el token
+            // cambió y salimos sin tocar el estado del archivo actual.
+            const token = (Number(this._videoProbeToken) || 0) + 1;
+            this._videoProbeToken = token;
+
+            // Revocar el objectUrl previo del preview antes de reemplazar.
+            const previousPreviewSrc = preview?.src;
+            if (previousPreviewSrc && previousPreviewSrc.startsWith('blob:')) {
+                URL.revokeObjectURL(previousPreviewSrc);
+            }
 
             if (!file) {
                 if (preview) {
@@ -4703,26 +4731,43 @@ export const supervisorMethods = {
 
             const objectUrl = URL.createObjectURL(file);
             let durationSeconds = 0;
+            let probeFailed = false;
             try {
                 durationSeconds = await this.probeVideoDurationSeconds(objectUrl);
             } catch (probeError) {
+                probeFailed = true;
                 console.warn('No fue posible medir la duración del video de instrucciones.', probeError);
             }
 
-            if (durationSeconds > MAX_VIDEO_SECONDS) {
+            // Race guard: si el user seleccionó otro archivo mientras esperábamos el probe,
+            // este handler es obsoleto — no debe tocar el estado del handler más nuevo.
+            if (token !== this._videoProbeToken) {
                 URL.revokeObjectURL(objectUrl);
-                input.value = '';
-                if (preview) {
-                    preview.removeAttribute('src');
-                    preview.classList.add('hidden');
-                }
-                if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s)';
-                label?.classList.remove('rtask-file-label-has-file');
+                return;
+            }
+
+            if (probeFailed) {
+                rejectFile({
+                    preview,
+                    label,
+                    text,
+                    objectUrl,
+                    toastMsg: 'No pudimos leer el video. Prueba con otro formato (mp4, mov o webm) o vuelve a grabarlo.',
+                    toastTitle: 'Video no soportado',
+                });
+                return;
+            }
+
+            if (durationSeconds > MAX_VIDEO_SECONDS) {
                 const mmss = this.formatSecondsAsMmSs(durationSeconds);
-                this.showToast(
-                    `El video dura ${mmss} y el máximo permitido es 1:00. Graba uno más corto.`,
-                    { tone: 'warning', title: 'Video demasiado largo', duration: 6000 }
-                );
+                rejectFile({
+                    preview,
+                    label,
+                    text,
+                    objectUrl,
+                    toastMsg: `El video dura ${mmss} y el máximo permitido es 1:00. Graba uno más corto.`,
+                    toastTitle: 'Video demasiado largo',
+                });
                 return;
             }
 
@@ -4739,28 +4784,47 @@ export const supervisorMethods = {
         });
     },
 
-    probeVideoDurationSeconds(objectUrl) {
+    probeVideoDurationSeconds(objectUrl, { timeoutMs = 5000 } = {}) {
         return new Promise((resolve, reject) => {
             const probe = document.createElement('video');
             probe.preload = 'metadata';
             probe.muted = true;
             probe.playsInline = true;
+            let settled = false;
             const cleanup = () => {
                 probe.removeAttribute('src');
                 probe.load?.();
             };
+            const timeoutId = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(new Error('Timeout leyendo la duración del video.'));
+            }, timeoutMs);
+            const safeResolve = (value) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+                cleanup();
+                resolve(value);
+            };
+            const safeReject = (error) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+                cleanup();
+                reject(error);
+            };
             probe.addEventListener('loadedmetadata', () => {
                 const seconds = Number(probe.duration);
-                cleanup();
                 if (!Number.isFinite(seconds) || seconds <= 0) {
-                    reject(new Error('Duración no disponible.'));
+                    safeReject(new Error('Duración no disponible.'));
                 } else {
-                    resolve(seconds);
+                    safeResolve(seconds);
                 }
             });
             probe.addEventListener('error', () => {
-                cleanup();
-                reject(new Error('No se pudo leer el video.'));
+                safeReject(new Error('No se pudo leer el video.'));
             });
             probe.src = objectUrl;
         });
