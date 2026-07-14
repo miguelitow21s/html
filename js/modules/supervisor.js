@@ -945,18 +945,14 @@ export const supervisorMethods = {
         );
         const name = match ? getRestaurantDisplayName(match) : '';
         hint.style.display = '';
-        hint.textContent = name
-            ? `Hora local de ${name} · ${timezone}`
-            : `Zona horaria del sitio: ${timezone}`;
+        hint.textContent = name ? `Hora local de ${name} · ${timezone}` : `Zona horaria del sitio: ${timezone}`;
     },
 
     getRestaurantTimezoneById(restaurantId) {
         if (!restaurantId) return '';
         const normalizedId = String(restaurantId).trim();
         const restaurants = asArray(this.data.supervisor?.restaurants);
-        const match = restaurants.find(
-            (r) => String(getRestaurantRecordId(r) || r?.id || '').trim() === normalizedId
-        );
+        const match = restaurants.find((r) => String(getRestaurantRecordId(r) || r?.id || '').trim() === normalizedId);
         if (!match) return '';
         return String(match.timezone || match.restaurant_timezone || match.raw?.timezone || '').trim();
     },
@@ -2146,9 +2142,7 @@ export const supervisorMethods = {
 
             if (!assignedEmployeeId) {
                 failed += 1;
-                errors.push(
-                    'No se pudo determinar el contratista del servicio asignado para crear la tarea especial.'
-                );
+                errors.push('No se pudo determinar el contratista del servicio asignado para crear la tarea especial.');
                 continue;
             }
 
@@ -2753,7 +2747,8 @@ export const supervisorMethods = {
 
         const alertsContainer = document.getElementById('supervisor-alerts-container');
         const firstName = (this.currentUser.full_name || this.currentUser.email).split(' ')[0];
-        document.getElementById('supervisor-welcome-title').textContent = `${t('supervisor.welcome.greeting')}, ${firstName}`;
+        document.getElementById('supervisor-welcome-title').textContent =
+            `${t('supervisor.welcome.greeting')}, ${firstName}`;
         document.getElementById('supervisor-welcome-subtitle').textContent =
             `${restaurants.length} ${t('supervisor.welcome.sites.suffix')}`;
 
@@ -3210,7 +3205,8 @@ export const supervisorMethods = {
             actions.className = 'employee-list-actions';
             const badge = document.createElement('span');
             badge.className = `badge ${employee.is_active === false ? 'badge-danger' : 'badge-success'}`;
-            badge.textContent = employee.is_active === false ? t('contractor.badge.inactive') : t('contractor.badge.active');
+            badge.textContent =
+                employee.is_active === false ? t('contractor.badge.inactive') : t('contractor.badge.active');
             actions.appendChild(badge);
 
             const phoneBindingAction = this.getPhoneBindingActionState(employee);
@@ -3233,7 +3229,8 @@ export const supervisorMethods = {
                 revokeDeviceBtn.dataset.userId = String(employee.id || '');
                 revokeDeviceBtn.dataset.userName = String(employee.full_name || employee.email || '');
                 revokeDeviceBtn.textContent = t('contractor.btn.revoke.device');
-                revokeDeviceBtn.title = 'Libera el dispositivo registrado para que el contratista pueda ingresar desde un dispositivo nuevo.';
+                revokeDeviceBtn.title =
+                    'Libera el dispositivo registrado para que el contratista pueda ingresar desde un dispositivo nuevo.';
                 actions.appendChild(revokeDeviceBtn);
 
                 const resetPinBtn = document.createElement('button');
@@ -4049,9 +4046,7 @@ export const supervisorMethods = {
     async prepareSupervisorReportsPage() {
         const [restaurants] = await Promise.all([
             this.getSupervisorRestaurants(),
-            this.data.supervisor.employees.length === 0
-                ? this.loadSupervisorEmployees()
-                : Promise.resolve(),
+            this.data.supervisor.employees.length === 0 ? this.loadSupervisorEmployees() : Promise.resolve(),
         ]);
 
         const restaurantSelect = document.getElementById('report-restaurant-select');
@@ -4067,7 +4062,7 @@ export const supervisorMethods = {
             restaurantSelect.innerHTML = '<option value="">Todos los sitios</option>';
             if (employeeSelect) {
                 employeeSelect.innerHTML = `
-                    <option value="">${escapeHtml(t("supervisor.shifts.all.employees"))}</option>
+                    <option value="">${escapeHtml(t('supervisor.shifts.all.employees'))}</option>
                     ${this.data.supervisor.employees
                         .map(
                             (employee) => `
@@ -4105,7 +4100,7 @@ export const supervisorMethods = {
 
         if (employeeSelect) {
             employeeSelect.innerHTML = `
-                <option value="">${escapeHtml(t("supervisor.shifts.all.employees"))}</option>
+                <option value="">${escapeHtml(t('supervisor.shifts.all.employees'))}</option>
                 ${this.data.supervisor.employees
                     .map(
                         (employee) => `
@@ -4691,12 +4686,12 @@ export const supervisorMethods = {
                 preview.removeAttribute('src');
                 preview.classList.add('hidden');
             }
-            if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s)';
+            if (text) text.textContent = t('rtask.video.placeholder');
             label?.classList.remove('rtask-file-label-has-file');
             if (toastMsg) {
                 this.showToast(toastMsg, {
                     tone: 'warning',
-                    title: toastTitle || 'Video no válido',
+                    title: toastTitle || t('rtask.video.error.unreadable.title'),
                     duration: 6000,
                 });
             }
@@ -4725,7 +4720,7 @@ export const supervisorMethods = {
                     preview.removeAttribute('src');
                     preview.classList.add('hidden');
                 }
-                if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s)';
+                if (text) text.textContent = t('rtask.video.placeholder');
                 label?.classList.remove('rtask-file-label-has-file');
                 return;
             }
@@ -4753,8 +4748,8 @@ export const supervisorMethods = {
                     label,
                     text,
                     objectUrl,
-                    toastMsg: 'No pudimos leer el video. Prueba con otro formato (mp4, mov o webm) o vuelve a grabarlo.',
-                    toastTitle: 'Video no soportado',
+                    toastMsg: t('rtask.video.error.unreadable'),
+                    toastTitle: t('rtask.video.error.unreadable.title'),
                 });
                 return;
             }
@@ -4766,8 +4761,8 @@ export const supervisorMethods = {
                     label,
                     text,
                     objectUrl,
-                    toastMsg: `El video dura ${mmss} y el máximo permitido es 1:00. Graba uno más corto.`,
-                    toastTitle: 'Video demasiado largo',
+                    toastMsg: t('rtask.video.error.toolong', { duration: mmss }),
+                    toastTitle: t('rtask.video.error.toolong.title'),
                 });
                 return;
             }
@@ -4779,7 +4774,7 @@ export const supervisorMethods = {
             if (text) {
                 const shortName = file.name.length > 24 ? `${file.name.slice(0, 24)}…` : file.name;
                 const durationText = durationSeconds > 0 ? ` · ${this.formatSecondsAsMmSs(durationSeconds)}` : '';
-                text.textContent = `🎬 Video listo: ${shortName}${durationText}`;
+                text.textContent = `${t('rtask.video.ready')}: ${shortName}${durationText}`;
             }
             label?.classList.add('rtask-file-label-has-file');
         });
@@ -4852,22 +4847,23 @@ export const supervisorMethods = {
         const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
         const path = requestUpload?.path || requestUpload?.upload?.path;
         if (!signedUrl || !path) {
-            throw new Error('No fue posible preparar la subida del video de instrucciones.');
+            throw new Error(t('rtask.video.error.upload'));
         }
 
         const maxBytes = Number(requestUpload?.max_bytes || requestUpload?.upload?.max_bytes || 0);
         if (maxBytes > 0 && videoFile.size > maxBytes) {
             const maxMb = Math.floor(maxBytes / (1024 * 1024));
             const fileMb = Math.round((videoFile.size / (1024 * 1024)) * 10) / 10;
-            throw new Error(
-                `El video pesa ${fileMb} MB y el máximo permitido es ${maxMb} MB. Graba uno más corto o comprímelo.`
-            );
+            throw new Error(t('rtask.video.error.toobig', { fileMb, maxMb }));
         }
 
         const allowedMime = asArray(requestUpload?.allowed_mime || requestUpload?.upload?.allowed_mime);
         if (allowedMime.length > 0 && !allowedMime.includes(contentType)) {
             throw new Error(
-                `Formato ${contentType || 'desconocido'} no soportado. Usa uno de: ${allowedMime.join(', ')}.`
+                t('rtask.video.error.mime', {
+                    mime: contentType || 'desconocido',
+                    allowed: allowedMime.join(', '),
+                })
             );
         }
 
@@ -4952,13 +4948,10 @@ export const supervisorMethods = {
                 console.error('[rtask.create] instructions video upload failed', uploadError);
                 this.hideLoading();
                 this.setSupervisorRestaurantTaskSubmitState(false);
-                this.showToast(
-                    this.getErrorMessage(
-                        uploadError,
-                        'No fue posible subir el video de instrucciones. Puedes quitar el video o intentar de nuevo.'
-                    ),
-                    { tone: 'error', title: 'Video no subido' }
-                );
+                this.showToast(this.getErrorMessage(uploadError, t('rtask.video.error.uploadfailed')), {
+                    tone: 'error',
+                    title: t('rtask.video.error.uploadfailed.title'),
+                });
                 return;
             }
         }
@@ -5190,7 +5183,8 @@ export const supervisorMethods = {
             .join('');
 
         if (!foundEvidence) {
-            copy.textContent = 'Ese día sí tiene servicios, pero no se recibieron evidencias de inicio y fin en este listado.';
+            copy.textContent =
+                'Ese día sí tiene servicios, pero no se recibieron evidencias de inicio y fin en este listado.';
         }
     },
 
@@ -5592,11 +5586,11 @@ export const supervisorMethods = {
             shiftItems.length > 0
                 ? shiftItems
                       .map((shift) => {
-                          const employeeName = this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible');
-                          const restaurantName = this.getResolvedShiftRestaurantName(
+                          const employeeName = this.getResolvedShiftEmployeeName(
                               shift,
-                              'Sitio sin nombre visible'
+                              'Contratista sin nombre visible'
                           );
+                          const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible');
                           const scheduleText = formatShiftRange(
                               shift.scheduled_start || shift.start_time,
                               shift.scheduled_end || shift.end_time
@@ -6827,7 +6821,10 @@ export const supervisorMethods = {
             return;
         }
         if (selectedEmployees.length === 0) {
-            this.showToast(t('sup.toast.select.contractor'), { tone: 'warning', title: t('sup.toast.missing.contractor') });
+            this.showToast(t('sup.toast.select.contractor'), {
+                tone: 'warning',
+                title: t('sup.toast.missing.contractor'),
+            });
             return;
         }
         if (activeRows.length === 0) {

@@ -4,7 +4,8 @@ const STORAGE_KEY = 'worktrace_lang';
 export const TRANSLATIONS = {
     es: {
         // Login
-        'login.consent': 'Autorizo el uso de mis datos personales, ubicación GPS y cámara para fines de verificación de acceso a sitios de trabajo. Acepto los términos y condiciones del servicio.',
+        'login.consent':
+            'Autorizo el uso de mis datos personales, ubicación GPS y cámara para fines de verificación de acceso a sitios de trabajo. Acepto los términos y condiciones del servicio.',
         'login.email.label': 'Correo Electrónico',
         'login.email.placeholder': 'usuario@worktrace.com',
         'login.password.label': 'Contraseña Numérica',
@@ -12,19 +13,24 @@ export const TRANSLATIONS = {
         'login.password.helper': 'Solo números. Debe tener exactamente 6 dígitos.',
         'login.btn': 'Iniciar Sesión',
         'login.forgot': '¿Olvidé mi contraseña?',
-        'login.reset.no.email': 'Escribe primero tu correo en el campo de arriba para que podamos identificar tu cuenta.',
+        'login.reset.no.email':
+            'Escribe primero tu correo en el campo de arriba para que podamos identificar tu cuenta.',
         'login.reset.sending': 'Enviando recuperación...',
         'login.reset.sending.desc': 'Solicitando un nuevo PIN para tu cuenta.',
-        'login.reset.email.sent': 'Si {email} existe, te enviaremos las instrucciones para recuperar el acceso. Revisa tu bandeja de entrada y la carpeta de spam.',
-        'login.reset.notice': 'No pudimos enviarte un correo en este momento. Contacta a tu Inspector de Calidad o al Administrador para que genere un nuevo PIN y te lo entregue de forma segura. Podrás cambiarlo en tu primer ingreso.',
-        'login.legal': 'Esta aplicación es una plataforma tecnológica de uso exclusivo para contratistas independientes comerciales de R3 Service & Solutions Inc. El uso de esta herramienta tiene como único fin la coordinación comercial, la entrega de evidencias de calidad (Anexo A) y la validación de acceso de seguridad a las locaciones de los clientes. El contratista retiene en todo momento su autonomía operativa, de horarios y de personal.',
+        'login.reset.email.sent':
+            'Si {email} existe, te enviaremos las instrucciones para recuperar el acceso. Revisa tu bandeja de entrada y la carpeta de spam.',
+        'login.reset.notice':
+            'No pudimos enviarte un correo en este momento. Contacta a tu Inspector de Calidad o al Administrador para que genere un nuevo PIN y te lo entregue de forma segura. Podrás cambiarlo en tu primer ingreso.',
+        'login.legal':
+            'Esta aplicación es una plataforma tecnológica de uso exclusivo para contratistas independientes comerciales de R3 Service & Solutions Inc. El uso de esta herramienta tiene como único fin la coordinación comercial, la entrega de evidencias de calidad (Anexo A) y la validación de acceso de seguridad a las locaciones de los clientes. El contratista retiene en todo momento su autonomía operativa, de horarios y de personal.',
 
         // OTP
         'otp.title': 'Verificación de Seguridad del Sitio',
         'otp.context': 'Ingresa el código de verificación para confirmar el acceso.',
         'otp.context.login': 'Ingresa el código de acceso para continuar.',
         'otp.context.action': 'Ingresa el código de acceso para continuar con esta operación.',
-        'otp.context.email': 'Enviamos un código de acceso a {email}. Revisa tu correo y escríbelo aquí para continuar.',
+        'otp.context.email':
+            'Enviamos un código de acceso a {email}. Revisa tu correo y escríbelo aquí para continuar.',
         'otp.context.phone': 'Enviamos un código de acceso a {phone}. Escríbelo aquí para continuar.',
         'otp.debug.label': 'Código de prueba',
         'otp.code.label': 'Código de Acceso',
@@ -45,14 +51,16 @@ export const TRANSLATIONS = {
         'pin.back': 'Volver al login',
         'pin.initial.title': 'Guarda este PIN inicial',
         'pin.initial.alert': 'Solo se muestra una vez',
-        'pin.initial.helper': 'Cópialo ahora y envíaselo al contratista por el canal que prefieras. No podrás verlo de nuevo.',
+        'pin.initial.helper':
+            'Cópialo ahora y envíaselo al contratista por el canal que prefieras. No podrás verlo de nuevo.',
         'pin.initial.for': 'Cuenta:',
         'pin.initial.copy': 'Copiar',
         'pin.initial.copied': '¡PIN copiado al portapapeles!',
         'pin.initial.done': 'Listo, ya lo guardé',
         'pin.initial.email.sent': 'También se envió por correo automáticamente.',
         'pin.initial.email.delivered.title': 'PIN enviado por correo',
-        'pin.initial.email.delivered': 'Le enviamos las credenciales a {email}. El contratista deberá cambiar el PIN en su primer ingreso.',
+        'pin.initial.email.delivered':
+            'Le enviamos las credenciales a {email}. El contratista deberá cambiar el PIN en su primer ingreso.',
         'pin.initial.email.notsent': 'El envío por correo aún no está disponible. Cópialo y compártelo manualmente.',
 
         // Camera
@@ -78,16 +86,20 @@ export const TRANSLATIONS = {
         'employee.dashboard.loading': 'Cargando fecha...',
         'employee.shift.helper': 'Aquí verás el estado real de tu servicio y cuándo puedes iniciarlo o continuarlo.',
         'shift.status.inprogress': 'Servicio en Progreso',
-        'shift.status.inprogress.helper': 'Ya registraste el inicio del servicio. Desde aquí puedes continuarlo y completar las evidencias pendientes.',
+        'shift.status.inprogress.helper':
+            'Ya registraste el inicio del servicio. Desde aquí puedes continuarlo y completar las evidencias pendientes.',
         'shift.status.canstart.today': 'Servicio del Día',
         'shift.status.canstart.next': 'Próximo Servicio',
-        'shift.status.canstart.helper': 'Tienes un servicio disponible dentro de la ventana de acceso. Revisa la información y continúa cuando estés en el sitio.',
+        'shift.status.canstart.helper':
+            'Tienes un servicio disponible dentro de la ventana de acceso. Revisa la información y continúa cuando estés en el sitio.',
         'shift.status.ready': 'Listo para iniciar',
         'shift.status.pending.today': 'Servicio Asignado',
-        'shift.status.pending.helper': 'Ya tienes un servicio asignado. Aquí verás sus datos cuando se acerque la ventana de acceso.',
+        'shift.status.pending.helper':
+            'Ya tienes un servicio asignado. Aquí verás sus datos cuando se acerque la ventana de acceso.',
         'shift.status.assigned': 'Asignado',
         'shift.status.completed': 'Servicio Completado',
-        'shift.status.completed.helper': 'No tienes servicios pendientes por ahora. Cuando te asignen uno nuevo, aparecerá aquí.',
+        'shift.status.completed.helper':
+            'No tienes servicios pendientes por ahora. Cuando te asignen uno nuevo, aparecerá aquí.',
         'shift.status.completed.short': 'Completado',
         'shift.status.completed.fallback': 'Servicio completado correctamente',
         'shift.status.none': 'Sin Servicios Asignados',
@@ -147,7 +159,8 @@ export const TRANSLATIONS = {
         'shift.photos.card': 'Áreas a Fotografiar',
         'shift.photos.subtitle': 'Registre el estado inicial de cada área del sitio',
         'shift.photos.select.strong': 'Selecciona las áreas trabajadas hoy',
-        'shift.photos.select.helper': 'Puedes elegir una o varias áreas. Solo se mostrarán sus subáreas para tomar evidencia.',
+        'shift.photos.select.helper':
+            'Puedes elegir una o varias áreas. Solo se mostrarán sus subáreas para tomar evidencia.',
         'shift.photos.focus.strong': 'Área que vas a fotografiar ahora',
         'shift.photos.focus.helper': 'Elige una de las áreas seleccionadas para ver solo sus subáreas.',
         'shift.photos.start.cleaning': 'Iniciar Servicio de Limpieza',
@@ -164,7 +177,8 @@ export const TRANSLATIONS = {
         'toast.verifying.service.desc': 'Consultando si tienes un servicio disponible para continuar.',
         'toast.service.unavailable': 'Servicio no disponible',
         'toast.cannot.continue': 'No fue posible continuar',
-        'toast.location.unverified': 'Tu ubicación no está verificada. Pulsa "Verificar acceso al sitio" para continuar.',
+        'toast.location.unverified':
+            'Tu ubicación no está verificada. Pulsa "Verificar acceso al sitio" para continuar.',
         'toast.location.pending': 'Ubicación pendiente',
         'toast.health.required': 'Debes confirmar tu declaración de condición antes de iniciar el servicio.',
         'toast.health.missing': 'Falta declaración de condición',
@@ -173,7 +187,8 @@ export const TRANSLATIONS = {
         'toast.photos.missing': 'Faltan evidencias iniciales',
         'toast.window.outside': 'Fuera de ventana de acceso',
         'toast.area.notallowed': 'Área no permitida',
-        'toast.cannot.start.outside': 'No se puede iniciar el servicio porque no estás dentro del área de acceso autorizada.',
+        'toast.cannot.start.outside':
+            'No se puede iniciar el servicio porque no estás dentro del área de acceso autorizada.',
         'toast.cannot.start.service': 'No fue posible iniciar el servicio',
         'toast.select.areas': 'Selecciona áreas',
         'toast.select.areas.first': 'Selecciona al menos un área antes de registrar las evidencias iniciales.',
@@ -182,7 +197,8 @@ export const TRANSLATIONS = {
         'toast.uploading.images': 'Subiendo imágenes',
         'toast.wait.short': 'Espera',
         'toast.complete.select.first': 'Primero debes seleccionar las áreas trabajadas y registrar sus evidencias.',
-        'toast.complete.evidence.missing': 'Debes tomar las evidencias finales de todas las subáreas antes de continuar.',
+        'toast.complete.evidence.missing':
+            'Debes tomar las evidencias finales de todas las subáreas antes de continuar.',
         'toast.evidence.required': 'Evidencia obligatoria',
         'toast.no.active.service': 'No hay un servicio activo para finalizar.',
         'toast.no.active.service.title': 'Sin servicio activo',
@@ -447,7 +463,8 @@ export const TRANSLATIONS = {
         'shift.complete.card': 'Evidencias de Cierre',
         'shift.complete.subtitle': 'Registre el estado final de cada área del sitio',
         'shift.complete.select.strong': 'Mismas áreas registradas al inicio',
-        'shift.complete.select.helper': 'Debes registrar la evidencia final de las mismas áreas que trabajaste al comenzar el servicio.',
+        'shift.complete.select.helper':
+            'Debes registrar la evidencia final de las mismas áreas que trabajaste al comenzar el servicio.',
         'shift.complete.focus.strong': 'Área que vas a fotografiar ahora',
         'shift.complete.focus.helper': 'Selecciona una de las áreas trabajadas para registrar sus evidencias finales.',
         'shift.complete.task.title': 'Tarea Especial',
@@ -493,17 +510,21 @@ export const TRANSLATIONS = {
         'supervisor.week.loading': 'Cargando...',
         'supervisor.shifts.loading': 'Cargando servicios asignados...',
         'supervisor.restaurants.loading': 'Cargando sitios...',
-        'supervisor.reports.support': 'Si el informe falla, toca aquí para copiar el detalle y compartirlo con soporte.',
-        'supervisor.reports.result.desc': 'Genera el período para ver el resumen operativo y las descargas disponibles.',
+        'supervisor.reports.support':
+            'Si el informe falla, toca aquí para copiar el detalle y compartirlo con soporte.',
+        'supervisor.reports.result.desc':
+            'Genera el período para ver el resumen operativo y las descargas disponibles.',
         'supervisor.reports.totals': 'Aquí verás cuántas horas se acumularon en el sitio consultado.',
         'supervisor.reports.states': 'Estados del período',
         'supervisor.reports.states.empty': 'Genera el informe para ver el estado de los servicios.',
         'supervisor.reports.evidence.title': 'Evidencias del Antes y Después',
-        'supervisor.reports.evidence.copy': 'Cuando el informe corresponde a un solo día, aquí verás las evidencias del servicio.',
+        'supervisor.reports.evidence.copy':
+            'Cuando el informe corresponde a un solo día, aquí verás las evidencias del servicio.',
         'supervisor.supervision.gps.status': 'Ubicación lista para verificar en sitio',
         'supervisor.supervision.area.placeholder': 'Selecciona un área',
         'supervisor.supervision.area.strong': 'Área',
-        'supervisor.supervision.support': 'Si vuelve a fallar, toca aquí para copiar el detalle y compartirlo con soporte.',
+        'supervisor.supervision.support':
+            'Si vuelve a fallar, toca aquí para copiar el detalle y compartirlo con soporte.',
         'admin.supervisors.active.desc': 'Permite que el inspector inicie sesión al crearse o actualizarse.',
         'admin.supervisors.filters.title': 'Filtros y Asignación',
         'admin.supervisors.search.label': 'Buscar',
@@ -527,6 +548,27 @@ export const TRANSLATIONS = {
         'admin.supervision.monitor.filter.all': 'Todos los inspectores',
         'admin.supervision.monitor.activity': 'Actividad de Inspectores',
         'supervisor.error.create.restaurant': 'Tu cuenta de inspector de calidad no pudo crear el restaurante.',
+        // OTP retry (contract v2)
+        'otp.retry.toast.msg': 'Tu código de acceso expiró. Vamos a verificarlo de nuevo para continuar.',
+        'otp.retry.toast.title': 'Verificación requerida',
+        // Video de instrucciones de tarea especial
+        'rtask.video.label': 'Video de instrucciones (opcional)',
+        'rtask.video.placeholder': 'Grabar o adjuntar video (máx. 60s)',
+        'rtask.video.hint': 'Máximo 1 minuto. El contratista podrá reproducir este video antes de completar la tarea.',
+        'rtask.video.ready': '🎬 Video listo',
+        'rtask.video.error.unreadable':
+            'No pudimos leer el video. Prueba con otro formato (mp4, mov o webm) o vuelve a grabarlo.',
+        'rtask.video.error.unreadable.title': 'Video no soportado',
+        'rtask.video.error.toolong': 'El video dura {duration} y el máximo permitido es 1:00. Graba uno más corto.',
+        'rtask.video.error.toolong.title': 'Video demasiado largo',
+        'rtask.video.error.upload': 'No fue posible preparar la subida del video de instrucciones.',
+        'rtask.video.error.toobig':
+            'El video pesa {fileMb} MB y el máximo permitido es {maxMb} MB. Graba uno más corto o comprímelo.',
+        'rtask.video.error.mime': 'Formato {mime} no soportado. Usa uno de: {allowed}.',
+        'rtask.video.error.uploadfailed':
+            'No fue posible subir el video de instrucciones. Puedes quitar el video o intentar de nuevo.',
+        'rtask.video.error.uploadfailed.title': 'Video no subido',
+        'rtask.video.viewer.label': 'Video de instrucciones del inspector',
         'modal.deactivate.restaurant.confirm': 'Confirma la eliminación del sitio seleccionado.',
         'modal.deactivate.user.confirm': 'Confirma la eliminación del contratista seleccionado.',
         'employee.welcome': '¡Hola! 👋',
@@ -644,7 +686,8 @@ export const TRANSLATIONS = {
         'modal.shift.start.time': 'Apertura de ventana',
         'modal.shift.end.time': 'Cierre de ventana',
         'modal.shift.window.note.strong': 'Ventana de acceso estándar: 12:00 AM – 8:00 AM',
-        'modal.shift.window.note': 'Todos los sitios usan esta ventana nocturna por defecto. El contratista decide la hora exacta de inicio y fin dentro de la ventana. R3 solo coordina el plazo de entrega del servicio (antes de que el sitio abra). Si este sitio requiere otra ventana, edítala arriba.',
+        'modal.shift.window.note':
+            'Todos los sitios usan esta ventana nocturna por defecto. El contratista decide la hora exacta de inicio y fin dentro de la ventana. R3 solo coordina el plazo de entrega del servicio (antes de que el sitio abra). Si este sitio requiere otra ventana, edítala arriba.',
         'modal.shift.cancel': 'Cancelar',
         'modal.shift.save': 'Guardar Asignación',
 
@@ -665,7 +708,7 @@ export const TRANSLATIONS = {
         // Modals - restaurant
         'modal.restaurant.title': 'Nuevo Sitio',
         'modal.restaurant.name': 'Nombre del Sitio / Cliente',
-        'modal.restaurant.name.placeholder': 'Ej: Dave\'s Hot Chicken - Locación X',
+        'modal.restaurant.name.placeholder': "Ej: Dave's Hot Chicken - Locación X",
         'modal.restaurant.address': 'Dirección del sitio o ubicación actual',
         'modal.restaurant.search': 'Buscar ubicación',
         'modal.restaurant.location': 'Usar ubicación actual',
@@ -712,7 +755,8 @@ export const TRANSLATIONS = {
 
     en: {
         // Login
-        'login.consent': 'I authorize the use of my personal data, GPS location and camera for the purpose of verifying access to service sites. I accept the terms and conditions of service.',
+        'login.consent':
+            'I authorize the use of my personal data, GPS location and camera for the purpose of verifying access to service sites. I accept the terms and conditions of service.',
         'login.email.label': 'Email Address',
         'login.email.placeholder': 'user@worktrace.com',
         'login.password.label': 'Numeric Password',
@@ -723,9 +767,12 @@ export const TRANSLATIONS = {
         'login.reset.no.email': 'First enter your email above so we can identify your account.',
         'login.reset.sending': 'Sending recovery...',
         'login.reset.sending.desc': 'Requesting a new PIN for your account.',
-        'login.reset.email.sent': 'If {email} exists, we will send you the instructions to recover access. Check your inbox and spam folder.',
-        'login.reset.notice': 'We could not send an email at this time. Contact your Quality Inspector or Administrator to generate a new PIN and deliver it securely. You will be able to change it on your first login.',
-        'login.legal': 'This application is a technology platform for the exclusive use of independent commercial contractors of R3 Service & Solutions Inc. The sole purpose of this tool is commercial coordination, delivery of quality evidence (Exhibit A), and validation of security access to client locations. The contractor retains at all times their operational, scheduling, and personnel autonomy.',
+        'login.reset.email.sent':
+            'If {email} exists, we will send you the instructions to recover access. Check your inbox and spam folder.',
+        'login.reset.notice':
+            'We could not send an email at this time. Contact your Quality Inspector or Administrator to generate a new PIN and deliver it securely. You will be able to change it on your first login.',
+        'login.legal':
+            'This application is a technology platform for the exclusive use of independent commercial contractors of R3 Service & Solutions Inc. The sole purpose of this tool is commercial coordination, delivery of quality evidence (Exhibit A), and validation of security access to client locations. The contractor retains at all times their operational, scheduling, and personnel autonomy.',
 
         // OTP
         'otp.title': 'Site Security Verification',
@@ -753,14 +800,16 @@ export const TRANSLATIONS = {
         'pin.back': 'Back to login',
         'pin.initial.title': 'Save this initial PIN',
         'pin.initial.alert': 'Shown only once',
-        'pin.initial.helper': 'Copy it now and share it with the contractor through your preferred channel. You will not see it again.',
+        'pin.initial.helper':
+            'Copy it now and share it with the contractor through your preferred channel. You will not see it again.',
         'pin.initial.for': 'Account:',
         'pin.initial.copy': 'Copy',
         'pin.initial.copied': 'PIN copied to clipboard!',
         'pin.initial.done': 'Done, I saved it',
         'pin.initial.email.sent': 'Also sent by email automatically.',
         'pin.initial.email.delivered.title': 'PIN sent by email',
-        'pin.initial.email.delivered': 'Credentials were sent to {email}. The contractor must change the PIN on their first login.',
+        'pin.initial.email.delivered':
+            'Credentials were sent to {email}. The contractor must change the PIN on their first login.',
         'pin.initial.email.notsent': 'Email delivery is not yet available. Copy it and share it manually.',
 
         // Camera
@@ -784,18 +833,23 @@ export const TRANSLATIONS = {
         // Employee dashboard
         'employee.dashboard.title': "Today's Service",
         'employee.dashboard.loading': 'Loading date...',
-        'employee.shift.helper': "Here you'll see the real status of your service and when you can start or continue it.",
+        'employee.shift.helper':
+            "Here you'll see the real status of your service and when you can start or continue it.",
         'shift.status.inprogress': 'Service in Progress',
-        'shift.status.inprogress.helper': "You've already started the service. From here you can continue it and complete pending evidence.",
+        'shift.status.inprogress.helper':
+            "You've already started the service. From here you can continue it and complete pending evidence.",
         'shift.status.canstart.today': "Today's Service",
         'shift.status.canstart.next': 'Next Service',
-        'shift.status.canstart.helper': 'You have a service available within the access window. Review the information and continue when you are at the site.',
+        'shift.status.canstart.helper':
+            'You have a service available within the access window. Review the information and continue when you are at the site.',
         'shift.status.ready': 'Ready to start',
         'shift.status.pending.today': 'Assigned Service',
-        'shift.status.pending.helper': "You have a service assigned. You'll see its details when the access window approaches.",
+        'shift.status.pending.helper':
+            "You have a service assigned. You'll see its details when the access window approaches.",
         'shift.status.assigned': 'Assigned',
         'shift.status.completed': 'Service Completed',
-        'shift.status.completed.helper': 'No pending services right now. When a new one is assigned, it will appear here.',
+        'shift.status.completed.helper':
+            'No pending services right now. When a new one is assigned, it will appear here.',
         'shift.status.completed.short': 'Completed',
         'shift.status.completed.fallback': 'Service completed successfully',
         'shift.status.none': 'No Assigned Services',
@@ -855,7 +909,8 @@ export const TRANSLATIONS = {
         'shift.photos.card': 'Areas to Photograph',
         'shift.photos.subtitle': 'Record the initial state of each site area',
         'shift.photos.select.strong': 'Select the areas worked today',
-        'shift.photos.select.helper': 'You can choose one or more areas. Only their subareas will be shown for evidence.',
+        'shift.photos.select.helper':
+            'You can choose one or more areas. Only their subareas will be shown for evidence.',
         'shift.photos.focus.strong': 'Area you are photographing now',
         'shift.photos.focus.helper': 'Choose one of the selected areas to see only its subareas.',
         'shift.photos.start.cleaning': 'Start Cleaning Service',
@@ -1155,7 +1210,8 @@ export const TRANSLATIONS = {
         'shift.complete.card': 'Closing Evidence',
         'shift.complete.subtitle': 'Record the final state of each site area',
         'shift.complete.select.strong': 'Same areas recorded at start',
-        'shift.complete.select.helper': 'You must record the final evidence for the same areas you worked at the beginning of the service.',
+        'shift.complete.select.helper':
+            'You must record the final evidence for the same areas you worked at the beginning of the service.',
         'shift.complete.focus.strong': 'Area you are photographing now',
         'shift.complete.focus.helper': 'Select one of the worked areas to record its final evidence.',
         'shift.complete.task.title': 'Special Task',
@@ -1207,7 +1263,8 @@ export const TRANSLATIONS = {
         'supervisor.reports.states': 'Period statuses',
         'supervisor.reports.states.empty': 'Generate the report to see the status of services.',
         'supervisor.reports.evidence.title': 'Before and After Evidence',
-        'supervisor.reports.evidence.copy': "When the report covers a single day, you'll see the service evidence here.",
+        'supervisor.reports.evidence.copy':
+            "When the report covers a single day, you'll see the service evidence here.",
         'supervisor.supervision.gps.status': 'Location ready to verify on-site',
         'supervisor.supervision.area.placeholder': 'Select an area',
         'supervisor.supervision.area.strong': 'Area',
@@ -1235,6 +1292,29 @@ export const TRANSLATIONS = {
         'admin.supervision.monitor.filter.all': 'All inspectors',
         'admin.supervision.monitor.activity': 'Inspector activity',
         'supervisor.error.create.restaurant': 'Your quality inspector account could not create the site.',
+        // OTP retry (contract v2)
+        'otp.retry.toast.msg': 'Your access code expired. Let’s verify it again to continue.',
+        'otp.retry.toast.title': 'Verification required',
+        // Special task instructions video
+        'rtask.video.label': 'Instructions video (optional)',
+        'rtask.video.placeholder': 'Record or attach video (max. 60s)',
+        'rtask.video.hint':
+            'Maximum 1 minute. The contractor will be able to play this video before completing the task.',
+        'rtask.video.ready': '🎬 Video ready',
+        'rtask.video.error.unreadable':
+            'We could not read the video. Try another format (mp4, mov or webm) or record it again.',
+        'rtask.video.error.unreadable.title': 'Video not supported',
+        'rtask.video.error.toolong':
+            'The video lasts {duration} and the maximum allowed is 1:00. Record a shorter one.',
+        'rtask.video.error.toolong.title': 'Video too long',
+        'rtask.video.error.upload': 'Could not prepare the instructions video upload.',
+        'rtask.video.error.toobig':
+            'The video weighs {fileMb} MB and the maximum allowed is {maxMb} MB. Record a shorter one or compress it.',
+        'rtask.video.error.mime': 'Format {mime} not supported. Use one of: {allowed}.',
+        'rtask.video.error.uploadfailed':
+            'Could not upload the instructions video. You can remove the video or try again.',
+        'rtask.video.error.uploadfailed.title': 'Video not uploaded',
+        'rtask.video.viewer.label': 'Inspector instructions video',
         'modal.deactivate.restaurant.confirm': 'Confirm deletion of the selected site.',
         'modal.deactivate.user.confirm': 'Confirm deletion of the selected contractor.',
         'employee.welcome': 'Hello! 👋',
@@ -1352,7 +1432,8 @@ export const TRANSLATIONS = {
         'modal.shift.start.time': 'Window opens',
         'modal.shift.end.time': 'Window closes',
         'modal.shift.window.note.strong': 'Standard access window: 12:00 AM – 8:00 AM',
-        'modal.shift.window.note': 'All sites use this overnight window by default. The contractor decides the exact start and end times within the window. R3 only coordinates the service delivery deadline (before the site opens). If this site requires a different window, edit it above.',
+        'modal.shift.window.note':
+            'All sites use this overnight window by default. The contractor decides the exact start and end times within the window. R3 only coordinates the service delivery deadline (before the site opens). If this site requires a different window, edit it above.',
         'modal.shift.cancel': 'Cancel',
         'modal.shift.save': 'Save Assignment',
 
@@ -1431,8 +1512,14 @@ export function setLang(lang) {
     localStorage.setItem(STORAGE_KEY, lang);
 }
 
-export function t(key) {
-    return TRANSLATIONS[_lang]?.[key] ?? TRANSLATIONS['es']?.[key] ?? key;
+export function t(key, params) {
+    const raw = TRANSLATIONS[_lang]?.[key] ?? TRANSLATIONS['es']?.[key] ?? key;
+    if (!params || typeof params !== 'object') {
+        return raw;
+    }
+    return String(raw).replace(/\{(\w+)\}/g, (match, name) =>
+        Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match
+    );
 }
 
 export function applyTranslations() {

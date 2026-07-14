@@ -334,10 +334,7 @@ export const employeeMethods = {
             detailsLabel.textContent = 'Detalle:';
             const detailsCopy = document.createElement('p');
             detailsCopy.className = 'task-observations-copy';
-            detailsCopy.textContent = [
-                task.description || dueText,
-                restaurantName ? `Cliente: ${restaurantName}` : '',
-            ]
+            detailsCopy.textContent = [task.description || dueText, restaurantName ? `Cliente: ${restaurantName}` : '']
                 .filter(Boolean)
                 .join(' ');
             observations.append(detailsLabel, detailsCopy);
@@ -1225,7 +1222,8 @@ export const employeeMethods = {
             }
 
             const detailedMessage = this.getShiftFinalizeDetailedErrorMessage(error);
-            const visibleMessage = detailedMessage || this.getErrorMessage(error, 'No fue posible finalizar el servicio.');
+            const visibleMessage =
+                detailedMessage || this.getErrorMessage(error, 'No fue posible finalizar el servicio.');
             const requestId = String(
                 error?.requestId || error?.payload?.request_id || error?.payload?.error?.request_id || ''
             ).trim();
@@ -1472,7 +1470,7 @@ export const employeeMethods = {
             ? `<div class="rtask-video-wrap" style="margin:8px 0;">
                 <video controls playsinline preload="metadata" style="width:100%;border-radius:8px;background:#000;max-height:240px;" src="${escapeHtml(safeVideoUrl)}"></video>
                 <p class="muted-copy" style="font-size:12px;margin:4px 0 0;">
-                    <i class="fas fa-video"></i> Video de instrucciones del inspector
+                    <i class="fas fa-video"></i> ${escapeHtml(t('rtask.video.viewer.label'))}
                 </p>
             </div>`
             : '';
@@ -1621,9 +1619,10 @@ export const employeeMethods = {
                 error?.payload?.message ||
                 '';
             const baseMessage = this.getEmployeeRestaurantTaskErrorMessage(error, 'No fue posible completar la tarea.');
-            const finalMessage = detailedMessage && !baseMessage.includes(detailedMessage)
-                ? `${baseMessage} (${detailedMessage})`
-                : baseMessage;
+            const finalMessage =
+                detailedMessage && !baseMessage.includes(detailedMessage)
+                    ? `${baseMessage} (${detailedMessage})`
+                    : baseMessage;
             this.showToast(finalMessage, {
                 tone: 'error',
                 title: t('toast.error.completing'),

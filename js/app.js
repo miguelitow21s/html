@@ -1804,9 +1804,9 @@ const app = {
     async retryWithFreshOtp(retryFn, { purpose = 'action' } = {}) {
         apiClient.setShiftOtpToken('');
         localStorage.removeItem(STORAGE_KEYS.shiftOtpExpiresAt);
-        this.showToast('Tu código de acceso expiró. Vamos a verificarlo de nuevo para continuar.', {
+        this.showToast(t('otp.retry.toast.msg'), {
             tone: 'info',
-            title: 'Verificación requerida',
+            title: t('otp.retry.toast.title'),
             duration: 3500,
         });
         await this.ensureOtpVerification({ force: true, purpose });

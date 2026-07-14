@@ -218,10 +218,7 @@ export const adminMethods = {
                         return cachedSupervisions.length > 0 ? cachedSupervisions : grouped;
                     }
 
-                    console.warn(
-                        `No fue posible listar auditorías para ${restaurant?.name || restaurant?.id}.`,
-                        error
-                    );
+                    console.warn(`No fue posible listar auditorías para ${restaurant?.name || restaurant?.id}.`, error);
                 }
 
                 if (index < visibleRestaurants.length - 1) {
@@ -400,9 +397,7 @@ export const adminMethods = {
                 ${visibleItems
                     .map((item) => {
                         const supervisorName =
-                            item.supervisor?.full_name ||
-                            item.supervisor_name ||
-                            t('admin.supervisors.role.fallback');
+                            item.supervisor?.full_name || item.supervisor_name || t('admin.supervisors.role.fallback');
                         const supervisorDetail = item.supervisor?.email || item.supervisor_email || '';
                         const restaurantName = getRestaurantDisplayName(
                             item,
@@ -968,9 +963,7 @@ export const adminMethods = {
 
     async toggleAdminSupervisorStatus(userId, isCurrentlyActive) {
         this.showLoading(
-            isCurrentlyActive
-                ? t('admin.supervisors.status.deactivating')
-                : t('admin.supervisors.status.activating'),
+            isCurrentlyActive ? t('admin.supervisors.status.deactivating') : t('admin.supervisors.status.activating'),
             'Actualizando el acceso.'
         );
 
@@ -983,9 +976,7 @@ export const adminMethods = {
             this.invalidateCache('adminSupervisors');
             await this.loadAdminSupervisors(true);
             this.showToast(
-                isCurrentlyActive
-                    ? t('admin.supervisors.status.deactivated')
-                    : t('admin.supervisors.status.activated'),
+                isCurrentlyActive ? t('admin.supervisors.status.deactivated') : t('admin.supervisors.status.activated'),
                 {
                     tone: 'success',
                     title: t('toast.common.saved'),
