@@ -569,6 +569,9 @@ export const TRANSLATIONS = {
             'No fue posible subir el video de instrucciones. Puedes quitar el video o intentar de nuevo.',
         'rtask.video.error.uploadfailed.title': 'Video no subido',
         'rtask.video.viewer.label': 'Video de instrucciones del inspector',
+        // Accesibilidad
+        'a11y.close': 'Cerrar',
+        'a11y.back': 'Volver',
         'modal.deactivate.restaurant.confirm': 'Confirma la eliminación del sitio seleccionado.',
         'modal.deactivate.user.confirm': 'Confirma la eliminación del contratista seleccionado.',
         'employee.welcome': '¡Hola! 👋',
@@ -1315,6 +1318,9 @@ export const TRANSLATIONS = {
             'Could not upload the instructions video. You can remove the video or try again.',
         'rtask.video.error.uploadfailed.title': 'Video not uploaded',
         'rtask.video.viewer.label': 'Inspector instructions video',
+        // Accessibility
+        'a11y.close': 'Close',
+        'a11y.back': 'Back',
         'modal.deactivate.restaurant.confirm': 'Confirm deletion of the selected site.',
         'modal.deactivate.user.confirm': 'Confirm deletion of the selected contractor.',
         'employee.welcome': 'Hello! 👋',
@@ -1529,6 +1535,9 @@ export function applyTranslations() {
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
         el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
+        el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel));
     });
     document.documentElement.lang = _lang;
 }

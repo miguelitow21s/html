@@ -116,7 +116,7 @@
         <div class="modal-content camera-modal-content">
             <div class="modal-header">
                 <h3 id="camera-capture-title" data-i18n="camera.title">Capturar evidencia</h3>
-                <button class="btn-close" id="camera-close-btn" type="button">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" id="camera-close-btn" type="button">&times;</button>
             </div>
             <div class="modal-body">
                 <p id="camera-capture-helper" class="muted-copy" data-i18n="camera.helper">Usa la cámara del dispositivo para registrar la foto requerida.</p>
@@ -178,7 +178,7 @@
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
                 <h3>Cancelar servicio asignado</h3>
-                <button class="btn-close" type="button" onclick="app.closeCancelScheduledShiftModal()">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" onclick="app.closeCancelScheduledShiftModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -206,7 +206,7 @@
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
                 <h3>Eliminar sitio</h3>
-                <button class="btn-close" type="button" onclick="app.closeDeactivateRestaurantModal()">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" onclick="app.closeDeactivateRestaurantModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -231,7 +231,7 @@
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
                 <h3>Eliminar usuario</h3>
-                <button class="btn-close" type="button" onclick="app.closeDeactivateUserModal()">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" onclick="app.closeDeactivateUserModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -335,7 +335,7 @@
                 <span>WorkTrace</span>
             </button>
             <div class="header-actions">
-                <button class="header-btn" onclick="app.navigate('employee-profile')" aria-label="Mi perfil">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-profile')" aria-label="Mi perfil">
                     <span id="user-initial">U</span>
                 </button>
             </div>
@@ -430,7 +430,7 @@
     <div id="page-employee-profile" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('employee-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span>Mi Perfil</span>
@@ -517,7 +517,7 @@
     <div id="page-employee-shift-start" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('employee-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="shift.start.title">Iniciar Servicio</span>
@@ -575,7 +575,7 @@
     <div id="page-employee-shift-photos" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('employee-shift-start')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-shift-start')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span>Fotos de Inicio</span>
@@ -676,7 +676,7 @@
     <div id="page-employee-shift-complete" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('employee-shift-cleaning')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-shift-cleaning')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="shift.complete.title">Finalizar Servicio</span>
@@ -769,7 +769,7 @@
     <div id="page-employee-shift-summary" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('employee-shift-complete')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('employee-shift-complete')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="shift.summary.title">Resumen del Servicio</span>
@@ -928,7 +928,7 @@
     <div id="page-supervisor-restaurants" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.restaurants.title">Gestión de Sitios</span>
@@ -958,7 +958,7 @@
     <div id="page-supervisor-employees" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.employees.title">Gestión de Contratistas</span>
@@ -993,7 +993,7 @@
     <div id="page-supervisor-shifts" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.shifts.title">Asignación de Proyectos</span>
@@ -1057,7 +1057,7 @@
     <div id="page-supervisor-reports" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.reports.title">Reportes de Calidad</span>
@@ -1206,7 +1206,7 @@
     <div id="page-supervisor-supervision" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('supervisor-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('supervisor-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="supervisor.supervision.title">Auditoría de Calidad en Sitio</span>
@@ -1310,7 +1310,7 @@
         <div class="modal-content shift-scheduler-modal-content">
             <div class="modal-header">
                 <h3 data-i18n="modal.shift.title">Asignar Servicios</h3>
-                <button class="btn-close" onclick="app.closeModal('modal-supervisor-schedule-shift')">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" onclick="app.closeModal('modal-supervisor-schedule-shift')">&times;</button>
             </div>
             <form id="supervisor-shift-form">
                 <div class="modal-body">
@@ -1378,7 +1378,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Nueva Tarea Especial</h3>
-                <button class="btn-close" onclick="app.closeModal('modal-supervisor-restaurant-task')">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" onclick="app.closeModal('modal-supervisor-restaurant-task')">&times;</button>
             </div>
             <form id="supervisor-restaurant-task-form">
                 <div class="modal-body">
@@ -1455,7 +1455,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 data-i18n="modal.restaurant.title">Nuevo Sitio</h3>
-                <button class="btn-close" onclick="app.closeModal('modal-admin-restaurant')">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" onclick="app.closeModal('modal-admin-restaurant')">&times;</button>
             </div>
             <form id="admin-restaurant-form">
                 <div class="modal-body">
@@ -1500,7 +1500,7 @@
 
                     <div class="form-group">
                         <label data-i18n="modal.restaurant.radius">Radio de verificación de acceso (m)</label>
-                        <input type="number" id="admin-restaurant-radius" value="100" min="10" required>
+                        <input type="number" id="admin-restaurant-radius" inputmode="numeric" value="100" min="10" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1516,21 +1516,21 @@
         <div class="modal-content admin-employee-modal-content">
             <div class="modal-header">
                 <h3 data-i18n="modal.employee.title">Nuevo Contratista</h3>
-                <button class="btn-close" onclick="app.closeModal('modal-admin-employee')">&times;</button>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" onclick="app.closeModal('modal-admin-employee')">&times;</button>
             </div>
             <form id="admin-employee-form">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>Nombre Completo</label>
-                        <input type="text" id="admin-employee-name" data-i18n-placeholder="modal.employee.name.placeholder" placeholder="Nombre del contratista" required>
+                        <label for="admin-employee-name">Nombre Completo</label>
+                        <input type="text" id="admin-employee-name" autocomplete="name" data-i18n-placeholder="modal.employee.name.placeholder" placeholder="Nombre del contratista" required>
                     </div>
                     <div class="form-group">
-                        <label data-i18n="modal.employee.email">Correo Electrónico</label>
-                        <input type="email" id="admin-employee-email" placeholder="contratista@ejemplo.com" required>
+                        <label for="admin-employee-email" data-i18n="modal.employee.email">Correo Electrónico</label>
+                        <input type="email" id="admin-employee-email" autocomplete="email" placeholder="contratista@ejemplo.com" required>
                     </div>
                     <div class="form-group">
-                        <label data-i18n="modal.employee.phone">Teléfono</label>
-                        <input type="tel" id="admin-employee-phone" placeholder="+573001112233" required>
+                        <label for="admin-employee-phone" data-i18n="modal.employee.phone">Teléfono</label>
+                        <input type="tel" id="admin-employee-phone" autocomplete="tel" inputmode="tel" placeholder="+573001112233" required>
                     </div>
                     <div class="alert alert-warning admin-employee-credential-note">
                         <i class="fas fa-key"></i>
@@ -1626,7 +1626,7 @@
     <div id="page-admin-supervision-monitor" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('admin-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('admin-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="admin.monitor.title">Seguimiento de Inspecciones</span>
@@ -1680,7 +1680,7 @@
     <div id="page-admin-supervisors" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
-                <button class="header-btn" onclick="app.navigate('admin-dashboard')">
+                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" onclick="app.navigate('admin-dashboard')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <span data-i18n="admin.dashboard.manage.btn">Administrar Inspectores</span>
@@ -1696,18 +1696,18 @@
                     <input type="hidden" id="admin-supervisor-edit-id">
                     <div class="toolbar-row two-col">
                         <div class="form-group admin-panel-field">
-                            <label>Nombre completo</label>
-                            <input type="text" id="admin-supervisor-full-name" class="dark-control" placeholder="Ana Martínez" required>
+                            <label for="admin-supervisor-full-name">Nombre completo</label>
+                            <input type="text" id="admin-supervisor-full-name" class="dark-control" autocomplete="name" placeholder="Ana Martínez" required>
                         </div>
                         <div class="form-group admin-panel-field">
-                            <label data-i18n="admin.supervisors.email">Correo electrónico</label>
-                            <input type="email" id="admin-supervisor-email" class="dark-control" data-i18n-placeholder="admin.supervisors.email.placeholder" placeholder="inspector@worktrace.com" required>
+                            <label for="admin-supervisor-email" data-i18n="admin.supervisors.email">Correo electrónico</label>
+                            <input type="email" id="admin-supervisor-email" class="dark-control" autocomplete="email" data-i18n-placeholder="admin.supervisors.email.placeholder" placeholder="inspector@worktrace.com" required>
                         </div>
                     </div>
                     <div class="toolbar-row two-col">
                         <div class="form-group admin-panel-field">
-                            <label data-i18n="admin.supervisors.phone">Teléfono E.164</label>
-                            <input type="tel" id="admin-supervisor-phone" class="dark-control" placeholder="+573001112233" required>
+                            <label for="admin-supervisor-phone" data-i18n="admin.supervisors.phone">Teléfono E.164</label>
+                            <input type="tel" id="admin-supervisor-phone" class="dark-control" autocomplete="tel" inputmode="tel" placeholder="+573001112233" required>
                         </div>
                         <div class="admin-toggle-panel">
                             <label class="checkbox-wrapper">
