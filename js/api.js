@@ -1,13 +1,13 @@
 // @ts-nocheck
+import { STORAGE_KEYS } from './constants.js';
+
 const DEFAULT_TIMEOUT_MS = 15000;
 
 export const DEFAULT_FUNCTIONS_BASE_URL = 'https://<SUPABASE_PROJECT>.supabase.co/functions/v1';
 
-export const STORAGE_KEYS = Object.freeze({
-    accessToken: 'worktrace_access_token',
-    shiftOtpToken: 'worktrace_shift_otp_token',
-    deviceFingerprint: 'worktrace_device_fingerprint',
-});
+// Re-export para compatibilidad con importadores existentes de api.js
+// (STORAGE_KEYS vive en constants.js como única fuente de verdad).
+export { STORAGE_KEYS };
 
 function createScopedConsole() {
     const baseConsole = globalThis.console || {};

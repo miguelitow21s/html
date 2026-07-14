@@ -1,8 +1,14 @@
 // @ts-nocheck
 
 export const STORAGE_KEYS = Object.freeze({
+    // Estado de sesión / user
     user: 'worktrace_user',
+    accessToken: 'worktrace_access_token',
+    deviceFingerprint: 'worktrace_device_fingerprint',
+    // OTP / verificación
+    shiftOtpToken: 'worktrace_shift_otp_token',
     shiftOtpExpiresAt: 'worktrace_shift_otp_expires_at',
+    // Cache de turno actual
     shiftSelectedAreas: 'worktrace_shift_selected_areas',
     shiftRestaurantNames: 'worktrace_shift_restaurant_names',
     shiftRequestTrace: 'worktrace_shift_request_trace',
