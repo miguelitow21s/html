@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { STORAGE_KEYS } from './constants.js';
+import { STORAGE_KEYS, scopedConsole } from './constants.js';
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
@@ -9,26 +9,8 @@ export const DEFAULT_FUNCTIONS_BASE_URL = 'https://<SUPABASE_PROJECT>.supabase.c
 // (STORAGE_KEYS vive en constants.js como única fuente de verdad).
 export { STORAGE_KEYS };
 
-function createScopedConsole() {
-    const baseConsole = globalThis.console || {};
-    const host = globalThis.location?.hostname || '';
-    const debugEnabled = Boolean(globalThis.WORKTRACE_CONFIG?.debugConsole) || /^(localhost|127\.0\.0\.1)$/i.test(host);
-
-    const noop = () => {};
-    const bindMethod = (method) =>
-        typeof baseConsole?.[method] === 'function' ? baseConsole[method].bind(baseConsole) : noop;
-
-    return {
-        ...baseConsole,
-        log: debugEnabled ? bindMethod('log') : noop,
-        info: debugEnabled ? bindMethod('info') : noop,
-        warn: debugEnabled ? bindMethod('warn') : noop,
-        debug: debugEnabled ? bindMethod('debug') : noop,
-        error: bindMethod('error'),
-    };
-}
-
-const console = createScopedConsole();
+// Rebind local para que console.* dentro de este módulo respete el debug gate.
+const console = scopedConsole;
 
 function getStorage() {
     if (typeof window === 'undefined') {
