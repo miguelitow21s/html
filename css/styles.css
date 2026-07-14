@@ -1537,37 +1537,7 @@ canvas {
     width: 100%;
 }
 
-.shift-schedule-filters {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    width: min(100%, 760px);
-}
-
-.shift-schedule-filter-group {
-    display: grid;
-    gap: 6px;
-    min-width: 0;
-    max-width: 100%;
-    overflow: visible;
-}
-
-.shift-schedule-filter-group label {
-    color: var(--gray);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    line-height: 1.3;
-}
-
-.shift-schedule-filter-group-action .btn {
-    width: 100%;
-    min-height: 44px;
-}
-
-#supervisor-shifts-filters,
-#supervisor-shifts-filters .shift-schedule-filter-group {
+#supervisor-shifts-filters {
     min-width: 0;
     max-width: 100%;
 }
@@ -1617,20 +1587,6 @@ canvas {
     min-width: 0;
     margin: 0;
     padding: 0;
-}
-
-.shift-schedule-list {
-    display: grid;
-    gap: 16px;
-}
-
-.shift-schedule-card {
-    display: grid;
-    gap: 16px;
-    padding: 18px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .modal-content.shift-scheduler-modal-content {
@@ -1721,9 +1677,6 @@ canvas {
 .shift-batch-picker,
 .shift-batch-option,
 .shift-batch-option > *,
-.shift-schedule-card,
-.shift-schedule-meta,
-.shift-schedule-meta-item,
 .admin-employee-modal-content .modal-body > *,
 .admin-employee-credential-note,
 .checkbox-content {
@@ -2204,65 +2157,6 @@ canvas {
     font-size: 14px;
     line-height: 1.5;
     overflow-wrap: anywhere;
-}
-
-.shift-schedule-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.shift-schedule-name {
-    color: white;
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 1.35;
-    overflow-wrap: anywhere;
-}
-
-.shift-schedule-subtitle {
-    color: var(--gray);
-    font-size: 14px;
-    margin-top: 4px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-}
-
-.shift-schedule-meta {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.shift-schedule-meta-item {
-    display: grid;
-    gap: 4px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    min-width: 0;
-}
-
-.shift-schedule-meta-label {
-    color: var(--gray);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.shift-schedule-meta-value {
-    color: white;
-    font-size: 15px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-}
-
-.shift-schedule-actions {
-    justify-content: flex-end;
-    margin-top: 12px;
 }
 
 .confirm-modal-content {
@@ -4376,126 +4270,6 @@ input[type='file'] {
     overflow-wrap: anywhere;
 }
 
-.table-responsive {
-    overflow-x: auto;
-}
-
-.audit-page {
-    gap: 24px;
-}
-
-.audit-filters-card,
-.audit-list-card {
-    overflow: hidden;
-}
-
-.audit-filter-field {
-    display: grid;
-    gap: 8px;
-    min-width: 0;
-}
-
-.audit-filter-field label {
-    color: var(--gray);
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.audit-filter-grid,
-.audit-actions-row {
-    margin-top: 6px;
-}
-
-.audit-toolbar-actions {
-    justify-content: flex-end;
-    align-self: end;
-}
-
-.audit-toolbar-actions .btn-inline {
-    width: auto;
-    min-width: 220px;
-}
-
-.audit-log-shell {
-    min-width: 0;
-}
-
-.audit-log-grid {
-    display: grid;
-    gap: 16px;
-}
-
-.audit-log-card {
-    position: relative;
-    display: grid;
-    gap: 16px;
-    padding: 18px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    overflow: hidden;
-}
-
-.audit-log-card::before {
-    content: '';
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 4px;
-    background: linear-gradient(180deg, #0ea5e9 0%, #10b981 100%);
-}
-
-.audit-log-card-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.audit-log-card-title {
-    color: white;
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1.35;
-}
-
-.audit-log-card-date {
-    margin-top: 4px;
-    color: var(--gray);
-    font-size: 13px;
-    line-height: 1.45;
-}
-
-.audit-log-meta-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.audit-log-meta-item {
-    display: grid;
-    gap: 4px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    min-width: 0;
-}
-
-.audit-log-meta-label {
-    color: var(--gray);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.audit-log-meta-value {
-    color: white;
-    font-size: 14px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-}
-
 .empty-state {
     color: var(--gray);
     padding: 18px 20px;
@@ -5116,37 +4890,6 @@ input[type='file'] {
 
     .supervision-target-grid {
         grid-template-columns: 1fr;
-    }
-
-    .audit-page {
-        gap: 18px;
-    }
-
-    .audit-log-card {
-        padding: 16px;
-        gap: 14px;
-    }
-
-    .audit-log-card-top {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .audit-log-card-top .badge {
-        align-self: flex-start;
-    }
-
-    .audit-log-meta-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .audit-toolbar-actions {
-        width: 100%;
-        justify-content: stretch;
-    }
-
-    .audit-toolbar-actions .btn-inline {
-        width: 100%;
     }
 
     .modal-footer-stack-sm {
