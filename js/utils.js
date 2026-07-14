@@ -252,6 +252,21 @@ export function escapeHtml(value) {
         .replace(/'/g, '&#039;');
 }
 
+// Devuelve la URL sanitizada si es http/https/blob/data-image; en cualquier
+// otro caso ('javascript:', 'vbscript:', 'data:text/html', etc.) devuelve
+// una cadena vacía. Complementa escapeHtml — que NO filtra schemes — antes
+// de inyectar URLs de origen backend en atributos href/src.
+export function sanitizeUrl(value) {
+    const raw = String(value ?? '').trim();
+    if (!raw) return '';
+    // Rutas relativas (no llevan scheme) las aceptamos.
+    if (/^[^:]+$/.test(raw) && !raw.includes(':')) return raw;
+    if (/^(https?:)?\/\//i.test(raw)) return raw;
+    if (/^blob:/i.test(raw)) return raw;
+    if (/^data:image\//i.test(raw)) return raw;
+    return '';
+}
+
 export function normalizeAreaToken(value) {
     return String(value || '')
         .normalize('NFD')

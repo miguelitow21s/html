@@ -44,6 +44,7 @@ import {
     normalizeLinkedPhoneValue,
     normalizeRestaurantId,
     pickMeaningfulRestaurantName,
+    sanitizeUrl,
     sumHours,
     sumWorkedHours,
     summarizeShiftStatuses,
@@ -5067,9 +5068,10 @@ export const supervisorMethods = {
                 </div>
             </div>`;
         }
-        return `<a class="report-day-photo" href="${escapeHtml(item.url)}" aria-label="${escapeHtml(`${phaseLabel} ${index + 1}`)}">
+        const safeUrl = sanitizeUrl(item.url);
+        return `<a class="report-day-photo" href="${escapeHtml(safeUrl)}" aria-label="${escapeHtml(`${phaseLabel} ${index + 1}`)}">
             <span class="report-day-photo-thumb">
-                <img src="${escapeHtml(item.url)}" alt="${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}" loading="lazy">
+                <img src="${escapeHtml(safeUrl)}" alt="${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}" loading="lazy">
             </span>
             <span class="report-day-photo-copy">
                 <span class="report-day-photo-phase">${escapeHtml(phaseLabel)}</span>
@@ -5564,10 +5566,11 @@ export const supervisorMethods = {
                     <div class="phase-title">${escapeHtml(label)}</div>
                     <div class="phase-gallery">
                         ${evidenceItems
-                            .map(
-                                (item, index) => `
-                            <a class="phase-photo" href="${escapeHtml(item.url)}" aria-label="${escapeHtml(`${label} ${index + 1}`)}">
-                                <img src="${escapeHtml(item.url)}" alt="${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}">
+                            .map((item, index) => {
+                                const safeUrl = sanitizeUrl(item.url);
+                                return `
+                            <a class="phase-photo" href="${escapeHtml(safeUrl)}" aria-label="${escapeHtml(`${label} ${index + 1}`)}">
+                                <img src="${escapeHtml(safeUrl)}" alt="${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}">
                                 <span class="phase-photo-copy">
                                     <span class="phase-photo-label">${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}</span>
                                     ${
@@ -5577,8 +5580,8 @@ export const supervisorMethods = {
                                     }
                                 </span>
                             </a>
-                        `
-                            )
+                        `;
+                            })
                             .join('')}
                     </div>
                 </div>

@@ -16,6 +16,7 @@ import {
     getRestaurantRecordId,
     getScheduledHours,
     normalizeAreaToken,
+    sanitizeUrl,
     sumHours,
     toInputDate,
 } from '../utils.js';
@@ -1466,9 +1467,10 @@ export const employeeMethods = {
                 task.metadata?.instructions_video_url ||
                 ''
         ).trim();
-        const videoHtml = instructionsVideoUrl
+        const safeVideoUrl = sanitizeUrl(instructionsVideoUrl);
+        const videoHtml = safeVideoUrl
             ? `<div class="rtask-video-wrap" style="margin:8px 0;">
-                <video controls playsinline preload="metadata" style="width:100%;border-radius:8px;background:#000;max-height:240px;" src="${escapeHtml(instructionsVideoUrl)}"></video>
+                <video controls playsinline preload="metadata" style="width:100%;border-radius:8px;background:#000;max-height:240px;" src="${escapeHtml(safeVideoUrl)}"></video>
                 <p class="muted-copy" style="font-size:12px;margin:4px 0 0;">
                     <i class="fas fa-video"></i> Video de instrucciones del inspector
                 </p>
