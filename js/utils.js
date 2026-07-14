@@ -13,10 +13,6 @@ export function getTodayEnd(date = new Date()) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 }
 
-export function getDaysAgo(days, date = new Date()) {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate() - days);
-}
-
 export function toInputDate(value) {
     if (!value) {
         return '';
@@ -448,25 +444,6 @@ export function pickMeaningfulDisplayValue(candidates = [], type = 'text') {
     }
 
     return '';
-}
-
-export function getRestaurantAddressFallback(record) {
-    const source = record && typeof record === 'object' ? record : {};
-    return pickMeaningfulDisplayValue(
-        [
-            source.address_line,
-            source.formatted_address,
-            source.display_address,
-            source.restaurant?.address_line,
-            source.location?.address_line,
-            source.site?.address_line,
-            source.raw?.address_line,
-            source.raw?.formatted_address,
-            [source.city, source.state].filter(Boolean).join(', '),
-            [source.city, source.state, source.country].filter(Boolean).join(', '),
-        ],
-        'text'
-    );
 }
 
 export function collectRestaurantAddressCandidates(record) {
