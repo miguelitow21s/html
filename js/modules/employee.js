@@ -1602,7 +1602,7 @@ export const employeeMethods = {
             console.info('[rtask] complete payload', completePayload);
             await apiClient.operationalTasksManage('complete', completePayload);
             this.data.employee.openTasks = (this.data.employee.openTasks || []).filter(
-                (task) => String(task.task_id || task.id || '') !== numericTaskId
+                (task) => String(task.task_id || task.id || '') !== String(numericTaskId)
             );
             this.renderEmployeeRestaurantTasks();
             this.showToast(t('toast.task.completed.evidence'), { tone: 'success', title: t('toast.done') });
