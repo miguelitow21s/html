@@ -5749,6 +5749,15 @@ const app = {
                 if (this.data.employee.dashboard && typeof this.data.employee.dashboard === 'object') {
                     this.data.employee.dashboard.active_shift = activeShift;
                 }
+            } else {
+                // Backend respondió (no lanzó) pero no hay turno activo: el turno terminó
+                // en otra pestaña, expiró, o fue cancelado por supervisor. Debemos limpiar
+                // el currentShift viejo para que el resto del flow no arrastre un id fantasma.
+                this.data.currentShift = null;
+                if (this.data.employee.dashboard && typeof this.data.employee.dashboard === 'object') {
+                    this.data.employee.dashboard.active_shift = null;
+                }
+                this.invalidateCache('employeeDashboard');
             }
         } catch (error) {
             console.warn('No fue posible refrescar my_active_shift.', error);
