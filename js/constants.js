@@ -33,17 +33,17 @@ export const ROLE_LABELS = Object.freeze({
 });
 
 export const REPORT_COLUMNS = [
-    'Servicio',
-    'Sitio',
-    'Contratista',
-    'Inspector',
-    'Inicio',
-    'Fin',
-    'Estado',
-    'Duracion',
-    'Novedades',
-    'Evidencia inicial',
-    'Evidencia final',
+    'shift_id',
+    'restaurant_name',
+    'employee_name',
+    'supervisor_name',
+    'start_time',
+    'end_time',
+    'status',
+    'hours_worked',
+    'incidents_count',
+    'start_evidence_urls',
+    'end_evidence_urls',
 ];
 
 export const AREA_META = Object.freeze({

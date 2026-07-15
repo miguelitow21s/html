@@ -844,6 +844,18 @@ const app = {
             });
         }
 
+        document.getElementById('supervisor-create-restaurant-btn')?.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            await this.openAdminRestaurantModal();
+        });
+
+        document.getElementById('supervisor-create-employee-btn')?.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            await this.openAdminEmployeeModal();
+        });
+
         const supervisorRestaurantTaskForm = document.getElementById('supervisor-restaurant-task-form');
         if (supervisorRestaurantTaskForm) {
             supervisorRestaurantTaskForm.addEventListener('submit', async (event) => {
@@ -1470,6 +1482,14 @@ const app = {
         if (modalId === 'modal-admin-restaurant') {
             await this.ensureAdminRestaurantMapReady();
         }
+    },
+
+    async openAdminRestaurantModal() {
+        await this.openModal('modal-admin-restaurant');
+    },
+
+    async openAdminEmployeeModal() {
+        await this.openModal('modal-admin-employee');
     },
 
     closeModal(modalId) {
@@ -3037,6 +3057,7 @@ const app = {
         }
 
         this.updateDebugInfo();
+        this.updateRoleBasedActions();
         void this.loadPageData(page);
     },
 
