@@ -815,11 +815,20 @@
             </div>
 
             <div class="card hidden" id="shift-early-end-card">
+                <h4 style="margin: 0 0 10px 0;"><i class="fas fa-clipboard"></i> <span id="shift-observations-heading">Observaciones</span></h4>
                 <div class="form-group">
-                    <textarea id="early-end-reason" placeholder="Motivo de salida anticipada"></textarea>
+                    <textarea id="early-end-reason" placeholder="Observaciones (opcional)"></textarea>
+                </div>
+                <div class="rtask-evidence-wrap" style="padding: 0;">
+                    <input type="file" id="shift-observations-file" accept="image/*,video/*" capture="environment" multiple style="display:none;">
+                    <div class="rtask-attachments" id="shift-observations-attachments"></div>
+                    <label for="shift-observations-file" id="shift-observations-file-label" class="rtask-file-label">
+                        <i class="fas fa-plus"></i>
+                        <span class="rtask-file-label-text">Agregar foto o video</span>
+                    </label>
                 </div>
             </div>
-            
+
             <button class="btn-large btn-success" data-action="finalizeShift">
                 <i class="fas fa-check"></i> <span data-i18n="shift.summary.finalize">Confirmar y Finalizar Servicio</span>
             </button>

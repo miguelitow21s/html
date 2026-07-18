@@ -983,11 +983,113 @@ export const employeeMethods = {
 
         if (earlyEndReasonInput) {
             earlyEndReasonInput.placeholder = isEarlyEnd
-                ? 'Motivo de salida anticipada (obligatorio)'
-                : 'Motivo de salida anticipada (si aplica)';
+                ? 'Observaciones (obligatorio para salida anticipada)'
+                : 'Observaciones (opcional)';
         }
 
+        // Buffer para adjuntos multimedia de observaciones. Sobrevive re-renders.
+        this._observationsAttachments = this._observationsAttachments || [];
+        this.bindObservationsAttachmentsOnce();
+        this.renderObservationsAttachments();
+
         this.navigate('employee-shift-summary');
+    },
+
+    bindObservationsAttachmentsOnce() {
+        const input = document.getElementById('shift-observations-file');
+        if (!input || input.dataset.observationsBound === '1') return;
+        input.dataset.observationsBound = '1';
+
+        input.addEventListener('change', () => {
+            const files = Array.from(input.files || []);
+            if (files.length === 0) return;
+            this._observationsAttachments = [...(this._observationsAttachments || []), ...files];
+            input.value = '';
+            this.renderObservationsAttachments();
+        });
+
+        const container = document.getElementById('shift-observations-attachments');
+        if (container && !container.dataset.observationsDelegation) {
+            container.dataset.observationsDelegation = '1';
+            container.addEventListener('click', (event) => {
+                const btn = event.target.closest('[data-observations-action="remove"]');
+                if (!btn) return;
+                const index = Number(btn.dataset.index);
+                if (Number.isFinite(index) && this._observationsAttachments) {
+                    this._observationsAttachments.splice(index, 1);
+                    this.renderObservationsAttachments();
+                }
+            });
+        }
+    },
+
+    renderObservationsAttachments() {
+        const wrap = document.getElementById('shift-observations-attachments');
+        if (!wrap) return;
+        const files = this._observationsAttachments || [];
+        const label = document.getElementById('shift-observations-file-label');
+        const textSpan = label?.querySelector('.rtask-file-label-text');
+
+        if (files.length === 0) {
+            wrap.innerHTML = '';
+            if (textSpan) textSpan.textContent = 'Agregar foto o video';
+            label?.classList.remove('rtask-file-label-has-file');
+            return;
+        }
+
+        if (textSpan) textSpan.textContent = `Agregar otra (${files.length})`;
+        label?.classList.add('rtask-file-label-has-file');
+
+        wrap.innerHTML = files
+            .map((file, index) => {
+                const isVideo = String(file.type || '').startsWith('video/');
+                const icon = isVideo ? 'fa-video' : 'fa-image';
+                const shortName = file.name.length > 22 ? `${file.name.slice(0, 22)}…` : file.name;
+                const sizeMb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+                return `<div class="rtask-attachment-item">
+                    <i class="fas ${icon}"></i>
+                    <span class="rtask-attachment-name">${escapeHtml(shortName)}</span>
+                    <span class="rtask-attachment-size">${sizeMb} MB</span>
+                    <button type="button" class="rtask-attachment-remove" data-observations-action="remove" data-index="${index}" aria-label="Quitar adjunto">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>`;
+            })
+            .join('');
+    },
+
+    async uploadObservationAttachments(shiftId, location) {
+        const files = this._observationsAttachments || [];
+        if (files.length === 0 || !shiftId) return [];
+        const uploaded = [];
+        for (const file of files) {
+            const rawType = String(file.type || '').toLowerCase();
+            const mime = rawType || (rawType.startsWith('video/') ? 'video/mp4' : 'image/jpeg');
+            const requestUpload = await apiClient.requestShiftEvidenceUpload(shiftId, 'fin', mime);
+            const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
+            const path = requestUpload?.path || requestUpload?.upload?.path;
+            if (!signedUrl || !path) throw new Error('No fue posible preparar la subida del adjunto.');
+            await apiClient.uploadToSignedUrl(signedUrl, file, mime);
+            try {
+                await apiClient.finalizeShiftEvidenceUpload({
+                    shift_id: shiftId,
+                    type: 'fin',
+                    path,
+                    lat: location?.lat,
+                    lng: location?.lng,
+                    accuracy: Math.round(location?.accuracy || 0),
+                    captured_at: new Date().toISOString(),
+                    meta: {
+                        source: 'observations',
+                        content_kind: rawType.startsWith('video/') ? 'video' : 'photo',
+                    },
+                });
+            } catch (finalizeError) {
+                console.warn('No fue posible finalizar el adjunto de observaciones.', finalizeError);
+            }
+            uploaded.push(path);
+        }
+        return uploaded;
     },
 
     async uploadTaskEvidence(taskId, file) {
@@ -1172,6 +1274,9 @@ export const employeeMethods = {
                 precheckPromise,
                 this.uploadShiftEvidenceBatch('fin', this.endPhotoFiles, this.uploadedEndAreas),
                 this.resolveOpenEmployeeTasks(notes),
+                this.uploadObservationAttachments(this.data.currentShift?.id, location).catch((error) => {
+                    console.warn('No fue posible subir todos los adjuntos de observaciones.', error);
+                }),
             ]);
 
             const performEndShiftRequest = () =>
@@ -1181,7 +1286,10 @@ export const employeeMethods = {
                     lng: location.lng,
                     fit_for_work: true,
                     declaration: notes,
+                    // Backend contract v2: early_end_reason ahora encapsula el texto libre
+                    // de "Observaciones" (obligatorio si es salida anticipada, opcional si no).
                     early_end_reason: earlyEndReason,
+                    observations: earlyEndReason,
                 });
 
             let endShiftPayload;
@@ -1212,6 +1320,8 @@ export const employeeMethods = {
                     ''
                 ),
             };
+            // Limpiar buffer de observaciones (esta terminado el servicio).
+            this._observationsAttachments = [];
             this.invalidateCache('employeeDashboard', 'employeeHoursHistory');
             this.showSuccessScreen();
             void this.loadEmployeeDashboard(true).catch((error) => {
