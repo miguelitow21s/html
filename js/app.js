@@ -1439,20 +1439,23 @@ const app = {
             return;
         }
 
-        if (modalId === 'modal-supervisor-schedule-shift') {
-            await this.prepareSupervisorShiftModal();
-        }
-
-        if (modalId === 'modal-admin-restaurant') {
-            this.prepareAdminRestaurantModal();
-        }
-
-        if (modalId === 'modal-admin-employee') {
-            this.prepareAdminEmployeeModal();
-        }
-
-        if (modalId === 'modal-supervisor-restaurant-task') {
-            await this.prepareSupervisorRestaurantTaskModal();
+        try {
+            if (modalId === 'modal-supervisor-schedule-shift') {
+                await this.prepareSupervisorShiftModal?.();
+            }
+            if (modalId === 'modal-admin-restaurant') {
+                await this.prepareAdminRestaurantModal?.();
+            }
+            if (modalId === 'modal-admin-employee') {
+                await this.prepareAdminEmployeeModal?.();
+            }
+            if (modalId === 'modal-supervisor-restaurant-task') {
+                await this.prepareSupervisorRestaurantTaskModal?.();
+            }
+        } catch (prepareError) {
+            // Un fallo del prepare NO debe impedir que el modal se muestre; el usuario
+            // puede corregir manualmente (ej. escribir dirección) sin bloqueo total.
+            console.error(`[openModal] prepare falló para ${modalId}`, prepareError);
         }
 
         modal.classList.add('active');
@@ -2241,8 +2244,14 @@ const app = {
                 const { employeeMethods } = await import('./modules/employee.js');
                 Object.assign(this, employeeMethods);
             } else if (route.startsWith('supervisor')) {
-                const { supervisorMethods } = await import('./modules/supervisor.js');
-                Object.assign(this, supervisorMethods);
+                // Los supervisores también pueden crear sitios/contratistas desde los
+                // botones "Nuevo Sitio" / "Nuevo Contratista" que abren modales admin;
+                // sin adminModalMethods esos modales quedaban sin prepare y no se abrían.
+                const [{ supervisorMethods }, { adminModalMethods }] = await Promise.all([
+                    import('./modules/supervisor.js'),
+                    import('./modules/adminModals.js'),
+                ]);
+                Object.assign(this, supervisorMethods, adminModalMethods);
             } else if (route.startsWith('admin')) {
                 const [{ adminMethods }, { adminModalMethods }, { supervisorMethods }] = await Promise.all([
                     import('./modules/admin.js'),
