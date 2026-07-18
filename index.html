@@ -1078,25 +1078,11 @@
                 </div>
 
                 <div class="report-filters">
-                    <div class="report-date-row" role="group" aria-label="Rango de fechas del informe">
-                        <div class="form-group report-filter-field report-date-field">
-                        <label for="report-start-date">Fecha Inicio</label>
-                        <div class="date-control">
-                            <input type="date" id="report-start-date" class="dark-control compact-picker" value="2026-03-01" inputmode="none" lang="en-GB">
-                            <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="report-start-date" aria-label="Abrir selector de fecha de inicio">
-                                <i class="fas fa-calendar-alt"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="form-group report-filter-field report-date-field">
-                        <label for="report-end-date">Fecha Fin</label>
-                        <div class="date-control">
-                            <input type="date" id="report-end-date" class="dark-control compact-picker" value="2026-03-24" inputmode="none" lang="en-GB">
-                            <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="report-end-date" aria-label="Abrir selector de fecha fin">
-                                <i class="fas fa-calendar-alt"></i>
-                            </button>
-                        </div>
-                    </div>
+                    <!-- Fechas ocultas: se usan defaults (mes actual) — los inputs quedan en el DOM
+                         para que generateReport() lea sus valores. hidden con `display:none`. -->
+                    <div class="report-date-row" role="group" aria-label="Rango de fechas del informe" style="display:none;">
+                        <input type="date" id="report-start-date" value="2026-03-01">
+                        <input type="date" id="report-end-date" value="2026-03-24">
                     </div>
 
                     <div class="form-group report-filter-field">
@@ -1180,11 +1166,8 @@
                 </div>
                 
                 <div class="report-downloads">
-                    <button class="btn btn-secondary btn-inline" id="report-preview-html" data-action="openGeneratedReportPreview">
-                        <i class="fas fa-eye"></i> Visualizar
-                    </button>
                     <div class="report-download-menu">
-                        <button class="btn btn-secondary btn-inline" id="report-download-trigger" type="button" data-action="toggleReportDownloadMenu">
+                        <button class="btn btn-primary btn-inline" id="report-download-trigger" type="button" data-action="toggleReportDownloadMenu">
                             <i class="fas fa-download"></i> Descargar
                         </button>
                         <div id="report-download-options" class="report-download-options hidden">
