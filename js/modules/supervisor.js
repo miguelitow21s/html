@@ -5466,7 +5466,13 @@ export const supervisorMethods = {
             return;
         }
 
-        window.location.assign(url);
+        // Abre en pestaña nueva para que el flujo del informe no interrumpa
+        // el estado del panel actual (filtros, resultado en pantalla).
+        // Fallback a assign() si el popup blocker cancela window.open.
+        const opened = window.open(url, '_blank', 'noopener,noreferrer');
+        if (!opened) {
+            window.location.assign(url);
+        }
     },
 
     openGeneratedReportPreview() {
