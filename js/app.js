@@ -3524,11 +3524,12 @@ const app = {
         const normalizedNext = nextAreas.length > 0 ? nextAreas : fallbackAreas;
         const previousAreas = JSON.stringify(this.areas || []);
         const previousSelection = JSON.stringify(this.selectedEmployeeAreas || []);
-        const selectedAreas = uniqueCleaningAreas(
-            (this.selectedEmployeeAreas || []).filter((areaLabel) =>
-                normalizedNext.some((candidate) => normalizeAreaToken(candidate) === normalizeAreaToken(areaLabel))
-            )
-        );
+        // Todas las áreas disponibles quedan pre-seleccionadas por default.
+        // Antes se preservaba la selección previa (filtrando por available), lo
+        // que permitía al contratista tomar foto de solo algunas y dejar
+        // "seleccionadas" 1 o 2. El requisito nuevo (#2) es que TODAS las
+        // áreas del sitio queden fotografiadas antes de iniciar.
+        const selectedAreas = [...normalizedNext];
         const nextSelection = JSON.stringify(selectedAreas);
         const selectionChanged = nextSelection !== previousSelection;
         const normalizedGroups =
@@ -5972,10 +5973,14 @@ const app = {
         const requiredFromShift = Number(
             shift?.required_start_evidence_count ?? shift?.requiredStartEvidenceCount ?? Number.NaN
         );
-        const requiredBySlots = this.employeePhotoSlots.length;
+        // Piso: TODAS las áreas disponibles del sitio (requisito #2 del contratista).
+        // Aunque el user deseleccione en el UI, la validación exige haber cubierto
+        // cada área disponible del restaurante.
+        const requiredByAvailable = this.getEmployeeAvailableAreas().length;
+        const requiredBySlots = Math.max(this.employeePhotoSlots.length, requiredByAvailable);
         const requiredCount =
             Number.isFinite(requiredFromShift) && requiredFromShift > 0
-                ? Math.max(0, requiredFromShift)
+                ? Math.max(requiredFromShift, requiredByAvailable)
                 : Math.max(0, requiredBySlots);
 
         const existingCountRaw = Number(shift?.start_evidence_count ?? shift?.startEvidenceCount ?? 0);
