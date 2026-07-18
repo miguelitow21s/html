@@ -650,7 +650,9 @@ export const employeeMethods = {
         };
 
         try {
-            await this.ensureOtpVerification();
+            // OTP se pide UNA sola vez al login; no volvemos a pedirlo aquí.
+            // Si el backend responde OTP_SESSION_EXPIRED/REQUIRED/INVALID, el
+            // catch de abajo dispara retryWithFreshOtp (una sola vez).
             try {
                 await performStartShiftRequest();
             } catch (firstError) {
@@ -852,7 +854,7 @@ export const employeeMethods = {
         this.showLoading(t('toast.uploading.images'), t('toast.wait.short'));
 
         try {
-            await this.ensureOtpVerification();
+            // OTP se pide solo al login; el token queda vigente mientras dure la sesión.
             await this.uploadShiftEvidenceBatch('inicio', this.photoFiles, this.uploadedStartAreas);
             await this.hydrateShiftEvidenceSummary(this.data.currentShift);
             this.persistCurrentShiftAreaSelection();
@@ -1086,7 +1088,8 @@ export const employeeMethods = {
         };
 
         try {
-            await this.ensureOtpVerification();
+            // OTP se pide solo al login; el token queda vigente mientras dure la sesión.
+            // Si expira mid-servicio, el catch de performEndShiftRequest hace auto-retry.
             const requireStartPhotos = this.getSystemSetting(
                 'evidence.require_start_photos',
                 DEFAULT_SYSTEM_SETTINGS.evidence.require_start_photos
