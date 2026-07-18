@@ -927,6 +927,14 @@ const app = {
             });
         }
 
+        ['employee-photo-area-select', 'employee-end-photo-area-select'].forEach((selectId) => {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            select.addEventListener('change', () => {
+                this.setEmployeePhotoSelectedArea(select.value);
+            });
+        });
+
         const supervisionPhotoInput = document.getElementById('supervision-photo-input');
         if (supervisionPhotoInput) {
             supervisionPhotoInput.addEventListener('change', (event) => {
@@ -3518,6 +3526,41 @@ const app = {
         this.renderSupervisorPhotoGrid();
     },
 
+    populateEmployeePhotoAreaOptions() {
+        // Mismo patrón que populateSupervisorAreaOptions: dropdown único con
+        // todas las áreas disponibles del sitio. Refleja el área activa.
+        const availableAreas = this.getEmployeeAvailableAreas();
+        const activeArea = this.getEmployeeActiveArea();
+        const activeKey = normalizeAreaToken(activeArea);
+        const optionsHtml = availableAreas
+            .map((areaLabel) => {
+                const optionKey = normalizeAreaToken(areaLabel);
+                return `<option value="${escapeHtml(areaLabel)}" ${optionKey === activeKey ? 'selected' : ''}>${escapeHtml(areaLabel)}</option>`;
+            })
+            .join('');
+
+        ['employee-photo-area-select', 'employee-end-photo-area-select'].forEach((selectId) => {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            select.innerHTML = `<option value="">Selecciona un área</option>${optionsHtml}`;
+            if (activeArea && select.value !== activeArea) {
+                select.value = activeArea;
+            }
+        });
+    },
+
+    setEmployeePhotoSelectedArea(areaLabel = '') {
+        this.setEmployeeActiveArea(areaLabel || '');
+        // Reflejar en ambos selects para mantenerlos sincronizados si el user
+        // navega entre inicio y fin sin refrescar.
+        ['employee-photo-area-select', 'employee-end-photo-area-select'].forEach((selectId) => {
+            const select = document.getElementById(selectId);
+            if (select && select.value !== (areaLabel || '')) {
+                select.value = areaLabel || '';
+            }
+        });
+    },
+
     setCleaningAreas(areas = [], areaGroups = null) {
         const nextAreas = uniqueCleaningAreas(areas).filter(Boolean);
         const fallbackAreas = uniqueCleaningAreas(DEFAULT_SYSTEM_SETTINGS.evidence.default_cleaning_areas);
@@ -4842,21 +4885,23 @@ const app = {
         const validSlotKeys = new Set(this.employeePhotoSlots.map((slot) => slot.key));
         this.pruneEmployeeEvidenceCollections(validSlotKeys);
 
+        this.populateEmployeePhotoAreaOptions();
+
         this.renderPhotoGridForTypeNow(
             'photo-grid',
             'start',
             visibleEmployeeSlots,
             selectedAreas.length > 0
-                ? 'Selecciona un área para ver sus subáreas.'
-                : 'Selecciona una o varias áreas para ver las subáreas requeridas.'
+                ? 'Selecciona un área del selector para ver sus subáreas.'
+                : 'Selecciona un área del selector para ver las subáreas requeridas.'
         );
         this.renderPhotoGridForTypeNow(
             'end-photo-grid',
             'end',
             visibleEmployeeSlots,
             selectedAreas.length > 0
-                ? 'Selecciona un área para ver sus subáreas finales.'
-                : 'Las mismas áreas seleccionadas al inicio aparecerán aquí.'
+                ? 'Selecciona un área del selector para ver sus subáreas finales.'
+                : 'Las mismas áreas del inicio aparecerán aquí.'
         );
 
         Object.entries(this.photos).forEach(([area, source]) => {
