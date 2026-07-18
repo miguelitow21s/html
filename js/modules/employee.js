@@ -875,6 +875,9 @@ export const employeeMethods = {
         if (restaurantElement) {
             restaurantElement.textContent = this.getResolvedShiftRestaurantName(shift, 'Servicio activo');
         }
+        // Re-render de tareas del sitio: cuando el user llega a cleaning con turno
+        // activo, las cards se mueven de la superficie dashboard a esta.
+        this.renderEmployeeRestaurantTasks();
     },
 
     navigateToShiftCompletion() {
@@ -1608,44 +1611,51 @@ export const employeeMethods = {
     },
 
     initRestaurantTaskDelegation() {
-        const list = document.getElementById('employee-restaurant-tasks-list');
-        if (!list || list.dataset.delegationReady) return;
-        list.dataset.delegationReady = '1';
-
         // Buffer de archivos adjuntos por tarea (permite múltiples fotos/videos).
         this._rtaskAttachments = this._rtaskAttachments || {};
 
-        list.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-rtask-action]');
-            if (!btn) return;
-            const taskId = btn.dataset.taskId;
-            const action = btn.dataset.rtaskAction;
-            if (action === 'close') void this.employeeCloseRestaurantTask(taskId);
-            else if (action === 'submit-evidence') void this.employeeCompleteRestaurantTask(taskId);
-            else if (action === 'show-evidence')
-                document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.remove('hidden');
-            else if (action === 'cancel-evidence') {
-                document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.add('hidden');
-                this._rtaskAttachments[taskId] = [];
-                this.renderRtaskAttachments(taskId);
-            } else if (action === 'remove-attachment') {
-                const index = Number(btn.dataset.index);
-                if (Number.isFinite(index) && this._rtaskAttachments[taskId]) {
-                    this._rtaskAttachments[taskId].splice(index, 1);
+        // Se bindea en los dos contenedores (dashboard + cleaning) porque las
+        // cards se renderizan en ambos y los ids de inputs son globales.
+        ['employee-restaurant-tasks-list', 'cleaning-restaurant-tasks-list'].forEach((listId) => {
+            const list = document.getElementById(listId);
+            if (!list || list.dataset.delegationReady) return;
+            list.dataset.delegationReady = '1';
+
+            list.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-rtask-action]');
+                if (!btn) return;
+                const taskId = btn.dataset.taskId;
+                const action = btn.dataset.rtaskAction;
+                if (action === 'close') void this.employeeCloseRestaurantTask(taskId);
+                else if (action === 'submit-evidence') void this.employeeCompleteRestaurantTask(taskId);
+                else if (action === 'show-evidence') {
+                    // Puede existir en ambas superficies; abrir la instancia del click.
+                    btn.closest('.rtask-card')
+                        ?.querySelector(`#rtask-evidence-wrap-${taskId}`)
+                        ?.classList.remove('hidden');
+                    document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.remove('hidden');
+                } else if (action === 'cancel-evidence') {
+                    document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.add('hidden');
+                    this._rtaskAttachments[taskId] = [];
                     this.renderRtaskAttachments(taskId);
+                } else if (action === 'remove-attachment') {
+                    const index = Number(btn.dataset.index);
+                    if (Number.isFinite(index) && this._rtaskAttachments[taskId]) {
+                        this._rtaskAttachments[taskId].splice(index, 1);
+                        this.renderRtaskAttachments(taskId);
+                    }
                 }
-            }
-        });
-        list.addEventListener('change', (e) => {
-            const fileInput = e.target.closest('.rtask-file-input');
-            if (!fileInput) return;
-            const taskId = fileInput.id.replace('rtask-file-', '');
-            const files = Array.from(fileInput.files || []);
-            if (files.length === 0) return;
-            this._rtaskAttachments[taskId] = [...(this._rtaskAttachments[taskId] || []), ...files];
-            // Reset del input para que se pueda re-seleccionar el mismo archivo si el user borra.
-            fileInput.value = '';
-            this.renderRtaskAttachments(taskId);
+            });
+            list.addEventListener('change', (e) => {
+                const fileInput = e.target.closest('.rtask-file-input');
+                if (!fileInput) return;
+                const taskId = fileInput.id.replace('rtask-file-', '');
+                const files = Array.from(fileInput.files || []);
+                if (files.length === 0) return;
+                this._rtaskAttachments[taskId] = [...(this._rtaskAttachments[taskId] || []), ...files];
+                fileInput.value = '';
+                this.renderRtaskAttachments(taskId);
+            });
         });
     },
 
@@ -1685,22 +1695,35 @@ export const employeeMethods = {
     },
 
     renderEmployeeRestaurantTasks() {
-        const section = document.getElementById('employee-restaurant-tasks-section');
-        if (!section) return;
-
         const tasks = this.getEmployeeRestaurantOpenTasks();
-        if (tasks.length === 0) {
-            section.classList.add('hidden');
-            return;
-        }
+        const dashboard = this.data.employee.dashboard || {};
+        const html = tasks.map((task) => this.buildRestaurantTaskCardHtml(task, dashboard)).join('');
+        const surfaces = [
+            { section: 'employee-restaurant-tasks-section', list: 'employee-restaurant-tasks-list' },
+            { section: 'cleaning-restaurant-tasks-section', list: 'cleaning-restaurant-tasks-list' },
+        ];
 
-        section.classList.remove('hidden');
-        const list = document.getElementById('employee-restaurant-tasks-list');
-        if (!list) return;
+        // Renderizar en UNA sola superficie a la vez para evitar duplicar ids
+        // (los cards contienen inputs con id="rtask-file-${taskId}" etc.).
+        // Prioridad: si hay servicio activo, ir a la pantalla de cleaning; si
+        // no, al dashboard. La otra superficie se limpia y se oculta.
+        const hasActiveShift = Boolean(this.data.currentShift?.id);
+        const activeListId = hasActiveShift ? 'cleaning-restaurant-tasks-list' : 'employee-restaurant-tasks-list';
+
+        surfaces.forEach(({ section: sectionId, list: listId }) => {
+            const section = document.getElementById(sectionId);
+            const list = document.getElementById(listId);
+            if (!section || !list) return;
+            if (listId !== activeListId || tasks.length === 0) {
+                section.classList.add('hidden');
+                list.innerHTML = '';
+                return;
+            }
+            section.classList.remove('hidden');
+            list.innerHTML = html;
+        });
 
         this.initRestaurantTaskDelegation();
-        const dashboard = this.data.employee.dashboard || {};
-        list.innerHTML = tasks.map((task) => this.buildRestaurantTaskCardHtml(task, dashboard)).join('');
     },
 
     async employeeCloseRestaurantTask(taskId) {

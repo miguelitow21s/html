@@ -636,19 +636,22 @@
     <div id="page-employee-shift-cleaning" class="app-container hidden">
         <header class="header">
             <div class="header-brand">
+                <button class="header-btn" aria-label="Volver al inicio" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="employee-dashboard">
+                    <i class="fas fa-home"></i>
+                </button>
                 <span data-i18n="shift.cleaning.title">Servicio en Progreso</span>
             </div>
         </header>
-        
+
         <main class="content">
             <div class="card" style="text-align: center; padding: 40px 20px;">
                 <div class="shift-active-indicator">
                     <div class="pulse-dot"></div>
                     <span>TURNO ACTIVO</span>
                 </div>
-                
+
                 <div class="timer-display" id="cleaning-timer">00:00:00</div>
-                
+
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle"></i>
                     <div>
@@ -656,7 +659,7 @@
                         <small>Mantenga la app abierta mientras realiza la limpieza.</small>
                     </div>
                 </div>
-                
+
                 <div class="info-item">
                     <i class="fas fa-store"></i>
                     <div class="info-item-content">
@@ -665,7 +668,12 @@
                     </div>
                 </div>
             </div>
-            
+
+            <div id="cleaning-restaurant-tasks-section" class="hidden">
+                <h3 class="section-heading"><i class="fas fa-store"></i> <span data-i18n="employee.tasks.section">Tareas del Sitio</span></h3>
+                <div id="cleaning-restaurant-tasks-list"></div>
+            </div>
+
             <button class="btn-large btn-success" data-action="navigateToShiftCompletion">
                 <i class="fas fa-check-circle"></i> He Terminado la Limpieza
             </button>
