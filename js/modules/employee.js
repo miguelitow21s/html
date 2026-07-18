@@ -991,22 +991,28 @@ export const employeeMethods = {
     },
 
     async uploadTaskEvidence(taskId, file) {
-        if (!this.isSupportedEvidenceImageFile(file)) {
-            throw new Error('Formato de imagen no soportado. Usa JPG, PNG, WebP, HEIC o HEIF.');
+        const rawType = String(file?.type || '').toLowerCase();
+        const isVideo = rawType.startsWith('video/');
+        const isImage = this.isSupportedEvidenceImageFile(file);
+        if (!isVideo && !isImage) {
+            throw new Error('Formato no soportado. Usa una imagen (JPG/PNG/WebP/HEIC) o un video (MP4/MOV/WebM).');
         }
 
-        const mimeType = this.getEvidenceFileContentType(file) || 'image/jpeg';
+        const mimeType = isVideo
+            ? rawType || 'video/mp4'
+            : this.getEvidenceFileContentType(file) || 'image/jpeg';
         const numericTaskId = Number(taskId);
         const requestUpload = await apiClient.operationalTasksManage('request_evidence_upload', {
             task_id: Number.isFinite(numericTaskId) ? numericTaskId : taskId,
             mime_type: mimeType,
+            evidence_type: isVideo ? 'video' : 'photo',
         });
 
         const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
         const path = requestUpload?.path || requestUpload?.upload?.path;
 
         if (!signedUrl || !path) {
-            throw new Error('No fue posible preparar la subida de la foto de la tarea.');
+            throw new Error('No fue posible preparar la subida de la evidencia de la tarea.');
         }
 
         await apiClient.uploadToSignedUrl(signedUrl, file, mimeType);
@@ -1440,10 +1446,11 @@ export const employeeMethods = {
                     <i class="fas fa-camera"></i> Completar tarea
                 </button>
                 <div class="rtask-evidence-wrap hidden" id="rtask-evidence-wrap-${taskId}">
-                    <input type="file" accept="${SUPPORTED_EVIDENCE_IMAGE_ACCEPT}" capture="environment" class="rtask-file-input" id="rtask-file-${taskId}">
+                    <input type="file" accept="${SUPPORTED_EVIDENCE_IMAGE_ACCEPT},video/*" capture="environment" multiple class="rtask-file-input" id="rtask-file-${taskId}" style="display:none;">
+                    <div class="rtask-attachments" id="rtask-attachments-${taskId}"></div>
                     <label for="rtask-file-${taskId}" class="rtask-file-label" id="rtask-file-label-${taskId}">
-                        <i class="fas fa-camera"></i>
-                        <span class="rtask-file-label-text">Tomar foto de evidencia</span>
+                        <i class="fas fa-plus"></i>
+                        <span class="rtask-file-label-text">Agregar foto o video</span>
                     </label>
                     <input type="text" placeholder="Observaciones (opcional)" class="rtask-notes-input dark-control" id="rtask-notes-${taskId}">
                     <div class="rtask-evidence-buttons">
@@ -1494,6 +1501,10 @@ export const employeeMethods = {
         const list = document.getElementById('employee-restaurant-tasks-list');
         if (!list || list.dataset.delegationReady) return;
         list.dataset.delegationReady = '1';
+
+        // Buffer de archivos adjuntos por tarea (permite múltiples fotos/videos).
+        this._rtaskAttachments = this._rtaskAttachments || {};
+
         list.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-rtask-action]');
             if (!btn) return;
@@ -1503,24 +1514,64 @@ export const employeeMethods = {
             else if (action === 'submit-evidence') void this.employeeCompleteRestaurantTask(taskId);
             else if (action === 'show-evidence')
                 document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.remove('hidden');
-            else if (action === 'cancel-evidence')
+            else if (action === 'cancel-evidence') {
                 document.getElementById(`rtask-evidence-wrap-${taskId}`)?.classList.add('hidden');
+                this._rtaskAttachments[taskId] = [];
+                this.renderRtaskAttachments(taskId);
+            } else if (action === 'remove-attachment') {
+                const index = Number(btn.dataset.index);
+                if (Number.isFinite(index) && this._rtaskAttachments[taskId]) {
+                    this._rtaskAttachments[taskId].splice(index, 1);
+                    this.renderRtaskAttachments(taskId);
+                }
+            }
         });
         list.addEventListener('change', (e) => {
             const fileInput = e.target.closest('.rtask-file-input');
             if (!fileInput) return;
             const taskId = fileInput.id.replace('rtask-file-', '');
-            const label = document.getElementById(`rtask-file-label-${taskId}`);
-            const textSpan = label?.querySelector('.rtask-file-label-text');
-            const file = fileInput.files?.[0];
-            if (file && textSpan) {
-                textSpan.textContent = `📷 Foto lista: ${file.name.slice(0, 24)}${file.name.length > 24 ? '...' : ''}`;
-                label?.classList.add('rtask-file-label-has-file');
-            } else if (textSpan) {
-                textSpan.textContent = 'Tomar foto de evidencia';
-                label?.classList.remove('rtask-file-label-has-file');
-            }
+            const files = Array.from(fileInput.files || []);
+            if (files.length === 0) return;
+            this._rtaskAttachments[taskId] = [...(this._rtaskAttachments[taskId] || []), ...files];
+            // Reset del input para que se pueda re-seleccionar el mismo archivo si el user borra.
+            fileInput.value = '';
+            this.renderRtaskAttachments(taskId);
         });
+    },
+
+    renderRtaskAttachments(taskId) {
+        const wrap = document.getElementById(`rtask-attachments-${taskId}`);
+        if (!wrap) return;
+        const files = this._rtaskAttachments?.[taskId] || [];
+        const label = document.getElementById(`rtask-file-label-${taskId}`);
+        const textSpan = label?.querySelector('.rtask-file-label-text');
+
+        if (files.length === 0) {
+            wrap.innerHTML = '';
+            if (textSpan) textSpan.textContent = 'Agregar foto o video';
+            label?.classList.remove('rtask-file-label-has-file');
+            return;
+        }
+
+        if (textSpan) textSpan.textContent = `Agregar otra (${files.length})`;
+        label?.classList.add('rtask-file-label-has-file');
+
+        wrap.innerHTML = files
+            .map((file, index) => {
+                const isVideo = String(file.type || '').startsWith('video/');
+                const icon = isVideo ? 'fa-video' : 'fa-image';
+                const shortName = file.name.length > 22 ? `${file.name.slice(0, 22)}…` : file.name;
+                const sizeMb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+                return `<div class="rtask-attachment-item">
+                    <i class="fas ${icon}"></i>
+                    <span class="rtask-attachment-name">${escapeHtml(shortName)}</span>
+                    <span class="rtask-attachment-size">${sizeMb} MB</span>
+                    <button type="button" class="rtask-attachment-remove" data-rtask-action="remove-attachment" data-task-id="${escapeHtml(String(taskId))}" data-index="${index}" aria-label="Quitar adjunto">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>`;
+            })
+            .join('');
     },
 
     renderEmployeeRestaurantTasks() {
@@ -1567,12 +1618,11 @@ export const employeeMethods = {
     },
 
     async employeeCompleteRestaurantTask(taskId) {
-        const fileInput = document.getElementById(`rtask-file-${taskId}`);
         const notesInput = document.getElementById(`rtask-notes-${taskId}`);
-        const file = fileInput?.files?.[0];
         const notes = notesInput?.value?.trim() || undefined;
+        const files = (this._rtaskAttachments && this._rtaskAttachments[taskId]) || [];
 
-        if (!file) {
+        if (files.length === 0) {
             this.showToast(t('toast.select.photo.first'), {
                 tone: 'warning',
                 title: t('toast.photo.required'),
@@ -1591,13 +1641,18 @@ export const employeeMethods = {
 
         this.showLoading(t('toast.uploading.evidence'), t('toast.wait'));
         try {
-            const evidencePath = await this.uploadTaskEvidence(numericTaskId, file);
-            if (!evidencePath) {
-                throw new Error('No se recibió la ruta de la evidencia subida.');
+            const paths = [];
+            for (const file of files) {
+                const path = await this.uploadTaskEvidence(numericTaskId, file);
+                if (!path) throw new Error('No se recibió la ruta de la evidencia subida.');
+                paths.push(path);
             }
             const completePayload = {
                 task_id: numericTaskId,
-                evidence_path: evidencePath,
+                // Compat: evidence_path (primero) para backends viejos.
+                // Nuevo: evidence_paths (array completo) para el flow multi-adjunto.
+                evidence_path: paths[0],
+                evidence_paths: paths,
             };
             if (notes) {
                 completePayload.notes = notes;
@@ -1607,6 +1662,7 @@ export const employeeMethods = {
             this.data.employee.openTasks = (this.data.employee.openTasks || []).filter(
                 (task) => String(task.task_id || task.id || '') !== String(numericTaskId)
             );
+            if (this._rtaskAttachments) this._rtaskAttachments[taskId] = [];
             this.renderEmployeeRestaurantTasks();
             this.showToast(t('toast.task.completed.evidence'), { tone: 'success', title: t('toast.done') });
         } catch (error) {
