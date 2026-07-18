@@ -6731,6 +6731,27 @@ export const supervisorMethods = {
             return;
         }
 
+        // Delegación una sola vez: los onchange inline dependen de CSP + del
+        // orden de carga de `window.app` en scope global, y en algunos móviles
+        // dejaban de sincronizar el estado interno con el checkbox visualmente
+        // marcado (bug reportado del sábado 18/07). Con addEventListener el
+        // handler siempre resuelve a `this` = módulo cargado.
+        if (!container.dataset.schedShiftBound) {
+            container.dataset.schedShiftBound = '1';
+            container.addEventListener('change', (event) => {
+                const input = event.target;
+                if (!(input instanceof HTMLInputElement)) return;
+                const rowIndex = Number(input.dataset.rowIndex);
+                if (!Number.isFinite(rowIndex)) return;
+                const kind = input.dataset.schedShiftInput;
+                if (kind === 'enabled') {
+                    this.onSchedShiftRowToggle(rowIndex, input.checked);
+                } else if (kind === 'startTime' || kind === 'endTime') {
+                    this.onSchedShiftRowTimeChange(rowIndex, kind, input.value);
+                }
+            });
+        }
+
         const fragment = document.createDocumentFragment();
         rows.forEach((row, index) => {
             const [y, m, d] = row.dateKey.split('-');
@@ -6740,17 +6761,18 @@ export const supervisorMethods = {
 
             rowEl.innerHTML = `
                 <label class="shift-plan-row-toggle">
-                    <input type="checkbox" ${row.enabled ? 'checked' : ''} onchange="app.onSchedShiftRowToggle(${index}, this.checked)">
+                    <input type="checkbox" ${row.enabled ? 'checked' : ''}
+                        data-sched-shift-input="enabled" data-row-index="${index}">
                     <span class="shift-plan-day-label">${escapeHtml(row.dayShort)} <span class="shift-plan-date">${escapeHtml(dateLabel)}</span></span>
                 </label>
                 <div class="shift-plan-times${row.enabled ? '' : ' opacity-50'}">
                     <input type="time" class="dark-control" value="${escapeHtml(row.startTime)}"
                         ${row.enabled ? '' : 'disabled'}
-                        onchange="app.onSchedShiftRowTimeChange(${index}, 'startTime', this.value)">
+                        data-sched-shift-input="startTime" data-row-index="${index}">
                     <span class="shift-plan-time-sep">→</span>
                     <input type="time" class="dark-control" value="${escapeHtml(row.endTime)}"
                         ${row.enabled ? '' : 'disabled'}
-                        onchange="app.onSchedShiftRowTimeChange(${index}, 'endTime', this.value)">
+                        data-sched-shift-input="endTime" data-row-index="${index}">
                 </div>
             `;
             fragment.appendChild(rowEl);
