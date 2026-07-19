@@ -1824,10 +1824,10 @@ export const employeeMethods = {
             { section: 'cleaning-restaurant-tasks-section', list: 'cleaning-restaurant-tasks-list' },
         ];
 
-        // Las tareas del sitio SOLO se muestran cuando el contratista tiene un
-        // turno activo. Sin turno activo, el backend rechaza el complete con
-        // NO_ACTIVE_SHIFT — mostrarlas antes es una trampa. Se renderizan solo
-        // en la pantalla de servicio en progreso, nunca en el dashboard.
+        // Las tareas del sitio SOLO se muestran en la pantalla del cronómetro
+        // (servicio en progreso). Es donde el contratista tiene tiempo real de
+        // trabajo. Fuera del turno activo o en la pantalla de cierre no se
+        // muestran para no distraer y para evitar NO_ACTIVE_SHIFT del backend.
         const hasActiveShift = Boolean(this.data.currentShift?.id);
         const activeListId = hasActiveShift ? 'cleaning-restaurant-tasks-list' : null;
 
