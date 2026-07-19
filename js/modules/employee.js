@@ -737,18 +737,22 @@ export const employeeMethods = {
                 return;
             }
 
+            // Backend v3: en today_shifts los turnos programados vienen con
+            // shift_id=null; el id real esta en scheduled_shift_id. Aceptamos
+            // cualquiera de los dos como fuente.
+            const scheduledShiftIdentifier = scheduledShift?.scheduled_shift_id || scheduledShift?.id;
             const otpTokenLength = String(apiClient.getConfig()?.shiftOtpToken || '').length;
             console.info('[shifts_start] pre-request diagnostic', {
                 otpTokenPresent: otpTokenLength > 0,
                 otpTokenLength,
-                scheduledShiftId: scheduledShift?.id,
+                scheduledShiftId: scheduledShiftIdentifier,
                 restaurantId: scheduledShift?.restaurant_id,
             });
             const location = this.location || (await this.captureLocation({ updateUi: false }));
 
             const result = await apiClient.startShift({
                 restaurant_id: scheduledShift.restaurant_id,
-                scheduled_shift_id: scheduledShift.id,
+                scheduled_shift_id: scheduledShiftIdentifier,
                 lat: location.lat,
                 lng: location.lng,
                 fit_for_work: true,
@@ -759,7 +763,7 @@ export const employeeMethods = {
                 {
                     ...scheduledShift,
                     id: result?.shift_id,
-                    scheduled_shift_id: scheduledShift.id,
+                    scheduled_shift_id: scheduledShiftIdentifier,
                     restaurant_id: scheduledShift.restaurant_id,
                     restaurant: scheduledShift.restaurant,
                     start_time: new Date().toISOString(),

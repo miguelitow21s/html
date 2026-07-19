@@ -5858,7 +5858,11 @@ const app = {
         scheduledShift = this.data.currentScheduledShift,
         _dashboard = this.data.employee.dashboard || {}
     ) {
-        if (!scheduledShift?.id) {
+        // Backend v3 en today_shifts[] devuelve turnos programados con shift_id=null
+        // y solo scheduled_shift_id. También aceptamos ese identificador para no
+        // rechazar el turno solo por no tener el shift_id todavía.
+        const identifier = scheduledShift?.id || scheduledShift?.scheduled_shift_id;
+        if (!identifier) {
             return false;
         }
 
