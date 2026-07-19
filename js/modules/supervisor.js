@@ -5434,8 +5434,15 @@ export const supervisorMethods = {
     },
 
     downloadGeneratedReport(type) {
+        // Safari iOS bloquea window.open si hay lógica entre el click y la
+        // llamada. Abrimos la pestaña INMEDIATAMENTE (about:blank) en el
+        // mismo tick del user gesture, y le seteamos el URL final después
+        // de verificar el reporte. Si algo falla, cerramos el blank.
+        const newWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
+
         const report = this.data.lastGeneratedReport;
         if (!report) {
+            newWindow?.close();
             this.showToast(t('sup.toast.report.first'), {
                 tone: 'warning',
                 title: t('sup.toast.report.no.results'),
@@ -5445,6 +5452,7 @@ export const supervisorMethods = {
 
         const url = type === 'pdf' ? report.url_pdf : report.url_excel;
         if (!url) {
+            newWindow?.close();
             this.showToast(`No fue posible preparar la descarga en ${type.toUpperCase()}.`, {
                 tone: 'error',
                 title: t('sup.toast.download.unavailable'),
@@ -5453,7 +5461,14 @@ export const supervisorMethods = {
         }
 
         this.closeReportDownloadMenu();
-        this.navigateToCurrentTab(url);
+
+        if (newWindow) {
+            newWindow.location.href = url;
+        } else {
+            // Popup blocker canceló window.open — no queda alternativa que
+            // reemplazar la pestaña actual para no perder la descarga.
+            window.location.assign(url);
+        }
     },
 
     toggleReportDownloadMenu() {
