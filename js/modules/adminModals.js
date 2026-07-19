@@ -1474,7 +1474,7 @@ export const adminModalMethods = {
         return this.runPending(
             `supervisorRestaurants:${this.currentUser?.role || 'unknown'}:${force ? 'force' : 'default'}`,
             async () => {
-                let restaurants = [];
+                let restaurants;
                 const mapRestaurantList = (result) =>
                     asArray(result)
                         .map((item) => ({
