@@ -5742,25 +5742,26 @@ const app = {
     },
 
     getEmployeeShiftStartWindowState(shift, now = Date.now()) {
+        // Backend v3: NO hay límite inferior. El contratista puede iniciar el
+        // servicio cuando quiera antes del scheduled_end. Solo rechazamos si la
+        // ventana ya expiró (SCHEDULE_WINDOW_EXPIRED del backend).
         const startWindow = shift?.start_window || shift?.startWindow || null;
 
-        // Fallback: si el backend no manda start_window, derivar de scheduled_start/end.
-        // Regla del producto: el contratista puede iniciar el servicio desde 1 hora antes
-        // del scheduled_start y hasta el scheduled_end (cuando abre el sitio).
-        if (!startWindow || typeof startWindow !== 'object') {
-            const scheduledStartMs = shift?.scheduled_start ? new Date(shift.scheduled_start).getTime() : Number.NaN;
-            const scheduledEndMs = shift?.scheduled_end ? new Date(shift.scheduled_end).getTime() : Number.NaN;
+        const normalizeDateValue = (value) => {
+            const candidate = value ? new Date(value) : null;
+            return candidate && !Number.isNaN(candidate.getTime()) ? candidate.getTime() : Number.NaN;
+        };
 
-            if (Number.isFinite(scheduledStartMs) && Number.isFinite(scheduledEndMs)) {
-                const earliestMs = scheduledStartMs - 60 * 60 * 1000;
-                const tooEarly = now < earliestMs;
+        if (!startWindow || typeof startWindow !== 'object') {
+            const scheduledEndMs = shift?.scheduled_end ? new Date(shift.scheduled_end).getTime() : Number.NaN;
+            if (Number.isFinite(scheduledEndMs)) {
                 const expired = now > scheduledEndMs;
                 return {
-                    tooEarly,
+                    tooEarly: false,
                     expired,
-                    withinWindow: !tooEarly && !expired,
+                    withinWindow: !expired,
                     hasWindowContract: true,
-                    earliest: new Date(earliestMs).toISOString(),
+                    earliest: '',
                     latest: new Date(scheduledEndMs).toISOString(),
                     serverNow: '',
                 };
@@ -5777,28 +5778,35 @@ const app = {
             };
         }
 
-        const normalizeDateValue = (value) => {
-            const candidate = value ? new Date(value) : null;
-            return candidate && !Number.isNaN(candidate.getTime()) ? candidate.getTime() : Number.NaN;
-        };
-
         const earliest = String(startWindow.earliest || startWindow.start || '').trim();
         const latest = String(startWindow.latest || startWindow.end || '').trim();
         const serverNow = String(startWindow.server_now || startWindow.serverNow || '').trim();
-        const earliestMs = normalizeDateValue(earliest);
         const latestMs = normalizeDateValue(latest);
         const referenceNowMs = normalizeDateValue(serverNow);
         const nowMs = Number.isFinite(referenceNowMs) ? referenceNowMs : now;
         const rawCanStart = startWindow.can_start_now ?? startWindow.canStartNow;
         const hasExplicitCanStart = typeof rawCanStart === 'boolean';
 
-        if (Number.isFinite(earliestMs) && Number.isFinite(latestMs)) {
-            const tooEarly = nowMs < earliestMs;
+        // Backend v3 puede enviar can_start_now=true incluso si aún no llegó
+        // el scheduled_start. Le hacemos caso si viene explícito.
+        if (hasExplicitCanStart && rawCanStart === true) {
+            return {
+                tooEarly: false,
+                expired: false,
+                withinWindow: true,
+                hasWindowContract: true,
+                earliest,
+                latest,
+                serverNow,
+            };
+        }
+
+        if (Number.isFinite(latestMs)) {
             const expired = nowMs > latestMs;
             return {
-                tooEarly,
+                tooEarly: false,
                 expired,
-                withinWindow: !tooEarly && !expired,
+                withinWindow: !expired,
                 hasWindowContract: true,
                 earliest,
                 latest,
@@ -5831,14 +5839,19 @@ const app = {
 
     getShiftStartWindowCopy(shift) {
         const state = this.getEmployeeShiftStartWindowState(shift);
-        const earliestLabel = formatDateTime(state?.earliest);
         const latestLabel = formatDateTime(state?.latest);
 
-        if (earliestLabel !== '-' && latestLabel !== '-') {
-            return `Tu servicio se habilita entre ${earliestLabel} y ${latestLabel}.`;
+        // Backend v3: sin límite inferior. El copy solo informa hasta cuándo se
+        // puede iniciar (scheduled_end); no importa cuándo estaba programado el inicio.
+        if (state?.expired) {
+            return latestLabel !== '-'
+                ? `La ventana del servicio terminó el ${latestLabel}. Ya no se puede iniciar.`
+                : 'La ventana del servicio ya terminó.';
         }
-
-        return 'Tu servicio está disponible dentro de la ventana de acceso configurada.';
+        if (latestLabel !== '-') {
+            return `Puedes iniciar este servicio en cualquier momento antes de ${latestLabel}.`;
+        }
+        return 'Puedes iniciar este servicio en cualquier momento antes del cierre de la ventana.';
     },
 
     canEmployeeStartScheduledShift(

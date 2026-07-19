@@ -1824,12 +1824,12 @@ export const employeeMethods = {
             { section: 'cleaning-restaurant-tasks-section', list: 'cleaning-restaurant-tasks-list' },
         ];
 
-        // Renderizar en UNA sola superficie a la vez para evitar duplicar ids
-        // (los cards contienen inputs con id="rtask-file-${taskId}" etc.).
-        // Prioridad: si hay servicio activo, ir a la pantalla de cleaning; si
-        // no, al dashboard. La otra superficie se limpia y se oculta.
+        // Las tareas del sitio SOLO se muestran cuando el contratista tiene un
+        // turno activo. Sin turno activo, el backend rechaza el complete con
+        // NO_ACTIVE_SHIFT — mostrarlas antes es una trampa. Se renderizan solo
+        // en la pantalla de servicio en progreso, nunca en el dashboard.
         const hasActiveShift = Boolean(this.data.currentShift?.id);
-        const activeListId = hasActiveShift ? 'cleaning-restaurant-tasks-list' : 'employee-restaurant-tasks-list';
+        const activeListId = hasActiveShift ? 'cleaning-restaurant-tasks-list' : null;
 
         surfaces.forEach(({ section: sectionId, list: listId }) => {
             const section = document.getElementById(sectionId);
