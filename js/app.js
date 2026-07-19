@@ -4475,6 +4475,10 @@ const app = {
             this.locationTimestamp = Date.now();
             void this.refreshCurrentLocationAddress(this.location);
             this.gpsVerified = true;
+            // Backend v3: si el contratista tiene turnos concurrentes en distintos sitios,
+            // la ubicación fresca permite elegir el correcto por matching GPS. Solo
+            // re-elegimos cuando NO hay turno activo (para no cambiar de sitio mid-servicio).
+            this.rebuildEmployeeScheduledShiftFromLocation?.();
 
             if (status && updateUi) {
                 status.className = 'gps-status valid';

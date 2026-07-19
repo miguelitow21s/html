@@ -54,13 +54,39 @@ export const employeeMethods = {
 
             this.data.employee.dashboard = dashboard;
             this.data.employee.openTasks = openTasks;
-            this.data.currentShift = this.enrichEmployeeShiftRecord(dashboard?.active_shift, dashboard);
-            this.data.currentScheduledShift = this.data.currentShift
-                ? null
-                : this.enrichEmployeeShiftRecord(
-                      this.getEmployeePendingScheduledShift(dashboard?.scheduled_shifts),
-                      dashboard
-                  );
+
+            // Backend v3: my_dashboard.today_shifts[] unifica activo+scheduled con lat/lng/radius del sitio.
+            // Fallback a active_shift + scheduled_shifts para builds viejos del backend.
+            const todayShifts = asArray(dashboard?.today_shifts);
+            if (todayShifts.length > 0) {
+                const activeCandidate = todayShifts.find((shift) => {
+                    const state = String(shift?.state || shift?.status || '').toLowerCase();
+                    return state === 'activo' || state === 'active' || state === 'in_progress';
+                });
+                this.data.currentShift = activeCandidate
+                    ? this.enrichEmployeeShiftRecord(activeCandidate, dashboard)
+                    : this.enrichEmployeeShiftRecord(dashboard?.active_shift, dashboard);
+
+                if (this.data.currentShift) {
+                    this.data.currentScheduledShift = null;
+                } else {
+                    const pending = this.pickEmployeeScheduledShiftByGpsOrProximity(todayShifts);
+                    this.data.currentScheduledShift = pending
+                        ? this.enrichEmployeeShiftRecord(pending, dashboard)
+                        : null;
+                }
+                // Expose todos los turnos del día para vistas que quieran mostrar el listado completo.
+                this.data.employee.todayShifts = todayShifts;
+            } else {
+                this.data.currentShift = this.enrichEmployeeShiftRecord(dashboard?.active_shift, dashboard);
+                this.data.currentScheduledShift = this.data.currentShift
+                    ? null
+                    : this.enrichEmployeeShiftRecord(
+                          this.getEmployeePendingScheduledShift(dashboard?.scheduled_shifts),
+                          dashboard
+                      );
+                this.data.employee.todayShifts = [];
+            }
             if (this.data.currentShift?.id) {
                 void this.hydrateShiftEvidenceSummary(this.data.currentShift).then((nextShift) => {
                     if (nextShift?.id && this.currentPage === 'employee-dashboard') {
@@ -99,6 +125,101 @@ export const employeeMethods = {
         const visibleTasks = this.getVisibleEmployeeTasks(this.data.employee.dashboard);
         this.renderEmployeeProfileTasks(visibleTasks);
         this.updateUserUI();
+    },
+
+    /**
+     * De la lista `today_shifts[]` (backend v3), elige el turno programado que
+     * corresponde al sitio donde el contratista está físicamente. Si no hay
+     * ubicación disponible o ningún restaurante está dentro del radio, cae al
+     * scheduled_start más cercano en el tiempo. Ignora turnos activos y cerrados.
+     */
+    pickEmployeeScheduledShiftByGpsOrProximity(todayShifts = []) {
+        const candidates = asArray(todayShifts).filter((shift) => {
+            const state = String(shift?.state || shift?.status || '').toLowerCase();
+            if (!state || state === 'activo' || state === 'active' || state === 'in_progress') return false;
+            const closed = new Set([
+                'cancelado',
+                'cancelled',
+                'completed',
+                'completado',
+                'finalizado',
+                'finished',
+                'closed',
+                'done',
+                'auto_ended',
+            ]);
+            return !closed.has(state);
+        });
+
+        if (candidates.length === 0) return null;
+        if (candidates.length === 1) return candidates[0];
+
+        const location = this.location;
+        const hasLocation =
+            location && Number.isFinite(Number(location.lat)) && Number.isFinite(Number(location.lng));
+
+        if (hasLocation) {
+            // 1) Preferir el turno cuyo sitio contenga la ubicación actual dentro del radio.
+            const inRange = candidates
+                .map((shift) => {
+                    const rLat = Number(shift?.restaurant?.lat);
+                    const rLng = Number(shift?.restaurant?.lng);
+                    const radius = Number(shift?.restaurant?.radius_meters || 100);
+                    if (!Number.isFinite(rLat) || !Number.isFinite(rLng)) return null;
+                    const distance = this.haversineMeters(location.lat, location.lng, rLat, rLng);
+                    return { shift, distance, radius };
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.distance - b.distance);
+
+            const inside = inRange.find((entry) => entry.distance <= entry.radius);
+            if (inside) return inside.shift;
+            if (inRange.length > 0) return inRange[0].shift; // el más cercano aunque esté fuera de radio
+        }
+
+        // 2) Sin GPS o sin coords en el sitio: el scheduled_start más cercano en tiempo.
+        const now = Date.now();
+        return candidates
+            .map((shift) => {
+                const start = shift?.scheduled_start || shift?.start_time;
+                const startMs = start ? new Date(start).getTime() : Number.POSITIVE_INFINITY;
+                const delta = Math.abs(startMs - now);
+                return { shift, delta };
+            })
+            .sort((a, b) => a.delta - b.delta)[0].shift;
+    },
+
+    /**
+     * Cuando la ubicación cambia y el contratista tiene múltiples turnos programados
+     * hoy en distintos sitios, re-elige el turno pending que corresponde al sitio
+     * actual. NO se ejecuta si ya hay un turno activo (para no cambiar mid-servicio).
+     */
+    rebuildEmployeeScheduledShiftFromLocation() {
+        if (this.data.currentShift?.id) return;
+        const todayShifts = asArray(this.data.employee.todayShifts);
+        if (todayShifts.length <= 1) return;
+        const nextPending = this.pickEmployeeScheduledShiftByGpsOrProximity(todayShifts);
+        const currentId = String(this.data.currentScheduledShift?.id || '').trim();
+        const nextId = String(nextPending?.id || '').trim();
+        if (!nextId || nextId === currentId) return;
+        this.data.currentScheduledShift = this.enrichEmployeeShiftRecord(
+            nextPending,
+            this.data.employee.dashboard || {}
+        );
+        if (this.currentPage === 'employee-dashboard') {
+            this.renderEmployeeDashboard();
+        }
+    },
+
+    haversineMeters(lat1, lng1, lat2, lng2) {
+        const R = 6371000; // metros
+        const toRad = (deg) => (Number(deg) * Math.PI) / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLng = toRad(lng2 - lng1);
+        const a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+        return 2 * R * Math.asin(Math.sqrt(a));
     },
 
     filterEmployeeTasksByKnownShifts(tasks = [], dashboard = this.data.employee.dashboard || {}) {
