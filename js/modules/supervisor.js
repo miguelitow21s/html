@@ -5033,11 +5033,9 @@ export const supervisorMethods = {
             }
         });
 
-        const capturedAt = formatDateTime(item.captured_at);
-        if (capturedAt !== '-') {
-            metaParts.push(capturedAt);
-        }
-
+        // La fecha/hora de captura se muestra ya en el PDF y Excel; en la vista
+        // de resultados del UI solo dejamos area/subarea para no duplicar
+        // información (feedback del usuario 20/07).
         return metaParts.join(' • ');
     },
 
