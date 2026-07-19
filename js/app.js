@@ -1767,6 +1767,26 @@ const app = {
             }
         }
 
+        // Backend v3: cerrada la ventana del turno (now > scheduled_end).
+        // Ya no hay límite superior para iniciar, pero sí para el fin: si pasó,
+        // el turno se auto-cerró y ya no se puede tocar.
+        if (errorCode === 'SCHEDULE_WINDOW_EXPIRED') {
+            const scheduledEnd =
+                error?.payload?.error?.details?.scheduled_end || error?.payload?.details?.scheduled_end;
+            if (scheduledEnd) {
+                return `La ventana del servicio terminó el ${formatDateTime(scheduledEnd)}. Ya no se puede iniciar.`;
+            }
+            return 'La ventana del servicio ya terminó. Ya no se puede iniciar.';
+        }
+
+        if (errorCode === 'TASK_ALREADY_COMPLETED') {
+            return 'Esta tarea ya fue completada. Refresca la lista para verlo actualizado.';
+        }
+
+        if (errorCode === 'TASK_CANCELLED') {
+            return 'Esta tarea fue cancelada por el inspector. Ya no requiere evidencia.';
+        }
+
         if (errorCode === 'GPS_OUT_OF_RANGE') {
             const details = error?.payload?.error?.details || error?.payload?.details || {};
             const distance = Number(details.distance_m);
@@ -1898,6 +1918,34 @@ const app = {
                 this.currentUser.must_change_pin = true;
             }
             void this.ensurePinChangeIfRequired?.();
+            return true;
+        }
+
+        // Backend v3: la tarea cambió de estado mientras el usuario tenía UI stale.
+        // Toast informativo + forzar refresh del dashboard para que la lista se
+        // actualice y desaparezca la card en cuestión.
+        if (code === 'TASK_ALREADY_COMPLETED' || code === 'TASK_CANCELLED') {
+            this.showToast(this.getErrorMessage(error), {
+                tone: 'info',
+                title: code === 'TASK_CANCELLED' ? 'Tarea cancelada' : 'Tarea ya completada',
+                duration: 5000,
+            });
+            this.invalidateCache?.('employeeDashboard');
+            void this.loadEmployeeDashboard?.(true);
+            return true;
+        }
+
+        // Backend v3: la ventana del turno (scheduled_end) ya pasó; backend
+        // auto-cerró el turno. Refresh del dashboard para que today_shifts[]
+        // refleje state=auto_ended y el turno salga de la lista.
+        if (code === 'SCHEDULE_WINDOW_EXPIRED') {
+            this.showToast(this.getErrorMessage(error), {
+                tone: 'warning',
+                title: 'Ventana del servicio cerrada',
+                duration: 6000,
+            });
+            this.invalidateCache?.('employeeDashboard');
+            void this.loadEmployeeDashboard?.(true);
             return true;
         }
 
@@ -5616,6 +5664,8 @@ const app = {
             'finished',
             'closed',
             'done',
+            // Backend v3: turno auto-cerrado por pasar de scheduled_end sin start.
+            'auto_ended',
         ]);
 
         const candidates = asArray(shifts)

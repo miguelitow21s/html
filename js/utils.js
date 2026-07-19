@@ -997,6 +997,7 @@ export function getBadgeClass(status) {
             'deactivated',
             'inactive',
             'error',
+            'auto_ended',
             'failed',
         ].includes(normalized)
     ) {
@@ -1137,6 +1138,8 @@ export function getShiftStatusLabel(item) {
         cancelled: 'Cancelado',
         canceled: 'Cancelado',
         rejected: 'Rechazado',
+        // Backend v3: turno cerrado automáticamente al pasar scheduled_end sin start manual.
+        auto_ended: 'Finalizado automáticamente',
     };
 
     return labelMap[normalized] || label || 'Pendiente';
