@@ -5351,6 +5351,16 @@ export const supervisorMethods = {
             );
             document.getElementById('report-summary-shifts').textContent = String(shiftItems.length);
             document.getElementById('report-summary-ended-early').textContent = String(endedEarlyCount);
+            // Backend v3: cada shift_item trae site_tasks[] con tareas del sitio
+            // resueltas dentro de la ventana del turno.
+            const siteTasksCount = shiftItems.reduce(
+                (total, item) => total + asArray(item?.site_tasks).length,
+                0
+            );
+            const siteTasksNode = document.getElementById('report-summary-site-tasks');
+            if (siteTasksNode) {
+                siteTasksNode.textContent = String(siteTasksCount);
+            }
             const description = document.getElementById('report-result-description');
             if (description) {
                 description.textContent = isSingleDay
