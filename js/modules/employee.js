@@ -58,6 +58,22 @@ export const employeeMethods = {
             // Backend v3: my_dashboard.today_shifts[] unifica activo+scheduled con lat/lng/radius del sitio.
             // Fallback a active_shift + scheduled_shifts para builds viejos del backend.
             const todayShifts = asArray(dashboard?.today_shifts);
+            console.info('[dashboard] today_shifts recibidos', {
+                count: todayShifts.length,
+                haveLocation: Boolean(this.location?.lat),
+                items: todayShifts.map((s) => ({
+                    scheduled_shift_id: s?.scheduled_shift_id,
+                    shift_id: s?.shift_id,
+                    state: s?.state || s?.status,
+                    restaurant_id: s?.restaurant_id,
+                    restaurant_name: s?.restaurant?.name,
+                    scheduled_start: s?.scheduled_start,
+                    scheduled_end: s?.scheduled_end,
+                    lat: s?.restaurant?.lat,
+                    lng: s?.restaurant?.lng,
+                    radius_meters: s?.restaurant?.radius_meters,
+                })),
+            });
             if (todayShifts.length > 0) {
                 const activeCandidate = todayShifts.find((shift) => {
                     const state = String(shift?.state || shift?.status || '').toLowerCase();
@@ -136,7 +152,7 @@ export const employeeMethods = {
     pickEmployeeScheduledShiftByGpsOrProximity(todayShifts = []) {
         const candidates = asArray(todayShifts).filter((shift) => {
             const state = String(shift?.state || shift?.status || '').toLowerCase();
-            if (!state || state === 'activo' || state === 'active' || state === 'in_progress') return false;
+            if (state === 'activo' || state === 'active' || state === 'in_progress') return false;
             const closed = new Set([
                 'cancelado',
                 'cancelled',
@@ -148,7 +164,18 @@ export const employeeMethods = {
                 'done',
                 'auto_ended',
             ]);
-            return !closed.has(state);
+            if (closed.has(state)) return false;
+            // 'scheduled' o vacío o cualquier otro estado pasa (sin descartar por no venir 'state').
+            return true;
+        });
+
+        console.info('[dashboard] pickEmployeeScheduledShiftByGpsOrProximity', {
+            totalToday: todayShifts.length,
+            candidates: candidates.length,
+            candidateIds: candidates.map((s) => s?.scheduled_shift_id || s?.shift_id || s?.id),
+            location: this.location
+                ? { lat: this.location.lat, lng: this.location.lng, accuracy: this.location.accuracy }
+                : null,
         });
 
         if (candidates.length === 0) return null;

@@ -4708,15 +4708,46 @@ input[type='file'] {
 }
 
 /* Schedule grid */
+.ssg-grid-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* Scrollbar siempre visible como indicador de que hay contenido a la
+       derecha (sábado y domingo) cuando el viewport es angosto. */
+    scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.ssg-grid-scroll::-webkit-scrollbar {
+    height: 10px;
+}
+
+.ssg-grid-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+}
+
+.ssg-grid-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.24);
+    border-radius: 6px;
+}
+
+.ssg-grid-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.36);
+}
+
 .ssg-grid {
     display: grid;
-    grid-template-columns: 180px repeat(7, minmax(110px, 1fr));
+    /* 140px + 7 * 80px min = 700px. Cabe en viewport tablet/desktop sin scroll;
+       en móvil el wrapper .overflow-x:auto ofrece scroll suave para ver todos
+       los días (incluyendo sábado y domingo). */
+    grid-template-columns: 140px repeat(7, minmax(80px, 1fr));
     gap: 1px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.07);
-    min-width: 900px;
+    min-width: 720px;
 }
 
 .ssg-header-cell {
