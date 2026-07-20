@@ -788,7 +788,9 @@ export const employeeMethods = {
                 scheduledShiftId: scheduledShiftIdentifier,
                 restaurantId: scheduledShift?.restaurant_id,
             });
-            const location = this.location || (await this.captureLocation({ updateUi: false }));
+            // shifts_start valida GPS_OUT_OF_RANGE: forzamos captura fresca de
+            // alta precisión, incluso si this.location está cacheada.
+            const location = await this.captureLocation({ updateUi: false, highAccuracy: true });
 
             const result = await apiClient.startShift({
                 restaurant_id: scheduledShift.restaurant_id,
@@ -900,7 +902,9 @@ export const employeeMethods = {
 
         if (entries.length === 0) return;
 
-        const location = this.location || (await this.captureLocation({ updateUi: false }));
+        // Evidencia también trae lat/lng al finalize; usamos GPS fresco de alta
+        // precisión para no marcar la foto con coords stale de otro sitio.
+        const location = await this.captureLocation({ updateUi: false, highAccuracy: true });
 
         await Promise.all(
             entries.map(async ([area, file]) => {
@@ -1406,7 +1410,8 @@ export const employeeMethods = {
                       })
                 : Promise.resolve();
 
-            const location = this.location || (await this.captureLocation({ updateUi: false }));
+            // shifts_end también valida GPS_OUT_OF_RANGE — GPS fresco de alta precisión.
+            const location = await this.captureLocation({ updateUi: false, highAccuracy: true });
             const notes = document.getElementById('special-task-notes')?.value?.trim() || 'Sin incidentes';
             const earlyEndReasonInput = document.getElementById('early-end-reason');
             const enrichedShift = this.enrichEmployeeShiftRecord(

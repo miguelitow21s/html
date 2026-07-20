@@ -4534,7 +4534,9 @@ export const supervisorMethods = {
 
             let location = this.location;
             if (forceCapture || !location) {
-                location = await this.captureLocation({ updateUi: false });
+                // Auditoría: forzamos GPS fresco de alta precisión para no
+                // recibir GPS_OUT_OF_RANGE por coords WiFi/celular stale.
+                location = await this.captureLocation({ updateUi: false, highAccuracy: true });
             }
 
             const distanceMeters = calculateDistanceMeters(location, {

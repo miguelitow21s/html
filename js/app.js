@@ -4445,7 +4445,16 @@ const app = {
         stream.getTracks().forEach((track) => track.stop());
     },
 
-    async captureLocation({ updateUi = true } = {}) {
+    /**
+     * highAccuracy explícito: cuando el frontend hace una captura "background"
+     * (updateUi=false), por defecto usa baja precisión + cache de 5min para
+     * ahorrar batería en los pollings. Pero para operaciones críticas
+     * (verificar geofence, iniciar/terminar servicio, guardar auditoría) se
+     * debe pasar highAccuracy=true para forzar GPS fresco sin cache — de lo
+     * contrario el backend puede recibir coords WiFi/celular imprecisas y
+     * marcar GPS_OUT_OF_RANGE con distancias de 2km+ falsos.
+     */
+    async captureLocation({ updateUi = true, highAccuracy } = {}) {
         const button = document.getElementById('gps-btn');
         const status = document.getElementById('gps-status');
 
@@ -4469,11 +4478,16 @@ const app = {
 
         try {
             const isBackgroundCapture = !updateUi;
-            const locationAge = isBackgroundCapture ? 300000 : 0;
+            // highAccuracy explícito manda; si no se pasa, se infiere del updateUi
+            // (foreground=highAccuracy, background=lowAccuracy con cache).
+            const useHighAccuracy = typeof highAccuracy === 'boolean' ? highAccuracy : !isBackgroundCapture;
+            const locationAge = useHighAccuracy ? 0 : 300000;
             const position = await new Promise((resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    enableHighAccuracy: !isBackgroundCapture,
-                    timeout: isBackgroundCapture ? 5000 : 10000,
+                    enableHighAccuracy: useHighAccuracy,
+                    // Con alta precisión damos más tiempo porque el GPS puede tardar
+                    // en fixear (especialmente en interiores tras un frío start).
+                    timeout: useHighAccuracy ? 15000 : 5000,
                     maximumAge: locationAge,
                 });
             });
