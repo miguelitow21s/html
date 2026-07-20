@@ -1034,7 +1034,19 @@ export const employeeMethods = {
 
         try {
             // OTP se pide solo al login; el token queda vigente mientras dure la sesión.
-            await this.uploadShiftEvidenceBatch('inicio', this.photoFiles, this.uploadedStartAreas);
+            // Si el token expiró/se limpió (típico tras 12h o refresh), envolvemos con
+            // auto-retry: modal OTP → nuevo token → reintenta el upload completo.
+            const uploadStart = () =>
+                this.uploadShiftEvidenceBatch('inicio', this.photoFiles, this.uploadedStartAreas);
+            try {
+                await uploadStart();
+            } catch (firstError) {
+                if (this.isOtpSessionError?.(firstError)) {
+                    await this.retryWithFreshOtp(uploadStart, { purpose: 'evidence_upload' });
+                } else {
+                    throw firstError;
+                }
+            }
             await this.hydrateShiftEvidenceSummary(this.data.currentShift);
             this.persistCurrentShiftAreaSelection();
             this.navigate('employee-shift-cleaning');
@@ -1452,9 +1464,18 @@ export const employeeMethods = {
                 return;
             }
 
+            const uploadEndEvidence = () =>
+                this.uploadShiftEvidenceBatch('fin', this.endPhotoFiles, this.uploadedEndAreas);
+            const uploadEndWithRetry = uploadEndEvidence().catch(async (uploadErr) => {
+                if (this.isOtpSessionError?.(uploadErr)) {
+                    return this.retryWithFreshOtp(uploadEndEvidence, { purpose: 'evidence_upload' });
+                }
+                throw uploadErr;
+            });
+
             await Promise.all([
                 precheckPromise,
-                this.uploadShiftEvidenceBatch('fin', this.endPhotoFiles, this.uploadedEndAreas),
+                uploadEndWithRetry,
                 this.resolveOpenEmployeeTasks(notes),
                 this.uploadObservationAttachments(this.data.currentShift?.id, location).catch((error) => {
                     console.warn('No fue posible subir todos los adjuntos de observaciones.', error);

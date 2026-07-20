@@ -5313,7 +5313,15 @@ const app = {
         this.updatePhotoSlot(area, type, previewUrl);
 
         if (type === 'start') {
-            this.queueUiRender('employee-photo-progress');
+            console.info('[photos] guardada', {
+                area,
+                totalFilesLocales: Object.keys(this.photoFiles).length,
+                keys: Object.keys(this.photoFiles),
+            });
+            // Render sincrónico: queueUiRender pasaba por requestAnimationFrame,
+            // y si el usuario cerraba el modal de cámara muy rápido el frame
+            // podía perderse. Llamamos directo para asegurar el update visible.
+            this.updateProgressNow();
         }
 
         if (type === 'end') {
