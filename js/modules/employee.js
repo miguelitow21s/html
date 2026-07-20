@@ -115,6 +115,17 @@ export const employeeMethods = {
             this.renderEmployeeDashboard();
             this.warmEmployeeWorkspace();
             void this.primeEmployeeWorkspacePermissions();
+
+            // Con múltiples turnos hoy en distintos sitios, la ubicación decide
+            // cuál se muestra. Disparamos captureLocation en background para que,
+            // cuando el GPS resuelva, rebuildEmployeeScheduledShiftFromLocation
+            // re-elija el turno del sitio actual sin acción del contratista.
+            if (asArray(this.data.employee.todayShifts).length > 1 && !this.data.currentShift?.id) {
+                void this.captureLocation({ updateUi: false }).catch((locError) => {
+                    console.warn('No fue posible capturar ubicación en background para elegir turno.', locError);
+                });
+            }
+
             return dashboard;
         });
     },
