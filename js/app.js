@@ -1872,7 +1872,17 @@ const app = {
 
     isOtpSessionError(error) {
         const code = this.getErrorCode(error);
-        return code === 'OTP_SESSION_REQUIRED' || code === 'OTP_SESSION_EXPIRED' || code === 'OTP_SESSION_INVALID';
+        // OTP_MISSING es el error LOCAL que lanza apiClient.buildHeaders cuando
+        // requiresOtp=true y no hay shiftOtpToken en config (típico tras refresh
+        // con token expirado en localStorage). Lo tratamos igual que los OTP_SESSION_*
+        // del backend para disparar retryWithFreshOtp.
+        const localFallback = String(error?.code || '').trim();
+        return (
+            code === 'OTP_SESSION_REQUIRED' ||
+            code === 'OTP_SESSION_EXPIRED' ||
+            code === 'OTP_SESSION_INVALID' ||
+            localFallback === 'OTP_MISSING'
+        );
     },
 
     /**
