@@ -210,8 +210,11 @@ export function formatShiftLocalRange(shift) {
 
     if (startLocal && endLocal) {
         const crossesMidnight = startDate && endDate && startDate !== endDate;
+        // Cuando cruza medianoche, marcar la hora de fin con día distinto
+        // (ej. "10:00 AM → 10:00 AM del día sig.") para que no lea como si
+        // el turno terminara la misma mañana que arrancó.
         const rangeText = crossesMidnight
-            ? `${startLocal} → ${endLocal} (día siguiente)`
+            ? `${startLocal} → ${endLocal} del día siguiente`
             : `${startLocal} - ${endLocal}`;
         return tzLabel ? `${rangeText} (${tzLabel})` : rangeText;
     }
@@ -221,15 +224,31 @@ export function formatShiftLocalRange(shift) {
 
 /**
  * Formato tipo "sábado, 20 de julio de 2026" respetando el día local del sitio.
+ * Si el turno cruza medianoche, devuelve "sábado 19 → domingo 20 de julio"
+ * para que quede claro que el rango termina al día siguiente.
  * Si el turno no trae shift.local (backend viejo), cae al formatDate del navegador.
  */
 export function formatShiftLocalDate(shift, opts = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) {
-    const localDate = shift?.local?.start?.local_date;
-    if (localDate) {
-        // local_date viene como "YYYY-MM-DD"; parseamos como fecha civil sin timezone shift.
-        const [y, m, d] = String(localDate).split('-').map(Number);
-        if (Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d)) {
-            return formatDate(new Date(y, m - 1, d, 12, 0), opts);
+    const startDateStr = shift?.local?.start?.local_date;
+    const endDateStr = shift?.local?.end?.local_date;
+
+    const parseCivilDate = (value) => {
+        if (!value) return null;
+        const [y, m, d] = String(value).split('-').map(Number);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+        return new Date(y, m - 1, d, 12, 0);
+    };
+
+    if (startDateStr) {
+        const startDate = parseCivilDate(startDateStr);
+        const endDate = parseCivilDate(endDateStr);
+        if (startDate && endDate && startDateStr !== endDateStr) {
+            // Cruce de medianoche: mostrar los dos días.
+            const shortOpts = { weekday: 'long', day: '2-digit', month: 'long' };
+            return `${formatDate(startDate, shortOpts)} → ${formatDate(endDate, opts)}`;
+        }
+        if (startDate) {
+            return formatDate(startDate, opts);
         }
     }
     return formatDate(shift?.scheduled_start || shift?.start_time || null, opts);
