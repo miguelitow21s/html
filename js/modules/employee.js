@@ -75,33 +75,43 @@ export const employeeMethods = {
                     radius_meters: s?.restaurant?.radius_meters,
                 })),
             });
-            if (todayShifts.length > 0) {
-                const activeCandidate = todayShifts.find((shift) => {
+            // Aliases de "activo" — cubre cualquier variación que envíe el backend
+            // (activo/active/in_progress/started/awaiting_evidence/incomplete) para
+            // no perder un turno recién iniciado que aún no ha subido evidencias.
+            const activeStates = new Set(['activo', 'active', 'in_progress', 'in-progress', 'started', 'ongoing', 'awaiting_evidence', 'incomplete']);
+            const findActiveCandidate = (list) =>
+                asArray(list).find((shift) => {
                     const state = String(shift?.state || shift?.status || '').toLowerCase();
-                    return state === 'activo' || state === 'active' || state === 'in_progress';
+                    return activeStates.has(state);
                 });
-                this.data.currentShift = activeCandidate
-                    ? this.enrichEmployeeShiftRecord(activeCandidate, dashboard)
-                    : this.enrichEmployeeShiftRecord(dashboard?.active_shift, dashboard);
 
-                if (this.data.currentShift) {
-                    this.data.currentScheduledShift = null;
-                } else {
-                    const pending = this.pickEmployeeScheduledShiftByGpsOrProximity(todayShifts);
-                    this.data.currentScheduledShift = pending
-                        ? this.enrichEmployeeShiftRecord(pending, dashboard)
-                        : null;
-                }
-                // Expose todos los turnos del día para vistas que quieran mostrar el listado completo.
+            // 1) dashboard.active_shift es la fuente autoritativa cuando existe.
+            //    Después de shifts_start el backend lo devuelve poblado, y a veces
+            //    todavía NO aparece dentro de today_shifts (race entre las dos consultas).
+            //    Si el frontend confía solo en today_shifts, muestra 'Sin servicios'
+            //    justo cuando el user acaba de iniciar.
+            // 2) Si active_shift no viene, buscamos un turno activo dentro de today_shifts.
+            // 3) Sin activo, elegimos un pending por GPS/proximidad.
+            const authoritativeActive =
+                dashboard?.active_shift || findActiveCandidate(todayShifts);
+
+            if (authoritativeActive) {
+                this.data.currentShift = this.enrichEmployeeShiftRecord(authoritativeActive, dashboard);
+                this.data.currentScheduledShift = null;
+                this.data.employee.todayShifts = todayShifts;
+            } else if (todayShifts.length > 0) {
+                this.data.currentShift = null;
+                const pending = this.pickEmployeeScheduledShiftByGpsOrProximity(todayShifts);
+                this.data.currentScheduledShift = pending
+                    ? this.enrichEmployeeShiftRecord(pending, dashboard)
+                    : null;
                 this.data.employee.todayShifts = todayShifts;
             } else {
-                this.data.currentShift = this.enrichEmployeeShiftRecord(dashboard?.active_shift, dashboard);
-                this.data.currentScheduledShift = this.data.currentShift
-                    ? null
-                    : this.enrichEmployeeShiftRecord(
-                          this.getEmployeePendingScheduledShift(dashboard?.scheduled_shifts),
-                          dashboard
-                      );
+                this.data.currentShift = null;
+                this.data.currentScheduledShift = this.enrichEmployeeShiftRecord(
+                    this.getEmployeePendingScheduledShift(dashboard?.scheduled_shifts),
+                    dashboard
+                );
                 this.data.employee.todayShifts = [];
             }
             if (this.data.currentShift?.id) {
