@@ -9,7 +9,8 @@ import {
     formatDate,
     formatDateTime,
     formatHours,
-    formatShiftRange,
+    formatShiftLocalDate,
+    formatShiftLocalRange,
     getBadgeClass,
     getMonthStart,
     getRestaurantDisplayName,
@@ -163,6 +164,7 @@ export const employeeMethods = {
                 'closed',
                 'done',
                 'auto_ended',
+                'expired',
             ]);
             if (closed.has(state)) return false;
             // 'scheduled' o vacío o cualquier otro estado pasa (sin descartar por no venir 'state').
@@ -1119,11 +1121,10 @@ export const employeeMethods = {
             { ...summaryShift, restaurant },
             'Sitio asignado'
         );
-        document.getElementById('summary-schedule').textContent = formatShiftRange(
-            summaryShift?.scheduled_start || summaryShift?.start_time,
-            summaryShift?.scheduled_end || new Date().toISOString()
-        );
-        document.getElementById('summary-date').textContent = summaryReferenceDate
+        document.getElementById('summary-schedule').textContent = formatShiftLocalRange(summaryShift);
+        document.getElementById('summary-date').textContent = summaryShift?.local?.start?.local_date
+            ? formatShiftLocalDate(summaryShift)
+            : summaryReferenceDate
             ? formatDate(summaryReferenceDate, {
                   weekday: 'long',
                   day: '2-digit',

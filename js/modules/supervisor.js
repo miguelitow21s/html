@@ -958,6 +958,21 @@ export const supervisorMethods = {
         return String(match.timezone || match.restaurant_timezone || match.raw?.timezone || '').trim();
     },
 
+    /**
+     * Backend v3: acepta hora de pared cruda (scheduled_date + start_time + end_time)
+     * y hace la conversión con restaurants.timezone. El frontend deja de calcular
+     * instantes ISO en el navegador — se acabaron los turnos "corridos" 2 horas.
+     * Extrae fecha y hora del input datetime-local sin aplicar timezone shift.
+     */
+    splitDateTimeLocalValue(value) {
+        // datetime-local viene como "2026-07-20T18:00" o "2026-07-20T18:00:00".
+        const raw = String(value || '').trim();
+        if (!raw) return null;
+        const match = raw.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+        if (!match) return null;
+        return { date: match[1], time: match[2] };
+    },
+
     buildSupervisorShiftDateTime(dateKey = '', timeValue = '', timezone = '') {
         const dateMatch = String(dateKey || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
         const timeMatch = String(timeValue || '').match(/^(\d{2}):(\d{2})$/);
@@ -3453,15 +3468,8 @@ export const supervisorMethods = {
             await Promise.all(
                 lastWeekShifts.map(async (shift) => {
                     try {
-                        const startValue = shift?.scheduled_start || shift?.start_time;
-                        const endValue = shift?.scheduled_end || shift?.end_time;
-                        if (!startValue || !endValue) {
-                            failed++;
-                            return;
-                        }
-
-                        const newStart = new Date(new Date(startValue).getTime() + 7 * 24 * 3600000);
-                        const newEnd = new Date(new Date(endValue).getTime() + 7 * 24 * 3600000);
+                        // Backend v3: replicar la semana anterior con hora de pared del sitio
+                        // (shift.local.*) + 7 días al date, así sobrevivimos a los cambios de DST.
                         const empId = shift.employee_id || shift.assigned_employee_id;
                         const restId = shift.restaurant_id;
                         if (!empId || !restId) {
@@ -3469,13 +3477,43 @@ export const supervisorMethods = {
                             return;
                         }
 
-                        await apiClient.scheduledShiftsManage('assign', {
-                            employee_id: empId,
-                            restaurant_id: restId,
-                            scheduled_start: newStart.toISOString(),
-                            scheduled_end: newEnd.toISOString(),
-                            notes: shift.notes || undefined,
-                        });
+                        const startDateLocal = shift?.local?.start?.local_date;
+                        const startTimeLocal = shift?.local?.start?.local_time_24 || shift?.local?.start?.local_time;
+                        const endTimeLocal = shift?.local?.end?.local_time_24 || shift?.local?.end?.local_time;
+                        let payload;
+
+                        if (startDateLocal && startTimeLocal && endTimeLocal) {
+                            const [y, m, d] = startDateLocal.split('-').map(Number);
+                            const nextDate = new Date(y, m - 1, d + 7);
+                            const nextDateKey = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+                            payload = {
+                                employee_id: empId,
+                                restaurant_id: restId,
+                                scheduled_date: nextDateKey,
+                                start_time: startTimeLocal,
+                                end_time: endTimeLocal,
+                                notes: shift.notes || undefined,
+                            };
+                        } else {
+                            // Fallback compat: shift viejo sin local — mantener camino ISO.
+                            const startValue = shift?.scheduled_start || shift?.start_time;
+                            const endValue = shift?.scheduled_end || shift?.end_time;
+                            if (!startValue || !endValue) {
+                                failed++;
+                                return;
+                            }
+                            const newStart = new Date(new Date(startValue).getTime() + 7 * 24 * 3600000);
+                            const newEnd = new Date(new Date(endValue).getTime() + 7 * 24 * 3600000);
+                            payload = {
+                                employee_id: empId,
+                                restaurant_id: restId,
+                                scheduled_start: newStart.toISOString(),
+                                scheduled_end: newEnd.toISOString(),
+                                notes: shift.notes || undefined,
+                            };
+                        }
+
+                        await apiClient.scheduledShiftsManage('assign', payload);
                         success++;
                     } catch {
                         failed++;
@@ -6037,9 +6075,11 @@ export const supervisorMethods = {
                     return;
                 }
 
-                const startDate = new Date(startValue);
-                const endDate = new Date(endValue);
-                if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
+                // Backend v3: enviamos hora de pared (scheduled_date + start_time + end_time)
+                // en lugar de ISO. El backend hace la conversión con restaurants.timezone.
+                const startParts = this.splitDateTimeLocalValue(startValue);
+                const endParts = this.splitDateTimeLocalValue(endValue);
+                if (!startParts || !endParts) {
                     this.showToast(t('sup.toast.end.after.start'), {
                         tone: 'warning',
                         title: t('sup.toast.invalid.schedule.title'),
@@ -6050,8 +6090,9 @@ export const supervisorMethods = {
                 assignments.push({
                     employee_id: normalizeRestaurantId(employeeId),
                     restaurant_id: normalizeRestaurantId(restaurantId),
-                    scheduled_start: startDate.toISOString(),
-                    scheduled_end: endDate.toISOString(),
+                    scheduled_date: startParts.date,
+                    start_time: startParts.time,
+                    end_time: endParts.time,
                     notes: notes || undefined,
                 });
             } else if (this.supervisorShiftMode === 'plan') {
@@ -6092,7 +6133,10 @@ export const supervisorMethods = {
                     return;
                 }
 
-                const planTimezone = this.getRestaurantTimezoneById(restaurantId);
+                // Backend v3: hora de pared cruda. row.dateKey ya es YYYY-MM-DD
+                // y row.startTime/endTime es HH:mm — el backend cruza medianoche
+                // automáticamente si end_time <= start_time y aplica la timezone
+                // del restaurante.
                 for (const row of activeRows) {
                     if (!row.startTime || !row.endTime) {
                         this.showToast(`Completa entrada y salida para ${row.dayLabel || 'el día seleccionado'}.`, {
@@ -6102,25 +6146,12 @@ export const supervisorMethods = {
                         return;
                     }
 
-                    const startDate = this.buildSupervisorShiftDateTime(row.dateKey, row.startTime, planTimezone);
-                    const endDate = this.buildSupervisorShiftDateTime(row.dateKey, row.endTime, planTimezone);
-                    if (!startDate || !endDate) {
-                        this.showToast(`Revisa el formato de hora en ${row.dayLabel || 'el día seleccionado'}.`, {
-                            tone: 'warning',
-                            title: t('sup.toast.invalid.schedule.title'),
-                        });
-                        return;
-                    }
-
-                    if (endDate <= startDate) {
-                        endDate.setDate(endDate.getDate() + 1);
-                    }
-
                     assignments.push({
                         employee_id: normalizeRestaurantId(employeeId),
                         restaurant_id: normalizeRestaurantId(restaurantId),
-                        scheduled_start: startDate.toISOString(),
-                        scheduled_end: endDate.toISOString(),
+                        scheduled_date: row.dateKey,
+                        start_time: row.startTime,
+                        end_time: row.endTime,
                         notes: row.notes?.trim() || undefined,
                     });
                 }
@@ -6142,9 +6173,10 @@ export const supervisorMethods = {
                     return;
                 }
 
-                const startDate = new Date(startValue);
-                const endDate = new Date(endValue);
-                if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
+                // Backend v3: hora de pared cruda para servicio compartido (batch).
+                const startParts = this.splitDateTimeLocalValue(startValue);
+                const endParts = this.splitDateTimeLocalValue(endValue);
+                if (!startParts || !endParts) {
                     this.showToast(t('sup.toast.end.after.start'), {
                         tone: 'warning',
                         title: t('sup.toast.invalid.schedule.title'),
@@ -6156,8 +6188,9 @@ export const supervisorMethods = {
                     assignments.push({
                         employee_id: normalizeRestaurantId(employeeId),
                         restaurant_id: normalizeRestaurantId(restaurantId),
-                        scheduled_start: startDate.toISOString(),
-                        scheduled_end: endDate.toISOString(),
+                        scheduled_date: startParts.date,
+                        start_time: startParts.time,
+                        end_time: endParts.time,
                         notes: notes || undefined,
                     });
                 });

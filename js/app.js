@@ -22,7 +22,8 @@ import {
     formatDate,
     formatTime,
     formatDateTime,
-    formatShiftRange,
+    formatShiftLocalDate,
+    formatShiftLocalRange,
     isHttpUrl,
     collectEvidenceUrls,
     escapeHtml,
@@ -5670,6 +5671,7 @@ const app = {
             'done',
             // Backend v3: turno auto-cerrado por pasar de scheduled_end sin start.
             'auto_ended',
+            'expired',
         ]);
 
         const candidates = asArray(shifts)
@@ -6510,13 +6512,10 @@ const app = {
         const actualStart = shift?.start_time || shift?.started_at || null;
 
         if (scheduledStart && scheduledEnd) {
-            const rangeText = formatShiftRange(scheduledStart, scheduledEnd);
-            const dateText = formatDate(scheduledStart, {
-                weekday: 'long',
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric',
-            });
+            // Backend v3: shift.local trae hora de pared del sitio (evita mostrar
+            // "corrido" para quien programa desde otra zona).
+            const rangeText = formatShiftLocalRange(shift);
+            const dateText = formatShiftLocalDate(shift);
             if (hasActiveShift && actualStart) {
                 return `${dateText} • ${rangeText} • ${t('employee.schedule.startedat')} ${formatTime(actualStart)}`;
             }

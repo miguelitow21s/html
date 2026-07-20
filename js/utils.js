@@ -192,6 +192,40 @@ export function formatShiftRange(startValue, endValue) {
     return `${start} - ${end}`;
 }
 
+/**
+ * Backend v3: cada turno trae shift.local con la hora de pared ya formateada
+ * en la zona del sitio. Preferir eso a formatShiftRange(ISO, ISO) — que usa
+ * la zona del navegador y muestra el turno "corrido" para quien programa
+ * desde Colombia con sitios en California.
+ */
+export function formatShiftLocalRange(shift) {
+    const startLocal = shift?.local?.start?.local_time;
+    const endLocal = shift?.local?.end?.local_time;
+    const tzLabel = shift?.local?.start?.tz_label || shift?.local?.end?.tz_label || '';
+
+    if (startLocal && endLocal) {
+        return tzLabel ? `${startLocal} - ${endLocal} (${tzLabel})` : `${startLocal} - ${endLocal}`;
+    }
+
+    return formatShiftRange(shift?.scheduled_start, shift?.scheduled_end);
+}
+
+/**
+ * Formato tipo "sábado, 20 de julio de 2026" respetando el día local del sitio.
+ * Si el turno no trae shift.local (backend viejo), cae al formatDate del navegador.
+ */
+export function formatShiftLocalDate(shift, opts = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) {
+    const localDate = shift?.local?.start?.local_date;
+    if (localDate) {
+        // local_date viene como "YYYY-MM-DD"; parseamos como fecha civil sin timezone shift.
+        const [y, m, d] = String(localDate).split('-').map(Number);
+        if (Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d)) {
+            return formatDate(new Date(y, m - 1, d, 12, 0), opts);
+        }
+    }
+    return formatDate(shift?.scheduled_start || shift?.start_time || null, opts);
+}
+
 export function formatHours(value) {
     const numericValue = Number(value || 0);
     if (!Number.isFinite(numericValue)) {
@@ -998,6 +1032,7 @@ export function getBadgeClass(status) {
             'inactive',
             'error',
             'auto_ended',
+            'expired',
             'failed',
         ].includes(normalized)
     ) {
@@ -1140,6 +1175,8 @@ export function getShiftStatusLabel(item) {
         rejected: 'Rechazado',
         // Backend v3: turno cerrado automáticamente al pasar scheduled_end sin start manual.
         auto_ended: 'Finalizado automáticamente',
+        // Backend v3: turno programado cuya ventana se cerró sin que se iniciara nunca.
+        expired: 'Vencido',
     };
 
     return labelMap[normalized] || label || 'Pendiente';
