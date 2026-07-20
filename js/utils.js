@@ -197,14 +197,23 @@ export function formatShiftRange(startValue, endValue) {
  * en la zona del sitio. Preferir eso a formatShiftRange(ISO, ISO) — que usa
  * la zona del navegador y muestra el turno "corrido" para quien programa
  * desde Colombia con sitios en California.
+ *
+ * Si el turno cruza medianoche (start.local_date !== end.local_date), se
+ * anota "→ día siguiente" para que quede claro que no es del mismo día.
  */
 export function formatShiftLocalRange(shift) {
     const startLocal = shift?.local?.start?.local_time;
     const endLocal = shift?.local?.end?.local_time;
+    const startDate = shift?.local?.start?.local_date;
+    const endDate = shift?.local?.end?.local_date;
     const tzLabel = shift?.local?.start?.tz_label || shift?.local?.end?.tz_label || '';
 
     if (startLocal && endLocal) {
-        return tzLabel ? `${startLocal} - ${endLocal} (${tzLabel})` : `${startLocal} - ${endLocal}`;
+        const crossesMidnight = startDate && endDate && startDate !== endDate;
+        const rangeText = crossesMidnight
+            ? `${startLocal} → ${endLocal} (día siguiente)`
+            : `${startLocal} - ${endLocal}`;
+        return tzLabel ? `${rangeText} (${tzLabel})` : rangeText;
     }
 
     return formatShiftRange(shift?.scheduled_start, shift?.scheduled_end);

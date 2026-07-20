@@ -6563,9 +6563,23 @@ const app = {
         const justCompletedShift = !hasActiveShift && !hasPendingShift ? this.data.employee.lastCompletedShift : null;
         const restaurant = this.getEmployeeShiftRestaurantRecord(shift, dashboard);
         const shiftReferenceDate = shift?.scheduled_start || shift?.start_time || null;
-        const isShiftToday = shiftReferenceDate
-            ? new Date(shiftReferenceDate).toDateString() === new Date().toDateString()
-            : false;
+        // Backend v3: preferir shift.local.start.local_date en zona del sitio;
+        // el toDateString del navegador puede decir "mañana" para turnos que
+        // en zona del sitio son "hoy" (turno nocturno programado desde Colombia).
+        const isShiftToday = (() => {
+            const startDateKey = shift?.local?.start?.local_date;
+            const endDateKey = shift?.local?.end?.local_date;
+            if (startDateKey || endDateKey) {
+                const now = new Date();
+                const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const startOk = !startDateKey || startDateKey <= todayKey;
+                const endOk = !endDateKey || todayKey <= endDateKey;
+                return startOk && endOk;
+            }
+            return shiftReferenceDate
+                ? new Date(shiftReferenceDate).toDateString() === new Date().toDateString()
+                : false;
+        })();
         const resolvedRestaurantName = shift
             ? this.getEmployeeResolvedShiftRestaurantName(shift, t('employee.shift.site.assigned'))
             : '';

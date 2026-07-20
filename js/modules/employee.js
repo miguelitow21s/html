@@ -1139,7 +1139,7 @@ export const employeeMethods = {
 
         if (earlyEndReasonInput) {
             earlyEndReasonInput.placeholder = isEarlyEnd
-                ? 'Observaciones (obligatorio para salida anticipada)'
+                ? 'Observaciones (obligatorio)'
                 : 'Observaciones (opcional)';
         }
 
@@ -1531,7 +1531,7 @@ export const employeeMethods = {
                 const enteredReason = String(earlyEndReasonInput?.value?.trim() || '');
                 if (!enteredReason) {
                     this.showToast(
-                        'Backend exige motivo de salida anticipada para este cierre. Escríbelo y vuelve a finalizar.',
+                        'Debes escribir una observación para este cierre y volver a finalizar.',
                         {
                             tone: 'warning',
                             title: t('toast.reason.obligatory'),

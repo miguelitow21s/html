@@ -2546,7 +2546,24 @@ export const supervisorMethods = {
         return Number.isNaN(parsed.getTime()) ? null : parsed;
     },
 
+    /**
+     * Backend v3: preferir shift.local.start.local_date (día en zona del sitio)
+     * cuando esté disponible. El fallback a toDateString() del navegador
+     * descartaba turnos que en zona del sitio son "hoy" pero en el navegador
+     * (Colombia UTC-5) aparecían como "mañana" por el cruce de medianoche.
+     */
     isShiftFromToday(shift, baseDate = new Date()) {
+        const startDateKey = shift?.local?.start?.local_date;
+        const endDateKey = shift?.local?.end?.local_date;
+
+        if (startDateKey || endDateKey) {
+            const todayKey = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}`;
+            // Cuenta si HOY cae dentro de la ventana del turno (start_date <= hoy <= end_date).
+            const startOk = !startDateKey || startDateKey <= todayKey;
+            const endOk = !endDateKey || todayKey <= endDateKey;
+            return startOk && endOk;
+        }
+
         const shiftDate = this.getShiftReferenceDate(shift);
         return Boolean(shiftDate && shiftDate.toDateString() === baseDate.toDateString());
     },
@@ -5203,14 +5220,14 @@ export const supervisorMethods = {
                     </div>
                     <div class="report-day-shift-statuses">
                         <span class="badge ${getBadgeClass(statusLabel)}">${escapeHtml(statusLabel)}</span>
-                        ${endedEarly ? '<span class="badge badge-warning">Salida anticipada</span>' : ''}
+                        ${endedEarly ? '<span class="badge badge-warning">Cerrado antes de hora</span>' : ''}
                     </div>
                 </div>
                 <div class="report-day-shift-metrics">
                     <div class="report-day-shift-metric"><span>Horas trabajadas</span><strong>${escapeHtml(workedHours)}</strong></div>
                     <div class="report-day-shift-metric"><span>Horas programadas</span><strong>${escapeHtml(scheduledHours)}</strong></div>
                 </div>
-                ${endedEarly && earlyEndReason ? `<div class="report-day-shift-metric"><span>Motivo de salida anticipada</span><strong>${escapeHtml(earlyEndReason)}</strong></div>` : ''}
+                ${earlyEndReason ? `<div class="report-day-shift-metric"><span>Observaciones</span><strong>${escapeHtml(earlyEndReason)}</strong></div>` : ''}
                 ${this.renderReportEvidencePairs(startMap, endMap, startItems, endItems, orderedKeys)}
             </article>`;
             })
@@ -5674,7 +5691,7 @@ export const supervisorMethods = {
                             </div>
                             <div class="report-card-statuses">
                                 <span class="report-status ${getBadgeClass(status)}">${escapeHtml(String(status))}</span>
-                                ${endedEarly ? '<span class="report-status badge-warning">Salida anticipada</span>' : ''}
+                                ${endedEarly ? '<span class="report-status badge-warning">Cerrado antes de hora</span>' : ''}
                             </div>
                         </div>
                         <div class="report-meta-grid">
@@ -5690,15 +5707,11 @@ export const supervisorMethods = {
                                 <span class="report-meta-label">Horas programadas</span>
                                 <span class="report-meta-value">${escapeHtml(scheduledHours)}</span>
                             </div>
-                            <div class="report-meta-item">
-                                <span class="report-meta-label">Salida anticipada</span>
-                                <span class="report-meta-value">${endedEarly ? 'Sí' : 'No'}</span>
-                            </div>
                             ${
-                                endedEarly && earlyEndReason
+                                earlyEndReason
                                     ? `
                                 <div class="report-meta-item">
-                                    <span class="report-meta-label">Motivo</span>
+                                    <span class="report-meta-label">Observaciones</span>
                                     <span class="report-meta-value">${escapeHtml(earlyEndReason)}</span>
                                 </div>
                             `

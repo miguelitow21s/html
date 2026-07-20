@@ -1326,6 +1326,18 @@ export const adminModalMethods = {
     },
 
     isShiftFromToday(shift, baseDate = new Date()) {
+        // Backend v3: preferir shift.local.start.local_date (día en zona del sitio)
+        // para no descartar turnos que cruzan medianoche.
+        const startDateKey = shift?.local?.start?.local_date;
+        const endDateKey = shift?.local?.end?.local_date;
+
+        if (startDateKey || endDateKey) {
+            const todayKey = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}`;
+            const startOk = !startDateKey || startDateKey <= todayKey;
+            const endOk = !endDateKey || todayKey <= endDateKey;
+            return startOk && endOk;
+        }
+
         const shiftDate = this.getShiftReferenceDate(shift);
         return Boolean(shiftDate && shiftDate.toDateString() === baseDate.toDateString());
     },
