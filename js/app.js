@@ -6544,7 +6544,8 @@ const app = {
             return t('employee.shift.date.none');
         }
 
-        return formatDate(shiftDate, {
+        // Backend v3: si viene shift.local, usarlo (día en zona del sitio, no del navegador).
+        return formatShiftLocalDate(shift, {
             weekday: 'long',
             day: '2-digit',
             month: 'long',

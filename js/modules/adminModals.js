@@ -6,7 +6,7 @@ import {
     asArray,
     escapeHtml,
     getRestaurantRecordId,
-    formatShiftRange,
+    formatShiftLocalRange,
     getShiftStatusLabel,
     normalizeLinkedPhoneValue,
     pickMeaningfulRestaurantName,
@@ -1337,7 +1337,7 @@ export const adminModalMethods = {
 
     buildSupervisorShiftOptionLabel(shift) {
         const employeeName = this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre');
-        const scheduleText = formatShiftRange(shift?.scheduled_start, shift?.scheduled_end);
+        const scheduleText = formatShiftLocalRange(shift);
         const statusText = getShiftStatusLabel(shift);
         return `${employeeName} • ${scheduleText} • ${statusText}`;
     },

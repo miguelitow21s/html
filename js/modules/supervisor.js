@@ -29,7 +29,7 @@ import {
     formatDate,
     formatDateTime,
     formatHours,
-    formatShiftRange,
+    formatShiftLocalRange,
     getBadgeClass,
     getEmployeeDisplayName,
     getRestaurantDisplayName,
@@ -2805,7 +2805,7 @@ export const supervisorMethods = {
                         <i class="fas fa-exclamation-circle"></i>
                         <div>
                             <strong>${escapeHtml(t('sup.alert.service.not.started'))}</strong><br>
-                            <small>${escapeHtml(this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible'))} - ${escapeHtml(this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible'))} (${escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end))})</small>
+                            <small>${escapeHtml(this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible'))} - ${escapeHtml(this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible'))} (${escapeHtml(formatShiftLocalRange(shift))})</small>
                         </div>
                     </div>
                 `
@@ -3892,7 +3892,7 @@ export const supervisorMethods = {
         const entries = cellShifts
             .map((shift) => {
                 const restName = escapeHtml(this.getResolvedShiftRestaurantName(shift, ''));
-                const timeRange = escapeHtml(formatShiftRange(shift.scheduled_start, shift.scheduled_end));
+                const timeRange = escapeHtml(formatShiftLocalRange(shift));
                 const shiftId = escapeHtml(String(shift.id || shift.scheduled_shift_id || ''));
                 return `<div class="ssg-shift-entry">
                 <div class="ssg-shift-rest">${restName}</div>
@@ -5163,10 +5163,7 @@ export const supervisorMethods = {
             .map((shift) => {
                 const employeeName = this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible');
                 const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible');
-                const scheduleText = formatShiftRange(
-                    shift.scheduled_start || shift.start_time,
-                    shift.scheduled_end || shift.end_time
-                );
+                const scheduleText = formatShiftLocalRange(shift);
                 const workedHours = formatHours(getWorkedHours(shift));
                 const scheduledHours = formatHours(getScheduledHours(shift));
                 const endedEarly = isShiftEndedEarly(shift);
@@ -5659,10 +5656,7 @@ export const supervisorMethods = {
                               'Contratista sin nombre visible'
                           );
                           const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible');
-                          const scheduleText = formatShiftRange(
-                              shift.scheduled_start || shift.start_time,
-                              shift.scheduled_end || shift.end_time
-                          );
+                          const scheduleText = formatShiftLocalRange(shift);
                           const status = getShiftStatusLabel(shift);
                           const workedHours = formatHours(getWorkedHours(shift));
                           const scheduledHours = formatHours(getScheduledHours(shift));
@@ -6920,7 +6914,10 @@ export const supervisorMethods = {
             return;
         }
 
-        const restaurantTimezone = this.getRestaurantTimezoneById(restaurantId);
+        // Backend v3: enviamos hora de pared del sitio cruda (scheduled_date +
+        // start_time + end_time). El backend hace la conversión con
+        // restaurants.timezone y resuelve el cruce de medianoche cuando
+        // end_time <= start_time (sobrevive a cambios de DST).
         const assignments = [];
         for (const row of activeRows) {
             if (!row.startTime || !row.endTime) {
@@ -6930,22 +6927,20 @@ export const supervisorMethods = {
                 });
                 return;
             }
-            const startDate = this.buildSupervisorShiftDateTime(row.dateKey, row.startTime, restaurantTimezone);
-            const endDate = this.buildSupervisorShiftDateTime(row.dateKey, row.endTime, restaurantTimezone);
-            if (!startDate || !endDate) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(row.dateKey) || !/^\d{2}:\d{2}$/.test(row.startTime) || !/^\d{2}:\d{2}$/.test(row.endTime)) {
                 this.showToast(`Revisa el formato de hora para el ${row.dayLabel} ${row.dateKey}.`, {
                     tone: 'warning',
                     title: t('sup.toast.invalid.schedule.title'),
                 });
                 return;
             }
-            if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
             for (const employeeId of selectedEmployees) {
                 assignments.push({
                     employee_id: normalizeRestaurantId(employeeId),
                     restaurant_id: normalizeRestaurantId(restaurantId),
-                    scheduled_start: startDate.toISOString(),
-                    scheduled_end: endDate.toISOString(),
+                    scheduled_date: row.dateKey,
+                    start_time: row.startTime,
+                    end_time: row.endTime,
                 });
             }
         }
