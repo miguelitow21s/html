@@ -392,6 +392,13 @@ export const adminMethods = {
 
         const visibleItems = Number.isFinite(maxItems) ? items.slice(0, maxItems) : items;
 
+        // Guardamos por id para poder recuperar la evidencia cuando se clickea "Ver fotos".
+        this._adminSupervisionsIndex = this._adminSupervisionsIndex || {};
+        visibleItems.forEach((item) => {
+            const key = String(item?.id || item?.supervisor_presence_id || item?.uuid || '').trim();
+            if (key) this._adminSupervisionsIndex[key] = item;
+        });
+
         container.innerHTML = `
             <div class="admin-supervisions-stack">
                 ${visibleItems
@@ -404,9 +411,9 @@ export const adminMethods = {
                             getRestaurantDisplayName(item.restaurant || null, 'Sitio sin nombre visible')
                         );
                         const observedAt = item.observed_at || item.created_at || item.registered_at || '';
-                        const observationCount =
-                            asArray(item.evidences).length ||
-                            Number(item.photo_count || item.evidence_count || item.photos_count || 0);
+                        const evidences = this.extractSupervisionEvidences(item);
+                        const observationCount = evidences.length;
+                        const itemKey = String(item?.id || item?.supervisor_presence_id || item?.uuid || '').trim();
 
                         return `
                         <article class="admin-supervision-card">
@@ -420,7 +427,7 @@ export const adminMethods = {
                                         <p>${escapeHtml(supervisorDetail || restaurantName)}</p>
                                     </div>
                                 </div>
-                                <span class="badge badge-success admin-supervision-status">Supervisión registrada</span>
+                                <span class="badge badge-success admin-supervision-status">Auditoría registrada</span>
                             </div>
                             <div class="admin-supervision-meta">
                                 <div class="admin-supervision-meta-item">
@@ -437,15 +444,129 @@ export const adminMethods = {
                                 </div>
                                 <div class="admin-supervision-meta-item">
                                     <span class="admin-supervision-meta-label">Evidencias</span>
-                                    <span class="admin-supervision-meta-value">${escapeHtml(observationCount > 0 ? `${observationCount} foto(s)` : 'Sin conteo disponible')}</span>
+                                    <span class="admin-supervision-meta-value">${escapeHtml(observationCount > 0 ? `${observationCount} foto(s)` : 'Sin fotos disponibles')}</span>
                                 </div>
                             </div>
+                            ${
+                                observationCount > 0 && itemKey
+                                    ? `<div style="margin-top:12px;">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-action="openAdminSupervisionEvidences" data-args="${escapeHtml(itemKey)}">
+                                            <i class="fas fa-images"></i> Ver ${observationCount} foto(s)
+                                        </button>
+                                       </div>`
+                                    : ''
+                            }
                         </article>
                     `;
                     })
                     .join('')}
             </div>
         `;
+    },
+
+    /**
+     * Extrae la lista de URLs firmadas de evidencia de una supervisión, aceptando
+     * varios formatos que puede devolver el backend (evidences[].signed_url,
+     * evidence_urls[], photos[].url, etc.).
+     */
+    extractSupervisionEvidences(supervision) {
+        const collected = [];
+        const seen = new Set();
+        const pushUrl = (raw, meta = {}) => {
+            const url = String(raw || '').trim();
+            if (!url || seen.has(url)) return;
+            seen.add(url);
+            collected.push({ url, ...meta });
+        };
+
+        asArray(supervision?.evidences).forEach((ev) => {
+            const url = ev?.signed_url || ev?.url || ev?.public_url || ev?.href || '';
+            pushUrl(url, {
+                is_video: Boolean(ev?.is_video || String(ev?.mime_type || '').startsWith('video/')),
+                captured_at: ev?.captured_at || ev?.observed_at || '',
+                label: ev?.area_label || ev?.subarea_label || '',
+            });
+        });
+        asArray(supervision?.evidence_urls).forEach((url) => pushUrl(url));
+        asArray(supervision?.photos).forEach((p) => pushUrl(p?.url || p?.signed_url));
+
+        return collected;
+    },
+
+    openAdminSupervisionEvidences(itemKey) {
+        const supervision = this._adminSupervisionsIndex?.[String(itemKey || '').trim()];
+        if (!supervision) {
+            this.showToast('No fue posible recuperar los datos de esta auditoría.', {
+                tone: 'error',
+                title: 'Auditoría no disponible',
+            });
+            return;
+        }
+        const evidences = this.extractSupervisionEvidences(supervision);
+        if (evidences.length === 0) {
+            this.showToast('Esta auditoría no tiene fotos registradas.', {
+                tone: 'info',
+                title: 'Sin evidencias',
+            });
+            return;
+        }
+        this.showAdminSupervisionEvidencesModal(supervision, evidences);
+    },
+
+    showAdminSupervisionEvidencesModal(supervision, evidences) {
+        let modal = document.getElementById('modal-admin-supervision-evidences');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modal-admin-supervision-evidences';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+
+        const supervisorName =
+            supervision?.supervisor?.full_name || supervision?.supervisor_name || t('admin.supervisors.role.fallback');
+        const restaurantName = getRestaurantDisplayName(
+            supervision,
+            getRestaurantDisplayName(supervision?.restaurant || null, 'Sitio sin nombre visible')
+        );
+        const observedAt = supervision?.observed_at || supervision?.created_at || supervision?.registered_at || '';
+
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 900px;">
+                <div class="modal-header">
+                    <h3>Evidencias de auditoría</h3>
+                    <button class="btn-close" aria-label="Cerrar" data-action="closeModal" data-args="modal-admin-supervision-evidences">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="muted-copy" style="margin: 0 0 12px;">
+                        <strong>${escapeHtml(supervisorName)}</strong> en <strong>${escapeHtml(restaurantName)}</strong>
+                        ${observedAt ? `— ${escapeHtml(formatDateTime(observedAt))}` : ''}
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                        ${evidences
+                            .map((ev, i) => {
+                                const safe = String(ev.url).replace(/"/g, '&quot;');
+                                const label = ev.label || `Evidencia ${i + 1}`;
+                                if (ev.is_video) {
+                                    return `<div style="border-radius:8px;overflow:hidden;background:rgba(0,0,0,0.35);">
+                                        <video controls playsinline preload="metadata" style="width:100%;max-height:220px;background:#000;" src="${safe}"></video>
+                                        <div style="padding:6px 8px;font-size:12px;">${escapeHtml(label)}</div>
+                                    </div>`;
+                                }
+                                return `<a href="${safe}" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;color:inherit;border-radius:8px;overflow:hidden;background:rgba(0,0,0,0.35);">
+                                    <img src="${safe}" alt="${escapeHtml(label)}" loading="lazy" style="width:100%;height:180px;object-fit:cover;display:block;">
+                                    <div style="padding:6px 8px;font-size:12px;">${escapeHtml(label)}</div>
+                                </a>`;
+                            })
+                            .join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-action="closeModal" data-args="modal-admin-supervision-evidences">Cerrar</button>
+                </div>
+            </div>
+        `;
+
+        modal.classList.add('active');
     },
 
     renderAdminSupervisionMonitorSummary(items) {
@@ -500,17 +621,30 @@ export const adminMethods = {
 
     async loadAdminSupervisionMonitor() {
         const restaurants = await this.ensureAdminRestaurants();
+        // Buffer de ±1 día en el filtro para que auditorías registradas en zona
+        // del sitio (ej. US Pacific) no queden fuera por diferencia de husos
+        // horarios con la zona del navegador (Colombia UTC-5). Después
+        // renderAdminSupervisionMonitorSummary aplica el filtro fino por sitio.
+        const todayStart = getTodayStart();
+        const todayEnd = getTodayEnd();
+        const fromWithBuffer = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
+        const toWithBuffer = new Date(todayEnd.getTime() + 24 * 60 * 60 * 1000);
         const [supervisors, supervisions] = await Promise.all([
             this.ensureAdminSupervisionMonitorSupervisors(),
             this.fetchAdminSupervisions(restaurants, {
                 restaurantLimit: restaurants.length,
-                from: toIsoDate(getTodayStart()),
-                to: toIsoDate(getTodayEnd()),
-                limit: 50,
+                from: toIsoDate(fromWithBuffer),
+                to: toIsoDate(toWithBuffer),
+                limit: 100,
             }),
         ]);
 
         this.data.admin.supervisions = supervisions;
+        console.info('[admin] supervisions cargadas', {
+            count: supervisions.length,
+            from: toIsoDate(fromWithBuffer),
+            to: toIsoDate(toWithBuffer),
+        });
         this.populateAdminSupervisionMonitorSupervisorFilter(supervisors, supervisions);
         this.applyAdminSupervisionMonitorFilter();
     },
