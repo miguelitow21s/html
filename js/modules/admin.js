@@ -353,9 +353,21 @@ export const adminMethods = {
             return asArray(items);
         }
 
-        return asArray(items).filter(
-            (item) => String(item?.supervisor?.id || item?.supervisor_id || '').trim() === selectedSupervisorId
-        );
+        // Aceptamos varios aliases porque backend puede usar user_id o
+        // registered_by en lugar de supervisor_id según la vista.
+        return asArray(items).filter((item) => {
+            const candidates = [
+                item?.supervisor?.id,
+                item?.supervisor?.user_id,
+                item?.supervisor_id,
+                item?.user_id,
+                item?.registered_by,
+                item?.created_by,
+            ]
+                .map((v) => String(v || '').trim())
+                .filter(Boolean);
+            return candidates.some((c) => c === selectedSupervisorId);
+        });
     },
 
     applyAdminSupervisionMonitorFilter() {
@@ -479,16 +491,42 @@ export const adminMethods = {
             collected.push({ url, ...meta });
         };
 
-        asArray(supervision?.evidences).forEach((ev) => {
-            const url = ev?.signed_url || ev?.url || ev?.public_url || ev?.href || '';
+        // Objeto {area: {...}} o array [{...}]
+        const pushFromRecord = (ev) => {
+            if (!ev || typeof ev !== 'object') return;
+            const url =
+                ev.signed_url ||
+                ev.url ||
+                ev.public_url ||
+                ev.href ||
+                ev.file_url ||
+                ev.image_url ||
+                '';
             pushUrl(url, {
-                is_video: Boolean(ev?.is_video || String(ev?.mime_type || '').startsWith('video/')),
-                captured_at: ev?.captured_at || ev?.observed_at || '',
-                label: ev?.area_label || ev?.subarea_label || '',
+                is_video: Boolean(ev.is_video || String(ev.mime_type || '').startsWith('video/')),
+                captured_at: ev.captured_at || ev.observed_at || '',
+                label: ev.area_label || ev.subarea_label || ev.name || '',
             });
-        });
+        };
+
+        asArray(supervision?.evidences).forEach(pushFromRecord);
+        asArray(supervision?.evidence_items).forEach(pushFromRecord);
+        asArray(supervision?.photos).forEach(pushFromRecord);
+        asArray(supervision?.images).forEach(pushFromRecord);
+
+        // Arrays de strings (URLs sueltas)
         asArray(supervision?.evidence_urls).forEach((url) => pushUrl(url));
-        asArray(supervision?.photos).forEach((p) => pushUrl(p?.url || p?.signed_url));
+        asArray(supervision?.photo_urls).forEach((url) => pushUrl(url));
+        asArray(supervision?.image_urls).forEach((url) => pushUrl(url));
+        asArray(supervision?.signed_urls).forEach((url) => pushUrl(url));
+
+        // Objeto {area1: 'url', area2: 'url'} — algunas APIs devuelven así
+        if (supervision?.evidences && typeof supervision.evidences === 'object' && !Array.isArray(supervision.evidences)) {
+            Object.entries(supervision.evidences).forEach(([label, val]) => {
+                if (typeof val === 'string') pushUrl(val, { label });
+                else if (val && typeof val === 'object') pushFromRecord({ ...val, label: val.label || label });
+            });
+        }
 
         return collected;
     },
@@ -620,6 +658,11 @@ export const adminMethods = {
     },
 
     async loadAdminSupervisionMonitor() {
+        // Invalidar cache al entrar a la pantalla: si el user acaba de hacer
+        // una auditoría desde otra pestaña o dispositivo, tiene que aparecer.
+        this.invalidateCache?.('adminSupervisions');
+        this.cache.adminSupervisionsQuery = '';
+
         const restaurants = await this.ensureAdminRestaurants();
         // Buffer de ±1 día en el filtro para que auditorías registradas en zona
         // del sitio (ej. US Pacific) no queden fuera por diferencia de husos
@@ -644,6 +687,24 @@ export const adminMethods = {
             count: supervisions.length,
             from: toIsoDate(fromWithBuffer),
             to: toIsoDate(toWithBuffer),
+            sample: supervisions[0]
+                ? {
+                      keys: Object.keys(supervisions[0]),
+                      supervisor_id_variants: {
+                          'supervisor.id': supervisions[0].supervisor?.id,
+                          supervisor_id: supervisions[0].supervisor_id,
+                          user_id: supervisions[0].user_id,
+                          registered_by: supervisions[0].registered_by,
+                      },
+                      evidence_variants: {
+                          evidences: asArray(supervisions[0].evidences).length,
+                          evidence_urls: asArray(supervisions[0].evidence_urls).length,
+                          photos: asArray(supervisions[0].photos).length,
+                          photo_urls: asArray(supervisions[0].photo_urls).length,
+                          images: asArray(supervisions[0].images).length,
+                      },
+                  }
+                : null,
         });
         this.populateAdminSupervisionMonitorSupervisorFilter(supervisors, supervisions);
         this.applyAdminSupervisionMonitorFilter();
