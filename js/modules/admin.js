@@ -227,8 +227,8 @@ export const adminMethods = {
             }
 
             const sorted = grouped.sort((left, right) => {
-                const leftTime = new Date(left.observed_at || left.created_at || left.registered_at || 0).getTime();
-                const rightTime = new Date(right.observed_at || right.created_at || right.registered_at || 0).getTime();
+                const leftTime = new Date(left.recorded_at || left.observed_at || left.created_at || left.registered_at || 0).getTime();
+                const rightTime = new Date(right.recorded_at || right.observed_at || right.created_at || right.registered_at || 0).getTime();
                 return rightTime - leftTime;
             });
 
@@ -454,18 +454,45 @@ export const adminMethods = {
             })),
         });
 
+        // Backend v3: cada item puede venir con supervisor_id plano SIN objeto
+        // supervisor anidado. Resolvemos nombre/email con la lista cargada.
+        const supervisorLookup = new Map();
+        asArray(this.data.admin.supervisionSupervisorOptions).forEach((s) => {
+            const id = String(s?.id || '').trim();
+            if (id) supervisorLookup.set(id, s);
+        });
+        asArray(this.data.admin.supervisors).forEach((s) => {
+            const id = String(s?.id || '').trim();
+            if (id && !supervisorLookup.has(id)) supervisorLookup.set(id, s);
+        });
+
         container.innerHTML = `
             <div class="admin-supervisions-stack">
                 ${visibleItems
                     .map((item) => {
+                        const supervisorId = String(
+                            item?.supervisor?.id ||
+                                item?.supervisor_id ||
+                                item?.user_id ||
+                                item?.registered_by ||
+                                ''
+                        ).trim();
+                        const supervisorFromLookup = supervisorId ? supervisorLookup.get(supervisorId) : null;
                         const supervisorName =
-                            item.supervisor?.full_name || item.supervisor_name || t('admin.supervisors.role.fallback');
-                        const supervisorDetail = item.supervisor?.email || item.supervisor_email || '';
+                            item.supervisor?.full_name ||
+                            item.supervisor_name ||
+                            supervisorFromLookup?.full_name ||
+                            t('admin.supervisors.role.fallback');
+                        const supervisorDetail =
+                            item.supervisor?.email ||
+                            item.supervisor_email ||
+                            supervisorFromLookup?.email ||
+                            '';
                         const restaurantName = getRestaurantDisplayName(
                             item,
                             getRestaurantDisplayName(item.restaurant || null, 'Sitio sin nombre visible')
                         );
-                        const observedAt = item.observed_at || item.created_at || item.registered_at || '';
+                        const observedAt = item.recorded_at || item.observed_at || item.created_at || item.registered_at || '';
                         const evidences = this.extractSupervisionEvidences(item);
                         const observationCount = evidences.length;
                         const itemKey = String(item?.id || item?.supervisor_presence_id || item?.uuid || '').trim();
@@ -547,8 +574,9 @@ export const adminMethods = {
                 '';
             pushUrl(url, {
                 is_video: Boolean(ev.is_video || String(ev.mime_type || '').startsWith('video/')),
-                captured_at: ev.captured_at || ev.observed_at || '',
-                label: ev.area_label || ev.subarea_label || ev.name || '',
+                captured_at: ev.captured_at || ev.observed_at || ev.created_at || '',
+                // Backend v3 envía 'label' plano; mantenemos aliases legacy.
+                label: ev.label || ev.area_label || ev.subarea_label || ev.name || '',
             });
         };
 
@@ -609,7 +637,7 @@ export const adminMethods = {
             supervision,
             getRestaurantDisplayName(supervision?.restaurant || null, 'Sitio sin nombre visible')
         );
-        const observedAt = supervision?.observed_at || supervision?.created_at || supervision?.registered_at || '';
+        const observedAt = supervision?.recorded_at || supervision?.observed_at || supervision?.created_at || supervision?.registered_at || '';
 
         modal.innerHTML = `
             <div class="modal-content" style="max-width: 900px;">
