@@ -875,7 +875,18 @@ const app = {
 
         const schedShiftStartDate = document.getElementById('sched-shift-start-date');
         const schedShiftEndDate = document.getElementById('sched-shift-end-date');
-        if (schedShiftStartDate) schedShiftStartDate.addEventListener('change', () => this.onSchedShiftDatesChange());
+        if (schedShiftStartDate) {
+            schedShiftStartDate.addEventListener('change', () => {
+                // Auto-sincronizar fecha fin con fecha inicio para que el default
+                // sea 1 turno (que puede cruzar medianoche por hora). Si el user
+                // quiere programar varios días, cambia explícitamente la fecha fin.
+                const endInput = document.getElementById('sched-shift-end-date');
+                if (endInput && (!endInput.value || endInput.value < schedShiftStartDate.value)) {
+                    endInput.value = schedShiftStartDate.value;
+                }
+                this.onSchedShiftDatesChange();
+            });
+        }
         if (schedShiftEndDate) schedShiftEndDate.addEventListener('change', () => this.onSchedShiftDatesChange());
 
         const schedShiftDefaultStart = document.getElementById('sched-shift-default-start');

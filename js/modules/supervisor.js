@@ -6823,12 +6823,28 @@ export const supervisorMethods = {
             });
         }
 
+        // Helper: siguiente día a partir de un YYYY-MM-DD (para mostrar el día de cierre en cruce medianoche).
+        const nextDayShortLabel = (dateKey) => {
+            const [yy, mm, dd] = dateKey.split('-').map(Number);
+            if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) return '';
+            const next = new Date(yy, mm - 1, dd + 1);
+            const shortNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            return `${shortNames[next.getDay()]} ${String(next.getDate()).padStart(2, '0')}/${String(next.getMonth() + 1).padStart(2, '0')}`;
+        };
+
         const fragment = document.createDocumentFragment();
         rows.forEach((row, index) => {
             const [y, m, d] = row.dateKey.split('-');
             const dateLabel = `${d}/${m}`;
             const rowEl = document.createElement('div');
+            const crossesMidnight = row.startTime && row.endTime && row.endTime <= row.startTime;
             rowEl.className = `shift-plan-row${row.enabled ? '' : ' shift-plan-row--disabled'}`;
+
+            const crossBadge = crossesMidnight
+                ? `<div class="shift-plan-cross-note" style="grid-column:1/-1;font-size:11px;opacity:0.75;padding:4px 8px;color:#60a5fa;">
+                    <i class="fas fa-moon" style="margin-right:4px;"></i>Cruza medianoche · termina el ${escapeHtml(nextDayShortLabel(row.dateKey))}
+                </div>`
+                : '';
 
             rowEl.innerHTML = `
                 <label class="shift-plan-row-toggle">
@@ -6845,6 +6861,7 @@ export const supervisorMethods = {
                         ${row.enabled ? '' : 'disabled'}
                         data-sched-shift-input="endTime" data-row-index="${index}">
                 </div>
+                ${crossBadge}
             `;
             fragment.appendChild(rowEl);
         });
@@ -6890,6 +6907,8 @@ export const supervisorMethods = {
         if (this.schedShiftRows?.[index] != null) {
             this.schedShiftRows[index][field] = value;
             this.schedShiftRows[index].isDefaultTime = false;
+            // Re-render para actualizar el badge "Cruza medianoche" en tiempo real.
+            this.renderSchedShiftRows();
         }
     },
 
