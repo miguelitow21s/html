@@ -3896,11 +3896,31 @@ export const supervisorMethods = {
             const empId = String(
                 shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || ''
             ).trim();
-            const startValue = shift?.scheduled_start || shift?.start_time;
-            if (!empId || !startValue) return;
-            const key = `${empId}|${toLocalDateKey(new Date(startValue))}`;
-            if (!map.has(key)) map.set(key, []);
-            map.get(key).push(shift);
+            if (!empId) return;
+
+            // Preferir shift.local (día en zona del sitio) sobre el ISO del navegador.
+            // Un turno guardado como sáb 23:00 → dom 06:00 PDT tiene scheduled_start
+            // que en Colombia puede caer en domingo — sin local se pintaría en la
+            // columna equivocada.
+            const startDateKey = shift?.local?.start?.local_date;
+            const endDateKey = shift?.local?.end?.local_date;
+            const fallbackStart = shift?.scheduled_start || shift?.start_time;
+            const startKey = startDateKey || (fallbackStart ? toLocalDateKey(new Date(fallbackStart)) : null);
+            if (!startKey) return;
+
+            const putShift = (dateKey, carryOver = false) => {
+                const key = `${empId}|${dateKey}`;
+                if (!map.has(key)) map.set(key, []);
+                // Marca de "viene del día anterior" para renderizarlo distinto.
+                map.get(key).push(carryOver ? { ...shift, _carryOver: true } : shift);
+            };
+
+            putShift(startKey, false);
+
+            // Cross-midnight: aparecer también en la columna del día de cierre.
+            if (endDateKey && endDateKey !== startKey) {
+                putShift(endDateKey, true);
+            }
         });
         return map;
     },
@@ -3911,10 +3931,18 @@ export const supervisorMethods = {
                 const restName = escapeHtml(this.getResolvedShiftRestaurantName(shift, ''));
                 const timeRange = escapeHtml(formatShiftLocalRange(shift));
                 const shiftId = escapeHtml(String(shift.id || shift.scheduled_shift_id || ''));
-                return `<div class="ssg-shift-entry">
+                // _carryOver marca que este turno viene del día anterior (cross-midnight).
+                // Se pinta más suave y con etiqueta para que no confunda al supervisor.
+                const carryOver = Boolean(shift?._carryOver);
+                const carryStyle = carryOver ? ' style="opacity:0.7;border-left:3px solid #60a5fa;"' : '';
+                const carryBadge = carryOver
+                    ? '<div class="ssg-shift-carry" style="font-size:10px;color:#60a5fa;margin-bottom:2px;"><i class="fas fa-arrow-left"></i> viene de ayer</div>'
+                    : '';
+                return `<div class="ssg-shift-entry"${carryStyle}>
+                ${carryBadge}
                 <div class="ssg-shift-rest">${restName}</div>
                 <div class="ssg-shift-time">${timeRange}</div>
-                ${shiftId ? `<button class="ssg-del-btn" type="button" data-action="confirmCancelScheduledShift" data-args="${shiftId}" data-stop-propagation="1" title="Eliminar"><i class="fas fa-times"></i></button>` : ''}
+                ${!carryOver && shiftId ? `<button class="ssg-del-btn" type="button" data-action="confirmCancelScheduledShift" data-args="${shiftId}" data-stop-propagation="1" title="Eliminar"><i class="fas fa-times"></i></button>` : ''}
             </div>`;
             })
             .join('');
