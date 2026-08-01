@@ -6888,6 +6888,25 @@ export const supervisorMethods = {
         const defaultStart = document.getElementById('sched-shift-default-start')?.value || '00:00';
         const defaultEnd = document.getElementById('sched-shift-default-end')?.value || '08:00';
 
+        // Cuando la ventana cruza medianoche (fin <= inicio), la Fecha fin del
+        // rango se avanza al día siguiente de Fecha inicio para reflejar la
+        // realidad del turno nocturno. Cuando NO cruza, la Fecha fin vuelve
+        // al mismo día de la fecha inicio.
+        const startDateEl = document.getElementById('sched-shift-start-date');
+        const endDateEl = document.getElementById('sched-shift-end-date');
+        if (startDateEl?.value && endDateEl) {
+            const crosses = defaultStart && defaultEnd && defaultEnd <= defaultStart;
+            if (crosses) {
+                const [y, m, d] = startDateEl.value.split('-').map(Number);
+                if (Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d)) {
+                    const next = new Date(y, m - 1, d + 1);
+                    endDateEl.value = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+                }
+            } else if (endDateEl.value !== startDateEl.value) {
+                endDateEl.value = startDateEl.value;
+            }
+        }
+
         if (!this.schedShiftRows) return;
         this.schedShiftRows = this.schedShiftRows.map((row) => {
             if (!row.isDefaultTime) return row;
