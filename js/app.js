@@ -1791,6 +1791,12 @@ const app = {
             return 'La ventana del servicio ya terminó. Ya no se puede iniciar.';
         }
 
+        // Backend v3: el único límite que queda es el guardarraíl de 24h
+        // (atrapa un typo de fecha, no un rango horario válido).
+        if (errorCode === 'SCHEDULE_DURATION_OUT_OF_RANGE') {
+            return 'La ventana del servicio supera 24 horas. Revisa que la Fecha fin sea el día correcto (para turnos que cruzan medianoche debe ser el día siguiente al de inicio, no varios días después).';
+        }
+
         if (errorCode === 'TASK_ALREADY_COMPLETED') {
             return 'Esta tarea ya fue completada. Refresca la lista para verlo actualizado.';
         }
