@@ -4128,75 +4128,104 @@ export const supervisorMethods = {
     },
 
     async prepareSupervisorReportsPage() {
+        const canLoadSupervisors = typeof this.loadAdminSupervisors === 'function' && this.isAdminRole && this.isAdminRole();
         const [restaurants] = await Promise.all([
             this.getSupervisorRestaurants(),
             this.data.supervisor.employees.length === 0 ? this.loadSupervisorEmployees() : Promise.resolve(),
+            canLoadSupervisors && asArray(this.data.admin?.supervisors).length === 0
+                ? this.loadAdminSupervisors().catch(() => null)
+                : Promise.resolve(),
         ]);
 
         const restaurantSelect = document.getElementById('report-restaurant-select');
-        const employeeSelect = document.getElementById('report-employee-select');
         if (!restaurantSelect) {
             return;
         }
 
         const currentRestaurantValue = restaurantSelect.value;
-        const currentEmployeeValue = employeeSelect?.value || '';
 
         if (restaurants.length === 0) {
             restaurantSelect.innerHTML = '<option value="">Todos los sitios</option>';
-            if (employeeSelect) {
-                employeeSelect.innerHTML = `
-                    <option value="">${escapeHtml(t('supervisor.shifts.all.employees'))}</option>
-                    ${this.data.supervisor.employees
-                        .map(
-                            (employee) => `
-                        <option value="${escapeHtml(String(employee.id))}" ${String(employee.id) === currentEmployeeValue ? 'selected' : ''}>
-                            ${escapeHtml(getEmployeeDisplayName(employee))}
-                        </option>
-                    `
-                        )
-                        .join('')}
-                `;
-            }
-            this.updateReportSupportCard();
-            return;
-        }
-
-        restaurantSelect.innerHTML = `
-            <option value="">Todos los sitios</option>
-            ${restaurants
-                .map(
-                    (restaurant, index) => `
-            <option value="${escapeHtml(String(getRestaurantRecordId(restaurant)))}">
-                ${escapeHtml(getRestaurantDisplayName(restaurant))}
-            </option>
-        `
-                )
-                .join('')}
-        `;
-
-        const availableRestaurantIds = new Set(
-            restaurants.map((restaurant) => String(getRestaurantRecordId(restaurant)))
-        );
-        restaurantSelect.value = availableRestaurantIds.has(String(currentRestaurantValue))
-            ? String(currentRestaurantValue)
-            : '';
-
-        if (employeeSelect) {
-            employeeSelect.innerHTML = `
-                <option value="">${escapeHtml(t('supervisor.shifts.all.employees'))}</option>
-                ${this.data.supervisor.employees
+        } else {
+            restaurantSelect.innerHTML = `
+                <option value="">Todos los sitios</option>
+                ${restaurants
                     .map(
-                        (employee) => `
-                    <option value="${escapeHtml(String(employee.id))}" ${String(employee.id) === currentEmployeeValue ? 'selected' : ''}>
-                        ${escapeHtml(getEmployeeDisplayName(employee))}
-                    </option>
-                `
+                        (restaurant) => `
+                <option value="${escapeHtml(String(getRestaurantRecordId(restaurant)))}">
+                    ${escapeHtml(getRestaurantDisplayName(restaurant))}
+                </option>
+            `
                     )
                     .join('')}
             `;
+
+            const availableRestaurantIds = new Set(
+                restaurants.map((restaurant) => String(getRestaurantRecordId(restaurant)))
+            );
+            restaurantSelect.value = availableRestaurantIds.has(String(currentRestaurantValue))
+                ? String(currentRestaurantValue)
+                : '';
         }
+
+        const shiftsRadio = document.querySelector('input[name="report-type"][value="shifts"]');
+        if (shiftsRadio && !document.querySelector('input[name="report-type"]:checked')) {
+            shiftsRadio.checked = true;
+        }
+        this.wireReportTypeToggle();
+        this.syncReportEmployeeSelectByType(this.getSelectedReportType());
         this.updateReportSupportCard();
+    },
+
+    getSelectedReportType() {
+        const checked = document.querySelector('input[name="report-type"]:checked');
+        const value = checked?.value === 'audits' ? 'audits' : 'shifts';
+        return value;
+    },
+
+    wireReportTypeToggle() {
+        if (this._reportTypeToggleWired) return;
+        const radios = document.querySelectorAll('input[name="report-type"]');
+        if (radios.length === 0) return;
+        radios.forEach((radio) => {
+            radio.addEventListener('change', () => {
+                this.syncReportEmployeeSelectByType(this.getSelectedReportType());
+            });
+        });
+        this._reportTypeToggleWired = true;
+    },
+
+    syncReportEmployeeSelectByType(type) {
+        const employeeSelect = document.getElementById('report-employee-select');
+        const employeeLabel = document.getElementById('report-employee-label');
+        if (!employeeSelect) return;
+
+        const currentValue = employeeSelect.value || '';
+
+        if (type === 'audits') {
+            if (employeeLabel) employeeLabel.textContent = 'Inspector';
+            const supervisors = asArray(this.data.admin?.supervisors);
+            const options = supervisors
+                .map((sup) => {
+                    const id = String(sup.id ?? sup.user_id ?? '');
+                    const name = sup.full_name || sup.email || t('admin.supervisors.role.fallback');
+                    if (!id) return '';
+                    return `<option value="${escapeHtml(id)}" ${id === currentValue ? 'selected' : ''}>${escapeHtml(name)}</option>`;
+                })
+                .filter(Boolean)
+                .join('');
+            employeeSelect.innerHTML = `<option value="">Todos los inspectores</option>${options}`;
+        } else {
+            if (employeeLabel) employeeLabel.textContent = 'Contratista';
+            const employees = asArray(this.data.supervisor?.employees);
+            const options = employees
+                .map((employee) => {
+                    const id = String(employee.id);
+                    return `<option value="${escapeHtml(id)}" ${id === currentValue ? 'selected' : ''}>${escapeHtml(getEmployeeDisplayName(employee))}</option>`;
+                })
+                .join('');
+            employeeSelect.innerHTML = `<option value="">${escapeHtml(t('supervisor.shifts.all.employees'))}</option>${options}`;
+        }
     },
 
     async prepareSupervisorSupervisionPage() {
@@ -5283,6 +5312,7 @@ export const supervisorMethods = {
         const endDate = document.getElementById('report-end-date')?.value;
         const restaurantId = document.getElementById('report-restaurant-select')?.value;
         const employeeId = document.getElementById('report-employee-select')?.value;
+        const reportType = this.getSelectedReportType();
 
         if (!startDate || !endDate) {
             this.showToast(t('sup.toast.report.range.missing'), {
@@ -5298,6 +5328,10 @@ export const supervisorMethods = {
                 title: t('sup.toast.report.range.invalid.title'),
             });
             return;
+        }
+
+        if (reportType === 'audits') {
+            return this.generateAuditsReport({ startDate, endDate, restaurantId, supervisorId: employeeId });
         }
 
         this.showLoading(t('sup.toast.report.generating'), t('sup.toast.report.generating.desc'));
@@ -5507,6 +5541,168 @@ export const supervisorMethods = {
                 Array.isArray(window.__worktraceReportDebug) ? window.__worktraceReportDebug[0] : null
             );
             this.showToast(this.getErrorMessage(error, 'No fue posible generar el informe.'), {
+                tone: 'error',
+                title: t('sup.toast.report.fail'),
+            });
+        } finally {
+            this.hideLoading();
+        }
+    },
+
+    async generateAuditsReport({ startDate, endDate, restaurantId, supervisorId, exportFormat = 'excel' }) {
+        this.showLoading(t('sup.toast.report.generating'), t('sup.toast.report.generating.desc'));
+        try {
+            const accessToken = await this.getValidAccessToken();
+            apiClient.setAccessToken(accessToken);
+
+            const normalizedRestaurantFilter = this.normalizeReportFilterValue(restaurantId, { numeric: true });
+            const normalizedSupervisorFilter = this.normalizeReportFilterValue(supervisorId, { numeric: false });
+
+            const payload = {
+                report_type: 'audits',
+                period_start: startDate,
+                period_end: endDate,
+                restaurant_id: normalizedRestaurantFilter,
+                supervisor_id: normalizedSupervisorFilter,
+                export_format: exportFormat,
+            };
+
+            const idempotencyKey = buildIdempotencyKey();
+            const result = await apiClient.reportsGenerate(payload, {
+                accessToken,
+                requiresIdempotency: false,
+                headers: { 'Idempotency-Key': idempotencyKey },
+                timeoutMs: 45000,
+            });
+
+            const rows = asArray(result?.rows);
+            const totals = result?.totals || {};
+            const totalAudits = Number(totals.audits ?? rows.length) || 0;
+            const totalEvidences = Number(
+                totals.evidences ??
+                    rows.reduce((acc, row) => acc + (Number(row?.evidence_count) || asArray(row?.evidences).length), 0)
+            ) || 0;
+            const uniqueSites = new Set(rows.map((row) => row?.restaurant_name || row?.restaurant_id).filter(Boolean));
+            const uniqueSupervisors = new Set(rows.map((row) => row?.supervisor_name || row?.supervisor_id).filter(Boolean));
+
+            this.data.lastGeneratedReport = {
+                ...(result || {}),
+                report_type: 'audits',
+                audit_rows: rows,
+                filters: {
+                    start_date: startDate,
+                    end_date: endDate,
+                    restaurant_id: payload.restaurant_id ?? '',
+                    supervisor_id: payload.supervisor_id ?? '',
+                },
+            };
+
+            const setText = (id, value) => {
+                const node = document.getElementById(id);
+                if (node) node.textContent = value;
+            };
+            setText('report-summary-worked-hours', String(totalAudits));
+            setText('report-summary-scheduled-hours', String(totalEvidences));
+            setText('report-summary-shifts', String(uniqueSites.size));
+            setText('report-summary-ended-early', String(uniqueSupervisors.size));
+            setText('report-summary-site-tasks', '0');
+
+            const labels = document.querySelectorAll('#report-result .stat-card .stat-label');
+            if (labels.length >= 5) {
+                labels[0].textContent = 'Auditorías';
+                labels[1].textContent = 'Evidencias';
+                labels[2].textContent = 'Sitios cubiertos';
+                labels[3].textContent = 'Inspectores';
+                labels[4].textContent = 'Tareas del sitio';
+            }
+
+            const description = document.getElementById('report-result-description');
+            if (description) {
+                description.textContent = startDate === endDate
+                    ? 'Auditorías del día seleccionado, con supervisor, sitio y evidencias fotográficas.'
+                    : 'Auditorías del período seleccionado, con supervisor, sitio y evidencias fotográficas.';
+            }
+
+            const restaurantTotalsCopy = document.getElementById('report-restaurant-totals-copy');
+            if (restaurantTotalsCopy) {
+                restaurantTotalsCopy.textContent = `${totalAudits} auditoría(s) con ${totalEvidences} evidencia(s) en el rango.`;
+            }
+
+            const statusBreakdown = document.getElementById('report-status-breakdown');
+            if (statusBreakdown) {
+                if (rows.length === 0) {
+                    statusBreakdown.innerHTML = '<span class="report-pill report-pill-empty">Sin auditorías en el período.</span>';
+                } else {
+                    const phaseCounts = rows.reduce(
+                        (acc, row) => {
+                            const phase = String(row?.phase || '').toLowerCase();
+                            if (phase === 'start') acc.start += 1;
+                            else if (phase === 'end') acc.end += 1;
+                            else acc.other += 1;
+                            return acc;
+                        },
+                        { start: 0, end: 0, other: 0 }
+                    );
+                    const pills = [];
+                    if (phaseCounts.start) pills.push(`<span class="report-pill"><span>Inicio</span><strong>${phaseCounts.start}</strong></span>`);
+                    if (phaseCounts.end) pills.push(`<span class="report-pill"><span>Cierre</span><strong>${phaseCounts.end}</strong></span>`);
+                    if (phaseCounts.other) pills.push(`<span class="report-pill"><span>Otras</span><strong>${phaseCounts.other}</strong></span>`);
+                    statusBreakdown.innerHTML = pills.join('') || '<span class="report-pill report-pill-empty">Sin fases registradas.</span>';
+                }
+            }
+
+            const dayEvidence = document.getElementById('report-day-evidence');
+            const dayEvidenceList = document.getElementById('report-day-evidence-list');
+            const dayEvidenceCopy = document.getElementById('report-day-evidence-copy');
+            if (dayEvidence && dayEvidenceList) {
+                if (rows.length === 0) {
+                    dayEvidence.classList.add('hidden');
+                    dayEvidenceList.innerHTML = '';
+                } else {
+                    dayEvidence.classList.remove('hidden');
+                    if (dayEvidenceCopy) {
+                        dayEvidenceCopy.textContent = `Vista previa de ${Math.min(rows.length, 20)} auditoría(s). El PDF/Excel incluye todas con sus fotos.`;
+                    }
+                    dayEvidenceList.innerHTML = rows
+                        .slice(0, 20)
+                        .map((row) => {
+                            const phaseLabel = String(row?.phase || '').toLowerCase() === 'start'
+                                ? 'Inicio'
+                                : String(row?.phase || '').toLowerCase() === 'end'
+                                    ? 'Cierre'
+                                    : (row?.phase || '—');
+                            const evidences = asArray(row?.evidences).slice(0, 6);
+                            const thumbs = evidences
+                                .map((ev) => {
+                                    const url = ev?.signed_url || '';
+                                    if (!url) return '';
+                                    if (ev?.is_video) {
+                                        return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="report-evidence-thumb"><i class="fas fa-video"></i></a>`;
+                                    }
+                                    return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="report-evidence-thumb"><img src="${escapeHtml(url)}" alt="Evidencia" loading="lazy"></a>`;
+                                })
+                                .join('');
+                            const evidenceCount = Number(row?.evidence_count) || asArray(row?.evidences).length;
+                            return `
+                                <div class="report-day-evidence-item">
+                                    <div class="report-day-evidence-meta">
+                                        <strong>${escapeHtml(row?.restaurant_name || '—')}</strong>
+                                        <span class="muted-copy">${escapeHtml(row?.local_date || '')} · ${escapeHtml(row?.local_time || '')} ${row?.timezone ? '· ' + escapeHtml(row.timezone) : ''}</span>
+                                        <span class="muted-copy">${escapeHtml(row?.supervisor_name || '—')} · ${escapeHtml(phaseLabel)} · ${evidenceCount} evidencia(s)</span>
+                                        ${row?.observations ? `<p class="muted-copy">${escapeHtml(row.observations)}</p>` : ''}
+                                    </div>
+                                    <div class="report-day-evidence-thumbs">${thumbs}</div>
+                                </div>
+                            `;
+                        })
+                        .join('');
+                }
+            }
+
+            document.getElementById('report-result')?.classList.remove('hidden');
+            this.updateReportSupportCard(null);
+        } catch (error) {
+            this.showToast(this.getErrorMessage(error, 'No fue posible generar el informe de auditorías.'), {
                 tone: 'error',
                 title: t('sup.toast.report.fail'),
             });

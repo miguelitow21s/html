@@ -1087,6 +1087,20 @@
                 </div>
 
                 <div class="report-filters">
+                    <div class="form-group report-filter-field" role="radiogroup" aria-label="Tipo de reporte">
+                        <label>Tipo de reporte</label>
+                        <div class="report-type-toggle" style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <label class="report-type-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;">
+                                <input type="radio" name="report-type" value="shifts" checked>
+                                <span><i class="fas fa-briefcase"></i> Turnos del contratista</span>
+                            </label>
+                            <label class="report-type-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;">
+                                <input type="radio" name="report-type" value="audits">
+                                <span><i class="fas fa-clipboard-check"></i> Auditorías del inspector</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="report-date-row" role="group" aria-label="Rango de fechas del informe">
                         <div class="form-group report-filter-field report-date-field">
                             <label for="report-start-date">Fecha Inicio</label>
@@ -1116,7 +1130,7 @@
                     </div>
 
                     <div class="form-group report-filter-field">
-                        <label for="report-employee-select" data-i18n="supervisor.reports.employee">Contratista</label>
+                        <label for="report-employee-select" id="report-employee-label" data-i18n="supervisor.reports.employee">Contratista</label>
                         <select id="report-employee-select" class="dark-control">
                             <option value="" data-i18n="supervisor.shifts.all.employees">Todos los contratistas</option>
                         </select>
