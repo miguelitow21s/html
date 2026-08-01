@@ -5516,15 +5516,8 @@ export const supervisorMethods = {
     },
 
     downloadGeneratedReport(type) {
-        // Safari iOS bloquea window.open si hay lógica entre el click y la
-        // llamada. Abrimos la pestaña INMEDIATAMENTE (about:blank) en el
-        // mismo tick del user gesture, y le seteamos el URL final después
-        // de verificar el reporte. Si algo falla, cerramos el blank.
-        const newWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
-
         const report = this.data.lastGeneratedReport;
         if (!report) {
-            newWindow?.close();
             this.showToast(t('sup.toast.report.first'), {
                 tone: 'warning',
                 title: t('sup.toast.report.no.results'),
@@ -5534,7 +5527,6 @@ export const supervisorMethods = {
 
         const url = type === 'pdf' ? report.url_pdf : report.url_excel;
         if (!url) {
-            newWindow?.close();
             this.showToast(`No fue posible preparar la descarga en ${type.toUpperCase()}.`, {
                 tone: 'error',
                 title: t('sup.toast.download.unavailable'),
@@ -5543,14 +5535,29 @@ export const supervisorMethods = {
         }
 
         this.closeReportDownloadMenu();
+        this.openInNewTab(url);
+    },
 
-        if (newWindow) {
-            newWindow.location.href = url;
-        } else {
-            // Popup blocker canceló window.open — no queda alternativa que
-            // reemplazar la pestaña actual para no perder la descarga.
-            window.location.assign(url);
-        }
+    /**
+     * Abre un URL en una pestaña nueva usando un <a target="_blank">
+     * creado y click-eado programáticamente. Este patrón sobrevive al
+     * popup blocker de Safari iOS (que sí bloquea window.open desde
+     * handlers indirectos como el delegador global) porque el navegador
+     * lo interpreta como una navegación de link natural, no como script.
+     */
+    openInNewTab(url) {
+        if (!url) return;
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        anchor.style.display = 'none';
+        document.body.appendChild(anchor);
+        anchor.click();
+        // requestAnimationFrame para asegurar que el click completa antes de remover.
+        requestAnimationFrame(() => {
+            anchor.remove();
+        });
     },
 
     toggleReportDownloadMenu() {
@@ -5567,17 +5574,9 @@ export const supervisorMethods = {
     },
 
     navigateToCurrentTab(url) {
-        if (!url) {
-            return;
-        }
-
-        // Abre en pestaña nueva para que el flujo del informe no interrumpa
-        // el estado del panel actual (filtros, resultado en pantalla).
-        // Fallback a assign() si el popup blocker cancela window.open.
-        const opened = window.open(url, '_blank', 'noopener,noreferrer');
-        if (!opened) {
-            window.location.assign(url);
-        }
+        // Nombre legacy. Ahora delega a openInNewTab (patrón <a target="_blank">
+        // que sí sobrevive al popup blocker de Safari iOS).
+        this.openInNewTab(url);
     },
 
     openGeneratedReportPreview() {
