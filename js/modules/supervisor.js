@@ -5274,6 +5274,12 @@ export const supervisorMethods = {
             ? 'Detalle del día con evidencias. Usa los botones de cada turno para descargar un informe individual.'
             : 'Turnos del período. Descarga el informe general con el botón superior o uno individual desde cada tarjeta.';
 
+        // Debug: registrar el shape del primer shift para poder ver qué campo
+        // trae el id (backend v3 usa variantes distintas según endpoint).
+        if (items.length > 0) {
+            console.info('[report-shifts] primer item, keys:', Object.keys(items[0]), 'raw keys:', items[0]?.raw ? Object.keys(items[0].raw) : null, 'sample:', items[0]);
+        }
+
         let foundEvidence = false;
         list.innerHTML = items
             .map((shift) => {
@@ -5284,7 +5290,13 @@ export const supervisorMethods = {
                 const scheduledHours = formatHours(getScheduledHours(shift));
                 const endedEarly = isShiftEndedEarly(shift);
                 const earlyEndReason = this.getEarlyEndReasonLabel(shift);
-                const shiftId = shift?.id || shift?.shift_id || shift?.raw?.id || '';
+                const shiftId = shift?.id
+                    || shift?.shift_id
+                    || shift?.scheduled_shift_id
+                    || shift?.raw?.id
+                    || shift?.raw?.shift_id
+                    || shift?.raw?.scheduled_shift_id
+                    || '';
 
                 let evidenceBlock = '';
                 if (isSingleDay) {
@@ -5355,38 +5367,70 @@ export const supervisorMethods = {
     },
 
     async downloadIndividualShiftReport(shiftIdArg, formatArg = 'pdf') {
+        console.info('[individual-report] click', { shiftIdArg, formatArg, typeShift: typeof shiftIdArg });
         const shiftId = String(shiftIdArg ?? '').trim();
         const format = formatArg === 'excel' ? 'excel' : 'pdf';
         if (!shiftId) {
-            this.showToast('No se pudo identificar el turno.', { tone: 'error', title: 'Turno no válido' });
+            this.showToast('No se pudo identificar el turno. El backend no envió su id.', {
+                tone: 'error',
+                title: 'Turno no válido',
+            });
             return;
         }
+
+        // Popup blocker de Safari iOS: `<a target="_blank">.click()` después de
+        // un await pierde el "user gesture" y bloquea. Truco: abrimos la
+        // pestaña YA en modo about:blank (sí es user gesture) y después del
+        // await le seteamos el URL. Si la abertura fue bloqueada igual,
+        // fallback a toast con instrucciones.
+        const previewWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
 
         this.showLoading('Generando informe', 'Preparando el informe del turno.');
         try {
             const accessToken = await this.getValidAccessToken();
             apiClient.setAccessToken(accessToken);
             const numericShiftId = Number(shiftId);
-            const shiftIdValue = Number.isFinite(numericShiftId) ? numericShiftId : shiftId;
-            const result = await apiClient.reportsGenerate(
-                { report_type: 'shifts', shift_id: shiftIdValue, export_format: 'both' },
-                {
-                    accessToken,
-                    requiresIdempotency: false,
-                    headers: { 'Idempotency-Key': buildIdempotencyKey() },
-                    timeoutMs: 45000,
-                }
-            );
+            const shiftIdValue = Number.isFinite(numericShiftId) && String(numericShiftId) === shiftId
+                ? numericShiftId
+                : shiftId;
+            const payload = { report_type: 'shifts', shift_id: shiftIdValue, export_format: 'both' };
+            console.info('[individual-report] payload', payload);
+            const result = await apiClient.reportsGenerate(payload, {
+                accessToken,
+                requiresIdempotency: false,
+                headers: { 'Idempotency-Key': buildIdempotencyKey() },
+                timeoutMs: 45000,
+            });
+            console.info('[individual-report] response', result);
             const url = format === 'pdf' ? result?.url_pdf : result?.url_excel;
             if (!url) {
-                this.showToast(`El backend no devolvió una URL de ${format.toUpperCase()}.`, {
+                console.warn('[individual-report] backend sin URL', { format, keys: result ? Object.keys(result) : null });
+                if (previewWindow && !previewWindow.closed) {
+                    try { previewWindow.close(); } catch {}
+                }
+                this.showToast(`El backend no devolvió una URL de ${format.toUpperCase()}. Revisa la consola para detalle.`, {
                     tone: 'error',
                     title: 'Descarga no disponible',
                 });
                 return;
             }
-            this.openInNewTab(url);
+
+            if (previewWindow && !previewWindow.closed) {
+                try {
+                    previewWindow.location.href = url;
+                } catch (assignError) {
+                    console.warn('[individual-report] no se pudo asignar url al popup, usando fallback', assignError);
+                    this.openInNewTab(url);
+                }
+            } else {
+                // Popup bloqueado: fallback al patrón <a target="_blank">.click()
+                this.openInNewTab(url);
+            }
         } catch (error) {
+            console.error('[individual-report] error', error, error?.payload);
+            if (previewWindow && !previewWindow.closed) {
+                try { previewWindow.close(); } catch {}
+            }
             this.showToast(this.getErrorMessage(error, 'No fue posible generar el informe del turno.'), {
                 tone: 'error',
                 title: 'Error',
