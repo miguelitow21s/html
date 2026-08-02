@@ -112,6 +112,47 @@
         </div>
     </div>
 
+    <div id="modal-phone-change" class="modal" data-locked="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cambiar teléfono</h3>
+                <button class="btn-close" aria-label="Cerrar" type="button" data-action="closePhoneChangeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="phone-change-step-request">
+                    <p class="muted-copy">Ingresa el nuevo número. Te enviaremos un código al correo de tu cuenta para autorizar el cambio.</p>
+                    <div id="phone-change-error" class="error-message hidden"></div>
+                    <div class="form-group">
+                        <label for="phone-change-new">Nuevo teléfono (formato E.164, ej. +13235550123)</label>
+                        <input type="tel" id="phone-change-new" class="dark-control" inputmode="tel" autocomplete="tel" placeholder="+13235550123">
+                    </div>
+                </div>
+                <div id="phone-change-step-confirm" class="hidden">
+                    <p class="muted-copy">Enviamos un código de 6 dígitos a <strong id="phone-change-masked-email">tu correo</strong>. Ingrésalo para confirmar el cambio.</p>
+                    <div id="phone-change-confirm-error" class="error-message hidden"></div>
+                    <div class="form-group">
+                        <label for="phone-change-code">Código de verificación</label>
+                        <input type="text" id="phone-change-code" class="dark-control" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer modal-footer-stack-sm">
+                <button type="button" class="btn btn-primary" id="phone-change-request-btn" data-action="requestPhoneChangeOtp">
+                    <i class="fas fa-envelope"></i> Enviar código
+                </button>
+                <button type="button" class="btn btn-primary hidden" id="phone-change-confirm-btn" data-action="confirmPhoneChangeOtp">
+                    <i class="fas fa-check"></i> Confirmar cambio
+                </button>
+                <button type="button" class="btn btn-secondary hidden" id="phone-change-resend-btn" data-action="requestPhoneChangeOtp">
+                    <i class="fas fa-rotate-right"></i> Reenviar
+                </button>
+                <button type="button" class="btn btn-secondary" data-action="closePhoneChangeModal">
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-camera-capture" class="modal camera-modal" data-locked="true">
         <div class="modal-content camera-modal-content">
             <div class="modal-header">
@@ -482,6 +523,9 @@
                         <span class="info-item-label" data-i18n="employee.profile.phone">Teléfono</span>
                         <span class="info-item-value" id="profile-phone">-</span>
                     </div>
+                    <button type="button" class="btn btn-secondary btn-inline" data-action="openPhoneChangeModal" style="margin-left:auto;">
+                        <i class="fas fa-edit"></i> Cambiar
+                    </button>
                 </div>
             </div>
 
@@ -1087,20 +1131,6 @@
                 </div>
 
                 <div class="report-filters">
-                    <div class="form-group report-filter-field" role="radiogroup" aria-label="Tipo de reporte">
-                        <label>Tipo de reporte</label>
-                        <div class="report-type-toggle" style="display:flex;gap:8px;flex-wrap:wrap;">
-                            <label class="report-type-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;">
-                                <input type="radio" name="report-type" value="shifts" checked>
-                                <span><i class="fas fa-briefcase"></i> Turnos del contratista</span>
-                            </label>
-                            <label class="report-type-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;">
-                                <input type="radio" name="report-type" value="audits">
-                                <span><i class="fas fa-clipboard-check"></i> Auditorías del inspector</span>
-                            </label>
-                        </div>
-                    </div>
-
                     <div class="report-date-row" role="group" aria-label="Rango de fechas del informe">
                         <div class="form-group report-filter-field report-date-field">
                             <label for="report-start-date">Fecha Inicio</label>
@@ -1130,7 +1160,7 @@
                     </div>
 
                     <div class="form-group report-filter-field">
-                        <label for="report-employee-select" id="report-employee-label" data-i18n="supervisor.reports.employee">Contratista</label>
+                        <label for="report-employee-select" data-i18n="supervisor.reports.employee">Contratista</label>
                         <select id="report-employee-select" class="dark-control">
                             <option value="" data-i18n="supervisor.shifts.all.employees">Todos los contratistas</option>
                         </select>
@@ -1681,6 +1711,68 @@
                     <div class="card-title" data-i18n="admin.supervision.monitor.activity">Actividad de Inspectores</div>
                 </div>
                 <div id="admin-supervision-monitor-list"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Informe de auditorías</div>
+                </div>
+                <p class="muted-copy" style="margin-top:-4px;">Genera un PDF/Excel de las auditorías del rango seleccionado, con fecha/hora local del sitio, inspector, observaciones y evidencias.</p>
+
+                <div class="report-filters">
+                    <div class="report-date-row" role="group" aria-label="Rango de fechas del informe de auditorías">
+                        <div class="form-group report-filter-field report-date-field">
+                            <label for="audit-report-start-date">Fecha inicio</label>
+                            <div class="date-control">
+                                <input type="date" id="audit-report-start-date" class="dark-control compact-picker" inputmode="none" lang="en-GB">
+                                <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="audit-report-start-date" aria-label="Abrir selector de fecha de inicio">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group report-filter-field report-date-field">
+                            <label for="audit-report-end-date">Fecha fin</label>
+                            <div class="date-control">
+                                <input type="date" id="audit-report-end-date" class="dark-control compact-picker" inputmode="none" lang="en-GB">
+                                <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="audit-report-end-date" aria-label="Abrir selector de fecha fin">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group report-filter-field">
+                        <label for="audit-report-restaurant-select">Sitio / Cliente</label>
+                        <select id="audit-report-restaurant-select" class="dark-control">
+                            <option value="">Todos los sitios</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group report-filter-field">
+                        <label for="audit-report-supervisor-select">Inspector</label>
+                        <select id="audit-report-supervisor-select" class="dark-control">
+                            <option value="">Todos los inspectores</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="toolbar-actions report-actions-row">
+                    <button class="btn btn-primary" data-action="generateAuditReportFromMonitor">
+                        <i class="fas fa-file-invoice"></i> Generar informe
+                    </button>
+                </div>
+
+                <div id="audit-report-result" class="report-downloads hidden" style="margin-top:12px;">
+                    <p class="muted-copy" id="audit-report-summary-copy"></p>
+                    <div class="report-download-menu">
+                        <button class="btn btn-secondary btn-inline" type="button" data-action="downloadAuditReport" data-args="pdf">
+                            <i class="fas fa-file-pdf"></i> Descargar PDF
+                        </button>
+                        <button class="btn btn-secondary btn-inline" type="button" data-action="downloadAuditReport" data-args="excel">
+                            <i class="fas fa-file-excel"></i> Descargar Excel
+                        </button>
+                    </div>
+                </div>
             </div>
         </main>
 

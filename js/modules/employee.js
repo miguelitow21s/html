@@ -2038,4 +2038,140 @@ export const employeeMethods = {
         if (httpCode === 404) return 'La tarea no fue encontrada.';
         return this.getErrorMessage(error, fallback);
     },
+
+    openPhoneChangeModal() {
+        this._phoneChangePendingNumber = '';
+        const inputNew = document.getElementById('phone-change-new');
+        const inputCode = document.getElementById('phone-change-code');
+        const stepReq = document.getElementById('phone-change-step-request');
+        const stepConf = document.getElementById('phone-change-step-confirm');
+        const err = document.getElementById('phone-change-error');
+        const errConf = document.getElementById('phone-change-confirm-error');
+        const btnReq = document.getElementById('phone-change-request-btn');
+        const btnConf = document.getElementById('phone-change-confirm-btn');
+        const btnResend = document.getElementById('phone-change-resend-btn');
+
+        if (inputNew) inputNew.value = '';
+        if (inputCode) inputCode.value = '';
+        if (stepReq) stepReq.classList.remove('hidden');
+        if (stepConf) stepConf.classList.add('hidden');
+        if (err) { err.classList.add('hidden'); err.textContent = ''; }
+        if (errConf) { errConf.classList.add('hidden'); errConf.textContent = ''; }
+        if (btnReq) btnReq.classList.remove('hidden');
+        if (btnConf) btnConf.classList.add('hidden');
+        if (btnResend) btnResend.classList.add('hidden');
+
+        this.openModal('modal-phone-change');
+    },
+
+    closePhoneChangeModal() {
+        this.closeModal('modal-phone-change');
+    },
+
+    _validatePhoneE164(value) {
+        // E.164: + seguido de 8 a 15 dígitos, primer dígito 1-9.
+        return /^\+[1-9]\d{7,14}$/.test(String(value || '').trim());
+    },
+
+    async requestPhoneChangeOtp() {
+        const inputNew = document.getElementById('phone-change-new');
+        const err = document.getElementById('phone-change-error');
+        const rawPhone = String(inputNew?.value || '').trim().replace(/\s+/g, '');
+
+        if (err) { err.classList.add('hidden'); err.textContent = ''; }
+
+        if (!this._validatePhoneE164(rawPhone)) {
+            if (err) {
+                err.textContent = 'El teléfono debe estar en formato E.164 (ej. +13235550123).';
+                err.classList.remove('hidden');
+            }
+            return;
+        }
+
+        this.showLoading('Enviando código', 'Estamos enviando el código a tu correo.');
+        try {
+            const result = await apiClient.profilePhoneChangeRequest({ new_phone: rawPhone });
+            if (result?.noop) {
+                this.showToast('El teléfono ingresado es el mismo que ya tienes registrado.', {
+                    tone: 'info',
+                    title: 'Sin cambios',
+                });
+                this.closePhoneChangeModal();
+                return;
+            }
+            this._phoneChangePendingNumber = rawPhone;
+            const maskedNode = document.getElementById('phone-change-masked-email');
+            if (maskedNode) maskedNode.textContent = result?.masked_email || 'tu correo';
+
+            document.getElementById('phone-change-step-request')?.classList.add('hidden');
+            document.getElementById('phone-change-step-confirm')?.classList.remove('hidden');
+            document.getElementById('phone-change-request-btn')?.classList.add('hidden');
+            document.getElementById('phone-change-confirm-btn')?.classList.remove('hidden');
+            document.getElementById('phone-change-resend-btn')?.classList.remove('hidden');
+            document.getElementById('phone-change-code')?.focus();
+        } catch (error) {
+            const code = String(error?.payload?.error_code || error?.payload?.error?.error_code || '').toUpperCase();
+            let msg = this.getErrorMessage(error, 'No fue posible enviar el código.');
+            if (code === 'PHONE_ALREADY_IN_USE') msg = 'Este teléfono ya está registrado por otra cuenta.';
+            else if (code === 'RATE_LIMITED') msg = 'Superaste el límite de intentos. Intenta de nuevo en unos minutos.';
+            else if (code === 'PHONE_FORMAT_INVALID') msg = 'Formato de teléfono inválido. Usa E.164 (+país+numero).';
+            if (err) { err.textContent = msg; err.classList.remove('hidden'); }
+        } finally {
+            this.hideLoading();
+        }
+    },
+
+    async confirmPhoneChangeOtp() {
+        const inputCode = document.getElementById('phone-change-code');
+        const err = document.getElementById('phone-change-confirm-error');
+        const code = String(inputCode?.value || '').trim();
+
+        if (err) { err.classList.add('hidden'); err.textContent = ''; }
+
+        if (!/^\d{6}$/.test(code)) {
+            if (err) {
+                err.textContent = 'Ingresa los 6 dígitos del código.';
+                err.classList.remove('hidden');
+            }
+            return;
+        }
+        if (!this._phoneChangePendingNumber) {
+            if (err) {
+                err.textContent = 'Vuelve a solicitar el código.';
+                err.classList.remove('hidden');
+            }
+            return;
+        }
+
+        this.showLoading('Confirmando', 'Estamos actualizando tu teléfono.');
+        try {
+            const result = await apiClient.profilePhoneChangeConfirm({
+                new_phone: this._phoneChangePendingNumber,
+                code,
+            });
+            const newPhone = result?.phone || this._phoneChangePendingNumber;
+            this.showToast(
+                result?.auth_synced === false
+                    ? 'Teléfono actualizado. La sincronización con el sistema de SMS quedó pendiente; los futuros códigos por SMS pueden llegar al número anterior hasta que se sincronice.'
+                    : 'Teléfono actualizado correctamente.',
+                { tone: 'success', title: 'Cambio guardado' }
+            );
+            // Refleja el nuevo teléfono en la UI sin necesidad de refetch.
+            const phoneNode = document.getElementById('profile-phone');
+            if (phoneNode) phoneNode.textContent = newPhone;
+            if (this.currentUser) this.currentUser.phone = newPhone;
+            this.closePhoneChangeModal();
+            this.loadEmployeeProfile(true).catch(() => null);
+        } catch (error) {
+            const errCode = String(error?.payload?.error_code || error?.payload?.error?.error_code || '').toUpperCase();
+            let msg = this.getErrorMessage(error, 'No fue posible confirmar el cambio.');
+            if (errCode === 'INVALID_CODE') msg = 'Código inválido. Verifícalo o pide uno nuevo.';
+            else if (errCode === 'CODE_EXPIRED') msg = 'El código expiró. Solicita uno nuevo.';
+            else if (errCode === 'PHONE_ALREADY_IN_USE') msg = 'Este teléfono ya está registrado por otra cuenta.';
+            else if (errCode === 'RATE_LIMITED') msg = 'Superaste el límite de intentos. Espera unos minutos.';
+            if (err) { err.textContent = msg; err.classList.remove('hidden'); }
+        } finally {
+            this.hideLoading();
+        }
+    },
 };

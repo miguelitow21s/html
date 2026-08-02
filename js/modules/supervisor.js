@@ -4128,21 +4128,17 @@ export const supervisorMethods = {
     },
 
     async prepareSupervisorReportsPage() {
-        const canLoadSupervisors = typeof this.loadAdminSupervisors === 'function' && this.isAdminRole && this.isAdminRole();
         const [restaurants] = await Promise.all([
             this.getSupervisorRestaurants(),
             this.data.supervisor.employees.length === 0 ? this.loadSupervisorEmployees() : Promise.resolve(),
-            canLoadSupervisors && asArray(this.data.admin?.supervisors).length === 0
-                ? this.loadAdminSupervisors().catch(() => null)
-                : Promise.resolve(),
         ]);
 
         const restaurantSelect = document.getElementById('report-restaurant-select');
-        if (!restaurantSelect) {
-            return;
-        }
+        const employeeSelect = document.getElementById('report-employee-select');
+        if (!restaurantSelect) return;
 
         const currentRestaurantValue = restaurantSelect.value;
+        const currentEmployeeValue = employeeSelect?.value || '';
 
         if (restaurants.length === 0) {
             restaurantSelect.innerHTML = '<option value="">Todos los sitios</option>';
@@ -4150,16 +4146,13 @@ export const supervisorMethods = {
             restaurantSelect.innerHTML = `
                 <option value="">Todos los sitios</option>
                 ${restaurants
-                    .map(
-                        (restaurant) => `
-                <option value="${escapeHtml(String(getRestaurantRecordId(restaurant)))}">
-                    ${escapeHtml(getRestaurantDisplayName(restaurant))}
-                </option>
-            `
-                    )
+                    .map((restaurant) => `
+                    <option value="${escapeHtml(String(getRestaurantRecordId(restaurant)))}">
+                        ${escapeHtml(getRestaurantDisplayName(restaurant))}
+                    </option>
+                `)
                     .join('')}
             `;
-
             const availableRestaurantIds = new Set(
                 restaurants.map((restaurant) => String(getRestaurantRecordId(restaurant)))
             );
@@ -4168,64 +4161,113 @@ export const supervisorMethods = {
                 : '';
         }
 
-        const shiftsRadio = document.querySelector('input[name="report-type"][value="shifts"]');
-        if (shiftsRadio && !document.querySelector('input[name="report-type"]:checked')) {
-            shiftsRadio.checked = true;
+        if (employeeSelect) {
+            employeeSelect.innerHTML = `
+                <option value="">${escapeHtml(t('supervisor.shifts.all.employees'))}</option>
+                ${asArray(this.data.supervisor?.employees)
+                    .map((employee) => {
+                        const id = String(employee.id);
+                        return `<option value="${escapeHtml(id)}" ${id === currentEmployeeValue ? 'selected' : ''}>${escapeHtml(getEmployeeDisplayName(employee))}</option>`;
+                    })
+                    .join('')}
+            `;
         }
-        this.wireReportTypeToggle();
-        this.syncReportEmployeeSelectByType(this.getSelectedReportType());
         this.updateReportSupportCard();
     },
 
-    getSelectedReportType() {
-        const checked = document.querySelector('input[name="report-type"]:checked');
-        const value = checked?.value === 'audits' ? 'audits' : 'shifts';
-        return value;
-    },
+    async prepareAdminSupervisionMonitorReport() {
+        const canLoadSupervisors = typeof this.loadAdminSupervisors === 'function' && this.isAdminRole && this.isAdminRole();
+        await Promise.all([
+            this.getSupervisorRestaurants().catch(() => []),
+            canLoadSupervisors && asArray(this.data.admin?.supervisors).length === 0
+                ? this.loadAdminSupervisors().catch(() => null)
+                : Promise.resolve(),
+        ]);
 
-    wireReportTypeToggle() {
-        if (this._reportTypeToggleWired) return;
-        const radios = document.querySelectorAll('input[name="report-type"]');
-        if (radios.length === 0) return;
-        radios.forEach((radio) => {
-            radio.addEventListener('change', () => {
-                this.syncReportEmployeeSelectByType(this.getSelectedReportType());
-            });
-        });
-        this._reportTypeToggleWired = true;
-    },
+        const restaurantSelect = document.getElementById('audit-report-restaurant-select');
+        const supervisorSelect = document.getElementById('audit-report-supervisor-select');
+        const startInput = document.getElementById('audit-report-start-date');
+        const endInput = document.getElementById('audit-report-end-date');
 
-    syncReportEmployeeSelectByType(type) {
-        const employeeSelect = document.getElementById('report-employee-select');
-        const employeeLabel = document.getElementById('report-employee-label');
-        if (!employeeSelect) return;
-
-        const currentValue = employeeSelect.value || '';
-
-        if (type === 'audits') {
-            if (employeeLabel) employeeLabel.textContent = 'Inspector';
-            const supervisors = asArray(this.data.admin?.supervisors);
-            const options = supervisors
-                .map((sup) => {
-                    const id = String(sup.id ?? sup.user_id ?? '');
-                    const name = sup.full_name || sup.email || t('admin.supervisors.role.fallback');
-                    if (!id) return '';
-                    return `<option value="${escapeHtml(id)}" ${id === currentValue ? 'selected' : ''}>${escapeHtml(name)}</option>`;
-                })
-                .filter(Boolean)
-                .join('');
-            employeeSelect.innerHTML = `<option value="">Todos los inspectores</option>${options}`;
-        } else {
-            if (employeeLabel) employeeLabel.textContent = 'Contratista';
-            const employees = asArray(this.data.supervisor?.employees);
-            const options = employees
-                .map((employee) => {
-                    const id = String(employee.id);
-                    return `<option value="${escapeHtml(id)}" ${id === currentValue ? 'selected' : ''}>${escapeHtml(getEmployeeDisplayName(employee))}</option>`;
-                })
-                .join('');
-            employeeSelect.innerHTML = `<option value="">${escapeHtml(t('supervisor.shifts.all.employees'))}</option>${options}`;
+        if (startInput && !startInput.value) {
+            const today = new Date();
+            const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            startInput.value = firstOfMonth.toISOString().slice(0, 10);
         }
+        if (endInput && !endInput.value) {
+            endInput.value = new Date().toISOString().slice(0, 10);
+        }
+
+        if (restaurantSelect) {
+            const currentValue = restaurantSelect.value || '';
+            const restaurants = asArray(this.data.supervisor?.restaurants);
+            restaurantSelect.innerHTML = `
+                <option value="">Todos los sitios</option>
+                ${restaurants
+                    .map((restaurant) => {
+                        const id = String(getRestaurantRecordId(restaurant));
+                        return `<option value="${escapeHtml(id)}" ${id === currentValue ? 'selected' : ''}>${escapeHtml(getRestaurantDisplayName(restaurant))}</option>`;
+                    })
+                    .join('')}
+            `;
+        }
+
+        if (supervisorSelect) {
+            const currentValue = supervisorSelect.value || '';
+            const supervisors = asArray(this.data.admin?.supervisors);
+            supervisorSelect.innerHTML = `
+                <option value="">Todos los inspectores</option>
+                ${supervisors
+                    .map((sup) => {
+                        const id = String(sup.id ?? sup.user_id ?? '');
+                        const name = sup.full_name || sup.email || t('admin.supervisors.role.fallback');
+                        if (!id) return '';
+                        return `<option value="${escapeHtml(id)}" ${id === currentValue ? 'selected' : ''}>${escapeHtml(name)}</option>`;
+                    })
+                    .filter(Boolean)
+                    .join('')}
+            `;
+        }
+    },
+
+    async generateAuditReportFromMonitor() {
+        const startDate = document.getElementById('audit-report-start-date')?.value;
+        const endDate = document.getElementById('audit-report-end-date')?.value;
+        const restaurantId = document.getElementById('audit-report-restaurant-select')?.value;
+        const supervisorId = document.getElementById('audit-report-supervisor-select')?.value;
+
+        if (!startDate || !endDate) {
+            this.showToast('Selecciona un rango de fechas.', {
+                tone: 'warning',
+                title: 'Faltan filtros',
+            });
+            return;
+        }
+        if (startDate > endDate) {
+            this.showToast('La fecha de inicio no puede ser mayor que la fecha fin.', {
+                tone: 'warning',
+                title: 'Rango inválido',
+            });
+            return;
+        }
+        await this.generateAuditsReport({ startDate, endDate, restaurantId, supervisorId, showInline: true });
+    },
+
+    downloadAuditReport(type) {
+        const report = this.data.lastGeneratedAuditReport;
+        if (!report) {
+            this.showToast('Genera primero el informe.', { tone: 'warning', title: 'Sin resultados' });
+            return;
+        }
+        const url = type === 'pdf' ? report.url_pdf : report.url_excel;
+        if (!url) {
+            this.showToast(`No fue posible preparar la descarga en ${type.toUpperCase()}.`, {
+                tone: 'error',
+                title: 'Descarga no disponible',
+            });
+            return;
+        }
+        this.openInNewTab(url);
     },
 
     async prepareSupervisorSupervisionPage() {
@@ -5217,24 +5259,22 @@ export const supervisorMethods = {
             return;
         }
 
-        if (!isSingleDay) {
-            wrapper.classList.add('hidden');
-            list.innerHTML = '';
-            return;
-        }
-
         const items = Array.isArray(shiftItems) ? shiftItems : [];
         wrapper.classList.remove('hidden');
 
         if (items.length === 0) {
-            copy.textContent = 'Ese día no tuvo servicios registrados para los filtros seleccionados.';
-            list.innerHTML = '<div class="report-day-phase-empty">No hay servicios que mostrar para esa fecha.</div>';
+            copy.textContent = isSingleDay
+                ? 'Ese día no tuvo servicios registrados para los filtros seleccionados.'
+                : 'No hay servicios en el período seleccionado.';
+            list.innerHTML = '<div class="report-day-phase-empty">No hay servicios que mostrar.</div>';
             return;
         }
 
-        let foundEvidence = false;
-        copy.textContent = 'Para reportes de un solo día aquí verás las evidencias de inicio y finalización.';
+        copy.textContent = isSingleDay
+            ? 'Detalle del día con evidencias. Usa los botones de cada turno para descargar un informe individual.'
+            : 'Turnos del período. Descarga el informe general con el botón superior o uno individual desde cada tarjeta.';
 
+        let foundEvidence = false;
         list.innerHTML = items
             .map((shift) => {
                 const employeeName = this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible');
@@ -5244,31 +5284,47 @@ export const supervisorMethods = {
                 const scheduledHours = formatHours(getScheduledHours(shift));
                 const endedEarly = isShiftEndedEarly(shift);
                 const earlyEndReason = this.getEarlyEndReasonLabel(shift);
-                const startItems = this.extractShiftEvidenceItems(shift, 'start');
-                const endItems = this.extractShiftEvidenceItems(shift, 'end');
-                foundEvidence = foundEvidence || startItems.length > 0 || endItems.length > 0;
+                const shiftId = shift?.id || shift?.shift_id || shift?.raw?.id || '';
 
-                const startMap = new Map();
-                startItems.forEach((item, i) => {
-                    const k = this.buildEvidenceItemKey(item, i);
-                    if (!startMap.has(k)) startMap.set(k, item);
-                });
-                const endMap = new Map();
-                endItems.forEach((item, i) => {
-                    const k = this.buildEvidenceItemKey(item, i);
-                    if (!endMap.has(k)) endMap.set(k, item);
-                });
+                let evidenceBlock = '';
+                if (isSingleDay) {
+                    const startItems = this.extractShiftEvidenceItems(shift, 'start');
+                    const endItems = this.extractShiftEvidenceItems(shift, 'end');
+                    foundEvidence = foundEvidence || startItems.length > 0 || endItems.length > 0;
 
-                const orderedKeys = [];
-                startMap.forEach((_, k) => orderedKeys.push(k));
-                endMap.forEach((_, k) => {
-                    if (!orderedKeys.includes(k)) orderedKeys.push(k);
-                });
-                const maxLength = Math.max(startItems.length, endItems.length);
-                for (let i = 0; i < maxLength; i++) {
-                    const fb = `index_${i + 1}`;
-                    if (!orderedKeys.includes(fb)) orderedKeys.push(fb);
+                    const startMap = new Map();
+                    startItems.forEach((item, i) => {
+                        const k = this.buildEvidenceItemKey(item, i);
+                        if (!startMap.has(k)) startMap.set(k, item);
+                    });
+                    const endMap = new Map();
+                    endItems.forEach((item, i) => {
+                        const k = this.buildEvidenceItemKey(item, i);
+                        if (!endMap.has(k)) endMap.set(k, item);
+                    });
+                    const orderedKeys = [];
+                    startMap.forEach((_, k) => orderedKeys.push(k));
+                    endMap.forEach((_, k) => {
+                        if (!orderedKeys.includes(k)) orderedKeys.push(k);
+                    });
+                    const maxLength = Math.max(startItems.length, endItems.length);
+                    for (let i = 0; i < maxLength; i++) {
+                        const fb = `index_${i + 1}`;
+                        if (!orderedKeys.includes(fb)) orderedKeys.push(fb);
+                    }
+                    evidenceBlock = this.renderReportEvidencePairs(startMap, endMap, startItems, endItems, orderedKeys);
                 }
+
+                const perShiftReportButtons = shiftId
+                    ? `<div class="report-day-shift-actions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+                        <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualShiftReport" data-args="${escapeHtml(String(shiftId))}|pdf">
+                            <i class="fas fa-file-pdf"></i> Informe (PDF)
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualShiftReport" data-args="${escapeHtml(String(shiftId))}|excel">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </button>
+                    </div>`
+                    : '';
 
                 const statusLabel = getShiftStatusLabel(shift);
                 return `<article class="report-day-shift-card">
@@ -5287,14 +5343,56 @@ export const supervisorMethods = {
                     <div class="report-day-shift-metric"><span>Horas programadas</span><strong>${escapeHtml(scheduledHours)}</strong></div>
                 </div>
                 ${earlyEndReason ? `<div class="report-day-shift-metric"><span>Observaciones</span><strong>${escapeHtml(earlyEndReason)}</strong></div>` : ''}
-                ${this.renderReportEvidencePairs(startMap, endMap, startItems, endItems, orderedKeys)}
+                ${evidenceBlock}
+                ${perShiftReportButtons}
             </article>`;
             })
             .join('');
 
-        if (!foundEvidence) {
-            copy.textContent =
-                'Ese día sí tiene servicios, pero no se recibieron evidencias de inicio y fin en este listado.';
+        if (isSingleDay && !foundEvidence) {
+            copy.textContent = 'Ese día sí tiene servicios, pero no se recibieron evidencias de inicio y fin en este listado.';
+        }
+    },
+
+    async downloadIndividualShiftReport(shiftIdArg, formatArg = 'pdf') {
+        const shiftId = String(shiftIdArg ?? '').trim();
+        const format = formatArg === 'excel' ? 'excel' : 'pdf';
+        if (!shiftId) {
+            this.showToast('No se pudo identificar el turno.', { tone: 'error', title: 'Turno no válido' });
+            return;
+        }
+
+        this.showLoading('Generando informe', 'Preparando el informe del turno.');
+        try {
+            const accessToken = await this.getValidAccessToken();
+            apiClient.setAccessToken(accessToken);
+            const numericShiftId = Number(shiftId);
+            const shiftIdValue = Number.isFinite(numericShiftId) ? numericShiftId : shiftId;
+            const result = await apiClient.reportsGenerate(
+                { report_type: 'shifts', shift_id: shiftIdValue, export_format: 'both' },
+                {
+                    accessToken,
+                    requiresIdempotency: false,
+                    headers: { 'Idempotency-Key': buildIdempotencyKey() },
+                    timeoutMs: 45000,
+                }
+            );
+            const url = format === 'pdf' ? result?.url_pdf : result?.url_excel;
+            if (!url) {
+                this.showToast(`El backend no devolvió una URL de ${format.toUpperCase()}.`, {
+                    tone: 'error',
+                    title: 'Descarga no disponible',
+                });
+                return;
+            }
+            this.openInNewTab(url);
+        } catch (error) {
+            this.showToast(this.getErrorMessage(error, 'No fue posible generar el informe del turno.'), {
+                tone: 'error',
+                title: 'Error',
+            });
+        } finally {
+            this.hideLoading();
         }
     },
 
@@ -5312,7 +5410,6 @@ export const supervisorMethods = {
         const endDate = document.getElementById('report-end-date')?.value;
         const restaurantId = document.getElementById('report-restaurant-select')?.value;
         const employeeId = document.getElementById('report-employee-select')?.value;
-        const reportType = this.getSelectedReportType();
 
         if (!startDate || !endDate) {
             this.showToast(t('sup.toast.report.range.missing'), {
@@ -5328,10 +5425,6 @@ export const supervisorMethods = {
                 title: t('sup.toast.report.range.invalid.title'),
             });
             return;
-        }
-
-        if (reportType === 'audits') {
-            return this.generateAuditsReport({ startDate, endDate, restaurantId, supervisorId: employeeId });
         }
 
         this.showLoading(t('sup.toast.report.generating'), t('sup.toast.report.generating.desc'));
@@ -5549,29 +5642,25 @@ export const supervisorMethods = {
         }
     },
 
-    async generateAuditsReport({ startDate, endDate, restaurantId, supervisorId, exportFormat = 'excel' }) {
+    async generateAuditsReport({ startDate, endDate, restaurantId, supervisorId, exportFormat = 'both' }) {
         this.showLoading(t('sup.toast.report.generating'), t('sup.toast.report.generating.desc'));
         try {
             const accessToken = await this.getValidAccessToken();
             apiClient.setAccessToken(accessToken);
 
-            const normalizedRestaurantFilter = this.normalizeReportFilterValue(restaurantId, { numeric: true });
-            const normalizedSupervisorFilter = this.normalizeReportFilterValue(supervisorId, { numeric: false });
-
             const payload = {
                 report_type: 'audits',
                 period_start: startDate,
                 period_end: endDate,
-                restaurant_id: normalizedRestaurantFilter,
-                supervisor_id: normalizedSupervisorFilter,
+                restaurant_id: this.normalizeReportFilterValue(restaurantId, { numeric: true }),
+                supervisor_id: this.normalizeReportFilterValue(supervisorId, { numeric: false }),
                 export_format: exportFormat,
             };
 
-            const idempotencyKey = buildIdempotencyKey();
             const result = await apiClient.reportsGenerate(payload, {
                 accessToken,
                 requiresIdempotency: false,
-                headers: { 'Idempotency-Key': idempotencyKey },
+                headers: { 'Idempotency-Key': buildIdempotencyKey() },
                 timeoutMs: 45000,
             });
 
@@ -5582,125 +5671,17 @@ export const supervisorMethods = {
                 totals.evidences ??
                     rows.reduce((acc, row) => acc + (Number(row?.evidence_count) || asArray(row?.evidences).length), 0)
             ) || 0;
-            const uniqueSites = new Set(rows.map((row) => row?.restaurant_name || row?.restaurant_id).filter(Boolean));
-            const uniqueSupervisors = new Set(rows.map((row) => row?.supervisor_name || row?.supervisor_id).filter(Boolean));
 
-            this.data.lastGeneratedReport = {
-                ...(result || {}),
-                report_type: 'audits',
-                audit_rows: rows,
-                filters: {
-                    start_date: startDate,
-                    end_date: endDate,
-                    restaurant_id: payload.restaurant_id ?? '',
-                    supervisor_id: payload.supervisor_id ?? '',
-                },
-            };
+            this.data.lastGeneratedAuditReport = { ...(result || {}) };
 
-            const setText = (id, value) => {
-                const node = document.getElementById(id);
-                if (node) node.textContent = value;
-            };
-            setText('report-summary-worked-hours', String(totalAudits));
-            setText('report-summary-scheduled-hours', String(totalEvidences));
-            setText('report-summary-shifts', String(uniqueSites.size));
-            setText('report-summary-ended-early', String(uniqueSupervisors.size));
-            setText('report-summary-site-tasks', '0');
-
-            const labels = document.querySelectorAll('#report-result .stat-card .stat-label');
-            if (labels.length >= 5) {
-                labels[0].textContent = 'Auditorías';
-                labels[1].textContent = 'Evidencias';
-                labels[2].textContent = 'Sitios cubiertos';
-                labels[3].textContent = 'Inspectores';
-                labels[4].textContent = 'Tareas del sitio';
+            const resultCard = document.getElementById('audit-report-result');
+            const summaryCopy = document.getElementById('audit-report-summary-copy');
+            if (resultCard) resultCard.classList.remove('hidden');
+            if (summaryCopy) {
+                summaryCopy.textContent = totalAudits === 0
+                    ? 'Sin auditorías en el rango seleccionado.'
+                    : `${totalAudits} auditoría(s) con ${totalEvidences} evidencia(s). Descarga el PDF o el Excel abajo.`;
             }
-
-            const description = document.getElementById('report-result-description');
-            if (description) {
-                description.textContent = startDate === endDate
-                    ? 'Auditorías del día seleccionado, con supervisor, sitio y evidencias fotográficas.'
-                    : 'Auditorías del período seleccionado, con supervisor, sitio y evidencias fotográficas.';
-            }
-
-            const restaurantTotalsCopy = document.getElementById('report-restaurant-totals-copy');
-            if (restaurantTotalsCopy) {
-                restaurantTotalsCopy.textContent = `${totalAudits} auditoría(s) con ${totalEvidences} evidencia(s) en el rango.`;
-            }
-
-            const statusBreakdown = document.getElementById('report-status-breakdown');
-            if (statusBreakdown) {
-                if (rows.length === 0) {
-                    statusBreakdown.innerHTML = '<span class="report-pill report-pill-empty">Sin auditorías en el período.</span>';
-                } else {
-                    const phaseCounts = rows.reduce(
-                        (acc, row) => {
-                            const phase = String(row?.phase || '').toLowerCase();
-                            if (phase === 'start') acc.start += 1;
-                            else if (phase === 'end') acc.end += 1;
-                            else acc.other += 1;
-                            return acc;
-                        },
-                        { start: 0, end: 0, other: 0 }
-                    );
-                    const pills = [];
-                    if (phaseCounts.start) pills.push(`<span class="report-pill"><span>Inicio</span><strong>${phaseCounts.start}</strong></span>`);
-                    if (phaseCounts.end) pills.push(`<span class="report-pill"><span>Cierre</span><strong>${phaseCounts.end}</strong></span>`);
-                    if (phaseCounts.other) pills.push(`<span class="report-pill"><span>Otras</span><strong>${phaseCounts.other}</strong></span>`);
-                    statusBreakdown.innerHTML = pills.join('') || '<span class="report-pill report-pill-empty">Sin fases registradas.</span>';
-                }
-            }
-
-            const dayEvidence = document.getElementById('report-day-evidence');
-            const dayEvidenceList = document.getElementById('report-day-evidence-list');
-            const dayEvidenceCopy = document.getElementById('report-day-evidence-copy');
-            if (dayEvidence && dayEvidenceList) {
-                if (rows.length === 0) {
-                    dayEvidence.classList.add('hidden');
-                    dayEvidenceList.innerHTML = '';
-                } else {
-                    dayEvidence.classList.remove('hidden');
-                    if (dayEvidenceCopy) {
-                        dayEvidenceCopy.textContent = `Vista previa de ${Math.min(rows.length, 20)} auditoría(s). El PDF/Excel incluye todas con sus fotos.`;
-                    }
-                    dayEvidenceList.innerHTML = rows
-                        .slice(0, 20)
-                        .map((row) => {
-                            const phaseLabel = String(row?.phase || '').toLowerCase() === 'start'
-                                ? 'Inicio'
-                                : String(row?.phase || '').toLowerCase() === 'end'
-                                    ? 'Cierre'
-                                    : (row?.phase || '—');
-                            const evidences = asArray(row?.evidences).slice(0, 6);
-                            const thumbs = evidences
-                                .map((ev) => {
-                                    const url = ev?.signed_url || '';
-                                    if (!url) return '';
-                                    if (ev?.is_video) {
-                                        return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="report-evidence-thumb"><i class="fas fa-video"></i></a>`;
-                                    }
-                                    return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="report-evidence-thumb"><img src="${escapeHtml(url)}" alt="Evidencia" loading="lazy"></a>`;
-                                })
-                                .join('');
-                            const evidenceCount = Number(row?.evidence_count) || asArray(row?.evidences).length;
-                            return `
-                                <div class="report-day-evidence-item">
-                                    <div class="report-day-evidence-meta">
-                                        <strong>${escapeHtml(row?.restaurant_name || '—')}</strong>
-                                        <span class="muted-copy">${escapeHtml(row?.local_date || '')} · ${escapeHtml(row?.local_time || '')} ${row?.timezone ? '· ' + escapeHtml(row.timezone) : ''}</span>
-                                        <span class="muted-copy">${escapeHtml(row?.supervisor_name || '—')} · ${escapeHtml(phaseLabel)} · ${evidenceCount} evidencia(s)</span>
-                                        ${row?.observations ? `<p class="muted-copy">${escapeHtml(row.observations)}</p>` : ''}
-                                    </div>
-                                    <div class="report-day-evidence-thumbs">${thumbs}</div>
-                                </div>
-                            `;
-                        })
-                        .join('');
-                }
-            }
-
-            document.getElementById('report-result')?.classList.remove('hidden');
-            this.updateReportSupportCard(null);
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible generar el informe de auditorías.'), {
                 tone: 'error',
@@ -6317,6 +6298,26 @@ export const supervisorMethods = {
                         title: t('sup.toast.invalid.schedule.title'),
                     });
                     return;
+                }
+
+                // Cross-midnight: si la fecha fin difiere de la inicio, debe
+                // ser el día siguiente Y la hora fin ≤ hora inicio. Cualquier
+                // otra combinación es ambigua (ej. 2 días con misma ventana)
+                // porque el backend colapsa a hora de pared y no puede
+                // representar más de 24h en un solo turno.
+                if (startParts.date !== endParts.date) {
+                    const [sy, sm, sd] = startParts.date.split('-').map(Number);
+                    const [ey, em, ed] = endParts.date.split('-').map(Number);
+                    const startMs = new Date(sy, sm - 1, sd).getTime();
+                    const endMs = new Date(ey, em - 1, ed).getTime();
+                    const dayDiff = Math.round((endMs - startMs) / (24 * 3600 * 1000));
+                    if (dayDiff !== 1 || endParts.time > startParts.time) {
+                        this.showToast(
+                            'Un turno no puede durar más de 24h. Si cruza medianoche, la fecha fin debe ser el día siguiente y la hora fin debe ser menor o igual a la hora inicio.',
+                            { tone: 'warning', title: 'Rango inválido' }
+                        );
+                        return;
+                    }
                 }
 
                 assignments.push({
@@ -6994,8 +6995,18 @@ export const supervisorMethods = {
         const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
         const DAY_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         const start = new Date(`${startDate}T00:00:00`);
-        const end = new Date(`${endDate}T00:00:00`);
+        let end = new Date(`${endDate}T00:00:00`);
         if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return [];
+
+        // Cross-midnight: si la ventana default cruza medianoche
+        // (defaultEnd <= defaultStart), la Fecha fin representa la fecha de
+        // cierre del turno nocturno (no un día nuevo de trabajo). Recortamos el
+        // último día para no crear una fila extra que se interpretaría como
+        // un segundo turno nocturno arrancando desde el "día de cierre".
+        const crosses = defaultStart && defaultEnd && defaultEnd <= defaultStart;
+        if (crosses && end.getTime() > start.getTime()) {
+            end = new Date(end.getTime() - 24 * 3600 * 1000);
+        }
 
         const rows = [];
         let current = new Date(start);

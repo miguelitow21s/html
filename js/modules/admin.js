@@ -779,6 +779,11 @@ export const adminMethods = {
         });
         this.populateAdminSupervisionMonitorSupervisorFilter(supervisors, supervisions);
         this.applyAdminSupervisionMonitorFilter();
+        if (typeof this.prepareAdminSupervisionMonitorReport === 'function') {
+            this.prepareAdminSupervisionMonitorReport().catch((error) => {
+                console.warn('[monitor] no fue posible preparar el card de informe de auditorías', error);
+            });
+        }
     },
 
     populateAdminSupervisorRestaurantFilter() {

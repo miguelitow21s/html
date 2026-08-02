@@ -830,6 +830,14 @@ export class WorkTraceApiClient {
     emailNotificationsDispatch(payload) {
         return this.post('/email_notifications_dispatch', payload);
     }
+
+    profilePhoneChangeRequest(payload, options = {}) {
+        return this.post('/profile_phone_change_request', payload, options);
+    }
+
+    profilePhoneChangeConfirm(payload, options = {}) {
+        return this.post('/profile_phone_change_confirm', payload, options);
+    }
 }
 
 export const apiClient = new WorkTraceApiClient();
