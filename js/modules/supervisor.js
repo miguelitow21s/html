@@ -5383,7 +5383,11 @@ export const supervisorMethods = {
         // pestaña YA en modo about:blank (sí es user gesture) y después del
         // await le seteamos el URL. Si la abertura fue bloqueada igual,
         // fallback a toast con instrucciones.
-        const previewWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
+        //
+        // OJO: NO usar `noopener,noreferrer` acá — en Safari eso retorna null
+        // aunque la pestaña sí se abra, y perdemos la referencia para
+        // asignar el URL después. Neutralizamos opener manualmente al final.
+        const previewWindow = window.open('about:blank', '_blank');
 
         this.showLoading('Generando informe', 'Preparando el informe del turno.');
         try {
@@ -5418,6 +5422,8 @@ export const supervisorMethods = {
             if (previewWindow && !previewWindow.closed) {
                 try {
                     previewWindow.location.href = url;
+                    // Neutralizar opener para bloquear tabnabbing (equivalente a rel=noopener).
+                    try { previewWindow.opener = null; } catch {}
                 } catch (assignError) {
                     console.warn('[individual-report] no se pudo asignar url al popup, usando fallback', assignError);
                     this.openInNewTab(url);
