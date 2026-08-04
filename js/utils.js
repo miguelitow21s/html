@@ -209,13 +209,10 @@ export function formatShiftLocalRange(shift) {
     const tzLabel = shift?.local?.start?.tz_label || shift?.local?.end?.tz_label || '';
 
     if (startLocal && endLocal) {
-        const crossesMidnight = startDate && endDate && startDate !== endDate;
-        // Cuando cruza medianoche, marcar la hora de fin con día distinto
-        // (ej. "10:00 AM → 10:00 AM del día sig.") para que no lea como si
-        // el turno terminara la misma mañana que arrancó.
-        const rangeText = crossesMidnight
-            ? `${startLocal} → ${endLocal} del día siguiente`
-            : `${startLocal} - ${endLocal}`;
+        // "→" ya sugiere transición; cuando además la fecha del rango
+        // muestra ambos días ("Lun 03 → Mar 04") el "del día siguiente"
+        // era redundante y hacía el label muy largo. Lo omitimos.
+        const rangeText = `${startLocal} → ${endLocal}`;
         return tzLabel ? `${rangeText} (${tzLabel})` : rangeText;
     }
 
@@ -243,9 +240,11 @@ export function formatShiftLocalDate(shift, opts = { weekday: 'long', day: '2-di
         const startDate = parseCivilDate(startDateStr);
         const endDate = parseCivilDate(endDateStr);
         if (startDate && endDate && startDateStr !== endDateStr) {
-            // Cruce de medianoche: mostrar los dos días.
-            const shortOpts = { weekday: 'long', day: '2-digit', month: 'long' };
-            return `${formatDate(startDate, shortOpts)} → ${formatDate(endDate, opts)}`;
+            // Cruce de medianoche: mostrar los dos días en formato compacto
+            // para que quepa cómodo en el label ("Ventana de Servicio ...").
+            const compactOpts = { weekday: 'short', day: '2-digit', month: 'short' };
+            const endOpts = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+            return `${formatDate(startDate, compactOpts)} → ${formatDate(endDate, endOpts)}`;
         }
         if (startDate) {
             return formatDate(startDate, opts);

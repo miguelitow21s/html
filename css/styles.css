@@ -974,6 +974,18 @@ canvas {
     box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.5);
 }
 
+/* Botón visualmente "no listo" pero clickeable — el handler muestra el toast
+   con lo que falta. Evita el uso de disabled, que suprime el click event. */
+.btn-not-ready {
+    opacity: 0.55;
+    filter: grayscale(0.35);
+    box-shadow: none;
+}
+.btn-not-ready:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 .btn-danger {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: white;

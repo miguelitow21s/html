@@ -5598,7 +5598,14 @@ const app = {
         }
 
         if (button) {
-            button.disabled = total === 0 ? false : requireStartPhotos ? count < total : false;
+            // NO usar .disabled: un botón disabled no dispara click y el toast
+            // "faltan N fotos" del handler nunca se muestra. Mantenemos el
+            // botón clickeable y sólo cambiamos su apariencia; la validación
+            // real vive en completeShiftStartPhotos que sí muestra el toast.
+            const notReady = total > 0 && requireStartPhotos && count < total;
+            button.disabled = false;
+            button.classList.toggle('btn-not-ready', notReady);
+            button.setAttribute('aria-disabled', notReady ? 'true' : 'false');
         }
     },
 
