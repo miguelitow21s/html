@@ -3591,6 +3591,7 @@ const app = {
                 })
                 .join('')}
         `;
+        this.renderSupervisionAreaNav();
     },
 
     setSupervisorSelectedArea(areaLabel = '') {
@@ -3600,6 +3601,49 @@ const app = {
             select.value = this.selectedSupervisorArea;
         }
         this.renderSupervisorPhotoGrid();
+        this.renderSupervisionAreaNav();
+    },
+
+    renderSupervisionAreaNav() {
+        const container = document.getElementById('supervision-area-nav');
+        if (!container) return;
+        const areas = this.getSupervisorAvailableAreas();
+        if (areas.length <= 1) {
+            container.classList.add('hidden');
+            return;
+        }
+        container.classList.remove('hidden');
+        const current = this.selectedSupervisorArea || areas[0];
+        const idx = areas.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
+        const safeIdx = idx >= 0 ? idx : 0;
+        const progressNode = document.getElementById('supervision-area-nav-progress');
+        if (progressNode) progressNode.textContent = `Área ${safeIdx + 1} de ${areas.length}`;
+        const prevBtn = document.getElementById('supervision-area-nav-prev');
+        const nextBtn = document.getElementById('supervision-area-nav-next');
+        if (prevBtn) prevBtn.classList.toggle('btn-not-ready', safeIdx <= 0);
+        if (nextBtn) nextBtn.classList.toggle('btn-not-ready', safeIdx >= areas.length - 1);
+    },
+
+    goToPreviousSupervisionArea() {
+        const areas = this.getSupervisorAvailableAreas();
+        if (areas.length <= 1) return;
+        const current = this.selectedSupervisorArea || areas[0];
+        const idx = areas.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
+        if (idx > 0) {
+            this.setSupervisorSelectedArea(areas[idx - 1]);
+            document.getElementById('supervision-photo-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    },
+
+    goToNextSupervisionArea() {
+        const areas = this.getSupervisorAvailableAreas();
+        if (areas.length <= 1) return;
+        const current = this.selectedSupervisorArea || areas[0];
+        const idx = areas.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
+        if (idx >= 0 && idx < areas.length - 1) {
+            this.setSupervisorSelectedArea(areas[idx + 1]);
+            document.getElementById('supervision-photo-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     },
 
     populateEmployeePhotoAreaOptions() {
@@ -4337,6 +4381,57 @@ const app = {
             activeKey: activeArea,
             emptyMessage: 'Selecciona al menos una zona para enfocarte en sus subáreas.',
         });
+
+        this.renderEmployeeAreaNav();
+    },
+
+    renderEmployeeAreaNav() {
+        const container = document.getElementById('employee-area-nav');
+        if (!container) return;
+        const selected = this.getEmployeeSelectedAreas();
+        if (selected.length <= 1) {
+            container.classList.add('hidden');
+            return;
+        }
+        container.classList.remove('hidden');
+        const current = this.getEmployeeActiveArea() || selected[0];
+        const idx = selected.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
+        const safeIdx = idx >= 0 ? idx : 0;
+        const progressNode = document.getElementById('employee-area-nav-progress');
+        if (progressNode) progressNode.textContent = `Zona ${safeIdx + 1} de ${selected.length}`;
+        const prevBtn = document.getElementById('employee-area-nav-prev');
+        const nextBtn = document.getElementById('employee-area-nav-next');
+        if (prevBtn) prevBtn.classList.toggle('btn-not-ready', safeIdx <= 0);
+        if (nextBtn) nextBtn.classList.toggle('btn-not-ready', safeIdx >= selected.length - 1);
+    },
+
+    goToPreviousEmployeeArea() {
+        const selected = this.getEmployeeSelectedAreas();
+        if (selected.length <= 1) return;
+        const current = this.getEmployeeActiveArea() || selected[0];
+        const idx = selected.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
+        if (idx > 0) {
+            this.setEmployeeActiveArea(selected[idx - 1]);
+            this.scrollToActivePhotoGrid();
+        }
+    },
+
+    goToNextEmployeeArea() {
+        const selected = this.getEmployeeSelectedAreas();
+        if (selected.length <= 1) return;
+        const current = this.getEmployeeActiveArea() || selected[0];
+        const idx = selected.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
+        if (idx >= 0 && idx < selected.length - 1) {
+            this.setEmployeeActiveArea(selected[idx + 1]);
+            this.scrollToActivePhotoGrid();
+        }
+    },
+
+    scrollToActivePhotoGrid() {
+        const grid = document.getElementById('photo-grid') || document.getElementById('supervision-photo-grid');
+        if (grid && typeof grid.scrollIntoView === 'function') {
+            grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     },
 
     updateDate() {
@@ -6590,6 +6685,37 @@ const app = {
         return t('employee.schedule.window.pending');
     },
 
+    // Igual que getEmployeeShiftScheduleText pero SIN la fecha — para lugares
+    // donde la fecha ya se muestra en una fila aparte (dashboard: fila "Fecha"
+    // + fila "Ventana de Servicio" → esta ultima solo debe mostrar la hora).
+    getEmployeeShiftScheduleTimeText(shift, { hasActiveShift = false } = {}) {
+        if (!shift) {
+            return t('employee.schedule.notrequired');
+        }
+
+        const scheduledStart = shift?.scheduled_start || null;
+        const scheduledEnd = shift?.scheduled_end || null;
+        const actualStart = shift?.start_time || shift?.started_at || null;
+
+        if (scheduledStart && scheduledEnd) {
+            const rangeText = formatShiftLocalRange(shift);
+            if (hasActiveShift && actualStart) {
+                return `${rangeText} • ${t('employee.schedule.startedat')} ${formatTime(actualStart)}`;
+            }
+            return rangeText;
+        }
+
+        if (hasActiveShift && actualStart) {
+            return `${t('employee.schedule.service.startedat')} ${formatTime(actualStart)}`;
+        }
+
+        if (scheduledStart) {
+            return `${t('employee.schedule.assignedfor')} ${formatDateTime(scheduledStart)}`;
+        }
+
+        return t('employee.schedule.window.pending');
+    },
+
     getEmployeeShiftDateText(shift) {
         if (!shift) {
             return t('employee.shift.date.none');
@@ -6675,19 +6801,21 @@ const app = {
             shiftHelper = t('shift.status.inprogress.helper');
             shiftStatus = `${t('shift.status.activeprefix')} ${String(activeStateLabel).toLowerCase()}`;
             restaurantName = resolvedRestaurantName;
-            scheduleText = this.getEmployeeShiftScheduleText(shift, { hasActiveShift: true });
+            // Dashboard: la fecha ya va en su fila propia (#employee-shift-date),
+            // asi que la "Ventana de Servicio" muestra SOLO la hora.
+            scheduleText = this.getEmployeeShiftScheduleTimeText(shift, { hasActiveShift: true });
         } else if (canStartShift) {
             shiftTitle = isShiftToday ? t('shift.status.canstart.today') : t('shift.status.canstart.next');
             shiftHelper = t('shift.status.canstart.helper');
             shiftStatus = t('shift.status.ready');
             restaurantName = resolvedRestaurantName;
-            scheduleText = this.getEmployeeShiftScheduleText(shift);
+            scheduleText = this.getEmployeeShiftScheduleTimeText(shift);
         } else if (hasPendingShift) {
             shiftTitle = isShiftToday ? t('shift.status.pending.today') : t('shift.status.canstart.next');
             shiftHelper = isShiftToday ? this.getShiftStartWindowCopy(shift) : t('shift.status.pending.helper');
             shiftStatus = t('shift.status.assigned');
             restaurantName = resolvedRestaurantName;
-            scheduleText = this.getEmployeeShiftScheduleText(shift);
+            scheduleText = this.getEmployeeShiftScheduleTimeText(shift);
         } else if (justCompletedShift) {
             shiftTitle = t('shift.status.completed');
             shiftHelper = t('shift.status.completed.helper');

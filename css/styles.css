@@ -2800,49 +2800,146 @@ select.dark-control option:disabled {
 
 /* GPS Verification */
 .gps-verification {
-    background: rgba(var(--primary-rgb), 0.1);
-    border: 1px solid rgba(var(--primary-rgb), 0.3);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.09), rgba(var(--primary-rgb), 0.02));
+    border: 1px solid rgba(var(--primary-rgb), 0.22);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gps-verification-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+}
+
+.gps-verification-icon {
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.gps-verification i {
-    font-size: 40px;
+    background: rgba(var(--primary-rgb), 0.18);
     color: var(--primary);
-    margin-bottom: 10px;
-}
-
-.gps-status {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
+    flex-shrink: 0;
+}
+
+.gps-verification-icon i {
+    font-size: 18px;
+    color: var(--primary);
+    margin-bottom: 0;
+}
+
+.gps-verification-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.gps-verification-text h4 {
+    color: white;
+    margin: 0 0 3px 0;
+    font-size: 15px;
     font-weight: 600;
 }
 
+.gps-verification-text .muted-copy {
+    margin: 0 0 8px 0;
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: var(--gray);
+}
+
+.gps-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(148, 163, 184, 0.14);
+    color: var(--gray);
+    max-width: 100%;
+}
+
+.gps-status i {
+    font-size: 12px;
+    color: inherit;
+    margin: 0;
+}
+
+.gps-status span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .gps-status.valid {
-    color: var(--secondary);
+    color: #16a34a;
+    background: rgba(34, 197, 94, 0.16);
 }
 
 .gps-status.invalid {
-    color: var(--danger);
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.14);
 }
 
 .gps-status.warning {
     color: #fbbf24;
+    background: rgba(251, 191, 36, 0.16);
 }
 
 .gps-actions {
-    margin-top: 14px;
-    display: grid;
+    display: flex;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .gps-actions .btn {
-    width: 100%;
+    flex: 1 1 auto;
+}
+
+/* Navegación entre zonas: evita tener que scrollear al top para
+   seleccionar la próxima zona/área a fotografiar. */
+.area-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: rgba(148, 163, 184, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 12px;
+}
+
+.area-nav .btn {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.area-nav-progress {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    min-width: 0;
+}
+
+.area-nav .btn-not-ready {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(0.4);
 }
 
 /* Responsive */
