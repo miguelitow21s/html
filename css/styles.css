@@ -3807,6 +3807,27 @@ input[type='file'] {
     color: white;
 }
 
+/* Variante suave para acciones sensibles pero no destructivas
+   (ej. "Desvincular dispositivo"): outline naranja en vez de fill
+   agresivo. Deja claro que es una accion con consecuencias sin
+   sentirse alarmante. */
+.btn-outline-warning {
+    background: transparent;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #f59e0b;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.btn-outline-warning:hover {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.75);
+    color: #fbbf24;
+    transform: none;
+    box-shadow: none;
+}
+.btn-outline-warning i {
+    color: inherit;
+}
+
 .toolbar-actions {
     display: flex;
     flex-wrap: wrap;

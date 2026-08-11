@@ -3257,11 +3257,11 @@ export const supervisorMethods = {
             if (employee.is_active !== false) {
                 const revokeDeviceBtn = document.createElement('button');
                 revokeDeviceBtn.type = 'button';
-                revokeDeviceBtn.className = 'btn btn-warning btn-inline';
+                revokeDeviceBtn.className = 'btn btn-outline-warning btn-inline';
                 revokeDeviceBtn.dataset.action = 'revoke-device-user';
                 revokeDeviceBtn.dataset.userId = String(employee.id || '');
                 revokeDeviceBtn.dataset.userName = String(employee.full_name || employee.email || '');
-                revokeDeviceBtn.textContent = t('contractor.btn.revoke.device');
+                revokeDeviceBtn.innerHTML = `<i class="fas fa-mobile-screen"></i> <span>${escapeHtml(t('contractor.btn.revoke.device'))}</span>`;
                 revokeDeviceBtn.title =
                     'Libera el dispositivo registrado para que el contratista pueda ingresar desde un dispositivo nuevo.';
                 actions.appendChild(revokeDeviceBtn);

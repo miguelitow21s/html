@@ -1186,7 +1186,7 @@ export const adminMethods = {
                         ${clearPhoneButton}
                         <button
                             type="button"
-                            class="btn btn-warning btn-inline"
+                            class="btn btn-outline-warning btn-inline"
                             data-action="admin-revoke-device-supervisor"
                             data-supervisor-id="${escapeHtml(supervisorId)}"
                             data-user-name="${escapeHtml(supervisor.full_name || supervisor.email || '')}"
