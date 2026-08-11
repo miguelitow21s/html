@@ -16,6 +16,7 @@ import {
     getRestaurantDisplayName,
     getRestaurantRecordId,
     getScheduledHours,
+    getShiftStatusLabel,
     normalizeAreaToken,
     sanitizeUrl,
     sumHours,
@@ -1801,7 +1802,7 @@ export const employeeMethods = {
         return `<div class="rtask-card" data-task-id="${taskId}">
             <div class="rtask-header">
                 <span class="rtask-title">${escapeHtml(task.title || 'Tarea del sitio')}</span>
-                <span class="badge ${getBadgeClass(status)}">${escapeHtml(status)}</span>
+                <span class="badge ${getBadgeClass(status)}">${escapeHtml(getShiftStatusLabel({ status }))}</span>
             </div>
             ${task.description ? `<p class="rtask-desc">${escapeHtml(task.description)}</p>` : ''}
             ${videoHtml}
