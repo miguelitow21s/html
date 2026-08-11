@@ -736,17 +736,40 @@ export const employeeMethods = {
 
         const gpsButton = document.getElementById('gps-btn');
         const gpsStatus = document.getElementById('gps-status');
-        this.gpsVerified = false;
 
-        if (gpsStatus) {
-            gpsStatus.className = 'gps-status invalid';
-            gpsStatus.innerHTML =
-                '<i class="fas fa-location-crosshairs"></i><span>Ubicación lista para verificar</span>';
-        }
+        // Reusar ubicación fresca del dashboard: si ya se capturó hace poco
+        // (< 2 min), no hacer que el usuario la verifique otra vez. Un fix
+        // GPS reciente sigue siendo valido para el matching de sitio.
+        const FRESH_LOCATION_MS = 2 * 60 * 1000;
+        const locationAgeMs = Number.isFinite(this.locationTimestamp)
+            ? Date.now() - this.locationTimestamp
+            : Infinity;
+        const hasFreshLocation =
+            Number.isFinite(this.location?.lat) &&
+            Number.isFinite(this.location?.lng) &&
+            locationAgeMs < FRESH_LOCATION_MS;
 
-        if (gpsButton) {
-            gpsButton.disabled = false;
-            gpsButton.innerHTML = '<i class="fas fa-location-crosshairs"></i> Verificar ubicación';
+        if (hasFreshLocation) {
+            this.gpsVerified = true;
+            if (gpsStatus) {
+                gpsStatus.className = 'gps-status valid';
+                gpsStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>Ubicación verificada</span>';
+            }
+            if (gpsButton) {
+                gpsButton.disabled = false;
+                gpsButton.innerHTML = '<i class="fas fa-check"></i> Verificada';
+            }
+        } else {
+            this.gpsVerified = false;
+            if (gpsStatus) {
+                gpsStatus.className = 'gps-status invalid';
+                gpsStatus.innerHTML =
+                    '<i class="fas fa-location-crosshairs"></i><span>Ubicación lista para verificar</span>';
+            }
+            if (gpsButton) {
+                gpsButton.disabled = false;
+                gpsButton.innerHTML = '<i class="fas fa-location-crosshairs"></i> Verificar ubicación';
+            }
         }
 
         this.checkCanContinue();

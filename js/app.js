@@ -4436,16 +4436,29 @@ const app = {
     },
 
     scrollToActivePhotoGrid() {
-        // Preferir el grid VISIBLE (la pantalla activa puede ser inicio, cierre
-        // o supervisor). getBoundingClientRect().height > 0 == render actual.
-        const candidates = ['photo-grid', 'end-photo-grid', 'supervision-photo-grid'];
-        for (const id of candidates) {
-            const el = document.getElementById(id);
-            if (el && el.getBoundingClientRect().height > 0) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                return;
-            }
-        }
+        // Bug detectado: cambiar de zona re-renderea el grid via
+        // queueUiRender, que es async. El scrollIntoView anterior corria
+        // ANTES del re-render, y como cada zona tiene distinta cantidad de
+        // fotos, la altura cambia y el scroll quedaba descuadrado (por eso
+        // 1->2 no funcionaba pero 2->3 si, dependia de si el nuevo grid era
+        // mas alto o mas corto que el viejo).
+        //
+        // Fix: doble requestAnimationFrame -- garantiza que el navegador
+        // ejecuto el paint del re-render antes de scrollear. Y scrolleamos
+        // al TOP absoluto (lo que el usuario pidio: "que lo suba a la parte
+        // superior") para que siempre vea el selector de zona arriba.
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // El main.content puede tener su propio scroll interno en
+                // algunos layouts (fullscreen shells); tambien lo reseteamos.
+                document.querySelectorAll('main.content').forEach((main) => {
+                    if (main.scrollTop > 0) {
+                        main.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+            });
+        });
     },
 
     updateDate() {
