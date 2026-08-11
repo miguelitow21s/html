@@ -709,13 +709,22 @@ export const employeeMethods = {
             )
         );
 
-        document.getElementById('shift-start-restaurant').textContent = this.getResolvedShiftRestaurantName(
-            { ...shift, restaurant },
-            hasActiveShift ? 'Sitio del servicio activo' : 'Sitio del servicio asignado'
-        );
-        document.getElementById('shift-start-schedule').textContent = this.getEmployeeShiftScheduleText(shift, {
-            hasActiveShift,
-        });
+        // Los ids shift-start-restaurant / shift-start-schedule se quitaron
+        // de la pantalla de Iniciar Servicio (la info se ve en el dashboard).
+        // Optional chaining para no explotar si vuelve a montarse.
+        const shiftStartRestaurantNode = document.getElementById('shift-start-restaurant');
+        if (shiftStartRestaurantNode) {
+            shiftStartRestaurantNode.textContent = this.getResolvedShiftRestaurantName(
+                { ...shift, restaurant },
+                hasActiveShift ? 'Sitio del servicio activo' : 'Sitio del servicio asignado'
+            );
+        }
+        const shiftStartScheduleNode = document.getElementById('shift-start-schedule');
+        if (shiftStartScheduleNode) {
+            shiftStartScheduleNode.textContent = this.getEmployeeShiftScheduleText(shift, {
+                hasActiveShift,
+            });
+        }
 
         if (button) {
             button.innerHTML = hasActiveShift
