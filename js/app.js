@@ -4386,23 +4386,31 @@ const app = {
     },
 
     renderEmployeeAreaNav() {
-        const container = document.getElementById('employee-area-nav');
-        if (!container) return;
         const selected = this.getEmployeeSelectedAreas();
-        if (selected.length <= 1) {
-            container.classList.add('hidden');
-            return;
-        }
-        container.classList.remove('hidden');
         const current = this.getEmployeeActiveArea() || selected[0];
         const idx = selected.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
         const safeIdx = idx >= 0 ? idx : 0;
-        const progressNode = document.getElementById('employee-area-nav-progress');
-        if (progressNode) progressNode.textContent = `Zona ${safeIdx + 1} de ${selected.length}`;
-        const prevBtn = document.getElementById('employee-area-nav-prev');
-        const nextBtn = document.getElementById('employee-area-nav-next');
-        if (prevBtn) prevBtn.classList.toggle('btn-not-ready', safeIdx <= 0);
-        if (nextBtn) nextBtn.classList.toggle('btn-not-ready', safeIdx >= selected.length - 1);
+
+        // Actualizamos AMBOS contenedores (fotos de inicio y de cierre) porque
+        // comparten el mismo state de zonas seleccionadas y area activa.
+        [
+            { navId: 'employee-area-nav', progressId: 'employee-area-nav-progress', prevId: 'employee-area-nav-prev', nextId: 'employee-area-nav-next' },
+            { navId: 'employee-end-area-nav', progressId: 'employee-end-area-nav-progress', prevId: 'employee-end-area-nav-prev', nextId: 'employee-end-area-nav-next' },
+        ].forEach(({ navId, progressId, prevId, nextId }) => {
+            const container = document.getElementById(navId);
+            if (!container) return;
+            if (selected.length <= 1) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            const progressNode = document.getElementById(progressId);
+            if (progressNode) progressNode.textContent = `Zona ${safeIdx + 1} de ${selected.length}`;
+            const prevBtn = document.getElementById(prevId);
+            const nextBtn = document.getElementById(nextId);
+            if (prevBtn) prevBtn.classList.toggle('btn-not-ready', safeIdx <= 0);
+            if (nextBtn) nextBtn.classList.toggle('btn-not-ready', safeIdx >= selected.length - 1);
+        });
     },
 
     goToPreviousEmployeeArea() {
@@ -4428,9 +4436,15 @@ const app = {
     },
 
     scrollToActivePhotoGrid() {
-        const grid = document.getElementById('photo-grid') || document.getElementById('supervision-photo-grid');
-        if (grid && typeof grid.scrollIntoView === 'function') {
-            grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Preferir el grid VISIBLE (la pantalla activa puede ser inicio, cierre
+        // o supervisor). getBoundingClientRect().height > 0 == render actual.
+        const candidates = ['photo-grid', 'end-photo-grid', 'supervision-photo-grid'];
+        for (const id of candidates) {
+            const el = document.getElementById(id);
+            if (el && el.getBoundingClientRect().height > 0) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return;
+            }
         }
     },
 
