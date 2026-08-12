@@ -12,9 +12,12 @@ import {
     DEFAULT_SYSTEM_SETTINGS,
     CACHE_TTLS,
     createScopedConsole,
-    SHIFT_MATCH_WINDOW_MS,
     SUPPORTED_EVIDENCE_IMAGE_TYPES,
 } from './constants.js';
+
+// Ventana de tolerancia local para matching de active_shift: fix in-place
+// tras retirar SHIFT_MATCH_WINDOW_MS de constants.
+const ACTIVE_SHIFT_MATCH_WINDOW_MS = 12 * 60 * 60 * 1000;
 import {
     getMonthStart,
     toInputDate,
@@ -3212,9 +3215,6 @@ const app = {
                 case 'supervisor-employees':
                     await this.loadSupervisorEmployees();
                     break;
-                case 'supervisor-shifts':
-                    await this.loadSupervisorShifts();
-                    break;
                 case 'supervisor-reports':
                     await this.prepareSupervisorReportsPage();
                     break;
@@ -4642,7 +4642,7 @@ const app = {
             // Backend v3: si el contratista tiene turnos concurrentes en distintos sitios,
             // la ubicación fresca permite elegir el correcto por matching GPS. Solo
             // re-elegimos cuando NO hay turno activo (para no cambiar de sitio mid-servicio).
-            this.rebuildEmployeeScheduledShiftFromLocation?.();
+            // rebuildEmployeeScheduledShiftFromLocation removido en migracion Visitas.
             // Fase A visitas ad-hoc: refrescar el card "Sitio disponible" con
             // la nueva ubicacion (aparece / desaparece segun geocerca).
             this.renderEmployeeVisitableCard?.();
@@ -5874,7 +5874,7 @@ const app = {
                     return null;
                 }
 
-                if (!Number.isFinite(endMs) && Number.isFinite(startMs) && startMs < now - SHIFT_MATCH_WINDOW_MS) {
+                if (!Number.isFinite(endMs) && Number.isFinite(startMs) && startMs < now - ACTIVE_SHIFT_MATCH_WINDOW_MS) {
                     return null;
                 }
 
@@ -6020,37 +6020,14 @@ const app = {
         };
     },
 
-    getShiftStartWindowCopy(shift) {
-        const state = this.getEmployeeShiftStartWindowState(shift);
-        const latestLabel = formatDateTime(state?.latest);
-
-        // Backend v3: sin límite inferior. El copy solo informa hasta cuándo se
-        // puede iniciar (scheduled_end); no importa cuándo estaba programado el inicio.
-        if (state?.expired) {
-            return latestLabel !== '-'
-                ? `La ventana del servicio terminó el ${latestLabel}. Ya no se puede iniciar.`
-                : 'La ventana del servicio ya terminó.';
-        }
-        if (latestLabel !== '-') {
-            return `Puedes iniciar este servicio en cualquier momento antes de ${latestLabel}.`;
-        }
-        return 'Puedes iniciar este servicio en cualquier momento antes del cierre de la ventana.';
+    // Post-migracion Visitas: no hay ventanas de servicio programadas.
+    // Estas funciones quedan como stubs neutros para no romper callers.
+    getShiftStartWindowCopy() {
+        return 'Inicia tu visita desde el sitio disponible en el dashboard.';
     },
 
-    canEmployeeStartScheduledShift(
-        scheduledShift = this.data.currentScheduledShift,
-        _dashboard = this.data.employee.dashboard || {}
-    ) {
-        // Backend v3 en today_shifts[] devuelve turnos programados con shift_id=null
-        // y solo scheduled_shift_id. También aceptamos ese identificador para no
-        // rechazar el turno solo por no tener el shift_id todavía.
-        const identifier = scheduledShift?.id || scheduledShift?.scheduled_shift_id;
-        if (!identifier) {
-            return false;
-        }
-
-        // Time window is the source of truth on the client to avoid stale can_start_shift flags.
-        return this.getEmployeeShiftStartWindowState(scheduledShift).withinWindow;
+    canEmployeeStartScheduledShift() {
+        return false;
     },
 
     normalizeShiftEvidenceSummary(summary = {}) {
@@ -6619,8 +6596,8 @@ const app = {
                     candidateStartAt > 0 &&
                     Number.isFinite(candidateEndAt) &&
                     candidateEndAt > 0 &&
-                    activeStartAt >= candidateStartAt - SHIFT_MATCH_WINDOW_MS &&
-                    activeStartAt <= candidateEndAt + SHIFT_MATCH_WINDOW_MS
+                    activeStartAt >= candidateStartAt - ACTIVE_SHIFT_MATCH_WINDOW_MS &&
+                    activeStartAt <= candidateEndAt + ACTIVE_SHIFT_MATCH_WINDOW_MS
                 ) {
                     score += 80;
                 }

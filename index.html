@@ -215,34 +215,6 @@
         </div>
     </div>
 
-    <div id="modal-scheduled-shift-cancel" class="modal" data-locked="true">
-        <div class="modal-content confirm-modal-content">
-            <div class="modal-header">
-                <h3>Cancelar servicio asignado</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" type="button" data-action="closeCancelScheduledShiftModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="fas fa-triangle-exclamation"></i>
-                    <div>
-                        <strong data-i18n="modal.cancel.shift.alert">Esta acción cancela la asignación.</strong><br>
-                        <small data-i18n="modal.cancel.shift.small">El servicio dejará de estar disponible para el contratista.</small>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="scheduled-shift-cancel-reason">Motivo (opcional)</label>
-                    <textarea id="scheduled-shift-cancel-reason" class="dark-control" placeholder="Ej: cambio de operación, cierre temporal, ajuste de agenda..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-action="closeCancelScheduledShiftModal">Cancelar</button>
-                <button type="button" class="btn btn-danger" data-action="submitCancelScheduledShiftModal">
-                    Eliminar
-                </button>
-            </div>
-        </div>
-    </div>
-
     <div id="modal-restaurant-deactivate" class="modal" data-locked="true">
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
@@ -388,48 +360,30 @@
                 <p id="current-date">Cargando fecha...</p>
             </div>
             
-            <div class="card" id="employee-shift-card">
+            <div class="card hidden" id="employee-active-visit-card">
                 <div class="card-header">
-                    <div class="card-title" id="employee-shift-title">Servicio del Día</div>
-                    <span class="badge badge-warning" id="employee-shift-status">Asignado</span>
+                    <div class="card-title"><i class="fas fa-play-circle"></i> Servicio en Progreso</div>
+                    <span class="badge badge-success" id="employee-active-visit-status">Activo</span>
                 </div>
-                <p class="employee-shift-helper" id="employee-shift-helper" data-i18n="employee.shift.helper">Aquí verás el estado real de tu servicio y cuándo puedes iniciarlo o continuarlo.</p>
-
-                <div id="shiftInfo" class="shift-info">
-                    <div class="info-item">
-                        <i class="fas fa-store"></i>
-                        <div class="info-item-content">
-                            <span class="info-item-label" data-i18n="employee.shift.restaurant">Cliente</span>
-                            <span class="info-item-value" id="employee-shift-restaurant">No hay servicios asignados en esta fecha</span>
-                        </div>
-                    </div>
-
-                    <div class="info-item">
-                        <i class="fas fa-calendar-alt"></i>
-                        <div class="info-item-content">
-                            <span class="info-item-label" data-i18n="employee.shift.date">Fecha</span>
-                            <span class="info-item-value" id="employee-shift-date">-</span>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <i class="fas fa-clock"></i>
-                        <div class="info-item-content">
-                            <span class="info-item-label" data-i18n="employee.shift.schedule">Ventana de Servicio</span>
-                            <span class="info-item-value" id="employee-shift-schedule">-</span>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <div class="info-item-content">
-                            <span class="info-item-label" data-i18n="employee.shift.location">Ubicación</span>
-                            <span class="info-item-value" id="employee-shift-location">-</span>
-                        </div>
+                <div class="info-item">
+                    <i class="fas fa-store"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Sitio</span>
+                        <span class="info-item-value" id="employee-active-visit-restaurant">-</span>
                     </div>
                 </div>
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Iniciado</span>
+                        <span class="info-item-value" id="employee-active-visit-started">-</span>
+                    </div>
+                </div>
+                <button class="btn-large btn-success" data-action="openEmployeeShiftStart" style="margin-top:12px;">
+                    <i class="fas fa-arrow-right"></i> Continuar con el servicio activo
+                </button>
             </div>
-            
+
             <div class="task-card" id="employee-task-card">
                 <h4><i class="fas fa-star"></i> <span id="employee-task-heading">Tarea Especial Asignada</span></h4>
                 <p id="employee-task-title" data-i18n="employee.task.empty">No hay tareas pendientes.</p>
@@ -452,11 +406,9 @@
                 <div id="employee-visitable-list"></div>
             </div>
 
-            <div class="action-buttons" id="employee-start-shift-actions">
-                <button class="btn-large btn-success" id="employee-start-shift-btn" data-action="openEmployeeShiftStart">
-                    <i class="fas fa-play-circle"></i> <span id="employee-start-shift-label">Iniciar Servicio</span>
-                </button>
-            </div>
+            <!-- Boton "Iniciar Servicio" retirado: el inicio ahora ocurre desde
+                 el card "Sitio disponible para visitar" (visita ad-hoc) o desde
+                 el card "Servicio en Progreso" (retomar visita activa). -->
         </main>
         
         <nav class="bottom-nav">
@@ -606,7 +558,7 @@
                 </div>
             </label>
             
-            <button class="btn btn-primary" data-action="startShiftFlow" id="continue-btn" disabled>
+            <button class="btn btn-primary" data-action="navigate" data-args="employee-shift-photos" id="continue-btn">
                 Continuar a Fotos <i class="fas fa-arrow-right"></i>
             </button>
         </main>
@@ -952,10 +904,6 @@
                     <i class="fas fa-users"></i>
                     <span data-i18n="supervisor.nav.employees">Contratistas</span>
                 </button>
-                <button class="quick-action-btn" data-action="navigate" data-args="supervisor-shifts">
-                    <i class="fas fa-history"></i>
-                    <span>Historial</span>
-                </button>
                 <button class="quick-action-btn" data-action="navigate" data-args="supervisor-reports">
                     <i class="fas fa-chart-bar"></i>
                     <span data-i18n="supervisor.nav.reports">Reportes</span>
@@ -1056,65 +1004,6 @@
                 </button>
             </div>
             <div id="supervisor-employees-list"></div>
-        </main>
-    </div>
-
-    <!-- SUPERVISOR SHIFTS -->
-    <div id="page-supervisor-shifts" class="app-container hidden">
-        <header class="header">
-            <div class="header-brand">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="supervisor-dashboard">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <span>Historial de servicios</span>
-            </div>
-            <div class="header-actions">
-                <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
-                    <i class="fas fa-house"></i>
-                    <span data-i18n="admin.return.btn">Inicio Admin</span>
-                </button>
-            </div>
-        </header>
-        
-        <main class="content">
-            <div class="card shift-board-card">
-                <!-- Navegación de semana + acciones -->
-                <div class="supervisor-week-toolbar">
-                    <div class="supervisor-week-nav">
-                        <button class="btn btn-secondary btn-inline" data-action="changeSupervisorWeek" data-args="-1" aria-label="Semana anterior">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <span class="supervisor-week-label" id="supervisor-week-label" data-i18n="supervisor.week.loading">Cargando...</span>
-                        <button class="btn btn-secondary btn-inline" data-action="changeSupervisorWeek" data-args="1" aria-label="Semana siguiente">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                    <!-- Botones de agendamiento retirados (Fase C migracion Visitas):
-                         los contratistas ahora inician visitas ad-hoc desde su dashboard.
-                         Este grid queda como HISTORIAL VISUAL de los turnos ya iniciados. -->
-                </div>
-
-                <!-- Filtros -->
-                <div class="supervisor-week-filters">
-                    <select id="supervisor-shifts-filter-restaurant" class="dark-control">
-                        <option value="" data-i18n="supervisor.shifts.all.sites">Todos los sitios</option>
-                    </select>
-                    <select id="supervisor-shifts-filter-employee" class="dark-control">
-                        <option value="" data-i18n="supervisor.shifts.all.employees">Todos los contratistas</option>
-                    </select>
-                    <input type="text" id="supervisor-shifts-filter-search" class="dark-control" data-i18n-placeholder="supervisor.shifts.search" placeholder="Buscar contratista...">
-                    <button type="button" class="btn btn-secondary btn-inline" data-action="clearSupervisorShiftFilters" data-i18n="supervisor.shifts.clear">
-                        Limpiar
-                    </button>
-                </div>
-
-                <!-- Grid semanal (scroll horizontal para móvil / viewports angostos) -->
-                <div class="ssg-grid-scroll">
-                    <div id="supervisor-shifts-grid">
-                        <div class="empty-state" data-i18n="supervisor.shifts.loading">Cargando servicios asignados...</div>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 
@@ -1386,75 +1275,6 @@
                 <span data-i18n="nav.logout">Salir</span>
             </button>
         </nav>
-    </div>
-
-    <!-- MODAL SUPERVISORA: Programar Turno -->
-    <div id="modal-supervisor-schedule-shift" class="modal">
-        <div class="modal-content shift-scheduler-modal-content">
-            <div class="modal-header">
-                <h3 data-i18n="modal.shift.title">Asignar Servicios</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" data-action="closeModal" data-args="modal-supervisor-schedule-shift">&times;</button>
-            </div>
-            <form id="supervisor-shift-form">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="sched-shift-restaurant" data-i18n="modal.shift.restaurant">Sitio / Cliente</label>
-                        <select id="sched-shift-restaurant" class="dark-control" required>
-                            <option value="" data-i18n="modal.shift.select.site">Selecciona un sitio</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label data-i18n="supervisor.employees.title">Contratistas</label>
-                        <div id="sched-shift-employee-picker" class="shift-batch-picker"></div>
-                    </div>
-                    <div class="form-row two-col">
-                        <div class="form-group">
-                            <label for="sched-shift-start-date" data-i18n="modal.shift.start.date">Fecha inicio</label>
-                            <div class="date-control">
-                                <input type="date" id="sched-shift-start-date" class="compact-picker" required inputmode="none" lang="en-GB">
-                                <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="sched-shift-start-date" aria-label="Abrir selector de fecha inicio">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="sched-shift-end-date" data-i18n="modal.shift.end.date">Fecha fin</label>
-                            <div class="date-control">
-                                <input type="date" id="sched-shift-end-date" class="compact-picker" required inputmode="none" lang="en-GB">
-                                <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="sched-shift-end-date" aria-label="Abrir selector de fecha fin">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-row two-col">
-                        <div class="form-group">
-                            <label for="sched-shift-default-start" data-i18n="modal.shift.start.time">Apertura de ventana</label>
-                            <input type="time" id="sched-shift-default-start" class="dark-control" value="00:00">
-                        </div>
-                        <div class="form-group">
-                            <label for="sched-shift-default-end" data-i18n="modal.shift.end.time">Cierre de ventana</label>
-                            <input type="time" id="sched-shift-default-end" class="dark-control" value="08:00">
-                        </div>
-                    </div>
-                    <p id="sched-shift-timezone-hint" class="muted-copy" style="margin: 0 0 12px; font-size: 13px;"></p>
-                    <div class="alert alert-info shift-window-note">
-                        <i class="fas fa-info-circle"></i>
-                        <div>
-                            <strong data-i18n="modal.shift.window.note.strong">Ventana de acceso al sitio</strong><br>
-                            <small data-i18n="modal.shift.window.note">El contratista decide la hora exacta de inicio y fin dentro de esta ventana. R3 solo coordina el plazo de entrega del servicio.</small>
-                        </div>
-                    </div>
-                    <div id="sched-shift-day-rows" class="shift-plan-rows"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-action="closeModal" data-args="modal-supervisor-schedule-shift" data-i18n="btn.cancel">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-calendar-check"></i> <span data-i18n="modal.shift.save">Guardar Asignación</span>
-                    </button>
-                </div>
-            </form>
-        </div>
     </div>
 
     <div id="modal-supervisor-restaurant-task" class="modal">

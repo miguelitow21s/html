@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { CACHE_TTLS, SHIFT_MATCH_WINDOW_MS } from '../constants.js';
+import { CACHE_TTLS } from '../constants.js';
 import { apiClient } from '../api.js';
 import { t } from '../i18n.js';
 import {
@@ -1544,121 +1544,6 @@ export const adminModalMethods = {
                 return restaurants;
             }
         );
-    },
-
-    async getSupervisorShiftList(options = {}) {
-        const todayStart = getTodayStart();
-        const todayEnd = getTodayEnd();
-        const defaultFrom = toIsoDate(new Date(todayStart.getTime() - SHIFT_MATCH_WINDOW_MS));
-        const defaultTo = toIsoDate(new Date(todayEnd.getTime() + SHIFT_MATCH_WINDOW_MS));
-
-        const {
-            forceRestaurants = false,
-            restaurantId,
-            from = defaultFrom,
-            to = defaultTo,
-            status,
-            employeeId,
-            limit = 100,
-        } = options;
-
-        const usesDefaultQuery =
-            !restaurantId && !status && !employeeId && from === defaultFrom && to === defaultTo && limit === 100;
-
-        if (
-            !forceRestaurants &&
-            usesDefaultQuery &&
-            this.data.supervisor.shifts.length > 0 &&
-            this.isCacheFresh('supervisorShifts', CACHE_TTLS.supervisorShifts)
-        ) {
-            return this.data.supervisor.shifts;
-        }
-
-        if (forceRestaurants || this.data.supervisor.restaurants.length === 0) {
-            this.data.supervisor.restaurants = await this.getSupervisorRestaurants(forceRestaurants);
-        }
-
-        const payload = { from, to, limit };
-
-        if (status) {
-            payload.status = status;
-        }
-
-        if (employeeId) {
-            payload.employee_id = employeeId;
-        }
-
-        const requestKey = `supervisorShifts:${JSON.stringify({ restaurantId: restaurantId || '', from, to, status: status || '', employeeId: employeeId || '', limit, role: this.currentUser?.role || '' })}`;
-        const fetchShiftList = async () => {
-            const isAdminScope = this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser';
-            if (restaurantId || isAdminScope) {
-                if (restaurantId) {
-                    payload.restaurant_id = Number.isFinite(Number(restaurantId)) ? Number(restaurantId) : restaurantId;
-                }
-
-                const result = await apiClient.scheduledShiftsManage('list', payload);
-                const shifts = asArray(result).filter((shift) => {
-                    const shiftStatus = String(shift?.status || shift?.state || '')
-                        .trim()
-                        .toLowerCase();
-                    return !['cancelado', 'cancelled', 'anulado', 'deleted'].includes(shiftStatus);
-                });
-
-                const normalizedShifts = usesDefaultQuery ? this.getTodayShifts(shifts) : shifts;
-
-                if (usesDefaultQuery) {
-                    this.data.supervisor.shifts = normalizedShifts;
-                    this.touchCache('supervisorShifts');
-                }
-
-                return normalizedShifts;
-            }
-
-            const restaurants = this.data.supervisor.restaurants;
-            if (restaurants.length === 0) {
-                return [];
-            }
-
-            const grouped = [];
-            for (const restaurant of restaurants) {
-                try {
-                    const result = await apiClient.scheduledShiftsManage('list', {
-                        ...payload,
-                        restaurant_id: getRestaurantRecordId(restaurant),
-                    });
-                    grouped.push(asArray(result));
-                } catch (error) {
-                    console.warn(`No fue posible listar turnos para ${restaurant.name || restaurant.id}.`, error);
-                    grouped.push([]);
-                }
-            }
-
-            const dedupe = new Map();
-            grouped.flat().forEach((shift) => {
-                const key =
-                    shift.id ||
-                    shift.scheduled_shift_id ||
-                    `${shift.employee_id}-${shift.scheduled_start}-${shift.restaurant_id}`;
-                dedupe.set(key, shift);
-            });
-            const shifts = Array.from(dedupe.values()).filter((shift) => {
-                const shiftStatus = String(shift?.status || shift?.state || '')
-                    .trim()
-                    .toLowerCase();
-                return !['cancelado', 'cancelled', 'anulado', 'deleted'].includes(shiftStatus);
-            });
-
-            const normalizedShifts = usesDefaultQuery ? this.getTodayShifts(shifts) : shifts;
-
-            if (usesDefaultQuery) {
-                this.data.supervisor.shifts = normalizedShifts;
-                this.touchCache('supervisorShifts');
-            }
-
-            return normalizedShifts;
-        };
-
-        return this.runPending(requestKey, fetchShiftList);
     },
 
     async ensureAdminRestaurants(force = false) {

@@ -86,35 +86,16 @@ export const employeeMethods = {
                     return activeStates.has(state);
                 });
 
-            // 1) dashboard.active_shift es la fuente autoritativa cuando existe.
-            //    Después de shifts_start el backend lo devuelve poblado, y a veces
-            //    todavía NO aparece dentro de today_shifts (race entre las dos consultas).
-            //    Si el frontend confía solo en today_shifts, muestra 'Sin servicios'
-            //    justo cuando el user acaba de iniciar.
-            // 2) Si active_shift no viene, buscamos un turno activo dentro de today_shifts.
-            // 3) Sin activo, elegimos un pending por GPS/proximidad.
+            // Post-migracion Visitas: no hay scheduled_shifts. Solo active_shift.
+            // El dashboard trae visitable_restaurants[] que el contratista usa
+            // para iniciar visita ad-hoc desde el card "Sitio disponible".
             const authoritativeActive =
                 dashboard?.active_shift || findActiveCandidate(todayShifts);
-
-            if (authoritativeActive) {
-                this.data.currentShift = this.enrichEmployeeShiftRecord(authoritativeActive, dashboard);
-                this.data.currentScheduledShift = null;
-                this.data.employee.todayShifts = todayShifts;
-            } else if (todayShifts.length > 0) {
-                this.data.currentShift = null;
-                const pending = this.pickEmployeeScheduledShiftByGpsOrProximity(todayShifts);
-                this.data.currentScheduledShift = pending
-                    ? this.enrichEmployeeShiftRecord(pending, dashboard)
-                    : null;
-                this.data.employee.todayShifts = todayShifts;
-            } else {
-                this.data.currentShift = null;
-                this.data.currentScheduledShift = this.enrichEmployeeShiftRecord(
-                    this.getEmployeePendingScheduledShift(dashboard?.scheduled_shifts),
-                    dashboard
-                );
-                this.data.employee.todayShifts = [];
-            }
+            this.data.currentShift = authoritativeActive
+                ? this.enrichEmployeeShiftRecord(authoritativeActive, dashboard)
+                : null;
+            this.data.currentScheduledShift = null;
+            this.data.employee.todayShifts = [];
             if (this.data.currentShift?.id) {
                 void this.hydrateShiftEvidenceSummary(this.data.currentShift).then((nextShift) => {
                     if (nextShift?.id && this.currentPage === 'employee-dashboard') {
@@ -127,13 +108,12 @@ export const employeeMethods = {
             this.warmEmployeeWorkspace();
             void this.primeEmployeeWorkspacePermissions();
 
-            // Con múltiples turnos hoy en distintos sitios, la ubicación decide
-            // cuál se muestra. Disparamos captureLocation en background para que,
-            // cuando el GPS resuelva, rebuildEmployeeScheduledShiftFromLocation
-            // re-elija el turno del sitio actual sin acción del contratista.
-            if (asArray(this.data.employee.todayShifts).length > 1 && !this.data.currentShift?.id) {
+            // Capturar GPS en background para poder filtrar visitable_restaurants
+            // por proximidad y mostrar el card "Sitio disponible" apenas se abre
+            // el dashboard.
+            if (!this.data.currentShift?.id) {
                 void this.captureLocation({ updateUi: false }).catch((locError) => {
-                    console.warn('No fue posible capturar ubicación en background para elegir turno.', locError);
+                    console.warn('No fue posible capturar ubicación en background.', locError);
                 });
             }
 
@@ -164,102 +144,6 @@ export const employeeMethods = {
         const visibleTasks = this.getVisibleEmployeeTasks(this.data.employee.dashboard);
         this.renderEmployeeProfileTasks(visibleTasks);
         this.updateUserUI();
-    },
-
-    /**
-     * De la lista `today_shifts[]` (backend v3), elige el turno programado que
-     * corresponde al sitio donde el contratista está físicamente. Si no hay
-     * ubicación disponible o ningún restaurante está dentro del radio, cae al
-     * scheduled_start más cercano en el tiempo. Ignora turnos activos y cerrados.
-     */
-    pickEmployeeScheduledShiftByGpsOrProximity(todayShifts = []) {
-        const candidates = asArray(todayShifts).filter((shift) => {
-            const state = String(shift?.state || shift?.status || '').toLowerCase();
-            if (state === 'activo' || state === 'active' || state === 'in_progress') return false;
-            const closed = new Set([
-                'cancelado',
-                'cancelled',
-                'completed',
-                'completado',
-                'finalizado',
-                'finished',
-                'closed',
-                'done',
-                'auto_ended',
-                'expired',
-            ]);
-            if (closed.has(state)) return false;
-            // 'scheduled' o vacío o cualquier otro estado pasa (sin descartar por no venir 'state').
-            return true;
-        });
-
-        console.info('[dashboard] pickEmployeeScheduledShiftByGpsOrProximity', {
-            totalToday: todayShifts.length,
-            candidates: candidates.length,
-            candidateIds: candidates.map((s) => s?.scheduled_shift_id || s?.shift_id || s?.id),
-            location: this.location
-                ? { lat: this.location.lat, lng: this.location.lng, accuracy: this.location.accuracy }
-                : null,
-        });
-
-        if (candidates.length === 0) return null;
-        if (candidates.length === 1) return candidates[0];
-
-        const location = this.location;
-        const hasLocation =
-            location && Number.isFinite(Number(location.lat)) && Number.isFinite(Number(location.lng));
-
-        if (hasLocation) {
-            // 1) Preferir el turno cuyo sitio contenga la ubicación actual dentro del radio.
-            const inRange = candidates
-                .map((shift) => {
-                    const rLat = Number(shift?.restaurant?.lat);
-                    const rLng = Number(shift?.restaurant?.lng);
-                    const radius = Number(shift?.restaurant?.radius_meters || 100);
-                    if (!Number.isFinite(rLat) || !Number.isFinite(rLng)) return null;
-                    const distance = this.haversineMeters(location.lat, location.lng, rLat, rLng);
-                    return { shift, distance, radius };
-                })
-                .filter(Boolean)
-                .sort((a, b) => a.distance - b.distance);
-
-            const inside = inRange.find((entry) => entry.distance <= entry.radius);
-            if (inside) return inside.shift;
-            if (inRange.length > 0) return inRange[0].shift; // el más cercano aunque esté fuera de radio
-        }
-
-        // 2) Sin GPS o sin coords en el sitio: el scheduled_start más cercano en tiempo.
-        const now = Date.now();
-        return candidates
-            .map((shift) => {
-                const start = shift?.scheduled_start || shift?.start_time;
-                const startMs = start ? new Date(start).getTime() : Number.POSITIVE_INFINITY;
-                const delta = Math.abs(startMs - now);
-                return { shift, delta };
-            })
-            .sort((a, b) => a.delta - b.delta)[0].shift;
-    },
-
-    /**
-     * Cuando la ubicación cambia y el contratista tiene múltiples turnos programados
-     * hoy en distintos sitios, re-elige el turno pending que corresponde al sitio
-     * actual. NO se ejecuta si ya hay un turno activo (para no cambiar mid-servicio).
-     */
-    rebuildEmployeeScheduledShiftFromLocation() {
-        if (this.data.currentShift?.id) return;
-        const todayShifts = asArray(this.data.employee.todayShifts);
-        if (todayShifts.length <= 1) return;
-        const nextPending = this.pickEmployeeScheduledShiftByGpsOrProximity(todayShifts);
-        const currentId = String(this.data.currentScheduledShift?.id || '').trim();
-        const nextId = String(nextPending?.id || '').trim();
-        if (!nextId || nextId === currentId) return;
-        this.data.currentScheduledShift = this.enrichEmployeeShiftRecord(
-            nextPending,
-            this.data.employee.dashboard || {}
-        );
-        if (this.currentPage === 'employee-dashboard') {
-            this.renderEmployeeDashboard();
-        }
     },
 
     haversineMeters(lat1, lng1, lat2, lng2) {
@@ -693,13 +577,9 @@ export const employeeMethods = {
         try {
             await this.loadEmployeeDashboard(true);
             const hasActiveShift = Boolean(this.data.currentShift?.id);
-            const canStartShift =
-                !hasActiveShift &&
-                this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, this.data.employee.dashboard);
-            const hasShiftAvailable = hasActiveShift || canStartShift;
 
-            if (!hasShiftAvailable) {
-                this.showToast(this.getShiftStartWindowCopy(this.data.currentScheduledShift), {
+            if (!hasActiveShift) {
+                this.showToast('No tienes un servicio activo. Inicia una visita desde el sitio disponible.', {
                     tone: 'warning',
                     title: t('toast.service.unavailable'),
                 });
@@ -830,15 +710,15 @@ export const employeeMethods = {
             hasActiveShift = Boolean(this.data.currentShift?.id);
         }
 
-        const canStartShift =
-            !hasActiveShift &&
-            this.canEmployeeStartScheduledShift(this.data.currentScheduledShift, this.data.employee.dashboard);
+        // Post-migracion Visitas: solo llegamos a la pantalla shift-start si hay
+        // una visita activa. El card "Sitio disponible" del dashboard inicia
+        // visitas ad-hoc y navega aca directamente cuando el backend responde.
         const shift = this.enrichEmployeeShiftRecord(
-            this.data.currentShift || this.data.currentScheduledShift,
+            this.data.currentShift,
             this.data.employee.dashboard
         );
-        if (!shift || (!hasActiveShift && !canStartShift)) {
-            this.showToast(this.getShiftStartWindowCopy(this.data.currentScheduledShift), {
+        if (!shift || !hasActiveShift) {
+            this.showToast('No tienes un servicio activo. Inicia una visita desde el sitio disponible.', {
                 tone: 'warning',
                 title: t('toast.service.unavailable'),
             });
@@ -846,11 +726,7 @@ export const employeeMethods = {
             return;
         }
 
-        if (hasActiveShift) {
-            this.data.currentShift = shift;
-        } else {
-            this.data.currentScheduledShift = shift;
-        }
+        this.data.currentShift = shift;
 
         const restaurant =
             shift?.restaurant ||
@@ -939,165 +815,6 @@ export const employeeMethods = {
         this.checkCanContinue();
     },
 
-    async startShiftFlow() {
-        const scheduledShift = this.data.currentScheduledShift;
-        let hasActiveShift = Boolean(this.data.currentShift?.id);
-        if (hasActiveShift) {
-            await this.refreshCurrentActiveShift();
-            await this.hydrateShiftEvidenceSummary(this.data.currentShift);
-            hasActiveShift = Boolean(this.data.currentShift?.id);
-        }
-
-        const canStartShift =
-            !hasActiveShift && this.canEmployeeStartScheduledShift(scheduledShift, this.data.employee.dashboard);
-
-        if (!this.gpsVerified) {
-            this.showToast(t('toast.location.unverified'), {
-                tone: 'warning',
-                title: t('toast.location.pending'),
-            });
-            return;
-        }
-
-        if (!this.healthCertified) {
-            this.showToast(t('toast.health.required'), {
-                tone: 'warning',
-                title: t('toast.health.missing'),
-            });
-            return;
-        }
-
-        if (!hasActiveShift && !canStartShift) {
-            this.showToast(this.getShiftStartWindowCopy(scheduledShift), {
-                tone: 'warning',
-                title: t('toast.service.unavailable'),
-            });
-            return;
-        }
-
-        this.showLoading(t('toast.starting.service'), t('toast.wait'));
-
-        const performStartShiftRequest = async () => {
-            // Si ya hay turno activo (usuario reentró después de un start exitoso pero fotos pendientes),
-            // NO tocamos scheduledShift (que en ese caso es null): el turno ya está corriendo en el backend.
-            if (this.data.currentShift) {
-                return;
-            }
-
-            // Backend v3: en today_shifts los turnos programados vienen con
-            // shift_id=null; el id real esta en scheduled_shift_id. Aceptamos
-            // cualquiera de los dos como fuente.
-            const scheduledShiftIdentifier = scheduledShift?.scheduled_shift_id || scheduledShift?.id;
-            const otpTokenLength = String(apiClient.getConfig()?.shiftOtpToken || '').length;
-            console.info('[shifts_start] pre-request diagnostic', {
-                otpTokenPresent: otpTokenLength > 0,
-                otpTokenLength,
-                scheduledShiftId: scheduledShiftIdentifier,
-                restaurantId: scheduledShift?.restaurant_id,
-            });
-            // shifts_start valida GPS_OUT_OF_RANGE: forzamos captura fresca de
-            // alta precisión, incluso si this.location está cacheada.
-            const location = await this.captureLocation({ updateUi: false, highAccuracy: true });
-
-            const result = await apiClient.startShift({
-                restaurant_id: scheduledShift.restaurant_id,
-                scheduled_shift_id: scheduledShiftIdentifier,
-                lat: location.lat,
-                lng: location.lng,
-                fit_for_work: true,
-                declaration: 'Me encuentro en condiciones de iniciar labores.',
-            });
-
-            this.data.currentShift = this.enrichEmployeeShiftRecord(
-                {
-                    ...scheduledShift,
-                    id: result?.shift_id,
-                    scheduled_shift_id: scheduledShiftIdentifier,
-                    restaurant_id: scheduledShift.restaurant_id,
-                    restaurant: scheduledShift.restaurant,
-                    start_time: new Date().toISOString(),
-                    state: 'activo',
-                },
-                this.data.employee.dashboard
-            );
-            this.data.currentScheduledShift = null;
-        };
-
-        try {
-            // OTP se pide UNA sola vez al login; no volvemos a pedirlo aquí.
-            // Si el backend responde OTP_SESSION_EXPIRED/REQUIRED/INVALID, el
-            // catch de abajo dispara retryWithFreshOtp (una sola vez).
-            try {
-                await performStartShiftRequest();
-            } catch (firstError) {
-                if (this.isOtpSessionError?.(firstError)) {
-                    console.warn('[shifts_start] OTP session invalido/expirado; reintentando tras re-verificar', {
-                        error_code: this.getErrorCode?.(firstError),
-                    });
-                    await this.retryWithFreshOtp(() => performStartShiftRequest(), { purpose: 'shift_start' });
-                } else {
-                    throw firstError;
-                }
-            }
-
-            this.persistCurrentShiftAreaSelection();
-
-            this.data.employee.lastCompletedShift = null;
-            this.invalidateCache('employeeDashboard', 'employeeHoursHistory');
-
-            const resumeInCleaning = this.shouldResumeActiveShiftInCleaning(this.data.currentShift);
-            this.updateCleaningUI();
-            if (hasActiveShift && resumeInCleaning) {
-                this.navigate('employee-shift-cleaning');
-                return;
-            }
-
-            if (hasActiveShift && !resumeInCleaning) {
-                this.showToast(t('toast.evidence.initial.incomplete'), {
-                    tone: 'info',
-                    title: t('toast.photos.missing'),
-                });
-            }
-
-            this.navigate('employee-shift-photos');
-        } catch (error) {
-            console.error('[shifts_start] failed', {
-                error_code: this.getErrorCode?.(error),
-                request_id: this.getErrorRequestIds?.(error),
-                status: error?.status,
-                payload: error?.payload,
-            });
-
-            // Backend contract v2: si viene error_code con acción específica, dispatchamos.
-            if (this.handleErrorCodeAction?.(error)) {
-                return;
-            }
-
-            if (this.isShiftStartOutsideWindow(error)) {
-                this.showToast(this.getShiftStartWindowOutsideMessage(error), {
-                    tone: 'warning',
-                    title: t('toast.window.outside'),
-                });
-                void this.loadEmployeeDashboard(true);
-                return;
-            }
-
-            if (this.isOutsideAllowedShiftArea(error)) {
-                this.showToast(t('toast.cannot.start.outside'), {
-                    tone: 'warning',
-                    title: t('toast.area.notallowed'),
-                });
-                return;
-            }
-
-            this.showToast(this.getErrorMessage(error, 'No fue posible iniciar el servicio.'), {
-                tone: 'error',
-                title: t('toast.cannot.start.service'),
-            });
-        } finally {
-            this.hideLoading();
-        }
-    },
 
     async uploadShiftEvidenceBatch(type, filesMap, uploadedMap) {
         const entries = Object.entries(filesMap).filter(([area, file]) => file && !uploadedMap[area]);

@@ -100,13 +100,6 @@ export const DEFAULT_SYSTEM_SETTINGS = Object.freeze({
         require_gps_for_shift_start: true,
         require_gps_for_supervision: true,
     },
-    shifts: {
-        default_hours: 6,
-        min_hours: 1,
-        max_hours: 12,
-        early_start_tolerance_minutes: 60,
-        late_start_tolerance_minutes: 60,
-    },
     evidence: {
         require_start_photos: true,
         require_end_photos: true,
@@ -126,7 +119,6 @@ export const CACHE_TTLS = Object.freeze({
     supervisorRestaurants: 60 * 1000,
     supervisorRestaurantStaff: 30 * 1000,
     supervisorAssignableEmployees: 30 * 1000,
-    supervisorShifts: 30 * 1000,
     supervisorEmployees: 30 * 1000,
     adminRestaurants: 60 * 1000,
     adminSettings: 60 * 1000,
@@ -135,13 +127,10 @@ export const CACHE_TTLS = Object.freeze({
     adminSupervisions: 90 * 1000,
 });
 
-export const SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES = 15;
-
-// Tolerancia de 12h para: (a) matchear un turno activo contra un scheduled_shift
-// cuyo start/end cruza medianoche, y (b) rango por defecto de filtros de fecha
-// (± 12h del día visible) en admin/supervisor. Cambiar aquí y se propaga a los
-// 5 call-sites en app.js / adminModals.js / supervisor.js.
-export const SHIFT_MATCH_WINDOW_MS = 12 * 60 * 60 * 1000;
+// SHIFT_NOT_STARTED_ALERT_GRACE_MINUTES y SHIFT_MATCH_WINDOW_MS removidos
+// en el corte de migracion Visitas (sin agendamiento, no hay ventana de
+// inicio ni alertas de "no arrancado"). Los call-sites vivos en app.js
+// para matching de active_shift usan valores locales.
 
 export const SUPPORTED_EVIDENCE_IMAGE_TYPES = Object.freeze([
     'image/jpeg',

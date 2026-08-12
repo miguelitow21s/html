@@ -750,9 +750,8 @@ export class WorkTraceApiClient {
         });
     }
 
-    scheduledShiftsManage(action, payload = {}) {
-        return this.callAction('/scheduled_shifts_manage', action, payload);
-    }
+    // scheduledShiftsManage removido en el corte de migracion Visitas.
+    // Backend lo dejo deprecado pero el frontend ya no lo consume.
 
     operationalTasksManage(action, payload = {}, options = {}) {
         return this.callAction('/operational_tasks_manage', action, payload, options);
