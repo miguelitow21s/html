@@ -6265,10 +6265,12 @@ const app = {
 
         const newEvidenceCount = Object.keys(this.photoFiles || {}).length;
         const normalizedExisting = requiredCount > 0 ? Math.min(existingCount, requiredCount) : existingCount;
-        const completedCount =
-            requiredCount > 0
-                ? Math.min(normalizedExisting + newEvidenceCount, requiredCount)
-                : normalizedExisting + newEvidenceCount;
+        // Backend es la fuente de verdad para lo YA subido. Local (this.photoFiles)
+        // cuenta lo que esta EN VUELO o pendiente de subir. Sumarlos double-counta
+        // porque cuando la foto local se sube al backend, ambos contadores la
+        // reflejan a la vez y el total pasaba a existing+new = 2x. Usamos max().
+        const raw = Math.max(normalizedExisting, newEvidenceCount);
+        const completedCount = requiredCount > 0 ? Math.min(raw, requiredCount) : raw;
         const remainingCount = Math.max(requiredCount - completedCount, 0);
 
         return {
