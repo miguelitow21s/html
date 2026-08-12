@@ -4643,6 +4643,9 @@ const app = {
             // la ubicación fresca permite elegir el correcto por matching GPS. Solo
             // re-elegimos cuando NO hay turno activo (para no cambiar de sitio mid-servicio).
             this.rebuildEmployeeScheduledShiftFromLocation?.();
+            // Fase A visitas ad-hoc: refrescar el card "Sitio disponible" con
+            // la nueva ubicacion (aparece / desaparece segun geocerca).
+            this.renderEmployeeVisitableCard?.();
 
             if (status && updateUi) {
                 status.className = 'gps-status valid';
@@ -6906,6 +6909,7 @@ const app = {
         }
 
         this.renderEmployeeRestaurantTasks();
+        this.renderEmployeeVisitableCard?.();
         this.updateUserUI();
     },
 };

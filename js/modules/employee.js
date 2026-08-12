@@ -273,6 +273,170 @@ export const employeeMethods = {
         return 2 * R * Math.asin(Math.sqrt(a));
     },
 
+    // Backend v3 (migración a visitas ad-hoc): my_dashboard trae
+    // visitable_restaurants[] con TODOS los sitios activos + geocerca. El
+    // frontend decide cuál es "el sitio donde estoy" comparando la ubicación
+    // actual contra cada radius_meters. Regla decidida: mostramos SOLO los
+    // que quedan dentro de su radio. Si ninguno matchea, no ofrecemos
+    // iniciar visita (el usuario tendrá que acercarse a un sitio).
+    findNearbyVisitableRestaurants(dashboard = this.data.employee.dashboard || {}) {
+        const restaurants = asArray(dashboard?.visitable_restaurants);
+        if (restaurants.length === 0) return [];
+        const lat = Number(this.location?.lat);
+        const lng = Number(this.location?.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
+
+        const withinRadius = restaurants
+            .map((r) => {
+                const rLat = Number(r?.lat);
+                const rLng = Number(r?.lng);
+                if (!Number.isFinite(rLat) || !Number.isFinite(rLng)) return null;
+                const radius = Number(r?.radius_meters) > 0 ? Number(r.radius_meters) : 200;
+                const distance = this.haversineMeters(lat, lng, rLat, rLng);
+                if (distance > radius) return null;
+                return { ...r, _distanceMeters: distance, _radiusMeters: radius };
+            })
+            .filter(Boolean)
+            .sort((a, b) => a._distanceMeters - b._distanceMeters);
+
+        return withinRadius;
+    },
+
+    renderEmployeeVisitableCard() {
+        const card = document.getElementById('employee-visitable-card');
+        const list = document.getElementById('employee-visitable-list');
+        const copy = document.getElementById('employee-visitable-copy');
+        if (!card || !list) return;
+
+        // Ocultar si ya hay turno activo (no se puede iniciar otro) o si el
+        // dashboard todavia no cargo visitable_restaurants (backend viejo).
+        const hasActiveShift = Boolean(this.data.currentShift?.id);
+        const dashboard = this.data.employee.dashboard || {};
+        const hasVisitableCatalog = Array.isArray(dashboard?.visitable_restaurants);
+        if (hasActiveShift || !hasVisitableCatalog) {
+            card.classList.add('hidden');
+            list.innerHTML = '';
+            return;
+        }
+
+        const nearby = this.findNearbyVisitableRestaurants(dashboard);
+        if (nearby.length === 0) {
+            // Mostramos el card con mensaje "no hay sitios cerca" solo si el GPS
+            // esta capturado. Sin GPS ni siquiera podemos decir "no hay sitios".
+            const hasLocation = Number.isFinite(Number(this.location?.lat));
+            if (!hasLocation) {
+                card.classList.add('hidden');
+                list.innerHTML = '';
+                return;
+            }
+            card.classList.remove('hidden');
+            if (copy) copy.textContent = 'No hay sitios disponibles cerca de tu ubicación actual.';
+            list.innerHTML = '';
+            return;
+        }
+
+        card.classList.remove('hidden');
+        if (copy) {
+            copy.textContent = nearby.length === 1
+                ? 'Detectamos que estás en la zona de este sitio. Puedes iniciar tu visita ahora.'
+                : 'Estás dentro de la zona de estos sitios. Elige uno para iniciar la visita.';
+        }
+        list.innerHTML = nearby
+            .map((r) => {
+                const name = escapeHtml(String(r.name || 'Sitio sin nombre'));
+                const cityState = [r.city, r.state].filter(Boolean).map((v) => escapeHtml(String(v))).join(', ');
+                const distanceLabel = `A ${Math.round(r._distanceMeters)} m del centro del sitio`;
+                return `
+                    <div class="info-item" style="margin-top:8px;">
+                        <i class="fas fa-store"></i>
+                        <div class="info-item-content">
+                            <span class="info-item-label">${name}</span>
+                            <span class="info-item-value" style="font-size:12px;color:var(--gray);">${cityState ? cityState + ' · ' : ''}${distanceLabel}</span>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-inline" data-action="startAdHocVisit" data-args="${escapeHtml(String(r.restaurant_id))}" style="flex-shrink:0;">
+                            <i class="fas fa-play"></i> Iniciar visita
+                        </button>
+                    </div>
+                `;
+            })
+            .join('');
+    },
+
+    async startAdHocVisit(restaurantIdArg) {
+        const restaurantId = Number(restaurantIdArg);
+        if (!Number.isFinite(restaurantId)) {
+            this.showToast('Sitio inválido.', { tone: 'error', title: 'No fue posible iniciar' });
+            return;
+        }
+
+        if (this.data.currentShift?.id) {
+            this.showToast('Ya tienes un servicio activo. Ciérralo antes de iniciar otro.', {
+                tone: 'warning',
+                title: 'Servicio activo',
+            });
+            return;
+        }
+
+        this.showLoading('Iniciando visita', 'Verificando ubicación y creando la visita.');
+        try {
+            // GPS fresco de alta precisión — el backend valida geocerca con lat/lng.
+            const location = await this.captureLocation({ updateUi: false, highAccuracy: true });
+
+            const performRequest = async () => apiClient.startShift({
+                restaurant_id: restaurantId,
+                lat: location.lat,
+                lng: location.lng,
+                fit_for_work: true,
+                declaration: 'Me encuentro en condiciones de iniciar labores.',
+            });
+
+            let result;
+            try {
+                result = await performRequest();
+            } catch (firstError) {
+                if (this.isOtpSessionError?.(firstError)) {
+                    result = await this.retryWithFreshOtp(performRequest, { purpose: 'visit_start_adhoc' });
+                } else {
+                    throw firstError;
+                }
+            }
+
+            // Enriquecer el shift con la data del restaurant del catalogo para
+            // que el flujo posterior (photos/cleaning) tenga nombre/geo/tz.
+            const restaurantRecord = asArray(this.data.employee.dashboard?.visitable_restaurants)
+                .find((r) => Number(r.restaurant_id) === restaurantId) || null;
+            this.data.currentShift = this.enrichEmployeeShiftRecord(
+                {
+                    id: result?.shift_id,
+                    restaurant_id: restaurantId,
+                    restaurant: restaurantRecord ? { id: restaurantId, ...restaurantRecord } : null,
+                    start_time: new Date().toISOString(),
+                    state: 'activo',
+                    visit_type: 'ad_hoc',
+                },
+                this.data.employee.dashboard
+            );
+            this.data.currentScheduledShift = null;
+
+            this.showToast('Visita iniciada. Continúa con las fotos iniciales.', {
+                tone: 'success',
+                title: 'Visita en curso',
+            });
+            // Refrescar dashboard (para que active_shift venga del backend)
+            // y navegar directo a fotos iniciales.
+            await this.loadEmployeeDashboard(true).catch(() => null);
+            this.navigate('employee-shift-start');
+        } catch (error) {
+            console.error('[visit-adhoc] failed', error, error?.payload);
+            this.showToast(this.getErrorMessage(error, 'No fue posible iniciar la visita.'), {
+                tone: 'error',
+                title: 'Error al iniciar',
+            });
+        } finally {
+            this.hideLoading();
+        }
+    },
+
     filterEmployeeTasksByKnownShifts(tasks = [], dashboard = this.data.employee.dashboard || {}) {
         const activeShiftId = String(dashboard?.active_shift?.id || this.data.currentShift?.id || '').trim();
         const knownScheduledShiftIds = new Set(
