@@ -615,7 +615,17 @@ export const employeeMethods = {
                 return;
             }
 
-            this.navigate('employee-shift-start');
+            // Post-migracion Visitas: si hay visita activa, saltarnos la
+            // pantalla shift-start (GPS + salud) porque ya se firmaron al
+            // iniciar la visita ad-hoc. Vamos directo a donde el usuario esta:
+            //   - cleaning (cronometro) si ya subio las fotos iniciales.
+            //   - photos si aun le faltan (para retomar el flujo desde ahi).
+            // Hidratar summary del backend para decidir bien.
+            if (typeof this.hydrateShiftEvidenceSummary === 'function') {
+                await this.hydrateShiftEvidenceSummary(this.data.currentShift).catch(() => null);
+            }
+            const goToCleaning = this.shouldResumeActiveShiftInCleaning(this.data.currentShift);
+            this.navigate(goToCleaning ? 'employee-shift-cleaning' : 'employee-shift-photos');
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible validar tu servicio actual.'), {
                 tone: 'error',
@@ -795,8 +805,14 @@ export const employeeMethods = {
         }
 
         if (button) {
+            // Si ya se subieron las fotos iniciales al backend, el boton lleva
+            // directo al cronometro (cleaning). Si no, lleva a la pantalla de
+            // fotos para completarlas. Antes iba siempre a fotos, obligando
+            // al contratista a "retomar" un paso que ya termino.
+            const goToCleaning = hasActiveShift && this.shouldResumeActiveShiftInCleaning(shift);
+            button.dataset.args = goToCleaning ? 'employee-shift-cleaning' : 'employee-shift-photos';
             button.innerHTML = hasActiveShift
-                ? this.shouldResumeActiveShiftInCleaning(shift)
+                ? goToCleaning
                     ? 'Continuar con el Servicio Activo <i class="fas fa-arrow-right"></i>'
                     : 'Completar Fotos Iniciales <i class="fas fa-camera"></i>'
                 : 'Registrar Inicio y Continuar <i class="fas fa-arrow-right"></i>';

@@ -3193,6 +3193,17 @@ const app = {
                 case 'employee-shift-start':
                     await this.prepareEmployeeShiftStart();
                     break;
+                case 'employee-shift-photos':
+                    // Al entrar (o refrescar) hidratamos el summary del backend
+                    // para saber cuantas fotos ya se subieron. Sin esto, la
+                    // barra de progreso queda en 0 aunque haya evidencias en
+                    // BD, y el usuario cree que tiene que retomarlas todas.
+                    if (this.data.currentShift?.id && typeof this.hydrateShiftEvidenceSummary === 'function') {
+                        await this.hydrateShiftEvidenceSummary(this.data.currentShift).catch(() => null);
+                    }
+                    this.renderPhotoGrids();
+                    this.updateProgressNow();
+                    break;
                 case 'employee-shift-cleaning':
                     this.updateCleaningUI();
                     break;
