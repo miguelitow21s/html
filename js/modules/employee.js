@@ -1090,27 +1090,32 @@ export const employeeMethods = {
         const earlyEndCard = document.getElementById('shift-early-end-card');
         const earlyEndReasonInput = document.getElementById('early-end-reason');
 
-        document.getElementById('summary-duration').textContent = formatHours(durationHours);
-        document.getElementById('summary-photos').textContent = String(
-            Object.keys(this.photoFiles).length +
-                Object.keys(this.endPhotoFiles).length +
-                (this.specialTaskEvidenceFile ? 1 : 0)
+        const setSummaryText = (id, value) => {
+            const node = document.getElementById(id);
+            if (node) node.textContent = value;
+        };
+        setSummaryText('summary-duration', formatHours(durationHours));
+        setSummaryText(
+            'summary-photos',
+            String(
+                Object.keys(this.photoFiles).length +
+                    Object.keys(this.endPhotoFiles).length +
+                    (this.specialTaskEvidenceFile ? 1 : 0)
+            )
         );
-        document.getElementById('summary-restaurant').textContent = this.getEmployeeResolvedShiftRestaurantName(
-            { ...summaryShift, restaurant },
-            'Sitio asignado'
+        setSummaryText(
+            'summary-restaurant',
+            this.getEmployeeResolvedShiftRestaurantName({ ...summaryShift, restaurant }, 'Sitio asignado')
         );
-        document.getElementById('summary-schedule').textContent = formatShiftLocalRange(summaryShift);
-        document.getElementById('summary-date').textContent = summaryShift?.local?.start?.local_date
-            ? formatShiftLocalDate(summaryShift)
-            : summaryReferenceDate
-            ? formatDate(summaryReferenceDate, {
-                  weekday: 'long',
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-              })
-            : '-';
+        // Post-migracion Visitas: mostramos la hora de inicio real de la visita
+        // en zona local del sitio. Sin agendamiento, "Ventana" y "Fecha" son
+        // redundantes (todo pasa hoy y no hay ventana programada).
+        const startedAtRaw =
+            summaryShift?.local?.start?.local_time ||
+            (summaryShift?.start_time || summaryShift?.started_at
+                ? formatDateTime(summaryShift.start_time || summaryShift.started_at)
+                : '-');
+        setSummaryText('summary-started-at', startedAtRaw);
 
         if (earlyEndCard) {
             earlyEndCard.classList.remove('hidden');
@@ -1601,11 +1606,9 @@ export const employeeMethods = {
         const futureToleranceMs = 5 * 60 * 1000;
         const scheduleAlignmentToleranceMs = 8 * 60 * 60 * 1000;
         const recentWindowMs = 24 * 60 * 60 * 1000;
-        const configuredMaxHours = Number(
-            this.getSystemSetting('shifts.max_hours', DEFAULT_SYSTEM_SETTINGS.shifts.max_hours)
-        );
-        const reasonableMaxHours =
-            Number.isFinite(configuredMaxHours) && configuredMaxHours > 0 ? Math.max(configuredMaxHours + 6, 18) : 18;
+        // Post-migracion Visitas: sin max_hours configurable. Backend cierra
+        // visitas ad-hoc a las 16h; dejamos 18h como tope local con margen.
+        const reasonableMaxHours = 18;
         const maxElapsedMs = reasonableMaxHours * 60 * 60 * 1000;
 
         const startMs = this.parseShiftTimestamp(shift?.start_time || shift?.started_at);

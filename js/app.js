@@ -402,11 +402,10 @@ const app = {
         const futureToleranceMs = 5 * 60 * 1000;
         const scheduleAlignmentToleranceMs = 8 * 60 * 60 * 1000;
         const recentWindowMs = 24 * 60 * 60 * 1000;
-        const configuredMaxHours = Number(
-            this.getSystemSetting('shifts.max_hours', DEFAULT_SYSTEM_SETTINGS.shifts.max_hours)
-        );
-        const reasonableMaxHours =
-            Number.isFinite(configuredMaxHours) && configuredMaxHours > 0 ? Math.max(configuredMaxHours + 6, 18) : 18;
+        // Post-migracion Visitas: sin agendamiento no hay max_hours configurable.
+        // El backend auto-cierra visitas ad-hoc a las 16h, dejamos 18h como
+        // tope local para el timer (con margen).
+        const reasonableMaxHours = 18;
         const maxElapsedMs = reasonableMaxHours * 60 * 60 * 1000;
 
         const startMs = this.parseShiftTimestamp(shift?.start_time || shift?.started_at);
@@ -3140,17 +3139,8 @@ const app = {
             this.stopTimer();
         }
 
-        if (page === 'employee-shift-summary') {
-            const summaryDate = document.getElementById('summary-date');
-            if (summaryDate) {
-                summaryDate.textContent = formatDate(new Date(), {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                });
-            }
-        }
+        // #summary-date removido post-migracion Visitas (redundante con el
+        // resto del resumen; todo lo relevante ya va en Duracion + Inicio).
 
         this.updateDebugInfo();
         this.updateRoleBasedActions();

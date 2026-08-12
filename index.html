@@ -550,13 +550,25 @@
                 </div>
             </div>
             
-            <label class="checkbox-wrapper" data-action="toggleHealthCert">
-                <input type="checkbox" id="health-cert">
-                <div class="checkbox-content">
-                    <span class="checkbox-title">Certificado de Actitud</span>
-                    <span class="checkbox-desc">Confirmo que me encuentro en perfecto estado de salud para iniciar mis labores.</span>
+            <div class="health-cert-card">
+                <div class="health-cert-head">
+                    <div class="health-cert-icon" aria-hidden="true">
+                        <i class="fas fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="health-cert-body">
+                        <h4 class="health-cert-title">Certificado de aptitud</h4>
+                        <p class="health-cert-copy">
+                            Al marcar esta casilla declaras que te encuentras en <strong>perfecto estado de salud</strong>
+                            para iniciar tus labores. Esta declaración queda registrada como parte de tu servicio y es
+                            obligatoria para poder iniciar la visita.
+                        </p>
+                    </div>
                 </div>
-            </label>
+                <label class="health-cert-check" data-action="toggleHealthCert">
+                    <input type="checkbox" id="health-cert">
+                    <span>Confirmo que estoy en condiciones de iniciar mis labores.</span>
+                </label>
+            </div>
             
             <button class="btn btn-primary" data-action="navigate" data-args="employee-shift-photos" id="continue-btn">
                 Continuar a Fotos <i class="fas fa-arrow-right"></i>
@@ -805,24 +817,16 @@
                 <div class="info-item">
                     <i class="fas fa-store"></i>
                     <div class="info-item-content">
-                        <span class="info-item-label" data-i18n="employee.shift.restaurant">Cliente</span>
+                        <span class="info-item-label">Sitio</span>
                         <span class="info-item-value" id="summary-restaurant">-</span>
                     </div>
                 </div>
-                
+
                 <div class="info-item">
-                    <i class="fas fa-clock"></i>
+                    <i class="fas fa-play"></i>
                     <div class="info-item-content">
-                        <span class="info-item-label" data-i18n="employee.shift.schedule">Ventana de Servicio</span>
-                        <span class="info-item-value" id="summary-schedule">-</span>
-                    </div>
-                </div>
-                
-                <div class="info-item">
-                    <i class="fas fa-calendar"></i>
-                    <div class="info-item-content">
-                        <span class="info-item-label" data-i18n="employee.shift.date">Fecha</span>
-                        <span class="info-item-value" id="summary-date">-</span>
+                        <span class="info-item-label">Inicio</span>
+                        <span class="info-item-value" id="summary-started-at">-</span>
                     </div>
                 </div>
             </div>
