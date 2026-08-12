@@ -6794,105 +6794,43 @@ const app = {
             fallbackToAllAvailable: hasActiveShift,
         });
 
-        let shiftTitle;
-        let shiftHelper;
-        let shiftStatus;
-        let restaurantName = t('employee.shift.no.services.date');
-        const restaurantAddress = this.getEmployeeCurrentLocationText();
-        let scheduleText = t('employee.shift.window.notrequired');
-        const activeStateLabel =
-            dashboard?.active_shift?.state || this.data.currentShift?.state || t('employee.shift.active');
-
-        if (hasActiveShift) {
-            shiftTitle = t('shift.status.inprogress');
-            shiftHelper = t('shift.status.inprogress.helper');
-            shiftStatus = `${t('shift.status.activeprefix')} ${String(activeStateLabel).toLowerCase()}`;
-            restaurantName = resolvedRestaurantName;
-            // Dashboard: la fecha ya va en su fila propia (#employee-shift-date),
-            // asi que la "Ventana de Servicio" muestra SOLO la hora.
-            scheduleText = this.getEmployeeShiftScheduleTimeText(shift, { hasActiveShift: true });
-        } else if (canStartShift) {
-            shiftTitle = isShiftToday ? t('shift.status.canstart.today') : t('shift.status.canstart.next');
-            shiftHelper = t('shift.status.canstart.helper');
-            shiftStatus = t('shift.status.ready');
-            restaurantName = resolvedRestaurantName;
-            scheduleText = this.getEmployeeShiftScheduleTimeText(shift);
-        } else if (hasPendingShift) {
-            shiftTitle = isShiftToday ? t('shift.status.pending.today') : t('shift.status.canstart.next');
-            shiftHelper = isShiftToday ? this.getShiftStartWindowCopy(shift) : t('shift.status.pending.helper');
-            shiftStatus = t('shift.status.assigned');
-            restaurantName = resolvedRestaurantName;
-            scheduleText = this.getEmployeeShiftScheduleTimeText(shift);
-        } else if (justCompletedShift) {
-            shiftTitle = t('shift.status.completed');
-            shiftHelper = t('shift.status.completed.helper');
-            shiftStatus = t('shift.status.completed.short');
-            restaurantName = this.getResolvedShiftRestaurantName(
-                justCompletedShift,
-                t('shift.status.completed.fallback')
-            );
-        } else {
-            shiftTitle = t('shift.status.none');
-            shiftHelper = '';
-            shiftStatus = t('shift.status.none.short');
-        }
-        const task = this.getPrimaryEmployeeTask();
-
-        const shiftTitleElement = document.getElementById('employee-shift-title');
-        if (shiftTitleElement) {
-            shiftTitleElement.textContent = shiftTitle;
-        }
-
-        const shiftStatusElement = document.getElementById('employee-shift-status');
-        if (shiftStatusElement) {
-            shiftStatusElement.textContent = shiftStatus;
-            shiftStatusElement.className = `badge ${getBadgeClass(shiftStatus)}`;
-        }
-
-        const shiftHelperElement = document.getElementById('employee-shift-helper');
-        if (shiftHelperElement) {
-            shiftHelperElement.textContent = shiftHelper;
-            shiftHelperElement.classList.toggle('hidden', !shiftHelper);
-        }
-
-        document.getElementById('employee-shift-restaurant').textContent = restaurantName;
-        document.getElementById('employee-shift-date').textContent = this.getEmployeeShiftDateText(shift);
-        document.getElementById('employee-shift-schedule').textContent = scheduleText;
-        document.getElementById('employee-shift-location').textContent = restaurantAddress;
-        document.getElementById('employee-task-title').textContent = task?.title || t('employee.task.empty');
-        document.getElementById('employee-task-observations').textContent =
-            task?.description || t('employee.task.noobs');
-        document.getElementById('employee-task-heading').textContent = task
-            ? t('employee.task.title')
-            : t('employee.task.none.urgent');
-        document.getElementById('employee-task-card').style.display = task ? '' : 'none';
-
-        const startButton = document.getElementById('employee-start-shift-btn');
-        const startLabel = document.getElementById('employee-start-shift-label');
-        if (startButton && startLabel) {
+        // Post-migracion Visitas: renderizado del dashboard simplificado.
+        // Solo hay 2 cards que dependen del shift:
+        //   1) #employee-active-visit-card: aparece si hay visita activa
+        //      (retomar servicio en progreso)
+        //   2) Card de tarea especial: aparece si hay task
+        // El card "Sitio disponible" lo renderiza renderEmployeeVisitableCard.
+        const activeVisitCard = document.getElementById('employee-active-visit-card');
+        if (activeVisitCard) {
             if (hasActiveShift) {
-                startLabel.textContent = t('employee.btn.continue.active');
-                startButton.disabled = false;
-            } else if (canStartShift) {
-                startLabel.textContent = t('employee.btn.start.assigned');
-                startButton.disabled = false;
-            } else if (hasPendingShift) {
-                startLabel.textContent = t('employee.btn.not.available');
-                startButton.disabled = true;
+                activeVisitCard.classList.remove('hidden');
+                const nameNode = document.getElementById('employee-active-visit-restaurant');
+                const startedNode = document.getElementById('employee-active-visit-started');
+                const statusNode = document.getElementById('employee-active-visit-status');
+                if (nameNode) nameNode.textContent = resolvedRestaurantName || 'Sitio del servicio activo';
+                if (startedNode) {
+                    const startedAt = this.data.currentShift?.start_time || this.data.currentShift?.started_at;
+                    startedNode.textContent = startedAt ? formatDateTime(startedAt) : '-';
+                }
+                if (statusNode) {
+                    const activeStateLabel =
+                        dashboard?.active_shift?.state || this.data.currentShift?.state || 'Activo';
+                    statusNode.textContent = activeStateLabel;
+                }
             } else {
-                startLabel.textContent = t('shift.status.none');
-                startButton.disabled = true;
+                activeVisitCard.classList.add('hidden');
             }
         }
 
-        // Fase B migracion Visitas: cuando NO hay servicio programado ni
-        // activo ni recien completado, ocultamos el card "Servicio del Dia"
-        // (con toda la fila de "-") y el boton grande "Iniciar Servicio".
-        // El card "Sitio disponible" toma protagonismo -- es lo que el
-        // contratista necesita para iniciar una visita ad-hoc.
-        const hasAnyShiftContext = hasActiveShift || hasPendingShift || Boolean(justCompletedShift);
-        document.getElementById('employee-shift-card')?.classList.toggle('hidden', !hasAnyShiftContext);
-        document.getElementById('employee-start-shift-actions')?.classList.toggle('hidden', !hasAnyShiftContext);
+        const task = this.getPrimaryEmployeeTask();
+        const taskTitleNode = document.getElementById('employee-task-title');
+        if (taskTitleNode) taskTitleNode.textContent = task?.title || t('employee.task.empty');
+        const taskObsNode = document.getElementById('employee-task-observations');
+        if (taskObsNode) taskObsNode.textContent = task?.description || t('employee.task.noobs');
+        const taskHeadingNode = document.getElementById('employee-task-heading');
+        if (taskHeadingNode) taskHeadingNode.textContent = task ? t('employee.task.title') : t('employee.task.none.urgent');
+        const taskCardNode = document.getElementById('employee-task-card');
+        if (taskCardNode) taskCardNode.style.display = task ? '' : 'none';
 
         this.renderEmployeeRestaurantTasks();
         this.renderEmployeeVisitableCard?.();
