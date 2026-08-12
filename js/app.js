@@ -6908,6 +6908,15 @@ const app = {
             }
         }
 
+        // Fase B migracion Visitas: cuando NO hay servicio programado ni
+        // activo ni recien completado, ocultamos el card "Servicio del Dia"
+        // (con toda la fila de "-") y el boton grande "Iniciar Servicio".
+        // El card "Sitio disponible" toma protagonismo -- es lo que el
+        // contratista necesita para iniciar una visita ad-hoc.
+        const hasAnyShiftContext = hasActiveShift || hasPendingShift || Boolean(justCompletedShift);
+        document.getElementById('employee-shift-card')?.classList.toggle('hidden', !hasAnyShiftContext);
+        document.getElementById('employee-start-shift-actions')?.classList.toggle('hidden', !hasAnyShiftContext);
+
         this.renderEmployeeRestaurantTasks();
         this.renderEmployeeVisitableCard?.();
         this.updateUserUI();

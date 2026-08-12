@@ -388,7 +388,7 @@
                 <p id="current-date">Cargando fecha...</p>
             </div>
             
-            <div class="card">
+            <div class="card" id="employee-shift-card">
                 <div class="card-header">
                     <div class="card-title" id="employee-shift-title">Servicio del Día</div>
                     <span class="badge badge-warning" id="employee-shift-status">Asignado</span>
@@ -452,7 +452,7 @@
                 <div id="employee-visitable-list"></div>
             </div>
 
-            <div class="action-buttons">
+            <div class="action-buttons" id="employee-start-shift-actions">
                 <button class="btn-large btn-success" id="employee-start-shift-btn" data-action="openEmployeeShiftStart">
                     <i class="fas fa-play-circle"></i> <span id="employee-start-shift-label">Iniciar Servicio</span>
                 </button>
@@ -953,8 +953,8 @@
                     <span data-i18n="supervisor.nav.employees">Contratistas</span>
                 </button>
                 <button class="quick-action-btn" data-action="navigate" data-args="supervisor-shifts">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span data-i18n="supervisor.nav.shifts">Proyectos</span>
+                    <i class="fas fa-history"></i>
+                    <span>Historial</span>
                 </button>
                 <button class="quick-action-btn" data-action="navigate" data-args="supervisor-reports">
                     <i class="fas fa-chart-bar"></i>
@@ -1066,7 +1066,7 @@
                 <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="supervisor-dashboard">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <span data-i18n="supervisor.shifts.title">Asignación de Proyectos</span>
+                <span>Historial de servicios</span>
             </div>
             <div class="header-actions">
                 <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
@@ -1089,14 +1089,9 @@
                             <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
-                    <div class="supervisor-week-actions">
-                        <button class="btn btn-secondary btn-inline" data-action="replicateSupervisorLastWeek">
-                            <i class="fas fa-copy"></i> <span data-i18n="supervisor.shifts.replicate">Replicar asignaciones</span>
-                        </button>
-                        <button class="btn btn-primary btn-inline" data-action="openScheduleShiftModal">
-                            <i class="fas fa-plus"></i> <span data-i18n="supervisor.shifts.schedule">Asignar Servicios</span>
-                        </button>
-                    </div>
+                    <!-- Botones de agendamiento retirados (Fase C migracion Visitas):
+                         los contratistas ahora inician visitas ad-hoc desde su dashboard.
+                         Este grid queda como HISTORIAL VISUAL de los turnos ya iniciados. -->
                 </div>
 
                 <!-- Filtros -->
