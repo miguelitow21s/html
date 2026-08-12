@@ -225,11 +225,23 @@ export const employeeMethods = {
                 ? 'Detectamos que estás en la zona de este sitio. Puedes iniciar tu visita ahora.'
                 : 'Estás dentro de la zona de estos sitios. Elige uno para iniciar la visita.';
         }
+        // Log de diagnostico: primer sitio del catalogo para confirmar el shape
+        // real del backend (nombre del campo id, tipo numerico o UUID, etc.).
+        if (nearby.length > 0) {
+            console.info('[visitable] primer sitio cercano:', {
+                keys: Object.keys(nearby[0]),
+                restaurant_id: nearby[0].restaurant_id,
+                id: nearby[0].id,
+                sample: nearby[0],
+            });
+        }
         list.innerHTML = nearby
             .map((r) => {
                 const name = escapeHtml(String(r.name || 'Sitio sin nombre'));
                 const cityState = [r.city, r.state].filter(Boolean).map((v) => escapeHtml(String(v))).join(', ');
                 const distanceLabel = `A ${Math.round(r._distanceMeters)} m del centro del sitio`;
+                // Aceptar aliases: restaurant_id (contrato oficial), id (fallback).
+                const idValue = r.restaurant_id ?? r.id ?? '';
                 return `
                     <div class="info-item" style="margin-top:8px;">
                         <i class="fas fa-store"></i>
@@ -237,7 +249,7 @@ export const employeeMethods = {
                             <span class="info-item-label">${name}</span>
                             <span class="info-item-value" style="font-size:12px;color:var(--gray);">${cityState ? cityState + ' · ' : ''}${distanceLabel}</span>
                         </div>
-                        <button type="button" class="btn btn-primary btn-inline" data-action="startAdHocVisit" data-args="${escapeHtml(String(r.restaurant_id))}" style="flex-shrink:0;">
+                        <button type="button" class="btn btn-primary btn-inline" data-action="startAdHocVisit" data-args="${escapeHtml(String(idValue))}" style="flex-shrink:0;">
                             <i class="fas fa-play"></i> Iniciar visita
                         </button>
                     </div>
@@ -247,10 +259,24 @@ export const employeeMethods = {
     },
 
     async startAdHocVisit(restaurantIdArg) {
-        const restaurantId = Number(restaurantIdArg);
-        if (!Number.isFinite(restaurantId)) {
-            this.showToast('Sitio inválido.', { tone: 'error', title: 'No fue posible iniciar' });
-            return;
+        // El delegador global de data-action coerce a Number si el arg matchea
+        // /^\d+(\.\d+)?$/. Aceptamos numero o string (UUID) para no rechazar
+        // ids no numericos que pueda usar el backend.
+        console.info('[visit-adhoc] click', { restaurantIdArg, typeArg: typeof restaurantIdArg });
+        let restaurantId;
+        if (typeof restaurantIdArg === 'number' && Number.isFinite(restaurantIdArg)) {
+            restaurantId = restaurantIdArg;
+        } else {
+            const raw = String(restaurantIdArg ?? '').trim();
+            if (!raw) {
+                this.showToast('Sitio inválido: no se recibió el id del sitio.', {
+                    tone: 'error',
+                    title: 'No fue posible iniciar',
+                });
+                return;
+            }
+            const asNumber = Number(raw);
+            restaurantId = Number.isFinite(asNumber) && String(asNumber) === raw ? asNumber : raw;
         }
 
         if (this.data.currentShift?.id) {
@@ -287,8 +313,10 @@ export const employeeMethods = {
 
             // Enriquecer el shift con la data del restaurant del catalogo para
             // que el flujo posterior (photos/cleaning) tenga nombre/geo/tz.
+            // Comparacion tolerante (string vs number) para soportar UUIDs.
+            const restaurantIdKey = String(restaurantId);
             const restaurantRecord = asArray(this.data.employee.dashboard?.visitable_restaurants)
-                .find((r) => Number(r.restaurant_id) === restaurantId) || null;
+                .find((r) => String(r.restaurant_id ?? r.id) === restaurantIdKey) || null;
             this.data.currentShift = this.enrichEmployeeShiftRecord(
                 {
                     id: result?.shift_id,
