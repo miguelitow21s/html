@@ -4446,31 +4446,19 @@ export const supervisorMethods = {
             return;
         }
 
-        // Cuando hay muchas visitas la vista previa inline satura la pagina
-        // y hace scroll infinito (screenshots muestran 64 turnos amontonados).
-        // Tope: 12 tarjetas. Sobre ese numero mostramos solo el total con CTA
-        // a descargar PDF/Excel, igual que en el card de auditorias.
-        const MAX_INLINE_CARDS = 12;
-        if (items.length > MAX_INLINE_CARDS) {
-            copy.textContent =
-                `El informe cubre ${items.length} visita(s). Para no saturar la pantalla, descarga el PDF o Excel arriba y ahi veras el detalle completo con evidencias.`;
-            list.innerHTML = `<div class="report-day-phase-empty">Vista previa desactivada por volumen (${items.length} visitas). Usa los botones de descarga arriba.</div>`;
-            return;
-        }
+        // Diseño post-migracion Visitas: SIEMPRE lista compacta. No pintamos
+        // fotos inline nunca -- viven en el PDF/Excel. Cada tarjeta representa
+        // una visita con: numero, contratista, sitio, hora, duracion, y sus
+        // botones de descarga individual. Antes intentabamos mostrar todos los
+        // pares antes/despues inline, pero con 3-4 visitas por dia (mismo
+        // sitio) la pagina se volvia infinita.
+        copy.textContent =
+            items.length === 1
+                ? '1 visita en el período. Descarga el detalle con evidencias en PDF o Excel.'
+                : `${items.length} visitas en el período. Cada una tiene su propio informe con evidencias.`;
 
-        copy.textContent = isSingleDay
-            ? 'Detalle del día con evidencias. Usa los botones de cada turno para descargar un informe individual.'
-            : `${items.length} visita(s) del período. Descarga el informe general con el botón superior o uno individual desde cada tarjeta.`;
-
-        // Debug: registrar el shape del primer shift para poder ver qué campo
-        // trae el id (backend v3 usa variantes distintas según endpoint).
-        if (items.length > 0) {
-            console.info('[report-shifts] primer item, keys:', Object.keys(items[0]), 'raw keys:', items[0]?.raw ? Object.keys(items[0].raw) : null, 'sample:', items[0]);
-        }
-
-        let foundEvidence = false;
         list.innerHTML = items
-            .map((shift) => {
+            .map((shift, index) => {
                 const employeeName = this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible');
                 const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible');
                 const scheduleText = formatShiftLocalRange(shift);
@@ -4483,39 +4471,10 @@ export const supervisorMethods = {
                     || shift?.raw?.scheduled_shift_id
                     || '';
 
-                let evidenceBlock = '';
-                if (isSingleDay) {
-                    const startItems = this.extractShiftEvidenceItems(shift, 'start');
-                    const endItems = this.extractShiftEvidenceItems(shift, 'end');
-                    foundEvidence = foundEvidence || startItems.length > 0 || endItems.length > 0;
-
-                    const startMap = new Map();
-                    startItems.forEach((item, i) => {
-                        const k = this.buildEvidenceItemKey(item, i);
-                        if (!startMap.has(k)) startMap.set(k, item);
-                    });
-                    const endMap = new Map();
-                    endItems.forEach((item, i) => {
-                        const k = this.buildEvidenceItemKey(item, i);
-                        if (!endMap.has(k)) endMap.set(k, item);
-                    });
-                    const orderedKeys = [];
-                    startMap.forEach((_, k) => orderedKeys.push(k));
-                    endMap.forEach((_, k) => {
-                        if (!orderedKeys.includes(k)) orderedKeys.push(k);
-                    });
-                    const maxLength = Math.max(startItems.length, endItems.length);
-                    for (let i = 0; i < maxLength; i++) {
-                        const fb = `index_${i + 1}`;
-                        if (!orderedKeys.includes(fb)) orderedKeys.push(fb);
-                    }
-                    evidenceBlock = this.renderReportEvidencePairs(startMap, endMap, startItems, endItems, orderedKeys);
-                }
-
                 const perShiftReportButtons = shiftId
-                    ? `<div class="report-day-shift-actions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+                    ? `<div class="report-day-shift-actions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
                         <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualShiftReport" data-args="${escapeHtml(String(shiftId))}|pdf">
-                            <i class="fas fa-file-pdf"></i> Informe (PDF)
+                            <i class="fas fa-file-pdf"></i> PDF
                         </button>
                         <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualShiftReport" data-args="${escapeHtml(String(shiftId))}|excel">
                             <i class="fas fa-file-excel"></i> Excel
@@ -4527,25 +4486,17 @@ export const supervisorMethods = {
                 return `<article class="report-day-shift-card">
                 <div class="report-day-shift-top">
                     <div>
-                        <div class="report-day-shift-title">${escapeHtml(employeeName)}</div>
-                        <div class="report-day-shift-subtitle">${escapeHtml(restaurantName)} • ${escapeHtml(scheduleText)}</div>
+                        <div class="report-day-shift-title">Visita #${index + 1} · ${escapeHtml(employeeName)}</div>
+                        <div class="report-day-shift-subtitle">${escapeHtml(restaurantName)} · ${escapeHtml(scheduleText)} · ${escapeHtml(workedHours)} trabajadas</div>
                     </div>
                     <div class="report-day-shift-statuses">
                         <span class="badge ${getBadgeClass(statusLabel)}">${escapeHtml(statusLabel)}</span>
                     </div>
                 </div>
-                <div class="report-day-shift-metrics">
-                    <div class="report-day-shift-metric"><span>Horas trabajadas</span><strong>${escapeHtml(workedHours)}</strong></div>
-                </div>
-                ${evidenceBlock}
                 ${perShiftReportButtons}
             </article>`;
             })
             .join('');
-
-        if (isSingleDay && !foundEvidence) {
-            copy.textContent = 'Ese día sí tiene servicios, pero no se recibieron evidencias de inicio y fin en este listado.';
-        }
     },
 
     async downloadIndividualShiftReport(shiftIdArg, formatArg = 'pdf') {
