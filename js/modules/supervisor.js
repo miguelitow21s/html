@@ -4632,6 +4632,18 @@ export const supervisorMethods = {
     },
 
     async generateReport() {
+        // Guard doble-click: si el usuario toca "Generar Informe" mientras el
+        // request anterior aun corre, se disparaban 2 requests concurrentes.
+        // Con el fix del retry (nueva idempotency-key por intento) esto ya
+        // no rompe con 409, pero igual es desperdicio.
+        if (this._reportGenerating) {
+            this.showToast('Ya se está generando un informe. Espera unos segundos.', {
+                tone: 'info',
+                title: 'Informe en proceso',
+            });
+            return;
+        }
+
         const startDate = document.getElementById('report-start-date')?.value;
         const endDate = document.getElementById('report-end-date')?.value;
         const restaurantId = document.getElementById('report-restaurant-select')?.value;
@@ -4653,6 +4665,7 @@ export const supervisorMethods = {
             return;
         }
 
+        this._reportGenerating = true;
         this.showLoading(t('sup.toast.report.generating'), t('sup.toast.report.generating.desc'));
         let reportRequestContext = null;
 
@@ -4672,17 +4685,16 @@ export const supervisorMethods = {
                 export_format: 'both',
                 columns: REPORT_COLUMNS,
             };
-            const reportIdempotencyKey = buildIdempotencyKey();
-            const reportGenerateRequestOptions = {
-                accessToken,
-                requiresIdempotency: false,
-                headers: {
-                    'Idempotency-Key': reportIdempotencyKey,
-                },
-            };
-            const runReportGenerate = async (timeoutMs) =>
+            const initialIdempotencyKey = buildIdempotencyKey();
+            // Cada intento usa SU PROPIA Idempotency-Key. Antes, el retry por
+            // timeout reusaba la misma key; si el primer request aun estaba en
+            // procesamiento del lado del backend, este respondia 409
+            // "Request idempotente en procesamiento".
+            const runReportGenerate = async (timeoutMs, idempotencyKey) =>
                 apiClient.reportsGenerate(payload, {
-                    ...reportGenerateRequestOptions,
+                    accessToken,
+                    requiresIdempotency: false,
+                    headers: { 'Idempotency-Key': idempotencyKey },
                     timeoutMs,
                 });
             reportRequestContext = {
@@ -4690,19 +4702,19 @@ export const supervisorMethods = {
                 headers_sent: {
                     Authorization: accessToken ? 'Bearer <access_token>' : '',
                     apikey: apiClient.getConfig().anonKey || '',
-                    'Idempotency-Key': reportIdempotencyKey,
+                    'Idempotency-Key': initialIdempotencyKey,
                 },
                 timeout_ms: 45000,
                 retry_on_timeout: true,
                 jwt_decoded: buildJwtFullDebugSummary(accessToken),
             };
 
-            const reportGeneratePromise = runReportGenerate(45000).catch(async (error) => {
+            const reportGeneratePromise = runReportGenerate(45000, initialIdempotencyKey).catch(async (error) => {
                 if (String(error?.code || '').toUpperCase() !== 'TIMEOUT') {
                     throw error;
                 }
-
-                return runReportGenerate(60000);
+                // Nueva key para no chocar con el request en curso del backend.
+                return runReportGenerate(60000, buildIdempotencyKey());
             });
 
             const [reportResult, shiftSummaryResult] = await Promise.all([
@@ -4864,6 +4876,7 @@ export const supervisorMethods = {
                 title: t('sup.toast.report.fail'),
             });
         } finally {
+            this._reportGenerating = false;
             this.hideLoading();
         }
     },

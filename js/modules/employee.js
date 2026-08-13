@@ -131,16 +131,15 @@ export const employeeMethods = {
                 ? totalScheduledHours
                 : sumHours(asArray(history));
 
-        document.getElementById('profile-hours-worked').textContent = formatHours(profileHours);
-        document.getElementById('profile-total-shifts').textContent = String(history?.total_shifts || 0);
-        document.getElementById('profile-upcoming-shifts').textContent = String(
-            asArray(this.data.employee.dashboard?.scheduled_shifts).filter((shift) =>
-                this.getEmployeePendingScheduledShift([shift])
-            ).length
-        );
-        document.getElementById('profile-pending-tasks').textContent = String(
-            this.data.employee.dashboard?.pending_tasks_count || 0
-        );
+        // Optional chaining defensivo: si algun stat card se remueve del HTML
+        // (ej. profile-upcoming-shifts en el corte final Visitas), no explota.
+        const setText = (id, value) => {
+            const node = document.getElementById(id);
+            if (node) node.textContent = value;
+        };
+        setText('profile-hours-worked', formatHours(profileHours));
+        setText('profile-total-shifts', String(history?.total_shifts || 0));
+        setText('profile-pending-tasks', String(this.data.employee.dashboard?.pending_tasks_count || 0));
         const visibleTasks = this.getVisibleEmployeeTasks(this.data.employee.dashboard);
         this.renderEmployeeProfileTasks(visibleTasks);
         this.updateUserUI();
