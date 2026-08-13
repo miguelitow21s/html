@@ -1124,63 +1124,9 @@ export const adminMethods = {
                         <span class="badge ${statusClass} admin-supervisor-status">${statusLabel}</span>
                     </div>
 
-                    <div class="admin-supervisor-section">
-                        <span class="info-item-label">Restaurantes asignados</span>
-                        ${
-                            assignedRestaurants.length > 0
-                                ? `
-                            <div class="assignment-list">
-                                ${assignedRestaurants
-                                    .map(
-                                        (assignment) => `
-                                    <span class="assignment-chip">
-                                        ${escapeHtml(getRestaurantDisplayName(assignment))}
-                                        <button
-                                            type="button"
-                                            title="Desasignar"
-                                            data-action="admin-unassign-restaurant"
-                                            data-supervisor-id="${escapeHtml(supervisorId)}"
-                                            data-restaurant-id="${escapeHtml(String(assignment.restaurant_id))}"
-                                        >
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </span>
-                                `
-                                    )
-                                    .join('')}
-                            </div>
-                        `
-                                : '<p class="muted-copy">Sin sitios asignados todavía.</p>'
-                        }
-                    </div>
-
-                    <div class="admin-supervisor-assignment-row">
-                        <div class="form-group admin-panel-field admin-supervisor-select-wrap">
-                            <label>Asignar restaurante</label>
-                            <select id="${escapeHtml(selectId)}" class="dark-control" ${assignDisabled}>
-                                <option value="">${availableRestaurants.length > 0 ? 'Selecciona un sitio' : 'Sin sitios disponibles'}</option>
-                                ${availableRestaurants
-                                    .map(
-                                        (restaurant) => `
-                                    <option value="${escapeHtml(String(restaurant.id || restaurant.restaurant_id))}">
-                                        ${escapeHtml(getRestaurantDisplayName(restaurant))}
-                                    </option>
-                                `
-                                    )
-                                    .join('')}
-                            </select>
-                        </div>
-                        <button
-                            type="button"
-                            class="btn btn-primary btn-inline admin-assign-btn"
-                            data-action="admin-assign-restaurant"
-                            data-supervisor-id="${escapeHtml(supervisorId)}"
-                            ${assignDisabled}
-                        >
-                            <i class="fas fa-link"></i>
-                            <span>Asignar</span>
-                        </button>
-                    </div>
+                    <!-- Bloque de asignacion de restaurantes retirado en el corte
+                         "Sin asignacion de sitios": los inspectores pueden
+                         auditar cualquier sitio activo sin asignacion previa. -->
 
                     <div class="admin-supervisor-actions">
                         ${clearPhoneButton}
@@ -1257,67 +1203,6 @@ export const adminMethods = {
             this.showToast(this.getErrorMessage(error, t('admin.supervisors.status.error')), {
                 tone: 'error',
                 title: t('admin.toast.cannot.update.status'),
-            });
-        } finally {
-            this.hideLoading();
-        }
-    },
-
-    async assignRestaurantToSupervisor(supervisorId) {
-        const select = document.getElementById(`admin-supervisor-assign-${supervisorId}`);
-        const restaurantId = select?.value;
-
-        if (!restaurantId) {
-            this.showToast(t('admin.toast.select.site.assign'), {
-                tone: 'warning',
-                title: t('admin.toast.missing.site.assign'),
-            });
-            return;
-        }
-
-        this.showLoading(t('admin.toast.assigning.site'), t('toast.common.saving.change'));
-
-        try {
-            await apiClient.adminSupervisorsManage('assign', {
-                supervisor_id: supervisorId,
-                restaurant_id: Number.isFinite(Number(restaurantId)) ? Number(restaurantId) : restaurantId,
-            });
-
-            this.invalidateCache('adminSupervisors');
-            await this.loadAdminSupervisors(true);
-            this.showToast(t('admin.toast.site.assigned'), {
-                tone: 'success',
-                title: t('admin.toast.assign.success'),
-            });
-        } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible asignar el sitio.'), {
-                tone: 'error',
-                title: t('admin.toast.cannot.assign.site'),
-            });
-        } finally {
-            this.hideLoading();
-        }
-    },
-
-    async unassignRestaurantFromSupervisor(supervisorId, restaurantId) {
-        this.showLoading(t('admin.toast.unassigning.site'), t('toast.common.saving.change'));
-
-        try {
-            await apiClient.adminSupervisorsManage('unassign', {
-                supervisor_id: supervisorId,
-                restaurant_id: Number.isFinite(Number(restaurantId)) ? Number(restaurantId) : restaurantId,
-            });
-
-            this.invalidateCache('adminSupervisors');
-            await this.loadAdminSupervisors(true);
-            this.showToast(t('admin.toast.site.unassigned'), {
-                tone: 'success',
-                title: t('toast.common.saved'),
-            });
-        } catch (error) {
-            this.showToast(this.getErrorMessage(error, 'No fue posible desasignar el sitio.'), {
-                tone: 'error',
-                title: t('admin.toast.cannot.unassign.site'),
             });
         } finally {
             this.hideLoading();

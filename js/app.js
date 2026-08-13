@@ -261,8 +261,6 @@ const app = {
     cache: {
         timestamps: {},
         pending: {},
-        supervisorRestaurantStaff: {},
-        supervisorAssignableEmployees: {},
         adminMetricsUnavailable: false,
         adminSupervisionsUnavailable: false,
         adminSupervisionsQuery: '',
@@ -1172,25 +1170,8 @@ const app = {
                 await this.openSupervisorRestaurantTaskModal(restaurantId, 'restaurants');
                 return;
             }
-            case 'admin-unassign-restaurant': {
-                const supervisorId = String(source.dataset.supervisorId || '').trim();
-                const restaurantId = String(source.dataset.restaurantId || '').trim();
-                if (!supervisorId || !restaurantId) {
-                    return;
-                }
-                event.preventDefault();
-                void this.unassignRestaurantFromSupervisor(supervisorId, restaurantId);
-                return;
-            }
-            case 'admin-assign-restaurant': {
-                const supervisorId = String(source.dataset.supervisorId || '').trim();
-                if (!supervisorId) {
-                    return;
-                }
-                event.preventDefault();
-                void this.assignRestaurantToSupervisor(supervisorId);
-                return;
-            }
+            // 'admin-assign-restaurant' / 'admin-unassign-restaurant' retirados
+            // en el corte "Sin asignacion de sitios".
             case 'admin-edit-supervisor': {
                 const supervisorId = String(source.dataset.supervisorId || '').trim();
                 if (!supervisorId) {
@@ -3098,8 +3079,6 @@ const app = {
         this._loadedModuleRole = null;
         this.cache.timestamps = {};
         this.cache.pending = {};
-        this.cache.supervisorRestaurantStaff = {};
-        this.cache.supervisorAssignableEmployees = {};
         this.cache.adminSupervisorsQuery = '';
         localStorage.removeItem(STORAGE_KEYS.user);
         localStorage.removeItem(STORAGE_KEYS.shiftOtpExpiresAt);

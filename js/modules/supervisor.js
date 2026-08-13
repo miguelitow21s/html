@@ -409,72 +409,6 @@ export const supervisorMethods = {
         };
     },
 
-    async getSupervisorRestaurantStaff(restaurantId) {
-        const normalizedRestaurantId = normalizeRestaurantId(restaurantId);
-        if (normalizedRestaurantId == null) {
-            return [];
-        }
-
-        const cacheKey = String(normalizedRestaurantId);
-        const cachedStaff = this.getScopedCacheEntry(
-            'supervisorRestaurantStaff',
-            cacheKey,
-            CACHE_TTLS.supervisorRestaurantStaff
-        );
-        if (cachedStaff) {
-            return cachedStaff;
-        }
-
-        return this.runPending(`supervisorRestaurantStaff:${cacheKey}`, async () => {
-            const result = await apiClient.restaurantStaffManage('list_by_restaurant', {
-                restaurant_id: normalizedRestaurantId,
-            });
-
-            return this.setScopedCacheEntry(
-                'supervisorRestaurantStaff',
-                cacheKey,
-                asArray(result).map((item) => this.normalizeSupervisorEmployeeRecord(item))
-            );
-        });
-    },
-
-    async getAssignableEmployeesForRestaurant(restaurantId) {
-        const normalizedRestaurantId = normalizeRestaurantId(restaurantId);
-        if (normalizedRestaurantId == null) {
-            return [];
-        }
-
-        const cacheKey = String(normalizedRestaurantId);
-        const cachedEmployees = this.getScopedCacheEntry(
-            'supervisorAssignableEmployees',
-            cacheKey,
-            CACHE_TTLS.supervisorAssignableEmployees
-        );
-        if (cachedEmployees) {
-            return cachedEmployees;
-        }
-
-        return this.runPending(`supervisorAssignableEmployees:${cacheKey}:directory`, async () => {
-            if (
-                this.data.supervisor.employees.length === 0 ||
-                !this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees)
-            ) {
-                await this.loadSupervisorEmployees();
-            }
-
-            return this.setScopedCacheEntry(
-                'supervisorAssignableEmployees',
-                cacheKey,
-                asArray(this.data.supervisor.employees)
-                    .filter((employee) => employee?.id)
-                    .filter((employee) => employee.is_active !== false)
-                    .map((employee) => ({
-                        ...employee,
-                        assigned_to_restaurant: true,
-                    }))
-            );
-        });
-    },
 
     async prepareSupervisorShiftModal() {
         if (this.data.supervisor.restaurants.length === 0) {
@@ -803,54 +737,10 @@ export const supervisorMethods = {
         return option;
     },
 
-    async renderSupervisorShiftEmployeePicker(restaurantId) {
-        const container = document.getElementById('supervisor-shift-employee-picker');
-        if (!container) {
-            return [];
-        }
-
-        if (!restaurantId) {
-            this.setShiftBatchPickerEmpty(container, 'Selecciona un sitio para ver los contratistas disponibles.');
-            this.supervisorBatchSelectedEmployees = [];
-            return [];
-        }
-
-        try {
-            const employees = await this.getAssignableEmployeesForRestaurant(restaurantId);
-            const validIds = new Set(employees.map((employee) => String(employee.id)));
-            this.supervisorBatchSelectedEmployees = (this.supervisorBatchSelectedEmployees || []).filter((employeeId) =>
-                validIds.has(String(employeeId))
-            );
-
-            if (employees.length === 0) {
-                this.setShiftBatchPickerEmpty(
-                    container,
-                    'No hay contratistas activos disponibles para asignar en este sitio.'
-                );
-                return [];
-            }
-
-            const fragment = document.createDocumentFragment();
-            employees.forEach((employee) => {
-                const employeeId = String(employee.id);
-                const isActive = this.supervisorBatchSelectedEmployees.includes(employeeId);
-                const option = this.buildSupervisorShiftBatchEmployeeOption(employee, isActive);
-                if (option) {
-                    fragment.appendChild(option);
-                }
-            });
-            container.replaceChildren(fragment);
-
-            return employees;
-        } catch (error) {
-            console.warn('No fue posible cargar empleados para programación masiva.', error);
-            this.setShiftBatchPickerEmpty(
-                container,
-                'No fue posible cargar los contratistas disponibles para este sitio.'
-            );
-            this.supervisorBatchSelectedEmployees = [];
-            return [];
-        }
+    // No-op post-corte "Sin asignacion de sitios": el picker de contratistas
+    // por sitio solo servia para el modal de agendamiento eliminado.
+    async renderSupervisorShiftEmployeePicker() {
+        return [];
     },
 
     toggleSupervisorBatchEmployee(employeeId, { rerender = true } = {}) {

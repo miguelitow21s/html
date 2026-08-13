@@ -810,9 +810,9 @@ export class WorkTraceApiClient {
         return this.callAction('/admin_dashboard_metrics', 'summary', payload, options);
     }
 
-    restaurantStaffManage(action, payload = {}) {
-        return this.callAction('/restaurant_staff_manage', action, payload);
-    }
+    // restaurantStaffManage removido en el corte "Sin asignacion de sitios".
+    // Los contratistas pueden entrar a cualquier sitio activo via
+    // visitable_restaurants[]; no hace falta staffing explicito.
 
     reportsManage(action, payload = {}) {
         return this.callAction('/reports_manage', action, payload);

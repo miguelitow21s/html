@@ -742,8 +742,8 @@ export const employeeMethods = {
             button.innerHTML = hasActiveShift
                 ? goToCleaning
                     ? 'Continuar con el Servicio Activo <i class="fas fa-arrow-right"></i>'
-                    : 'Completar Fotos Iniciales <i class="fas fa-camera"></i>'
-                : 'Registrar Inicio y Continuar <i class="fas fa-arrow-right"></i>';
+                    : 'Tomar Fotos de Entrada <i class="fas fa-camera"></i>'
+                : 'Tomar Fotos de Entrada <i class="fas fa-camera"></i>';
         }
 
         const gpsButton = document.getElementById('gps-btn');
@@ -1350,15 +1350,11 @@ export const employeeMethods = {
             // Backend contract: si viene early_end_reason, exige >=3 caracteres.
             // Validamos aca para no mandar y recibir "String must contain at
             // least 3 character(s)" crudo del servidor.
-            const MIN_REASON_LEN = 3;
-            if (earlyEndReasonRaw && earlyEndReasonRaw.length < MIN_REASON_LEN) {
+            if (earlyEndReasonRaw && earlyEndReasonRaw.length < 3) {
                 this.hideLoading();
                 this.showToast(
-                    `Las observaciones deben tener al menos ${MIN_REASON_LEN} caracteres. Escribe una descripción más completa o deja el campo vacío.`,
-                    {
-                        tone: 'warning',
-                        title: 'Observaciones muy cortas',
-                    }
+                    'Escribe más de 3 caracteres en las observaciones o deja el campo vacío.',
+                    { tone: 'warning', title: 'Observaciones muy cortas' }
                 );
                 earlyEndReasonInput?.focus();
                 return;
@@ -1864,7 +1860,7 @@ export const employeeMethods = {
 
     async employeeCompleteRestaurantTask(taskId) {
         const notesInput = document.getElementById(`rtask-notes-${taskId}`);
-        const notes = notesInput?.value?.trim() || undefined;
+        const rawNotes = notesInput?.value?.trim() || '';
         const files = (this._rtaskAttachments && this._rtaskAttachments[taskId]) || [];
 
         if (files.length === 0) {
@@ -1874,6 +1870,18 @@ export const employeeMethods = {
             });
             return;
         }
+
+        // Backend rechaza notes con <3 chars ("notes String must contain at
+        // least 3 character(s)"). Validamos aca para mostrar toast humano.
+        if (rawNotes && rawNotes.length < 3) {
+            this.showToast(
+                'Escribe más de 3 caracteres en las observaciones o deja el campo vacío.',
+                { tone: 'warning', title: 'Observaciones muy cortas' }
+            );
+            notesInput?.focus();
+            return;
+        }
+        const notes = rawNotes || undefined;
 
         const numericTaskId = Number(taskId);
         if (!Number.isFinite(numericTaskId)) {

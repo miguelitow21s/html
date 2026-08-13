@@ -117,8 +117,6 @@ export const CACHE_TTLS = Object.freeze({
     employeeDashboard: 20 * 1000,
     employeeHoursHistory: 60 * 1000,
     supervisorRestaurants: 60 * 1000,
-    supervisorRestaurantStaff: 30 * 1000,
-    supervisorAssignableEmployees: 30 * 1000,
     supervisorEmployees: 30 * 1000,
     adminRestaurants: 60 * 1000,
     adminSettings: 60 * 1000,
