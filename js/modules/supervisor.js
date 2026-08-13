@@ -2828,12 +2828,19 @@ export const supervisorMethods = {
         const employees = await this.runPending(
             `supervisorEmployees:${this.currentUser?.role || 'unknown'}:${force ? 'force' : 'default'}`,
             async () => {
-                if (this.currentUser.role === 'super_admin' || this.currentUser.role === 'superuser') {
-                    const result = await apiClient.adminUsersManage('list', {
-                        role: 'empleado',
-                        limit: 100,
+                // Post-corte "Sin asignacion de sitios": ya no filtramos por
+                // asignaciones. Todos los roles con permiso admin cargan la
+                // lista global de contratistas via admin_users_manage list.
+                // Fallback a [] si el rol no tiene permiso, para no romper la
+                // pantalla.
+                const result = await apiClient
+                    .adminUsersManage('list', { role: 'empleado', limit: 200 })
+                    .catch((error) => {
+                        console.warn('No fue posible cargar el directorio de contratistas.', error);
+                        return [];
                     });
-                    return asArray(result).map((item) => ({
+                return asArray(result)
+                    .map((item) => ({
                         id: item.id || item.user_id,
                         full_name: getEmployeeDisplayName(item),
                         email: item.email || '-',
@@ -2844,39 +2851,12 @@ export const supervisorMethods = {
                         assignments: [],
                         available_restaurants: [],
                         raw: item,
-                    }));
-                }
-
-                const directoryResult = await apiClient
-                    .restaurantStaffManage('list_assignable_employees', {
-                        limit: 200,
-                    })
-                    .catch((error) => {
-                        console.warn('No fue posible cargar el directorio completo de contratistas.', error);
-                        return [];
-                    });
-
-                return asArray(directoryResult)
-                    .map((item) => this.normalizeSupervisorEmployeeRecord(item))
-                    .filter((employee) => employee.id)
-                    .map((employee) => ({
-                        id: employee.id,
-                        full_name: employee.full_name,
-                        email: employee.email,
-                        phone_e164: employee.phone_e164,
-                        username: employee.username || employee.user_name || employee.employee_username || '',
-                        employee_code: employee.employee_code || employee.code || '',
-                        is_active: employee.is_active,
-                        assigned_restaurants_count: employee.assigned_restaurants_count || 0,
-                        assignments: [],
-                        available_restaurants: [],
-                        raw: employee.raw || employee,
                     }))
+                    .filter((employee) => employee.id)
                     .sort((left, right) => {
                         if ((left.is_active === false) !== (right.is_active === false)) {
                             return left.is_active === false ? 1 : -1;
                         }
-
                         return String(left.full_name || '').localeCompare(String(right.full_name || ''), 'es', {
                             sensitivity: 'base',
                         });
