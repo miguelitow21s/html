@@ -4446,9 +4446,21 @@ export const supervisorMethods = {
             return;
         }
 
+        // Cuando hay muchas visitas la vista previa inline satura la pagina
+        // y hace scroll infinito (screenshots muestran 64 turnos amontonados).
+        // Tope: 12 tarjetas. Sobre ese numero mostramos solo el total con CTA
+        // a descargar PDF/Excel, igual que en el card de auditorias.
+        const MAX_INLINE_CARDS = 12;
+        if (items.length > MAX_INLINE_CARDS) {
+            copy.textContent =
+                `El informe cubre ${items.length} visita(s). Para no saturar la pantalla, descarga el PDF o Excel arriba y ahi veras el detalle completo con evidencias.`;
+            list.innerHTML = `<div class="report-day-phase-empty">Vista previa desactivada por volumen (${items.length} visitas). Usa los botones de descarga arriba.</div>`;
+            return;
+        }
+
         copy.textContent = isSingleDay
             ? 'Detalle del día con evidencias. Usa los botones de cada turno para descargar un informe individual.'
-            : 'Turnos del período. Descarga el informe general con el botón superior o uno individual desde cada tarjeta.';
+            : `${items.length} visita(s) del período. Descarga el informe general con el botón superior o uno individual desde cada tarjeta.`;
 
         // Debug: registrar el shape del primer shift para poder ver qué campo
         // trae el id (backend v3 usa variantes distintas según endpoint).
@@ -4463,9 +4475,6 @@ export const supervisorMethods = {
                 const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible');
                 const scheduleText = formatShiftLocalRange(shift);
                 const workedHours = formatHours(getWorkedHours(shift));
-                const scheduledHours = formatHours(getScheduledHours(shift));
-                const endedEarly = isShiftEndedEarly(shift);
-                const earlyEndReason = this.getEarlyEndReasonLabel(shift);
                 const shiftId = shift?.id
                     || shift?.shift_id
                     || shift?.scheduled_shift_id
@@ -4523,14 +4532,11 @@ export const supervisorMethods = {
                     </div>
                     <div class="report-day-shift-statuses">
                         <span class="badge ${getBadgeClass(statusLabel)}">${escapeHtml(statusLabel)}</span>
-                        ${endedEarly ? '<span class="badge badge-warning">Cerrado antes de hora</span>' : ''}
                     </div>
                 </div>
                 <div class="report-day-shift-metrics">
                     <div class="report-day-shift-metric"><span>Horas trabajadas</span><strong>${escapeHtml(workedHours)}</strong></div>
-                    <div class="report-day-shift-metric"><span>Horas programadas</span><strong>${escapeHtml(scheduledHours)}</strong></div>
                 </div>
-                ${earlyEndReason ? `<div class="report-day-shift-metric"><span>Observaciones</span><strong>${escapeHtml(earlyEndReason)}</strong></div>` : ''}
                 ${evidenceBlock}
                 ${perShiftReportButtons}
             </article>`;
@@ -4564,6 +4570,45 @@ export const supervisorMethods = {
         // aunque la pestaña sí se abra, y perdemos la referencia para
         // asignar el URL después. Neutralizamos opener manualmente al final.
         const previewWindow = window.open('about:blank', '_blank');
+
+        // Placeholder mientras el backend genera el reporte (5-30s). Antes
+        // el user veia "about:blank" y no sabia que estaba pasando.
+        if (previewWindow && !previewWindow.closed) {
+            try {
+                previewWindow.document.open();
+                previewWindow.document.write(`<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Generando informe...</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+    :root { color-scheme: dark light; }
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f172a; color: #e2e8f0; text-align: center; padding: 24px; }
+    .box { max-width: 320px; }
+    .spinner { width: 48px; height: 48px; border-radius: 50%;
+        border: 4px solid rgba(148,163,184,0.25); border-top-color: #38bdf8;
+        margin: 0 auto 20px; animation: spin 0.9s linear infinite; }
+    h1 { font-size: 18px; font-weight: 600; margin: 0 0 8px; }
+    p { font-size: 14px; color: #94a3b8; margin: 0; line-height: 1.4; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+    <div class="box">
+        <div class="spinner"></div>
+        <h1>Generando el informe...</h1>
+        <p>El PDF se abrirá aquí automáticamente en unos segundos. No cierres esta pestaña.</p>
+    </div>
+</body>
+</html>`);
+                previewWindow.document.close();
+            } catch (writeError) {
+                console.warn('[individual-report] no se pudo pintar placeholder en preview', writeError);
+            }
+        }
 
         this.showLoading('Generando informe', 'Preparando el informe del turno.');
         try {
@@ -4788,14 +4833,24 @@ export const supervisorMethods = {
                 },
             };
 
-            document.getElementById('report-summary-worked-hours').textContent = formatHours(
-                this.data.lastGeneratedReport.resolved_totals.total_worked_hours
+            // Helper defensivo: los stats scheduled/ended-early se removieron
+            // post-migracion Visitas (no hay agenda), este helper evita
+            // getElementById(null).textContent en versiones donde se limpiaron.
+            const setStatText = (id, value) => {
+                const node = document.getElementById(id);
+                if (node) node.textContent = value;
+            };
+            setStatText(
+                'report-summary-worked-hours',
+                formatHours(this.data.lastGeneratedReport.resolved_totals.total_worked_hours)
             );
-            document.getElementById('report-summary-scheduled-hours').textContent = formatHours(
-                this.data.lastGeneratedReport.resolved_totals.total_scheduled_hours
+            setStatText('report-summary-shifts', String(shiftItems.length));
+            // Legacy: si estos aun existen en algun HTML viejo, se pintan igual.
+            setStatText(
+                'report-summary-scheduled-hours',
+                formatHours(this.data.lastGeneratedReport.resolved_totals.total_scheduled_hours)
             );
-            document.getElementById('report-summary-shifts').textContent = String(shiftItems.length);
-            document.getElementById('report-summary-ended-early').textContent = String(endedEarlyCount);
+            setStatText('report-summary-ended-early', String(endedEarlyCount));
             // Backend v3: cada shift_item trae site_tasks[] con tareas del sitio
             // resueltas dentro de la ventana del turno.
             const siteTasksCount = shiftItems.reduce(
