@@ -2810,8 +2810,6 @@ export const supervisorMethods = {
     async loadSupervisorEmployees(force = false) {
         if (force) {
             this.invalidateCache('supervisorEmployees', 'supervisorRestaurants');
-            this.invalidateScopedCache('supervisorRestaurantStaff');
-            this.invalidateScopedCache('supervisorAssignableEmployees');
         }
 
         this.data.supervisor.restaurants = await this.getSupervisorRestaurants(force);
@@ -2831,14 +2829,28 @@ export const supervisorMethods = {
                 // Post-corte "Sin asignacion de sitios": ya no filtramos por
                 // asignaciones. Todos los roles con permiso admin cargan la
                 // lista global de contratistas via admin_users_manage list.
-                // Fallback a [] si el rol no tiene permiso, para no romper la
-                // pantalla.
-                const result = await apiClient
-                    .adminUsersManage('list', { role: 'empleado', limit: 200 })
-                    .catch((error) => {
-                        console.warn('No fue posible cargar el directorio de contratistas.', error);
-                        return [];
+                let result;
+                try {
+                    result = await apiClient.adminUsersManage('list', { role: 'empleado', limit: 200 });
+                    console.info('[loadSupervisorEmployees] adminUsersManage list role=empleado ->', {
+                        rol_usuario: this.currentUser?.role,
+                        count: Array.isArray(result) ? result.length : 'not-array',
+                        sample: Array.isArray(result) && result.length > 0 ? Object.keys(result[0]) : null,
                     });
+                } catch (error) {
+                    console.error('[loadSupervisorEmployees] adminUsersManage list FAILED', {
+                        rol_usuario: this.currentUser?.role,
+                        error_code: error?.payload?.error_code || error?.code,
+                        status: error?.status,
+                        message: error?.message,
+                        payload: error?.payload,
+                    });
+                    this.showToast(
+                        `No fue posible cargar contratistas (${error?.payload?.error_code || error?.status || 'error'}). Revisa la consola.`,
+                        { tone: 'error', title: 'Error al cargar contratistas' }
+                    );
+                    result = [];
+                }
                 return asArray(result)
                     .map((item) => ({
                         id: item.id || item.user_id,

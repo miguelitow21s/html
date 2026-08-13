@@ -3193,7 +3193,9 @@ const app = {
                     await this.loadSupervisorRestaurants();
                     break;
                 case 'supervisor-employees':
-                    await this.loadSupervisorEmployees();
+                    // force=true: si el cache previo tenia [] por el bug de
+                    // restaurantStaffManage, se reintenta el fetch.
+                    await this.loadSupervisorEmployees(true);
                     break;
                 case 'supervisor-reports':
                     await this.prepareSupervisorReportsPage();
