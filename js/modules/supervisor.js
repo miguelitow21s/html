@@ -2835,20 +2835,25 @@ export const supervisorMethods = {
                     console.info('[loadSupervisorEmployees] adminUsersManage list role=empleado ->', {
                         rol_usuario: this.currentUser?.role,
                         count: Array.isArray(result) ? result.length : 'not-array',
-                        sample: Array.isArray(result) && result.length > 0 ? Object.keys(result[0]) : null,
                     });
                 } catch (error) {
-                    console.error('[loadSupervisorEmployees] adminUsersManage list FAILED', {
+                    const status = error?.status || error?.payload?.error?.code;
+                    console.warn('[loadSupervisorEmployees] adminUsersManage list rechazado', {
                         rol_usuario: this.currentUser?.role,
-                        error_code: error?.payload?.error_code || error?.code,
-                        status: error?.status,
-                        message: error?.message,
-                        payload: error?.payload,
+                        status,
+                        error_code: error?.payload?.error_code || error?.payload?.error?.error_code,
                     });
-                    this.showToast(
-                        `No fue posible cargar contratistas (${error?.payload?.error_code || error?.status || 'error'}). Revisa la consola.`,
-                        { tone: 'error', title: 'Error al cargar contratistas' }
-                    );
+                    // 403 esperado si el rol no es super_admin/superuser. En ese
+                    // caso mostramos mensaje amigable en la pantalla (via el
+                    // renderer que ya maneja lista vacia) sin toast agresivo.
+                    // Otros errores (500, network) si merecen aviso.
+                    if (Number(status) !== 403) {
+                        this.showToast(
+                            `No fue posible cargar contratistas (${status || 'error'}).`,
+                            { tone: 'error', title: 'Error al cargar contratistas' }
+                        );
+                    }
+                    this._contractorsListForbidden = Number(status) === 403;
                     result = [];
                 }
                 return asArray(result)
@@ -2935,12 +2940,17 @@ export const supervisorMethods = {
             card.className = 'card';
             const paragraph = document.createElement('p');
             paragraph.style.color = 'var(--gray)';
-            paragraph.textContent =
-                this.supervisorEmployeesStatusFilter === 'inactive'
-                    ? 'No hay contratistas inactivos para mostrar.'
-                    : this.supervisorEmployeesStatusFilter === 'active'
-                      ? 'No hay contratistas activos disponibles para mostrar.'
-                      : 'No hay contratistas disponibles para mostrar.';
+            if (this._contractorsListForbidden) {
+                paragraph.textContent =
+                    'Tu rol no tiene permiso para ver el listado global de contratistas. Coordina con un administrador para que te lo habilite.';
+            } else {
+                paragraph.textContent =
+                    this.supervisorEmployeesStatusFilter === 'inactive'
+                        ? 'No hay contratistas inactivos para mostrar.'
+                        : this.supervisorEmployeesStatusFilter === 'active'
+                          ? 'No hay contratistas activos disponibles para mostrar.'
+                          : 'No hay contratistas disponibles para mostrar.';
+            }
             card.appendChild(paragraph);
             container.replaceChildren(card);
             return;
