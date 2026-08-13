@@ -348,89 +348,18 @@ export const employeeMethods = {
         }
     },
 
-    filterEmployeeTasksByKnownShifts(tasks = [], dashboard = this.data.employee.dashboard || {}) {
-        const activeShiftId = String(dashboard?.active_shift?.id || this.data.currentShift?.id || '').trim();
-        const knownScheduledShiftIds = new Set(
-            asArray(dashboard?.scheduled_shifts)
-                .map((shift) => String(shift?.id || shift?.scheduled_shift_id || '').trim())
-                .filter(Boolean)
-        );
-        const hasKnownShiftScope = Boolean(activeShiftId) || knownScheduledShiftIds.size > 0;
-
-        if (activeShiftId) {
-            knownScheduledShiftIds.add(activeShiftId);
-        }
-
-        const knownRestaurantIds = new Set();
-        const pushRestaurantId = (value) => {
-            const normalizedValue = String(getRestaurantRecordId(value) || value || '').trim();
-            if (normalizedValue) {
-                knownRestaurantIds.add(normalizedValue);
-            }
-        };
-
-        pushRestaurantId(this.data.currentShift?.restaurant_id || this.data.currentShift?.restaurant?.id);
-        pushRestaurantId(
-            this.data.currentScheduledShift?.restaurant_id || this.data.currentScheduledShift?.restaurant?.id
-        );
-        asArray(dashboard?.scheduled_shifts).forEach((shift) => {
-            pushRestaurantId(
-                shift?.restaurant_id ||
-                    shift?.restaurant?.restaurant_id ||
-                    shift?.restaurant?.id ||
-                    shift?.location_id ||
-                    shift?.location?.id
-            );
-        });
-        this.getEmployeeAssignedRestaurants(dashboard).forEach((restaurant) => {
-            pushRestaurantId(restaurant);
-        });
-
-        return asArray(tasks).filter((task) => {
-            const linkedScheduledShiftId = String(
-                task?.scheduled_shift_id ||
-                    task?.scheduledShiftId ||
-                    task?.scheduled_shift?.id ||
-                    task?.scheduled_shift?.scheduled_shift_id ||
-                    task?.meta?.scheduled_shift_id ||
-                    task?.metadata?.scheduled_shift_id ||
-                    ''
-            ).trim();
-            const linkedShiftId = String(
-                task?.shift_id ||
-                    task?.shiftId ||
-                    task?.shift?.id ||
-                    task?.meta?.shift_id ||
-                    task?.metadata?.shift_id ||
-                    ''
-            ).trim();
-            const linkedRestaurantId = String(
-                task?.restaurant_id ||
-                    task?.restaurant?.restaurant_id ||
-                    task?.restaurant?.id ||
-                    task?.meta?.restaurant_id ||
-                    task?.metadata?.restaurant_id ||
-                    ''
-            ).trim();
-
-            if (!linkedScheduledShiftId && !linkedShiftId && !linkedRestaurantId) {
-                return hasKnownShiftScope || knownRestaurantIds.size > 0;
-            }
-
-            if (linkedScheduledShiftId && knownScheduledShiftIds.has(linkedScheduledShiftId)) {
-                return true;
-            }
-
-            if (linkedShiftId && (linkedShiftId === activeShiftId || knownScheduledShiftIds.has(linkedShiftId))) {
-                return true;
-            }
-
-            if (linkedRestaurantId && knownRestaurantIds.has(linkedRestaurantId)) {
-                return true;
-            }
-
-            return false;
-        });
+    filterEmployeeTasksByKnownShifts(tasks = []) {
+        // Post-migracion Visitas: este filtro descarta tareas cuyo
+        // restaurant_id no este en el scope "conocido" (scheduled_shifts +
+        // assigned_restaurants). Bug reportado: si a un contratista se le
+        // asigna una tarea en un sitio nuevo donde nunca tuvo shift ni
+        // asignacion previa (henrry en Motosmart), la tarea queda invisible
+        // aunque el backend list_my_open la haya devuelto.
+        //
+        // Con visitas ad-hoc el contratista puede tener tarea en cualquier
+        // sitio, y el backend ya filtra por usuario. Confiamos y mostramos
+        // todo lo que list_my_open / pending_tasks_preview devuelve.
+        return asArray(tasks);
     },
 
     getEmployeeTaskRestaurantRecord(task, dashboard = this.data.employee.dashboard || {}) {
@@ -1032,6 +961,13 @@ export const employeeMethods = {
         this.restoreCurrentShiftAreaSelection({
             fallbackToAllAvailable: Boolean(this.data.currentShift?.id),
         });
+        // Al entrar a "Evidencias de Cierre", posicionar la zona activa en la
+        // PRIMERA de la lista (antes quedaba en la ultima seleccionada del
+        // flujo de inicio, obligando al user a scrollear/hacer click atras).
+        const areas = this.getEmployeeSelectedAreas();
+        if (areas.length > 0 && typeof this.setEmployeeActiveArea === 'function') {
+            this.setEmployeeActiveArea(areas[0]);
+        }
         this.syncShiftCompletionTaskCard();
         this.navigate('employee-shift-complete');
     },
@@ -1411,6 +1347,22 @@ export const employeeMethods = {
             const scheduledEnd = scheduledEndSource ? new Date(scheduledEndSource) : null;
             const earlyEndReasonRaw = earlyEndReasonInput?.value?.trim() || '';
             const requiresEarlyEndReason = Boolean(scheduledEnd && scheduledEnd.getTime() > Date.now());
+            // Backend contract: si viene early_end_reason, exige >=3 caracteres.
+            // Validamos aca para no mandar y recibir "String must contain at
+            // least 3 character(s)" crudo del servidor.
+            const MIN_REASON_LEN = 3;
+            if (earlyEndReasonRaw && earlyEndReasonRaw.length < MIN_REASON_LEN) {
+                this.hideLoading();
+                this.showToast(
+                    `Las observaciones deben tener al menos ${MIN_REASON_LEN} caracteres. Escribe una descripción más completa o deja el campo vacío.`,
+                    {
+                        tone: 'warning',
+                        title: 'Observaciones muy cortas',
+                    }
+                );
+                earlyEndReasonInput?.focus();
+                return;
+            }
             const earlyEndReason = earlyEndReasonRaw || undefined;
 
             if (requiresEarlyEndReason && !earlyEndReason) {
