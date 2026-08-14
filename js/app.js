@@ -3325,6 +3325,54 @@ const app = {
         // header aparece "ADMIN" o "SUPERVISOR" o "CONTRATISTA" según la
         // pantalla actual, con color distinto por módulo.
         this.updateHeaderModuleBadges();
+
+        // Switcher de módulo (solo para admins): dos botones grandes para
+        // saltar entre "Panel Admin" y "Panel Supervisor" sin usar el logo.
+        this.updateHeaderModuleSwitcher();
+    },
+
+    updateHeaderModuleSwitcher() {
+        const isAdmin = this.isAdminRole();
+        const page = this.currentPage || '';
+        const currentIsAdmin = page.startsWith('admin-');
+        const currentIsSupervisor = page.startsWith('supervisor-');
+
+        document.querySelectorAll('.app-container > .header').forEach((header) => {
+            const parent = header.closest('.app-container');
+            if (parent && parent.classList.contains('hidden')) return;
+
+            let switcher = header.querySelector('.header-module-switcher');
+            // Solo mostrar en pantallas admin/supervisor y solo para admins.
+            const shouldShow = isAdmin && (currentIsAdmin || currentIsSupervisor);
+            if (!shouldShow) {
+                switcher?.remove();
+                return;
+            }
+            if (!switcher) {
+                switcher = document.createElement('div');
+                switcher.className = 'header-module-switcher';
+                switcher.innerHTML = `
+                    <button type="button" class="module-switch-btn" data-action="navigate" data-args="admin-dashboard">
+                        <i class="fas fa-user-shield"></i> Admin
+                    </button>
+                    <button type="button" class="module-switch-btn" data-action="navigate" data-args="supervisor-dashboard">
+                        <i class="fas fa-user-tie"></i> Supervisor
+                    </button>
+                `;
+                // Insertar antes del .header-actions (o al final si no existe).
+                const actions = header.querySelector('.header-actions');
+                if (actions) header.insertBefore(switcher, actions);
+                else header.appendChild(switcher);
+            }
+            // Marcar el botón activo según la página actual.
+            switcher.querySelectorAll('.module-switch-btn').forEach((btn) => {
+                const target = btn.dataset.args;
+                const isActive =
+                    (target === 'admin-dashboard' && currentIsAdmin) ||
+                    (target === 'supervisor-dashboard' && currentIsSupervisor);
+                btn.classList.toggle('module-switch-btn-active', isActive);
+            });
+        });
     },
 
     updateHeaderModuleBadges() {
