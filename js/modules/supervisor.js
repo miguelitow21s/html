@@ -3195,9 +3195,13 @@ export const supervisorMethods = {
         // Fechas por defecto: HOY. Antes tenian value hardcoded en HTML.
         const startInput = document.getElementById('report-start-date');
         const endInput = document.getElementById('report-end-date');
+        // Fecha actual como default cada vez que entra a la pantalla.
+        // Antes solo si el input estaba vacio; el navegador puede restaurar
+        // valores de sesion previa (autofill), asi que forzamos hoy siempre.
+        // Si el usuario cambia la fecha manualmente ya generara con lo elegido.
         const todayIso = new Date().toISOString().slice(0, 10);
-        if (startInput && !startInput.value) startInput.value = todayIso;
-        if (endInput && !endInput.value) endInput.value = todayIso;
+        if (startInput) startInput.value = todayIso;
+        if (endInput) endInput.value = todayIso;
 
         const restaurantSelect = document.getElementById('report-restaurant-select');
         const employeeSelect = document.getElementById('report-employee-select');
@@ -3255,12 +3259,11 @@ export const supervisorMethods = {
         const startInput = document.getElementById('audit-report-start-date');
         const endInput = document.getElementById('audit-report-end-date');
 
-        if (startInput && !startInput.value) {
-            const today = new Date();
-            const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            startInput.value = firstOfMonth.toISOString().slice(0, 10);
+        // Fecha actual como default (mismo criterio que el reporte de turnos).
+        if (startInput) {
+            startInput.value = new Date().toISOString().slice(0, 10);
         }
-        if (endInput && !endInput.value) {
+        if (endInput) {
             endInput.value = new Date().toISOString().slice(0, 10);
         }
 
