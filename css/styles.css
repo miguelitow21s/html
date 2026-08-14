@@ -5584,3 +5584,28 @@ label,
         padding: 6px 10px;
     }
 }
+
+/* Botón "Hoy" al lado de cada campo de fecha en los filtros de reportes.
+   El picker nativo trae "Restablecer" (UI del sistema, no editable); este
+   botón cumple la misma función pero saltando el picker. */
+.date-today-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid rgba(var(--primary-rgb), 0.4);
+    color: var(--primary);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: background 0.15s ease;
+}
+.date-today-btn:hover {
+    background: rgba(var(--primary-rgb), 0.1);
+}
+.date-today-btn i {
+    font-size: 11px;
+}

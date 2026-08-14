@@ -4600,6 +4600,15 @@ const app = {
         input.click?.();
     },
 
+    setDateInputToToday(inputId = '') {
+        const input = document.getElementById(String(inputId || '').trim());
+        if (!input) return;
+        input.value = new Date().toISOString().slice(0, 10);
+        // Disparar change para que cualquier handler que escuche el input
+        // se entere del nuevo valor (ej. sched-shift-*).
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    },
+
     async primeEmployeeWorkspacePermissions() {
         if (!this.currentUser || !ROLE_ROUTES[this.currentUser.role]?.startsWith('employee')) {
             return;
