@@ -155,6 +155,24 @@
         </div>
     </div>
 
+    <div id="modal-task-evidences" class="modal">
+        <div class="modal-content" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3 id="task-evidences-title">Evidencias de la tarea</h3>
+                <button class="btn-close" aria-label="Cerrar" type="button" data-action="closeTaskEvidencesModal">&times;</button>
+            </div>
+            <div class="modal-body" id="task-evidences-body">
+                <div class="task-evidences-loading" style="padding: 40px 20px; text-align: center;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--primary);"></i>
+                    <p class="muted-copy" style="margin-top: 12px;">Cargando evidencias…</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-action="closeTaskEvidencesModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-camera-capture" class="modal camera-modal" data-locked="true">
         <div class="modal-content camera-modal-content">
             <div class="modal-header">

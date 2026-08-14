@@ -1659,7 +1659,12 @@ export const employeeMethods = {
         ].filter(Boolean);
 
         const actionsHtml = isDone
-            ? ''
+            ? `
+            <div class="rtask-actions">
+                <button type="button" class="btn btn-secondary btn-sm" data-rtask-action="view-evidences" data-task-id="${taskId}">
+                    <i class="fas fa-images"></i> Ver evidencias
+                </button>
+            </div>`
             : requiresEvidence
               ? `
             <div class="rtask-actions">
@@ -1736,6 +1741,7 @@ export const employeeMethods = {
                 const action = btn.dataset.rtaskAction;
                 if (action === 'close') void this.employeeCloseRestaurantTask(taskId);
                 else if (action === 'submit-evidence') void this.employeeCompleteRestaurantTask(taskId);
+                else if (action === 'view-evidences') void this.openTaskEvidencesModal(taskId);
                 else if (action === 'show-evidence') {
                     // Puede existir en ambas superficies; abrir la instancia del click.
                     btn.closest('.rtask-card')
@@ -2093,5 +2099,127 @@ export const employeeMethods = {
         } finally {
             this.hideLoading();
         }
+    },
+
+    // -----------------------------------------------------------------
+    // Vista detalle de tarea especial: consumo backend list_evidences.
+    // Aparece en la card de tarea cuando status === completed/closed.
+    // -----------------------------------------------------------------
+    async openTaskEvidencesModal(taskIdArg) {
+        const taskId = Number(taskIdArg);
+        if (!Number.isFinite(taskId)) {
+            this.showToast('No se pudo identificar la tarea.', { tone: 'error', title: 'Tarea inválida' });
+            return;
+        }
+
+        const body = document.getElementById('task-evidences-body');
+        const titleNode = document.getElementById('task-evidences-title');
+        if (titleNode) titleNode.textContent = 'Evidencias de la tarea';
+        if (body) {
+            body.innerHTML = `
+                <div class="task-evidences-loading" style="padding: 40px 20px; text-align: center;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--primary);"></i>
+                    <p class="muted-copy" style="margin-top: 12px;">Cargando evidencias…</p>
+                </div>
+            `;
+        }
+        this.openModal('modal-task-evidences');
+
+        try {
+            const detail = await apiClient.operationalTasksManage('list_evidences', { task_id: taskId });
+            this.renderTaskEvidencesModal(detail || {});
+        } catch (error) {
+            console.warn('[task-evidences] fallo la carga', error);
+            if (body) {
+                body.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <div>
+                            <strong>No fue posible cargar las evidencias.</strong><br>
+                            <small>${escapeHtml(this.getErrorMessage(error, 'Intenta de nuevo en unos segundos.'))}</small>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    },
+
+    closeTaskEvidencesModal() {
+        this.closeModal('modal-task-evidences');
+    },
+
+    renderTaskEvidencesModal(detail) {
+        const body = document.getElementById('task-evidences-body');
+        const titleNode = document.getElementById('task-evidences-title');
+        if (!body) return;
+
+        const title = detail?.title || 'Tarea del sitio';
+        const restaurant = detail?.restaurant_name || '—';
+        const completedBy = detail?.completed_by || '—';
+        const completedAt = detail?.completed_at ? formatDateTime(detail.completed_at) : '—';
+        const notes = String(detail?.notes || '').trim();
+        const evidences = asArray(detail?.evidences);
+
+        if (titleNode) titleNode.textContent = title;
+
+        const metaHtml = `
+            <div class="task-evidences-meta">
+                <div class="info-item">
+                    <i class="fas fa-store"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Sitio</span>
+                        <span class="info-item-value">${escapeHtml(restaurant)}</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-user"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Contratista</span>
+                        <span class="info-item-value">${escapeHtml(completedBy)}</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Completada</span>
+                        <span class="info-item-value">${escapeHtml(completedAt)}</span>
+                    </div>
+                </div>
+                ${notes ? `
+                <div class="info-item">
+                    <i class="fas fa-clipboard"></i>
+                    <div class="info-item-content">
+                        <span class="info-item-label">Observaciones</span>
+                        <span class="info-item-value">${escapeHtml(notes)}</span>
+                    </div>
+                </div>` : ''}
+            </div>
+        `;
+
+        const galleryHtml = evidences.length === 0
+            ? `<p class="muted-copy" style="margin-top: 16px; text-align: center;">La tarea no tiene evidencias registradas.</p>`
+            : `
+            <h4 style="margin: 20px 0 10px; font-size: 15px;">Evidencias (${evidences.length})</h4>
+            <div class="task-evidences-gallery">
+                ${evidences.map((ev, i) => {
+                    const url = sanitizeUrl(ev?.signed_url || '');
+                    if (!url) return '';
+                    if (ev?.is_video) {
+                        return `
+                        <div class="task-evidence-tile">
+                            <video controls playsinline preload="metadata" src="${escapeHtml(url)}"></video>
+                            <span class="task-evidence-caption"><i class="fas fa-video"></i> Video ${i + 1}</span>
+                        </div>`;
+                    }
+                    return `
+                        <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="task-evidence-tile">
+                            <img src="${escapeHtml(url)}" alt="Evidencia ${i + 1}" loading="lazy">
+                            <span class="task-evidence-caption"><i class="fas fa-image"></i> Foto ${i + 1}</span>
+                        </a>`;
+                }).filter(Boolean).join('')}
+            </div>
+            `;
+
+        body.innerHTML = metaHtml + galleryHtml;
     },
 };

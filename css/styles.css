@@ -5453,3 +5453,49 @@ label,
         padding: 0 6px;
     }
 }
+
+/* Galería de evidencias de tareas especiales (modal-task-evidences) */
+.task-evidences-meta .info-item {
+    margin-bottom: 8px;
+}
+.task-evidences-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+.task-evidence-tile {
+    display: block;
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    color: inherit;
+}
+.task-evidence-tile img,
+.task-evidence-tile video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #000;
+}
+.task-evidence-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(0deg, rgba(15, 23, 42, 0.75) 0%, transparent 100%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.task-evidence-caption i {
+    font-size: 10px;
+}
