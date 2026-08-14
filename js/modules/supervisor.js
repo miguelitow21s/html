@@ -3858,11 +3858,8 @@ export const supervisorMethods = {
             }
         }
 
-        const prioritySelect = document.getElementById('supervisor-restaurant-task-priority');
-        if (prioritySelect) {
-            prioritySelect.value = 'high';
-        }
-
+        // Select de prioridad fue removido; getSupervisorRestaurantTaskDraft
+        // devuelve 'high' hardcoded.
         this.restaurantTaskSubmitPending = false;
         this.updateSupervisorRestaurantTaskContextCopy();
     },
@@ -3872,8 +3869,12 @@ export const supervisorMethods = {
             restaurantId: String(document.getElementById('supervisor-restaurant-task-restaurant')?.value || '').trim(),
             title: document.getElementById('supervisor-restaurant-task-title')?.value?.trim() || '',
             description: document.getElementById('supervisor-restaurant-task-description')?.value?.trim() || '',
-            requiresEvidence: document.getElementById('supervisor-restaurant-task-requires-evidence')?.checked === true,
-            priority: document.getElementById('supervisor-restaurant-task-priority')?.value?.trim() || '',
+            // Toda tarea especial ahora requiere evidencia SIEMPRE (el checkbox
+            // fue removido del modal por pedido del usuario: era un paso extra
+            // innecesario porque la evidencia siempre se solicitaba).
+            requiresEvidence: true,
+            // Prioridad fija en Alta (el select fue removido por la misma razon).
+            priority: 'high',
             videoFile: document.getElementById('supervisor-restaurant-task-video')?.files?.[0] || null,
             source: this.restaurantTaskDraftSource || 'restaurants',
         };

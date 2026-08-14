@@ -1335,19 +1335,10 @@
                             </p>
                         </div>
 
-                        <div class="shift-special-task-options">
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" id="supervisor-restaurant-task-requires-evidence">
-                                <span data-i18n="modal.task.evidence">Solicitar evidencia fotográfica</span>
-                            </label>
-                            <div class="form-group">
-                                <label for="supervisor-restaurant-task-priority">Prioridad</label>
-                                <select id="supervisor-restaurant-task-priority" class="dark-control">
-                                    <option value="high">Alta</option>
-                                    <option value="low">Baja</option>
-                                </select>
-                            </div>
-                        </div>
+                        <!-- Checkbox "Solicitar evidencia fotográfica" y select
+                             "Prioridad" removidos: la tarea siempre requiere
+                             evidencia y siempre es prioridad Alta. El JS los
+                             hardcodea en getSupervisorRestaurantTaskDraft. -->
                     </div>
                 </div>
                 <div class="modal-footer">
