@@ -2565,11 +2565,69 @@ export const supervisorMethods = {
         document.getElementById('supervisor-welcome-subtitle').textContent =
             `${restaurants.length} ${t('supervisor.welcome.sites.suffix')}`;
 
-        // Post-migracion Visitas: no hay shifts programados que "no arrancaron".
-        // El card "Tareas especiales completadas" espera el endpoint del
-        // backend (queda con placeholder del HTML por ahora).
+        // Card "Tareas especiales completadas": intentamos poblar con las
+        // últimas tareas del sitio en estado completado (o cerrado). Si el
+        // backend no acepta la acción o devuelve vacio, dejamos el
+        // placeholder original.
+        void this.loadSupervisorCompletedTasks();
 
         this.warmSupervisorWorkspace();
+    },
+
+    async loadSupervisorCompletedTasks() {
+        const alertsContainer = document.getElementById('supervisor-alerts-container');
+        if (!alertsContainer) return;
+        try {
+            const result = await apiClient.operationalTasksManage('list', {
+                status: 'completed',
+                limit: 5,
+            });
+            const items = asArray(result);
+            console.info('[supervisor-alerts] tareas completadas recientes', {
+                count: items.length,
+                sample_keys: items[0] ? Object.keys(items[0]) : null,
+            });
+            if (items.length === 0) {
+                alertsContainer.innerHTML = `<p class="muted-copy" style="margin:0;">Aún no hay tareas especiales completadas para mostrar.</p>`;
+                return;
+            }
+            alertsContainer.innerHTML = items
+                .map((task) => {
+                    const title = escapeHtml(task.title || 'Tarea sin título');
+                    const restaurant = escapeHtml(
+                        task.restaurant_name || task.restaurant?.name || 'Sitio'
+                    );
+                    const completedBy = escapeHtml(
+                        task.completed_by || task.completed_by_name || 'Contratista'
+                    );
+                    const completedAt = task.completed_at
+                        ? escapeHtml(formatDateTime(task.completed_at))
+                        : '';
+                    const taskId = escapeHtml(String(task.id || task.task_id || ''));
+                    return `
+                        <div class="alert alert-success" style="margin-bottom:8px;">
+                            <i class="fas fa-check-circle"></i>
+                            <div style="flex:1;min-width:0;">
+                                <strong>${title}</strong><br>
+                                <small>${restaurant} · ${completedBy}${completedAt ? ` · ${completedAt}` : ''}</small>
+                                ${taskId ? `<div style="margin-top:6px;">
+                                    <button type="button" class="btn btn-secondary btn-inline" data-action="openTaskEvidencesModal" data-args="${taskId}" style="padding:4px 10px;font-size:12px;">
+                                        <i class="fas fa-images"></i> Ver evidencias
+                                    </button>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                })
+                .join('');
+        } catch (error) {
+            const status = error?.status || error?.payload?.error?.code;
+            console.warn('[supervisor-alerts] no se pudo cargar tareas completadas', {
+                status,
+                error_code: error?.payload?.error_code,
+            });
+            // Solo dejamos el placeholder del HTML; no mostramos toast para no ser ruidosos.
+        }
     },
 
     async loadSupervisorRestaurants(force = false) {
