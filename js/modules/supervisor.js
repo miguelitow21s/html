@@ -27,6 +27,7 @@ import {
     formatDate,
     formatDateTime,
     formatHours,
+    formatShiftLocalDate,
     formatShiftLocalRange,
     getBadgeClass,
     getEmployeeDisplayName,
@@ -2565,18 +2566,8 @@ export const supervisorMethods = {
             `${restaurants.length} ${t('supervisor.welcome.sites.suffix')}`;
 
         // Post-migracion Visitas: no hay shifts programados que "no arrancaron".
-        // Las alertas de este tipo desaparecen. El card queda con estado neutro.
-        if (alertsContainer) {
-            alertsContainer.innerHTML = `
-                <div class="alert alert-warning">
-                    <i class="fas fa-check-circle"></i>
-                    <div>
-                        <strong>${escapeHtml(t('sup.alerts.no.critical'))}</strong><br>
-                        <small>${escapeHtml(t('sup.alerts.up.to.date'))}</small>
-                    </div>
-                </div>
-            `;
-        }
+        // El card "Tareas especiales completadas" espera el endpoint del
+        // backend (queda con placeholder del HTML por ahora).
 
         this.warmSupervisorWorkspace();
     },
@@ -3200,6 +3191,13 @@ export const supervisorMethods = {
             this.getSupervisorRestaurants(),
             this.data.supervisor.employees.length === 0 ? this.loadSupervisorEmployees() : Promise.resolve(),
         ]);
+
+        // Fechas por defecto: HOY. Antes tenian value hardcoded en HTML.
+        const startInput = document.getElementById('report-start-date');
+        const endInput = document.getElementById('report-end-date');
+        const todayIso = new Date().toISOString().slice(0, 10);
+        if (startInput && !startInput.value) startInput.value = todayIso;
+        if (endInput && !endInput.value) endInput.value = todayIso;
 
         const restaurantSelect = document.getElementById('report-restaurant-select');
         const employeeSelect = document.getElementById('report-employee-select');
@@ -4353,6 +4351,7 @@ export const supervisorMethods = {
             .map((shift, index) => {
                 const employeeName = this.getResolvedShiftEmployeeName(shift, 'Contratista sin nombre visible');
                 const restaurantName = this.getResolvedShiftRestaurantName(shift, 'Sitio sin nombre visible');
+                const dateText = formatShiftLocalDate(shift);
                 const scheduleText = formatShiftLocalRange(shift);
                 const workedHours = formatHours(getWorkedHours(shift));
                 const shiftId = shift?.id
@@ -4363,29 +4362,35 @@ export const supervisorMethods = {
                     || shift?.raw?.scheduled_shift_id
                     || '';
 
-                const perShiftReportButtons = shiftId
-                    ? `<div class="report-day-shift-actions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
-                        <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualShiftReport" data-args="${escapeHtml(String(shiftId))}|pdf">
-                            <i class="fas fa-file-pdf"></i> PDF
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualShiftReport" data-args="${escapeHtml(String(shiftId))}|excel">
-                            <i class="fas fa-file-excel"></i> Excel
-                        </button>
-                    </div>`
-                    : '';
-
                 const statusLabel = getShiftStatusLabel(shift);
+                // Card rediseniada: FECHA como titulo principal (grande), sitio/contratista/horas
+                // como meta secundaria, y botones PDF/Excel apilados con flex-wrap para no
+                // desbordar en mobile.
                 return `<article class="report-day-shift-card">
                 <div class="report-day-shift-top">
-                    <div>
-                        <div class="report-day-shift-title">Visita #${index + 1} · ${escapeHtml(employeeName)}</div>
-                        <div class="report-day-shift-subtitle">${escapeHtml(restaurantName)} · ${escapeHtml(scheduleText)} · ${escapeHtml(workedHours)} trabajadas</div>
+                    <div style="flex:1; min-width:0;">
+                        <div class="report-visit-date">${escapeHtml(dateText)}</div>
+                        <div class="report-visit-meta">
+                            <span><i class="fas fa-store"></i> ${escapeHtml(restaurantName)}</span>
+                            <span><i class="fas fa-user"></i> ${escapeHtml(employeeName)}</span>
+                            <span><i class="fas fa-clock"></i> ${escapeHtml(scheduleText)} · ${escapeHtml(workedHours)}</span>
+                        </div>
                     </div>
                     <div class="report-day-shift-statuses">
                         <span class="badge ${getBadgeClass(statusLabel)}">${escapeHtml(statusLabel)}</span>
                     </div>
                 </div>
-                ${perShiftReportButtons}
+                ${shiftId ? `
+                <div class="report-visit-actions">
+                    <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualShiftReport" data-args="${escapeHtml(String(shiftId))}|pdf">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualShiftReport" data-args="${escapeHtml(String(shiftId))}|excel">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                    <span class="report-visit-index">Visita #${index + 1}</span>
+                </div>
+                ` : ''}
             </article>`;
             })
             .join('');

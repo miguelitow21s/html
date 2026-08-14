@@ -3296,14 +3296,28 @@ const app = {
 
     updateRoleBasedActions() {
         const isAdmin = this.isAdminRole();
-        const canShowSupervisorCreation = isAdmin || this.isSupervisorRole();
+        const isSupervisor = this.isSupervisorRole();
+        const canShowSupervisorCreation = isAdmin || isSupervisor;
         const createRestaurantButton = document.getElementById('supervisor-create-restaurant-btn');
         const createEmployeeButton = document.getElementById('supervisor-create-employee-btn');
 
         createRestaurantButton?.classList.toggle('hidden', !canShowSupervisorCreation);
         createEmployeeButton?.classList.toggle('hidden', !canShowSupervisorCreation);
+
+        // Botón "Inicio" en pantallas hijas: antes solo se mostraba a admins.
+        // Ahora también a supervisoras (llevando a supervisor-dashboard). El
+        // label se ajusta según el destino real.
+        const dashboardRoute = isAdmin ? 'admin-dashboard' : 'supervisor-dashboard';
+        const dashboardLabel = isAdmin ? 'Inicio Admin' : 'Inicio';
         document.querySelectorAll('.admin-return-btn').forEach((button) => {
-            button.classList.toggle('hidden', !isAdmin);
+            const shouldShow = isAdmin || isSupervisor;
+            button.classList.toggle('hidden', !shouldShow);
+            if (shouldShow) {
+                button.dataset.args = dashboardRoute;
+                button.title = `Ir al panel principal`;
+                const label = button.querySelector('span');
+                if (label) label.textContent = dashboardLabel;
+            }
         });
     },
 

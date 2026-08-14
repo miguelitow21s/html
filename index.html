@@ -9,7 +9,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f172a">
     <title>WorkTrace - Sistema de Gestión de Limpieza</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Cpath d='M18 44l18-18 10 10-18 18H18z' fill='%230ea5e9'/%3E%3Cpath d='M33 17l4-4 14 14-4 4z' fill='%23f8fafc'/%3E%3C/svg%3E">
+    <!-- Favicon: check mark verde de VerifiK sobre fondo blanco. -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23ffffff'/%3E%3Cpath d='M14 34 L26 46 L50 20' stroke='%2300cc44' stroke-width='7' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="css/logos/VerifiK.svg">
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body class="app-booting">
@@ -910,16 +912,10 @@
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title" data-i18n="supervisor.dashboard.alerts">Alertas Recientes</div>
+                    <div class="card-title"><i class="fas fa-bell"></i> Tareas especiales completadas</div>
                 </div>
                 <div id="supervisor-alerts-container">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <div>
-                            <strong data-i18n="supervisor.dashboard.noalerts">Sin alertas operativas</strong><br>
-                            <small data-i18n="supervisor.dashboard.alerts.helper">Cuando haya novedades operativas aparecerán aquí.</small>
-                        </div>
-                    </div>
+                    <p class="muted-copy" style="margin:0;">Aquí verás las tareas especiales del sitio que los contratistas completaron recientemente.</p>
                 </div>
             </div>
         </main>
@@ -1030,7 +1026,7 @@
                         <div class="form-group report-filter-field report-date-field">
                             <label for="report-start-date">Fecha Inicio</label>
                             <div class="date-control">
-                                <input type="date" id="report-start-date" class="dark-control compact-picker" value="2026-03-01" inputmode="none" lang="en-GB">
+                                <input type="date" id="report-start-date" class="dark-control compact-picker" inputmode="none" lang="en-GB">
                                 <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="report-start-date" aria-label="Abrir selector de fecha de inicio">
                                     <i class="fas fa-calendar-alt"></i>
                                 </button>
@@ -1039,7 +1035,7 @@
                         <div class="form-group report-filter-field report-date-field">
                             <label for="report-end-date">Fecha Fin</label>
                             <div class="date-control">
-                                <input type="date" id="report-end-date" class="dark-control compact-picker" value="2026-03-24" inputmode="none" lang="en-GB">
+                                <input type="date" id="report-end-date" class="dark-control compact-picker" inputmode="none" lang="en-GB">
                                 <button type="button" class="date-control-btn" data-action="openDateControlPicker" data-args="report-end-date" aria-label="Abrir selector de fecha fin">
                                     <i class="fas fa-calendar-alt"></i>
                                 </button>
@@ -1077,56 +1073,17 @@
             </div>
             
             <div id="report-result" class="card report-result-card hidden">
+                <!-- ORDEN: 1) descargar (arriba), 2) lista de visitas, 3) resumen del periodo (abajo) -->
+
                 <div class="card-header">
-                    <div class="card-title" data-i18n="supervisor.reports.result">Resumen del Período</div>
+                    <div class="card-title">Informe generado</div>
                 </div>
+                <p class="muted-copy" id="report-result-description">Descarga el informe consolidado o revisa cada visita.</p>
 
-                <p class="muted-copy" id="report-result-description" data-i18n="supervisor.reports.result.desc">Genera el período para ver el resumen operativo y las descargas disponibles.</p>
-
-                <div class="chart-placeholder">
-                    <i class="fas fa-chart-pie" style="font-size: 48px;"></i>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="report-summary-worked-hours">0h</div>
-                        <div class="stat-label">Horas trabajadas</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="report-summary-shifts">0</div>
-                        <div class="stat-label">Visitas</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="report-summary-site-tasks">0</div>
-                        <div class="stat-label">Tareas del sitio</div>
-                    </div>
-                </div>
-
-                <div class="report-inline-summary-grid">
-                    <div class="report-inline-summary-card">
-                        <strong>Horas del sitio</strong>
-                        <p id="report-restaurant-totals-copy" data-i18n="supervisor.reports.totals">Aquí verás cuántas horas se acumularon en el sitio consultado.</p>
-                    </div>
-                    <div class="report-inline-summary-card">
-                        <strong data-i18n="supervisor.reports.states">Estados del período</strong>
-                        <div id="report-status-breakdown" class="report-pill-list">
-                            <span class="report-pill report-pill-empty" data-i18n="supervisor.reports.states.empty">Genera el informe para ver el estado de los servicios.</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="report-day-evidence" class="report-day-evidence hidden">
-                    <div class="report-day-evidence-header">
-                        <h4 data-i18n="supervisor.reports.evidence.title">Evidencias del Antes y Después</h4>
-                        <p id="report-day-evidence-copy" data-i18n="supervisor.reports.evidence.copy">Cuando el informe corresponde a un solo día, aquí verás las evidencias del servicio.</p>
-                    </div>
-                    <div id="report-day-evidence-list" class="report-day-evidence-list"></div>
-                </div>
-                
-                <div class="report-downloads">
+                <div class="report-downloads" style="margin-bottom: 18px;">
                     <div class="report-download-menu">
-                        <button class="btn btn-primary btn-inline" id="report-download-trigger" type="button" data-action="toggleReportDownloadMenu">
-                            <i class="fas fa-download"></i> Descargar
+                        <button class="btn btn-primary" id="report-download-trigger" type="button" data-action="toggleReportDownloadMenu">
+                            <i class="fas fa-download"></i> Descargar informe consolidado
                         </button>
                         <div id="report-download-options" class="report-download-options hidden">
                             <button class="btn btn-secondary btn-inline" type="button" data-action="downloadGeneratedReport" data-args="pdf">
@@ -1138,6 +1095,49 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="report-day-evidence" class="report-day-evidence hidden">
+                    <div class="report-day-evidence-header">
+                        <h4>Visitas del período</h4>
+                        <p id="report-day-evidence-copy" class="muted-copy">Cada visita tiene su propio informe con evidencias.</p>
+                    </div>
+                    <div id="report-day-evidence-list" class="report-day-evidence-list"></div>
+                </div>
+
+                <details class="report-summary-collapse" style="margin-top: 24px;">
+                    <summary style="cursor:pointer; font-weight:600; padding:12px 0; border-top:1px solid var(--border-color);">
+                        <i class="fas fa-chart-pie"></i> Resumen del período
+                    </summary>
+                    <div style="padding-top: 12px;">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="report-summary-worked-hours">0h</div>
+                                <div class="stat-label">Horas trabajadas</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="report-summary-shifts">0</div>
+                                <div class="stat-label">Visitas</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="report-summary-site-tasks">0</div>
+                                <div class="stat-label">Tareas del sitio</div>
+                            </div>
+                        </div>
+
+                        <div class="report-inline-summary-grid" style="margin-top: 14px;">
+                            <div class="report-inline-summary-card">
+                                <strong>Horas del sitio</strong>
+                                <p id="report-restaurant-totals-copy" class="muted-copy">Aquí verás cuántas horas se acumularon en el sitio consultado.</p>
+                            </div>
+                            <div class="report-inline-summary-card">
+                                <strong>Estados del período</strong>
+                                <div id="report-status-breakdown" class="report-pill-list">
+                                    <span class="report-pill report-pill-empty">Genera el informe para ver el estado de los servicios.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </div>
             </div>
         </main>
@@ -1455,7 +1455,7 @@
         <main class="content">
             <div class="page-title" data-i18n="admin.dashboard.page.title">Panel de Control Operativo</div>
 
-            <div class="welcome-banner" style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);">
+            <div class="welcome-banner">
                 <h2 data-i18n="admin.dashboard.title">Control de Operaciones y Calidad</h2>
                 <p data-i18n="admin.dashboard.welcome.subtitle">Administración y Auditoría</p>
             </div>
