@@ -3701,16 +3701,9 @@ select.dark-control option:disabled {
     background: rgba(15, 23, 42, 0.02);
 }
 
-.chart-placeholder {
-    height: 200px;
-    background: rgba(15, 23, 42, 0.05);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--gray);
-    margin-bottom: 20px;
-}
+/* .chart-placeholder removido — el ícono de torta vacío se veía feo y
+   el rediseño del informe ya no lo incluye. La clase queda documentada
+   por si algún HTML legacy la referencia. */
 
 /* Hide file input */
 input[type='file'] {
