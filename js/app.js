@@ -3319,6 +3319,54 @@ const app = {
                 if (label) label.textContent = dashboardLabel;
             }
         });
+
+        // Badge de MÓDULO activo en cada header. El admin que navega al modulo
+        // supervisor perdía referencia visual de dónde estaba. Ahora en todo
+        // header aparece "ADMIN" o "SUPERVISOR" o "CONTRATISTA" según la
+        // pantalla actual, con color distinto por módulo.
+        this.updateHeaderModuleBadges();
+    },
+
+    updateHeaderModuleBadges() {
+        const page = this.currentPage || '';
+        let moduleName = '';
+        let moduleClass = '';
+        if (page.startsWith('admin-')) {
+            moduleName = 'ADMIN';
+            moduleClass = 'header-module-badge-admin';
+        } else if (page.startsWith('supervisor-')) {
+            moduleName = 'SUPERVISOR';
+            moduleClass = 'header-module-badge-supervisor';
+        } else if (page.startsWith('employee-')) {
+            moduleName = 'CONTRATISTA';
+            moduleClass = 'header-module-badge-employee';
+        }
+
+        document.querySelectorAll('.app-container > .header').forEach((header) => {
+            // Solo inyectar en headers visibles (de la página activa) para no
+            // acumular badges huérfanos.
+            const parent = header.closest('.app-container');
+            if (parent && parent.classList.contains('hidden')) return;
+
+            let badge = header.querySelector('.header-module-badge');
+            if (!moduleName) {
+                badge?.remove();
+                return;
+            }
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'header-module-badge';
+                // Insertar dentro del .header-brand para que quede al lado del logo.
+                const brand = header.querySelector('.header-brand');
+                if (brand) {
+                    brand.appendChild(badge);
+                } else {
+                    header.appendChild(badge);
+                }
+            }
+            badge.textContent = moduleName;
+            badge.className = `header-module-badge ${moduleClass}`;
+        });
     },
 
     getCacheAge(key) {
