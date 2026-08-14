@@ -3521,34 +3521,35 @@ select.dark-control option:disabled {
     flex-shrink: 0;
 }
 
-/* Nueva tarjeta de visita: fecha como TÍTULO PRINCIPAL. */
+/* Nueva tarjeta de visita: fecha como TÍTULO PRINCIPAL, letras amplias. */
 .report-visit-date {
     color: var(--text-primary);
-    font-size: 17px;
-    font-weight: 700;
+    font-size: 22px;
+    font-weight: 800;
     text-transform: capitalize;
-    line-height: 1.25;
-    margin-bottom: 8px;
+    line-height: 1.2;
+    margin-bottom: 12px;
     word-wrap: break-word;
 }
 
 .report-visit-meta {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    color: var(--text-secondary);
-    font-size: 13px;
+    gap: 8px;
+    color: var(--text-primary);
+    font-size: 15px;
     line-height: 1.5;
 }
 .report-visit-meta span {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     word-wrap: break-word;
 }
 .report-visit-meta i {
     color: var(--primary);
-    width: 14px;
+    width: 18px;
+    font-size: 14px;
     flex-shrink: 0;
 }
 
@@ -3556,14 +3557,15 @@ select.dark-control option:disabled {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
-    padding-top: 12px;
+    gap: 10px;
+    padding-top: 14px;
+    margin-top: 4px;
     border-top: 1px solid var(--border-color);
 }
 .report-visit-actions .btn {
     flex: 0 0 auto;
-    padding: 8px 14px;
-    font-size: 13px;
+    padding: 10px 18px;
+    font-size: 14px;
 }
 .report-visit-index {
     margin-left: auto;
