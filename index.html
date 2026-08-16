@@ -904,11 +904,10 @@
         <main class="content">
             <div class="page-title" data-i18n="supervisor.dashboard.title">Panel de Control</div>
 
-            <div class="welcome-banner">
-                <h2 id="supervisor-welcome-title" data-i18n="supervisor.welcome.title">¡Bienvenido!</h2>
-                <p id="supervisor-welcome-subtitle" data-i18n="supervisor.welcome.subtitle">Gestión de operaciones</p>
-            </div>
-            
+            <!-- Welcome banner removido para consistencia con admin-dashboard.
+                 El switcher "Vista Admin | Vista Supervisor" ya identifica el
+                 contexto; el saludo era redundante. -->
+
             <div class="quick-actions">
                 <button class="quick-action-btn" data-action="navigate" data-args="supervisor-restaurants">
                     <i class="fas fa-store"></i>

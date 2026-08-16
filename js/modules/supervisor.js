@@ -2558,12 +2558,19 @@ export const supervisorMethods = {
         const todayShifts = this.getTodayShifts(shifts);
         this.data.supervisor.shifts = todayShifts;
 
-        const alertsContainer = document.getElementById('supervisor-alerts-container');
+        // Welcome banner removido del HTML; optional chaining defensivo por
+        // si algún flujo legacy lo espera. El saludo era inconsistente
+        // (admin veia "Hola, Admin" en vista supervisor, y nada en vista
+        // admin) — decidimos quitarlo en ambas para consistencia.
         const firstName = (this.currentUser.full_name || this.currentUser.email).split(' ')[0];
-        document.getElementById('supervisor-welcome-title').textContent =
-            `${t('supervisor.welcome.greeting')}, ${firstName}`;
-        document.getElementById('supervisor-welcome-subtitle').textContent =
-            `${restaurants.length} ${t('supervisor.welcome.sites.suffix')}`;
+        const welcomeTitle = document.getElementById('supervisor-welcome-title');
+        if (welcomeTitle) {
+            welcomeTitle.textContent = `${t('supervisor.welcome.greeting')}, ${firstName}`;
+        }
+        const welcomeSubtitle = document.getElementById('supervisor-welcome-subtitle');
+        if (welcomeSubtitle) {
+            welcomeSubtitle.textContent = `${restaurants.length} ${t('supervisor.welcome.sites.suffix')}`;
+        }
 
         // Card "Tareas especiales completadas": intentamos poblar con las
         // últimas tareas del sitio en estado completado (o cerrado). Si el
