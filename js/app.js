@@ -3320,8 +3320,51 @@ const app = {
             }
         });
 
-        // Limpiar residuos de badges / switchers removidos.
+        // Limpiar residuos de intentos anteriores en el header.
         document.querySelectorAll('.header-module-badge, .header-module-switcher').forEach((el) => el.remove());
+
+        // Switcher grande "Vista Admin | Vista Supervisor" DENTRO del contenido
+        // de los dashboards. Solo para admins (que tienen 2 vistas). El botón
+        // activo se destaca claramente para que el usuario sepa en qué vista
+        // está y pueda saltar rápido a la otra.
+        this.updateAdminViewSwitcher();
+    },
+
+    updateAdminViewSwitcher() {
+        // Limpiar switchers viejos siempre (para no acumular en la pantalla
+        // oculta cuando navegamos entre pages).
+        document.querySelectorAll('.admin-view-switcher').forEach((el) => el.remove());
+
+        const isAdmin = this.isAdminRole();
+        const page = this.currentPage || '';
+        if (!isAdmin) return;
+
+        // Solo inyectar en los dos dashboards principales.
+        const targetPages = ['admin-dashboard', 'supervisor-dashboard'];
+        if (!targetPages.includes(page)) return;
+
+        const isInAdminView = page === 'admin-dashboard';
+        const isInSupervisorView = page === 'supervisor-dashboard';
+
+        const container = document.querySelector(`#page-${page} main.content`);
+        if (!container) return;
+
+        const switcher = document.createElement('div');
+        switcher.className = 'admin-view-switcher';
+        switcher.innerHTML = `
+            <button type="button" class="admin-view-btn ${isInAdminView ? 'admin-view-btn-active' : ''}" data-action="navigate" data-args="admin-dashboard">
+                <i class="fas fa-user-shield"></i>
+                <span class="admin-view-btn-title">Vista Admin</span>
+                <span class="admin-view-btn-sub">Panel operativo</span>
+            </button>
+            <button type="button" class="admin-view-btn ${isInSupervisorView ? 'admin-view-btn-active' : ''}" data-action="navigate" data-args="supervisor-dashboard">
+                <i class="fas fa-user-tie"></i>
+                <span class="admin-view-btn-title">Vista Supervisor</span>
+                <span class="admin-view-btn-sub">Auditoría y reportes</span>
+            </button>
+        `;
+        // Insertar como primer elemento del content.
+        container.insertBefore(switcher, container.firstChild);
     },
 
     getCacheAge(key) {
