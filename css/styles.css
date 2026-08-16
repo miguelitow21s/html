@@ -1214,7 +1214,7 @@ canvas {
     background-position: right 18px center !important;
     border: none !important;
     box-shadow: none !important;
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 17px;
     font-weight: 700;
     letter-spacing: -0.01em;
@@ -1255,14 +1255,14 @@ canvas {
 
 .area-chip:hover {
     border-color: rgba(var(--primary-rgb), 0.5);
-    color: var(--white);
+    color: var(--primary);
     transform: translateY(-1px);
 }
 
 .area-chip.active {
     background: rgba(var(--primary-rgb), 0.16);
     border-color: rgba(var(--primary-rgb), 0.55);
-    color: var(--white);
+    color: var(--primary);
     box-shadow: 0 10px 24px -18px rgba(var(--primary-rgb), 0.9);
 }
 
@@ -1623,7 +1623,7 @@ canvas {
 .shift-mode-btn.active {
     background: rgba(var(--primary-rgb), 0.14);
     border-color: rgba(var(--primary-rgb), 0.55);
-    color: var(--white);
+    color: var(--text-primary);
     box-shadow: 0 18px 34px -28px rgba(var(--primary-rgb), 0.95);
 }
 
@@ -1714,7 +1714,7 @@ canvas {
 }
 
 .shift-batch-copy strong {
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 15px;
     overflow-wrap: anywhere;
 }
@@ -1765,7 +1765,7 @@ canvas {
 }
 
 .shift-week-summary-pill strong {
-    color: var(--white);
+    color: var(--text-primary);
 }
 
 .shift-week-row {
@@ -1806,7 +1806,7 @@ canvas {
 }
 
 .shift-week-day-copy strong {
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 15px;
     overflow-wrap: anywhere;
 }
@@ -1876,7 +1876,7 @@ canvas {
 }
 
 .shift-special-task-copy strong {
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 15px;
     overflow-wrap: anywhere;
 }
@@ -1965,7 +1965,7 @@ canvas {
 }
 
 .initial-pin-display strong {
-    color: var(--white);
+    color: var(--text-primary);
     word-break: break-all;
 }
 
@@ -1988,7 +1988,7 @@ canvas {
     background: rgba(14, 165, 233, 0.12);
     border: 2px dashed rgba(14, 165, 233, 0.45);
     border-radius: 12px;
-    color: var(--white);
+    color: var(--text-primary);
     user-select: all;
     min-width: 0;
     overflow-wrap: anywhere;
@@ -2779,19 +2779,19 @@ select.dark-control option:disabled {
 .alert-success {
     background: rgba(16, 185, 129, 0.1);
     border: 1px solid rgba(16, 185, 129, 0.3);
-    color: #10b981;
+    color: #047857;
 }
 
 .alert-warning {
     background: rgba(245, 158, 11, 0.1);
     border: 1px solid rgba(245, 158, 11, 0.3);
-    color: #f59e0b;
+    color: #b45309;
 }
 
 .alert-info {
     background: rgba(14, 165, 233, 0.08);
     border: 1px solid rgba(14, 165, 233, 0.25);
-    color: #7dd3fc;
+    color: #0369a1;
 }
 
 .shift-window-note {
@@ -3491,7 +3491,7 @@ select.dark-control option:disabled {
 }
 
 .report-day-evidence-header h4 {
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 18px;
 }
 
@@ -3616,7 +3616,7 @@ select.dark-control option:disabled {
 }
 
 .report-day-shift-metric strong {
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 16px;
 }
 
@@ -3656,14 +3656,14 @@ select.dark-control option:disabled {
 }
 
 .report-day-photo-label {
-    color: var(--white);
+    color: #ffffff;
     font-size: 12px;
     font-weight: 700;
     line-height: 1.35;
 }
 
 .report-day-photo-meta {
-    color: var(--gray);
+    color: rgba(255, 255, 255, 0.75);
     font-size: 11px;
     line-height: 1.45;
 }
@@ -4037,7 +4037,7 @@ input[type='file'] {
 
 .admin-supervision-copy h4 {
     margin-bottom: 4px;
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 18px;
     overflow-wrap: anywhere;
 }
@@ -4079,7 +4079,7 @@ input[type='file'] {
 }
 
 .admin-supervision-meta-value {
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 14px;
     line-height: 1.45;
     overflow-wrap: anywhere;
@@ -5076,7 +5076,7 @@ input[type='file'] {
 .ssg-date-num {
     font-size: 0.85rem;
     font-weight: 500;
-    color: var(--white);
+    color: var(--text-primary);
     text-transform: none;
     letter-spacing: 0;
 }
@@ -5572,4 +5572,42 @@ label,
 }
 .admin-view-btn-active:hover i {
     color: #ffffff;
+}
+
+/* Badges genéricos (fuera de report-pill). Faltaban estilos base
+   post light-theme -- los <span class="badge badge-*"> aparecían
+   sin color de fondo ni contraste. */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    background: rgba(15, 23, 42, 0.08);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+.badge.badge-success {
+    background: rgba(16, 185, 129, 0.14);
+    color: #047857;
+    border-color: rgba(16, 185, 129, 0.35);
+}
+.badge.badge-warning {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+.badge.badge-danger {
+    background: rgba(239, 68, 68, 0.14);
+    color: #b91c1c;
+    border-color: rgba(239, 68, 68, 0.35);
+}
+.badge.badge-info {
+    background: rgba(14, 165, 233, 0.14);
+    color: #0369a1;
+    border-color: rgba(14, 165, 233, 0.35);
 }
