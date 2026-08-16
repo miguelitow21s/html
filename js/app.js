@@ -6220,9 +6220,17 @@ const app = {
             return true;
         }
 
-        const requiredStartEvidenceCount = Number(
+        // Piso: si el backend no envia required_start_evidence_count, usamos
+        // el total de slots configurados del sitio (employeePhotoSlots.length).
+        // Antes, si el backend no lo mandaba, con 1 sola foto retornaba true
+        // y dejaba pasar al user a cleaning sin haber tomado las demás.
+        const requiredFromBackend = Number(
             shift?.required_start_evidence_count ?? shift?.requiredStartEvidenceCount ?? 0
         );
+        const requiredFromSlots = Number(this.employeePhotoSlots?.length || 0);
+        const requiredStartEvidenceCount = Number.isFinite(requiredFromBackend) && requiredFromBackend > 0
+            ? requiredFromBackend
+            : requiredFromSlots;
 
         const startEvidenceCount = Number(shift?.start_evidence_count ?? shift?.startEvidenceCount ?? 0);
 
@@ -6230,8 +6238,10 @@ const app = {
             if (Number.isFinite(requiredStartEvidenceCount) && requiredStartEvidenceCount > 0) {
                 return startEvidenceCount >= requiredStartEvidenceCount;
             }
-
-            return true;
+            // Sin requerido (backend + slots ambos vacios), no podemos decidir
+            // con certeza. Mejor NO auto-navegar a cleaning; que el usuario
+            // pase por photos manualmente.
+            return false;
         }
 
         if (shift?.has_start_evidence === true || shift?.hasStartEvidence === true) {
