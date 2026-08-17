@@ -1703,7 +1703,7 @@ canvas {
 .shift-batch-option.active .shift-batch-check {
     background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.95) 0%, rgba(16, 185, 129, 0.95) 100%);
     border-color: rgba(16, 185, 129, 0.45);
-    color: #f8fafc;
+    color: var(--text-primary);
     box-shadow: 0 16px 28px -20px rgba(var(--primary-rgb), 0.9);
 }
 
@@ -1944,7 +1944,7 @@ canvas {
 }
 
 .admin-employee-credential-copy span {
-    color: #f8fafc;
+    color: var(--text-primary);
     font-size: 14px;
     line-height: 1.5;
     overflow-wrap: anywhere;
@@ -2358,7 +2358,7 @@ input.dark-control[type='datetime-local']::-webkit-calendar-picker-indicator {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: #f8fafc;
+    color: var(--text-primary);
 }
 
 input.dark-control[type='date']::-webkit-datetime-edit,
@@ -2371,7 +2371,7 @@ input.dark-control[type='datetime-local']::-webkit-datetime-edit {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: #f8fafc;
+    color: var(--text-primary);
 }
 
 .app-container .form-group input[type='date']::-webkit-datetime-edit-fields-wrapper,
@@ -2384,7 +2384,7 @@ input.dark-control[type='datetime-local']::-webkit-datetime-edit {
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
-    color: #f8fafc;
+    color: var(--text-primary);
 }
 
 input.dark-control[type='date']::-webkit-datetime-edit-fields-wrapper,
@@ -2394,7 +2394,7 @@ input.dark-control[type='datetime-local']::-webkit-datetime-edit-fields-wrapper 
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
-    color: #f8fafc;
+    color: var(--text-primary);
 }
 
 .app-container .form-group input[type='date']::-webkit-datetime-edit-text,
@@ -2416,14 +2416,14 @@ input.dark-control[type='datetime-local']::-webkit-datetime-edit-text {
 
 .app-container select,
 .modal select {
-    color-scheme: dark;
+    color-scheme: light;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 select.dark-control {
-    color-scheme: dark;
+    color-scheme: light;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2433,14 +2433,14 @@ select.dark-control {
 .modal select option,
 .app-container select optgroup,
 .modal select optgroup {
-    background: #1e293b;
-    color: #f8fafc;
+    background: #ffffff;
+    color: var(--text-primary);
 }
 
 select.dark-control option,
 select.dark-control optgroup {
     background: #1e293b;
-    color: #f8fafc;
+    color: var(--text-primary);
 }
 
 .compact-picker {
