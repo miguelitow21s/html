@@ -859,28 +859,39 @@ export const employeeMethods = {
         );
         const progress = this.getStartEvidenceProgressSnapshot(this.data.currentShift);
 
-        // Guard hard: si se requieren fotos y NO hay ninguna (ni local ni
-        // en backend), bloquear siempre — sin importar si requiredCount
-        // salio 0 por algún cálculo. Fix para el bug de dejar iniciar sin
-        // tomar fotos cuando la visita ad-hoc no traía required_start_
-        // evidence_count.
-        if (requireStartPhotos && progress.newEvidenceCount === 0 && progress.existingCount === 0) {
+        // Chequeo GRANULAR por slot (subárea). Antes contaba agregado y con
+        // fotos previas del backend podía "aprobar" aunque faltaran subáreas
+        // específicas. Ahora recorremos cada slot de employeePhotoSlots y
+        // verificamos que tenga foto en photoFiles.
+        const slots = this.employeePhotoSlots || [];
+        const photosByKey = this.photoFiles || {};
+        const missingSlots = slots.filter((slot) => !photosByKey[slot.key]);
+
+        console.info('[iniciar-limpieza] validacion', {
+            totalSlots: slots.length,
+            fotosLocales: Object.keys(photosByKey).length,
+            faltantes: missingSlots.length,
+            faltantesLabels: missingSlots.map((s) => s.title),
+            backendCount: progress.existingCount,
+            required: progress.requiredCount,
+        });
+
+        if (requireStartPhotos && slots.length > 0 && missingSlots.length > 0) {
+            const firstMissing = missingSlots[0];
             this.showToast(
-                'Debes tomar al menos una foto por cada área seleccionada antes de iniciar la limpieza.',
+                `Faltan ${missingSlots.length} foto(s). Empieza por: ${firstMissing.title}`,
                 { tone: 'warning', title: t('toast.evidence.missing') }
             );
             return;
         }
 
-        if (requireStartPhotos && progress.remainingCount > 0) {
-            const isActiveShift = Boolean(this.data.currentShift?.id);
-            const message = isActiveShift
-                ? `Faltan ${progress.remainingCount} evidencia(s) inicial(es) para continuar con el servicio activo.`
-                : 'Debes tomar las fotos iniciales de todas las subáreas requeridas.';
-            this.showToast(message, {
-                tone: 'warning',
-                title: t('toast.evidence.missing'),
-            });
+        // Fallback: si no hay slots definidos (visita muy nueva) pero backend
+        // y local están en 0, bloquear.
+        if (requireStartPhotos && slots.length === 0 && progress.newEvidenceCount === 0 && progress.existingCount === 0) {
+            this.showToast(
+                'Debes tomar al menos una foto por cada área seleccionada antes de iniciar la limpieza.',
+                { tone: 'warning', title: t('toast.evidence.missing') }
+            );
             return;
         }
 
