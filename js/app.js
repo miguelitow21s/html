@@ -6310,15 +6310,25 @@ const app = {
         const requiredFromShift = Number(
             shift?.required_start_evidence_count ?? shift?.requiredStartEvidenceCount ?? Number.NaN
         );
-        // Piso: TODAS las áreas disponibles del sitio (requisito #2 del contratista).
-        // Aunque el user deseleccione en el UI, la validación exige haber cubierto
-        // cada área disponible del restaurante.
+        // Piso de fotos requeridas:
+        //   1. Lo que dice el shift del backend (si viene).
+        //   2. Todas las áreas DISPONIBLES del sitio.
+        //   3. Las áreas SELECCIONADAS por el user (mínimo 1 foto por área
+        //      que va a trabajar). Este es el fix del bug de visitas ad-hoc
+        //      donde el backend no manda required_start_evidence_count y
+        //      employeePhotoSlots puede estar vacío al momento del click.
+        //   4. Slots configurados.
+        // Ganamos el MÁXIMO de esos 4, para que nunca sea 0 si el user tiene
+        // áreas para trabajar.
         const requiredByAvailable = this.getEmployeeAvailableAreas().length;
-        const requiredBySlots = Math.max(this.employeePhotoSlots.length, requiredByAvailable);
-        const requiredCount =
-            Number.isFinite(requiredFromShift) && requiredFromShift > 0
-                ? Math.max(requiredFromShift, requiredByAvailable)
-                : Math.max(0, requiredBySlots);
+        const requiredBySelected = this.getEmployeeSelectedAreas().length;
+        const requiredBySlots = this.employeePhotoSlots.length;
+        const requiredCount = Math.max(
+            Number.isFinite(requiredFromShift) && requiredFromShift > 0 ? requiredFromShift : 0,
+            requiredByAvailable,
+            requiredBySelected,
+            requiredBySlots
+        );
 
         const existingCountRaw = Number(shift?.start_evidence_count ?? shift?.startEvidenceCount ?? 0);
         const existingCount = Number.isFinite(existingCountRaw) && existingCountRaw > 0 ? existingCountRaw : 0;

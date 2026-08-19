@@ -858,6 +858,20 @@ export const employeeMethods = {
             DEFAULT_SYSTEM_SETTINGS.evidence.require_start_photos
         );
         const progress = this.getStartEvidenceProgressSnapshot(this.data.currentShift);
+
+        // Guard hard: si se requieren fotos y NO hay ninguna (ni local ni
+        // en backend), bloquear siempre — sin importar si requiredCount
+        // salio 0 por algún cálculo. Fix para el bug de dejar iniciar sin
+        // tomar fotos cuando la visita ad-hoc no traía required_start_
+        // evidence_count.
+        if (requireStartPhotos && progress.newEvidenceCount === 0 && progress.existingCount === 0) {
+            this.showToast(
+                'Debes tomar al menos una foto por cada área seleccionada antes de iniciar la limpieza.',
+                { tone: 'warning', title: t('toast.evidence.missing') }
+            );
+            return;
+        }
+
         if (requireStartPhotos && progress.remainingCount > 0) {
             const isActiveShift = Boolean(this.data.currentShift?.id);
             const message = isActiveShift
