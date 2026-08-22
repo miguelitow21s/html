@@ -816,30 +816,26 @@ export const adminMethods = {
         form?.reset();
 
         const editId = document.getElementById('admin-supervisor-edit-id');
-        const formTitle = document.getElementById('admin-supervisor-form-title');
+        const formTitle = document.getElementById('modal-admin-supervisor-title');
         const submitLabel = document.getElementById('admin-supervisor-submit-label');
-        const cancelButton = document.getElementById('admin-supervisor-cancel-btn');
         const activeCheckbox = document.getElementById('admin-supervisor-active');
 
-        if (editId) {
-            editId.value = '';
-        }
+        if (editId) editId.value = '';
+        if (formTitle) formTitle.textContent = 'Nuevo Inspector';
+        if (submitLabel) submitLabel.textContent = 'Guardar Inspector';
+        if (activeCheckbox) activeCheckbox.checked = true;
+    },
 
-        if (formTitle) {
-            formTitle.textContent = t('admin.supervisors.new.title');
+    openAdminSupervisorModal(mode = 'new') {
+        if (mode === 'new') {
+            this.resetAdminSupervisorForm();
         }
+        this.openModal('modal-admin-supervisor');
+    },
 
-        if (submitLabel) {
-            submitLabel.textContent = t('admin.supervisors.save.new');
-        }
-
-        if (cancelButton) {
-            cancelButton.classList.add('hidden');
-        }
-
-        if (activeCheckbox) {
-            activeCheckbox.checked = true;
-        }
+    closeAdminSupervisorModal() {
+        this.closeModal('modal-admin-supervisor');
+        this.resetAdminSupervisorForm();
     },
 
     beginEditAdminSupervisor(userId) {
@@ -856,12 +852,17 @@ export const adminMethods = {
         document.getElementById('admin-supervisor-full-name').value = supervisor.full_name || '';
         document.getElementById('admin-supervisor-email').value = supervisor.email || '';
         document.getElementById('admin-supervisor-phone').value = supervisor.phone_e164 || '';
-        document.getElementById('admin-supervisor-active').checked = supervisor.is_active !== false;
-        document.getElementById('admin-supervisor-form-title').textContent = t('admin.supervisors.edit.title');
-        document.getElementById('admin-supervisor-submit-label').textContent = t('admin.supervisors.save.update');
-        document.getElementById('admin-supervisor-cancel-btn').classList.remove('hidden');
+        // Cuenta activa: se mantiene siempre en true (chulo eliminado por
+        // pedido del cliente). El input existe hidden solo para no romper
+        // el payload que envía is_active.
+        const activeCheckbox = document.getElementById('admin-supervisor-active');
+        if (activeCheckbox) activeCheckbox.checked = true;
+        const modalTitle = document.getElementById('modal-admin-supervisor-title');
+        if (modalTitle) modalTitle.textContent = 'Editar Inspector';
+        const submitLabel = document.getElementById('admin-supervisor-submit-label');
+        if (submitLabel) submitLabel.textContent = 'Actualizar Inspector';
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.openModal('modal-admin-supervisor');
     },
 
     async submitAdminSupervisorForm() {
@@ -909,7 +910,7 @@ export const adminMethods = {
         try {
             const result = await apiClient.adminUsersManage(isEditing ? 'update' : 'create', payload);
             this.invalidateCache('adminSupervisors');
-            this.resetAdminSupervisorForm();
+            this.closeAdminSupervisorModal();
             await this.loadAdminSupervisors(true);
 
             if (!isEditing) {
@@ -1093,22 +1094,11 @@ export const adminMethods = {
                 const statusLabel = supervisor.is_active ? 'Activa' : 'Inactiva';
                 const statusClass = supervisor.is_active ? 'badge-success' : 'badge-danger';
                 const assignDisabled = availableRestaurants.length === 0 ? 'disabled' : '';
-                const phoneBindingAction = this.getPhoneBindingActionState(supervisor);
-                const clearPhoneButton =
-                    canManagePhoneBinding && phoneBindingAction.visible
-                        ? `
-                        <button
-                            type="button"
-                            class="btn btn-warning btn-inline"
-                            data-action="clear-phone-supervisor"
-                            data-supervisor-id="${escapeHtml(supervisorId)}"
-                            title="Remover el teléfono actual del perfil para poder registrar otro."
-                        >
-                            <i class="fas fa-unlink"></i>
-                            <span>Desvincular Teléfono</span>
-                        </button>
-                    `
-                        : '';
+                // "Desvincular Teléfono" eliminado por pedido del cliente
+                // (PDF de cambios). El botón se retira del render pero el
+                // handler subyacente permanece por si vuelve a habilitarse
+                // desde otro flujo.
+                const clearPhoneButton = '';
 
                 return `
                 <article class="admin-supervisor-card">

@@ -321,6 +321,86 @@ body.camera-capture-active {
     min-width: 0;
 }
 
+.consent-box-detailed .consent-title {
+    margin: 0 0 6px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.consent-box-detailed .consent-list {
+    margin: 0 0 10px;
+    padding-left: 18px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.consent-box-detailed .consent-list li {
+    margin-bottom: 4px;
+}
+
+.consent-box-detailed .consent-check {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    cursor: pointer;
+    padding: 6px 0;
+}
+
+.consent-box-detailed .consent-check + .consent-check {
+    border-top: 1px dashed rgba(148, 163, 184, 0.35);
+    padding-top: 8px;
+    margin-top: 4px;
+}
+
+.consent-box-detailed .consent-foot {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.consent-box-detailed a {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.login-provided-by {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 18px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.login-provided-by-label {
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+}
+
+.login-provided-by-logo {
+    max-height: 20px;
+    width: auto;
+    opacity: 0.9;
+}
+
+.login-provided-by-fallback {
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 0.02em;
+}
+
+.health-cert-foot {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: left;
+}
+
 .form-group {
     margin-bottom: 20px;
 }
@@ -685,6 +765,125 @@ body.camera-capture-active {
     background: rgba(255, 255, 255, 0.92);
     padding: 3px;
     flex-shrink: 0;
+}
+
+/* Header tri-columna: Logo cliente | Logo WorkTrace | Iniciales contratista.
+   Se usa en dashboards principales (empleado, supervisor, admin).
+   Los 3 elementos están justificados y con mayor tamaño para que la
+   marca del cliente se lea sin ambigüedad. */
+.header.header-tri {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 12px 18px;
+    gap: 12px;
+}
+
+.header-tri .header-slot {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+}
+
+.header-tri .header-slot-left {
+    justify-content: flex-start;
+}
+
+.header-tri .header-slot-center {
+    justify-content: center;
+}
+
+.header-tri .header-slot-right {
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.header-client-logo {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 4px;
+    box-shadow: var(--shadow-sm);
+}
+
+.header-wt-logo {
+    height: 32px;
+    width: auto;
+    max-width: 160px;
+    object-fit: contain;
+}
+
+.header-user-pill {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 999px;
+    background: var(--gradient-1);
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.header-user-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.header-user-pill.header-user-pill-static {
+    cursor: default;
+}
+
+.header-user-pill.header-user-pill-static:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.restaurant-card-task-alert {
+    color: #b45309;
+    font-weight: 600;
+}
+
+.restaurant-card-task-empty {
+    color: var(--text-secondary);
+}
+
+@media (max-width: 480px) {
+    .header.header-tri {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .header-client-logo {
+        width: 36px;
+        height: 36px;
+    }
+
+    .header-wt-logo {
+        height: 26px;
+        max-width: 120px;
+    }
+
+    .header-user-pill {
+        min-width: 40px;
+        height: 40px;
+        padding: 0 10px;
+        font-size: 14px;
+    }
 }
 
 .header-actions {

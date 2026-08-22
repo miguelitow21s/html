@@ -312,11 +312,21 @@
             </div>
 
             <form id="login-form">
-                <div class="consent-box">
-                    <label>
+                <div class="consent-box consent-box-detailed">
+                    <p class="consent-title">Necesitamos tu autorización</p>
+                    <ul class="consent-list">
+                        <li><strong>Ubicación</strong> — solo al registrar una tarea. Nunca en segundo plano.</li>
+                        <li><strong>Cámara</strong> — solo para la foto de evidencia en el momento. Sin acceso a tu galería ni otras apps.</li>
+                    </ul>
+                    <label class="consent-check">
                         <input type="checkbox" id="login-consent" required>
-                        <span data-i18n="login.consent">Autorizo el uso de mis datos personales, ubicación GPS y cámara para fines de verificación de turnos laborales. Acepto los términos y condiciones del servicio.</span>
+                        <span data-i18n="login.consent">Autorizo el uso de mi ubicación y cámara solo para verificar mis tareas, como se describe arriba.</span>
                     </label>
+                    <label class="consent-check">
+                        <input type="checkbox" id="login-consent-terms" required>
+                        <span data-i18n="login.consent.terms">Acepto los <a href="#" data-action="openTerms">Términos y Condiciones</a> y el <a href="#" data-action="openPrivacy">Aviso de Privacidad</a>.</span>
+                    </label>
+                    <p class="consent-foot">Puedes revocar esto cuando quieras, desde Configuración.</p>
                 </div>
 
                 <div id="login-notice" class="login-message login-message-success hidden"></div>
@@ -340,7 +350,8 @@
                 </div>
 
                 <div class="login-legal-box">
-                    <p data-i18n="login.legal">Esta aplicación es una plataforma tecnológica de uso exclusivo para contratistas independientes comerciales de R3 Service &amp; Solutions Inc. El uso de esta herramienta tiene como único fin la coordinación comercial, la entrega de evidencias de calidad (Anexo A) y la validación de acceso de seguridad a las locaciones de los clientes. El contratista retiene en todo momento su autonomía operativa, de horarios y de personal.</p>
+                    <p data-i18n="login.legal">WorkTrace es una plataforma tecnológica provista por VerifiK, de uso exclusivo para contratistas independientes comerciales vinculados a R3 Service &amp; Solutions Inc. mediante contrato de prestación de servicios. Su único fin es la coordinación comercial, la entrega de evidencias de calidad del servicio y la confirmación de presencia en las locaciones asignadas por el cliente.</p>
+                    <p data-i18n="login.legal.autonomy">El uso de esta plataforma no constituye ni implica una relación laboral, de subordinación o de dependencia entre el contratista y R3 Service &amp; Solutions Inc. o VerifiK. El contratista conserva en todo momento su autonomía operativa, de horarios, de métodos de trabajo y de personal.</p>
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="login-btn">
@@ -352,6 +363,11 @@
             <div class="forgot-password">
                 <a href="#" data-action="requestPasswordReset" data-i18n="login.forgot">¿Olvidé mi contraseña?</a>
             </div>
+
+            <div class="login-provided-by" aria-label="Provisto por VerifiK">
+                <span class="login-provided-by-label">By</span>
+                <img src="css/logos/VerifiK.svg" alt="VerifiK" class="login-provided-by-logo" width="72" height="20" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'login-provided-by-fallback',textContent:'VerifiK'}));">
+            </div>
         </div>
     </div>
 
@@ -362,14 +378,16 @@
                 employee-shift-complete, employee-shift-summary, success
          ============================================================ -->
     <div id="page-employee-dashboard" class="app-container hidden">
-        <header class="header">
-            <button class="header-brand" data-action="navigateToRoleDashboard" aria-label="Inicio">
-                <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
-                <span>WorkTrace</span>
+        <header class="header header-tri">
+            <button class="header-slot header-slot-left" data-action="navigateToRoleDashboard" aria-label="Inicio">
+                <img class="header-client-logo" src="css/logos/r3-logo.png" alt="R3" width="40" height="40" loading="lazy">
             </button>
-            <div class="header-actions">
-                <button class="header-btn" aria-label="Volver" data-i18n-aria-label="a11y.back" data-action="navigate" data-args="employee-profile" aria-label="Mi perfil">
-                    <span id="user-initial">U</span>
+            <div class="header-slot header-slot-center">
+                <img class="header-wt-logo" src="css/logos/worktrace.svg" alt="WorkTrace" loading="lazy">
+            </div>
+            <div class="header-slot header-slot-right">
+                <button class="header-user-pill" data-action="navigate" data-args="employee-profile" aria-label="Mi perfil">
+                    <span class="js-user-initial" id="user-initial">U</span>
                 </button>
             </div>
         </header>
@@ -476,10 +494,6 @@
                     <div class="stat-value" id="profile-total-shifts">0</div>
                     <div class="stat-label" data-i18n="employee.profile.shifts">Servicios realizados</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="profile-pending-tasks">0</div>
-                    <div class="stat-label">Tareas especiales</div>
-                </div>
             </div>
             
             <div class="card">
@@ -505,16 +519,6 @@
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Tareas Especiales</div>
-                </div>
-                <div id="profile-special-tasks-list">
-                    <div class="task-card">
-                        <p data-i18n="employee.profile.notasks">No hay tareas especiales pendientes.</p>
-                    </div>
-                </div>
-            </div>
         </main>
         
         <nav class="bottom-nav">
@@ -569,14 +573,13 @@
             <div class="health-cert-card">
                 <div class="health-cert-head">
                     <div class="health-cert-icon" aria-hidden="true">
-                        <i class="fas fa-triangle-exclamation"></i>
+                        <i class="fas fa-clipboard-check"></i>
                     </div>
                     <div class="health-cert-body">
-                        <h4 class="health-cert-title">Certificado de aptitud</h4>
+                        <h4 class="health-cert-title">Declaración de Disposición para la Tarea</h4>
                         <p class="health-cert-copy">
-                            Al marcar esta casilla declaras que te encuentras en <strong>perfecto estado de salud</strong>
-                            para iniciar tus labores. Esta declaración queda registrada como parte de tu servicio y es
-                            obligatoria para poder iniciar la visita.
+                            Antes de iniciar, confirma que estás en condiciones de realizar las tareas de hoy.
+                            Es tu propia declaración — no pedimos documentos ni información médica.
                         </p>
                     </div>
                 </div>
@@ -584,6 +587,7 @@
                     <input type="checkbox" id="health-cert">
                     <span>Confirmo que estoy en condiciones de iniciar mis labores.</span>
                 </label>
+                <p class="health-cert-foot">Obligatorio para iniciar la visita.</p>
             </div>
             
             <button class="btn btn-primary" data-action="navigate" data-args="employee-shift-photos" id="continue-btn">
@@ -888,16 +892,20 @@
                 supervisor-reports, supervisor-supervision
          ============================================================ -->
     <div id="page-supervisor-dashboard" class="app-container hidden">
-        <header class="header">
-            <button class="header-brand" data-action="navigateToRoleDashboard" aria-label="Inicio">
-                <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
-                <span>WorkTrace</span>
+        <header class="header header-tri">
+            <button class="header-slot header-slot-left" data-action="navigateToRoleDashboard" aria-label="Inicio">
+                <img class="header-client-logo" src="css/logos/r3-logo.png" alt="R3" width="40" height="40" loading="lazy">
             </button>
-            <div class="header-actions">
-                <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al inicio del panel admin" aria-label="Volver al inicio del panel admin">
+            <div class="header-slot header-slot-center">
+                <img class="header-wt-logo" src="css/logos/worktrace.svg" alt="WorkTrace" loading="lazy">
+            </div>
+            <div class="header-slot header-slot-right">
+                <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al panel admin" aria-label="Volver al panel admin">
                     <i class="fas fa-house"></i>
-                    <span data-i18n="admin.return.btn">Inicio Admin</span>
                 </button>
+                <span class="header-user-pill header-user-pill-static" aria-label="Identificación del inspector">
+                    <span class="js-user-initial">U</span>
+                </span>
             </div>
         </header>
         
@@ -1323,10 +1331,10 @@
 
                         <div class="form-group">
                             <label for="supervisor-restaurant-task-video" data-i18n="rtask.video.label">Video de instrucciones (opcional)</label>
-                            <input type="file" id="supervisor-restaurant-task-video" accept="video/*" capture="environment" style="opacity:0;position:absolute;pointer-events:none;width:1px;height:1px;">
+                            <input type="file" id="supervisor-restaurant-task-video" accept="video/*" style="opacity:0;position:absolute;pointer-events:none;width:1px;height:1px;">
                             <label for="supervisor-restaurant-task-video" id="supervisor-restaurant-task-video-label" class="rtask-file-label">
                                 <i class="fas fa-video"></i>
-                                <span class="rtask-file-label-text" data-i18n="rtask.video.placeholder">Grabar o adjuntar video (máx. 60s)</span>
+                                <span class="rtask-file-label-text" data-i18n="rtask.video.placeholder">Grabar o subir video desde la galería (máx. 60s)</span>
                             </label>
                             <video id="supervisor-restaurant-task-video-preview" class="hidden" controls playsinline style="width:100%;margin-top:8px;border-radius:8px;background:#000;max-height:220px;"></video>
                             <p class="muted-copy" style="font-size:12px;margin:6px 0 0;" data-i18n="rtask.video.hint">
@@ -1414,15 +1422,51 @@
         </div>
     </div>
 
+    <!-- MODAL ADMIN: Inspector (nuevo/editar) -->
+    <div id="modal-admin-supervisor" class="modal">
+        <div class="modal-content admin-employee-modal-content">
+            <div class="modal-header">
+                <h3 id="modal-admin-supervisor-title">Nuevo Inspector</h3>
+                <button class="btn-close" aria-label="Cerrar" data-action="closeAdminSupervisorModal">&times;</button>
+            </div>
+            <form id="admin-supervisor-form">
+                <div class="modal-body">
+                    <input type="hidden" id="admin-supervisor-edit-id">
+                    <div class="form-group">
+                        <label for="admin-supervisor-full-name">Nombre completo</label>
+                        <input type="text" id="admin-supervisor-full-name" autocomplete="name" placeholder="Ana Martínez" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-supervisor-email">Correo electrónico</label>
+                        <input type="email" id="admin-supervisor-email" autocomplete="email" placeholder="inspector@worktrace.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-supervisor-phone">Teléfono</label>
+                        <input type="tel" id="admin-supervisor-phone" autocomplete="tel" inputmode="tel" placeholder="+573001112233" required>
+                    </div>
+                    <input type="checkbox" id="admin-supervisor-active" checked hidden aria-hidden="true">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-action="closeAdminSupervisorModal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        <span id="admin-supervisor-submit-label">Guardar Inspector</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL ADMIN: Empleado -->
     <div id="modal-admin-employee" class="modal">
         <div class="modal-content admin-employee-modal-content">
             <div class="modal-header">
-                <h3 data-i18n="modal.employee.title">Nuevo Contratista</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" data-action="closeModal" data-args="modal-admin-employee">&times;</button>
+                <h3 id="modal-admin-employee-title" data-i18n="modal.employee.title">Nuevo Contratista</h3>
+                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" data-action="closeAdminEmployeeModal">&times;</button>
             </div>
             <form id="admin-employee-form">
                 <div class="modal-body">
+                    <input type="hidden" id="admin-employee-edit-id">
                     <div class="form-group">
                         <label for="admin-employee-name">Nombre Completo</label>
                         <input type="text" id="admin-employee-name" autocomplete="name" data-i18n-placeholder="modal.employee.name.placeholder" placeholder="Nombre del contratista" required>
@@ -1435,7 +1479,7 @@
                         <label for="admin-employee-phone" data-i18n="modal.employee.phone">Teléfono</label>
                         <input type="tel" id="admin-employee-phone" autocomplete="tel" inputmode="tel" placeholder="+573001112233" required>
                     </div>
-                    <div class="alert alert-warning admin-employee-credential-note">
+                    <div class="alert alert-warning admin-employee-credential-note" id="admin-employee-credential-note">
                         <i class="fas fa-key"></i>
                         <div class="admin-employee-credential-copy">
                             <strong>PIN inicial predeterminado</strong>
@@ -1444,8 +1488,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-action="closeModal" data-args="modal-admin-employee">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" data-i18n="btn.save">Guardar</button>
+                    <button type="button" class="btn btn-secondary" data-action="closeAdminEmployeeModal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="admin-employee-submit-btn" data-i18n="btn.save">Guardar</button>
                 </div>
             </form>
         </div>
@@ -1457,12 +1501,17 @@
          ============================================================ -->
     <!-- ADMIN DASHBOARD -->
     <div id="page-admin-dashboard" class="app-container hidden">
-        <header class="header">
-            <button class="header-brand" data-action="navigateToRoleDashboard" aria-label="Inicio">
-                <img class="header-brand-logo" src="css/logos/r3-logo.png" alt="Logo WorkTrace" width="30" height="30" loading="lazy">
-                <span>WorkTrace Admin</span>
+        <header class="header header-tri">
+            <button class="header-slot header-slot-left" data-action="navigateToRoleDashboard" aria-label="Inicio">
+                <img class="header-client-logo" src="css/logos/r3-logo.png" alt="R3" width="40" height="40" loading="lazy">
             </button>
-            <div class="header-actions">
+            <div class="header-slot header-slot-center">
+                <img class="header-wt-logo" src="css/logos/worktrace.svg" alt="WorkTrace" loading="lazy">
+            </div>
+            <div class="header-slot header-slot-right">
+                <span class="header-user-pill header-user-pill-static" aria-label="Identificación del admin">
+                    <span class="js-user-initial">A</span>
+                </span>
             </div>
         </header>
         
@@ -1471,42 +1520,15 @@
                  (inyectado por JS) queda como pieza principal arriba. -->
             <div class="page-title" data-i18n="admin.dashboard.page.title">Panel de Control Operativo</div>
 
-            <div class="quick-actions">
-                <button class="quick-action-btn" data-action="navigate" data-args="supervisor-dashboard">
-                    <i class="fas fa-user-tie"></i>
-                    <span data-i18n="admin.dashboard.supervisor.btn">Módulo de Inspectores de Calidad</span>
-                </button>
+            <div class="quick-actions admin-quick-actions-2">
                 <button class="quick-action-btn" data-action="adminAction" data-args="monitoreo-supervisoras">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span data-i18n="admin.dashboard.monitor.btn">Seguimiento de Inspecciones</span>
+                    <i class="fas fa-file-lines"></i>
+                    <span data-i18n="admin.dashboard.monitor.btn">Informes</span>
                 </button>
                 <button class="quick-action-btn" data-action="adminAction" data-args="supervisores">
                     <i class="fas fa-user-shield"></i>
-                    <span data-i18n="admin.dashboard.manage.btn">Administrar Inspectores</span>
+                    <span data-i18n="admin.dashboard.manage.btn">Inspectores</span>
                 </button>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title" data-i18n="admin.dashboard.supervisions">Auditorías de Calidad Hoy</div>
-                </div>
-                <div id="admin-supervisions-list"></div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title" data-i18n="admin.exec.summary">Resumen Ejecutivo</div>
-                </div>
-                <div class="stats-grid" id="admin-metrics-summary">
-                    <div class="stat-card">
-                        <div class="stat-value">0</div>
-                        <div class="stat-label" data-i18n="admin.dashboard.restaurants">Sitios</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">0</div>
-                        <div class="stat-label" data-i18n="admin.dashboard.shifts">Servicios</div>
-                    </div>
-                </div>
             </div>
         </main>
         
@@ -1536,32 +1558,7 @@
         <main class="content admin-section-grid">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">Seguimiento de Hoy</div>
-                </div>
-                <div class="form-group admin-supervision-monitor-filter">
-                    <label for="admin-supervision-supervisor-filter" data-i18n="admin.supervision.monitor.filter.label">Inspector de Calidad</label>
-                    <select id="admin-supervision-supervisor-filter" class="dark-control" onchange="app.applyAdminSupervisionMonitorFilter()">
-                        <option value="" data-i18n="admin.supervision.monitor.filter.all">Todos los inspectores</option>
-                    </select>
-                </div>
-                <div class="stats-grid" id="admin-supervision-monitor-summary">
-                    <div class="stat-card">
-                        <div class="stat-value">0</div>
-                        <div class="stat-label">Supervisiones</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title" data-i18n="admin.supervision.monitor.activity">Actividad de Inspectores</div>
-                </div>
-                <div id="admin-supervision-monitor-list"></div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Informe de auditorías</div>
+                    <div class="card-title">Informes de auditoría</div>
                 </div>
                 <p class="muted-copy" style="margin-top:-4px;">Genera un PDF/Excel de las auditorías del rango seleccionado, con fecha/hora local del sitio, inspector, observaciones y evidencias.</p>
 
@@ -1626,6 +1623,25 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Seguimiento hoy</div>
+                </div>
+                <div class="form-group admin-supervision-monitor-filter">
+                    <label for="admin-supervision-supervisor-filter" data-i18n="admin.supervision.monitor.filter.label">Inspector de Calidad</label>
+                    <select id="admin-supervision-supervisor-filter" class="dark-control" onchange="app.applyAdminSupervisionMonitorFilter()">
+                        <option value="" data-i18n="admin.supervision.monitor.filter.all">Todos los inspectores</option>
+                    </select>
+                </div>
+                <div class="stats-grid" id="admin-supervision-monitor-summary">
+                    <div class="stat-card">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Supervisiones</div>
+                    </div>
+                </div>
+                <div id="admin-supervision-monitor-list" class="hidden"></div>
+            </div>
         </main>
 
         <nav class="bottom-nav">
@@ -1656,48 +1672,11 @@
         </header>
 
         <main class="content admin-section-grid admin-supervisors-page">
-            <div class="card admin-supervisor-form-card">
-                <div class="card-header">
-                    <div class="card-title" id="admin-supervisor-form-title" data-i18n="admin.supervisors.new.title">Nuevo Inspector de Calidad</div>
-                </div>
-                <form id="admin-supervisor-form">
-                    <input type="hidden" id="admin-supervisor-edit-id">
-                    <div class="toolbar-row two-col">
-                        <div class="form-group admin-panel-field">
-                            <label for="admin-supervisor-full-name">Nombre completo</label>
-                            <input type="text" id="admin-supervisor-full-name" class="dark-control" autocomplete="name" placeholder="Ana Martínez" required>
-                        </div>
-                        <div class="form-group admin-panel-field">
-                            <label for="admin-supervisor-email" data-i18n="admin.supervisors.email">Correo electrónico</label>
-                            <input type="email" id="admin-supervisor-email" class="dark-control" autocomplete="email" data-i18n-placeholder="admin.supervisors.email.placeholder" placeholder="inspector@worktrace.com" required>
-                        </div>
-                    </div>
-                    <div class="toolbar-row two-col">
-                        <div class="form-group admin-panel-field">
-                            <label for="admin-supervisor-phone" data-i18n="admin.supervisors.phone">Teléfono E.164</label>
-                            <input type="tel" id="admin-supervisor-phone" class="dark-control" autocomplete="tel" inputmode="tel" placeholder="+573001112233" required>
-                        </div>
-                        <div class="admin-toggle-panel">
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" id="admin-supervisor-active" checked>
-                                <div class="checkbox-content">
-                                    <span class="checkbox-title">Cuenta activa</span>
-                                    <span class="checkbox-desc" data-i18n="admin.supervisors.active.desc">Permite que el inspector inicie sesión al crearse o actualizarse.</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="toolbar-actions">
-                        <button type="submit" class="btn btn-primary btn-inline">
-                            <i class="fas fa-save"></i>
-                            <span id="admin-supervisor-submit-label" data-i18n="admin.supervisors.save">Guardar Inspector</span>
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-inline hidden" id="admin-supervisor-cancel-btn" data-action="resetAdminSupervisorForm">
-                            <i class="fas fa-times"></i>
-                            <span data-i18n="admin.supervisors.cancel">Cancelar edición</span>
-                        </button>
-                    </div>
-                </form>
+            <div class="toolbar-actions" style="margin-bottom: 12px;">
+                <button class="btn btn-primary btn-inline" data-action="openAdminSupervisorModal" data-args="new">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Nuevo Inspector</span>
+                </button>
             </div>
 
             <div class="card admin-supervisor-filters-card">

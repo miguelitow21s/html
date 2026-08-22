@@ -2421,6 +2421,18 @@ export const supervisorMethods = {
             this.currentPhotoArea = null;
             this.currentPhotoContext = null;
         }
+        // Bug reportado: al reabrir una auditoría después de enviar,
+        // el input <input type="file"> mantenía el valor anterior y
+        // reaparecían fotos residuales. Reseteamos explícitamente el
+        // input y los observations para dejar el formulario limpio.
+        const photoInput = document.getElementById('supervision-photo-input');
+        if (photoInput) {
+            try { photoInput.value = ''; } catch (_) { /* ignore */ }
+        }
+        const observations = document.getElementById('supervision-observations');
+        if (observations) {
+            observations.value = '';
+        }
         this.populateSupervisorAreaOptions();
         this.renderSupervisorPhotoGrid();
         this.hideSupervisionSupportCard();
@@ -2651,16 +2663,25 @@ export const supervisorMethods = {
 
         let restaurants = [];
         let shifts = [];
+        let openTasks = [];
         try {
-            const [r, s] = await Promise.all([
+            const [r, s, tasks] = await Promise.all([
                 this.getSupervisorRestaurants(force),
                 this.getSupervisorShiftList({ forceRestaurants: force }).catch((shiftErr) => {
                     console.warn('No fue posible cargar servicios para el render de sitios.', shiftErr);
                     return [];
                 }),
+                apiClient
+                    .operationalTasksManage('list', { status: 'open', limit: 200 })
+                    .then((res) => asArray(res))
+                    .catch((taskErr) => {
+                        console.warn('No fue posible cargar tareas especiales para el render de sitios.', taskErr);
+                        return [];
+                    }),
             ]);
             restaurants = r;
             shifts = s;
+            openTasks = tasks;
         } catch (error) {
             console.error('No fue posible cargar los sitios.', error);
             if (container) {
@@ -2708,6 +2729,20 @@ export const supervisorMethods = {
         const availableEmployeeCount = canUseEmployeeCache
             ? this.data.supervisor.employees.filter((employee) => employee?.id && employee.is_active !== false).length
             : null;
+        // Contar tareas especiales OPEN por sitio (petición cliente:
+        // reemplazar el aviso irrelevante del card por el estado de
+        // tarea especial).
+        const openTasksByRestaurant = openTasks.reduce((acc, task) => {
+            const rid = String(
+                task?.restaurant_id ||
+                    task?.restaurant?.restaurant_id ||
+                    task?.restaurant?.id ||
+                    ''
+            );
+            if (!rid) return acc;
+            acc[rid] = (acc[rid] || 0) + 1;
+            return acc;
+        }, {});
         const canManageRestaurantLifecycle = this.isAdminRole() || this.currentUser?.role === 'supervisora';
         const canCreateRestaurantTasks =
             this.isAdminRole() ||
@@ -2745,15 +2780,20 @@ export const supervisorMethods = {
                 )
             );
 
-            const shiftsLine = document.createElement('p');
-            const shiftsIcon = document.createElement('i');
-            shiftsIcon.className = 'fas fa-calendar-alt';
-            shiftsLine.append(
-                shiftsIcon,
-                document.createTextNode(` ${String(shiftsForRestaurantCount)} ${t('site.card.services.period')}`)
-            );
+            // El PDF pidió sustituir el "aviso" del card por el estado
+            // de tarea especial. Mostramos badge activo si hay al menos
+            // una tarea open; si no, indicamos "sin tareas".
+            const openTaskCount = openTasksByRestaurant[restaurantIdKey] || 0;
+            const taskLine = document.createElement('p');
+            taskLine.className = openTaskCount > 0 ? 'restaurant-card-task-alert' : 'restaurant-card-task-empty';
+            const taskIcon = document.createElement('i');
+            taskIcon.className = openTaskCount > 0 ? 'fas fa-star' : 'far fa-star';
+            const taskLabel = openTaskCount > 0
+                ? ` ${openTaskCount} tarea${openTaskCount === 1 ? '' : 's'} especial${openTaskCount === 1 ? '' : 'es'} pendiente${openTaskCount === 1 ? '' : 's'}`
+                : ' Sin tareas especiales pendientes';
+            taskLine.append(taskIcon, document.createTextNode(taskLabel));
 
-            card.append(title, address, employeesLine, shiftsLine);
+            card.append(title, address, employeesLine, taskLine);
 
             if (canManageRestaurantLifecycle || canCreateRestaurantTasks) {
                 const actions = document.createElement('div');
@@ -3060,6 +3100,15 @@ export const supervisorMethods = {
             }
 
             if (employee.is_active !== false) {
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.className = 'btn btn-secondary btn-inline';
+                editBtn.dataset.action = 'beginEditAdminEmployee';
+                editBtn.dataset.args = String(employee.id || '');
+                editBtn.innerHTML = '<i class="fas fa-pen"></i> <span>Editar</span>';
+                editBtn.title = 'Editar los datos del contratista.';
+                actions.appendChild(editBtn);
+
                 const revokeDeviceBtn = document.createElement('button');
                 revokeDeviceBtn.type = 'button';
                 revokeDeviceBtn.className = 'btn btn-outline-warning btn-inline';
@@ -3405,6 +3454,11 @@ export const supervisorMethods = {
     },
 
     async prepareSupervisorSupervisionPage() {
+        // Bug reportado: al reabrir "Auditoría" quedaban fotos y notas
+        // de la sesión anterior. Reseteamos siempre al entrar, no solo
+        // después de enviar.
+        this.resetSupervisorSupervisionState();
+
         if (this.data.supervisor.restaurants.length === 0) {
             this.data.supervisor.restaurants = await this.getSupervisorRestaurants();
         }
@@ -5550,6 +5604,7 @@ export const supervisorMethods = {
     },
 
     async submitAdminEmployeeForm() {
+        const editId = document.getElementById('admin-employee-edit-id')?.value?.trim();
         const fullName = document.getElementById('admin-employee-name')?.value?.trim();
         const email = document.getElementById('admin-employee-email')?.value?.trim();
         const phone = document.getElementById('admin-employee-phone')?.value?.trim();
@@ -5571,22 +5626,42 @@ export const supervisorMethods = {
             return;
         }
 
-        this.showLoading(t('sup.toast.creating.contractor'), t('sup.toast.creating.contractor.desc'));
+        const isEditing = Boolean(editId);
+        this.showLoading(
+            isEditing ? 'Actualizando contratista...' : t('sup.toast.creating.contractor'),
+            isEditing ? 'Guardando cambios.' : t('sup.toast.creating.contractor.desc')
+        );
 
         try {
-            const result = await apiClient.adminUsersManage('create', {
-                role: 'empleado',
-                full_name: fullName,
-                email,
-                phone_number: phone,
-                is_active: isActive,
-            });
+            const payload = isEditing
+                ? {
+                      user_id: editId,
+                      full_name: fullName,
+                      email,
+                      phone_number: phone,
+                      is_active: isActive,
+                  }
+                : {
+                      role: 'empleado',
+                      full_name: fullName,
+                      email,
+                      phone_number: phone,
+                      is_active: isActive,
+                  };
+            const result = await apiClient.adminUsersManage(isEditing ? 'update' : 'create', payload);
 
             this.invalidateCache('supervisorEmployees');
             this.invalidateScopedCache('supervisorAssignableEmployees');
-            this.closeModal('modal-admin-employee');
+            this.closeAdminEmployeeModal();
             await this.loadSupervisorEmployees(true);
 
+            if (isEditing) {
+                this.showToast('Contratista actualizado.', {
+                    tone: 'success',
+                    title: t('toast.common.updated'),
+                });
+                return;
+            }
             const initialPin = result?.initial_pin;
             if (initialPin) {
                 this.showInitialPinModal({
@@ -5602,19 +5677,61 @@ export const supervisorMethods = {
             }
         } catch (error) {
             if (!this.isAdminRole() && error?.status === 403) {
-                this.showToast(this.getErrorMessage(error, 'Tu cuenta no pudo crear el contratista.'), {
+                this.showToast(this.getErrorMessage(error, 'Tu cuenta no pudo guardar el contratista.'), {
                     tone: 'error',
                     title: t('toast.common.no.permission'),
                 });
                 return;
             }
-            this.showToast(this.getErrorMessage(error, 'No fue posible crear el contratista.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible guardar el contratista.'), {
                 tone: 'error',
                 title: t('sup.toast.contractor.create.fail'),
             });
         } finally {
             this.hideLoading();
         }
+    },
+
+    resetAdminEmployeeForm() {
+        const form = document.getElementById('admin-employee-form');
+        form?.reset();
+        const editId = document.getElementById('admin-employee-edit-id');
+        if (editId) editId.value = '';
+        const title = document.getElementById('modal-admin-employee-title');
+        if (title) title.textContent = 'Nuevo Contratista';
+        const submitBtn = document.getElementById('admin-employee-submit-btn');
+        if (submitBtn) submitBtn.textContent = 'Guardar';
+        const credentialNote = document.getElementById('admin-employee-credential-note');
+        if (credentialNote) credentialNote.classList.remove('hidden');
+    },
+
+    closeAdminEmployeeModal() {
+        this.closeModal('modal-admin-employee');
+        this.resetAdminEmployeeForm();
+    },
+
+    beginEditAdminEmployee(userId) {
+        const employees = asArray(this.data.supervisor.employees);
+        const employee = employees.find((item) => String(item?.id) === String(userId));
+        if (!employee) {
+            this.showToast('No fue posible cargar el contratista.', {
+                tone: 'error',
+                title: t('toast.common.cannot.continue'),
+            });
+            return;
+        }
+        this.resetAdminEmployeeForm();
+        document.getElementById('admin-employee-edit-id').value = employee.id;
+        document.getElementById('admin-employee-name').value = employee.full_name || '';
+        document.getElementById('admin-employee-email').value = employee.email || '';
+        document.getElementById('admin-employee-phone').value = employee.phone_e164 || employee.phone_number || '';
+        const title = document.getElementById('modal-admin-employee-title');
+        if (title) title.textContent = 'Editar Contratista';
+        const submitBtn = document.getElementById('admin-employee-submit-btn');
+        if (submitBtn) submitBtn.textContent = 'Actualizar';
+        const credentialNote = document.getElementById('admin-employee-credential-note');
+        if (credentialNote) credentialNote.classList.add('hidden');
+        this.openModal('modal-admin-employee');
     },
 
     async saveSupervision() {

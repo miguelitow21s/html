@@ -3240,10 +3240,14 @@ const app = {
         const roleLabel = ROLE_LABELS[this.currentUser.role] || 'Usuario';
         const firstName = fullName.split(' ')[0];
 
-        const userInitial = document.getElementById('user-initial');
-        if (userInitial) {
-            userInitial.textContent = initials(fullName);
+        const userInitialText = initials(fullName);
+        const legacyUserInitial = document.getElementById('user-initial');
+        if (legacyUserInitial) {
+            legacyUserInitial.textContent = userInitialText;
         }
+        document.querySelectorAll('.js-user-initial').forEach((el) => {
+            el.textContent = userInitialText;
+        });
 
         const welcome = document.getElementById('employee-welcome');
         if (welcome) {
@@ -5555,6 +5559,18 @@ const app = {
     handleSupervisionPhotoUpload(event) {
         const file = event.target.files?.[0];
         if (!file || !this.currentPhotoArea) {
+            return;
+        }
+
+        // Bloqueo pedido por el cliente: no aceptar fotos si el inspector
+        // no está dentro del radio validado del sitio seleccionado. Antes
+        // se podía enviar evidencia de cualquier sitio sin estar en él.
+        if (!this.supervisionLocationVerified) {
+            this.showToast(
+                'Solo puedes tomar fotos de auditoría cuando estés dentro del sitio. Verifica tu ubicación primero.',
+                { tone: 'warning', title: 'Ubicación no validada' }
+            );
+            event.target.value = '';
             return;
         }
 
