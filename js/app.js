@@ -655,9 +655,13 @@ const app = {
         const branding = config.clientBranding || {};
         const logoSrc = String(branding.logoSrc || 'css/logos/r3-logo.png');
         const logoAlt = String(branding.logoAlt || branding.name || 'Cliente');
+        const legalName = String(branding.legalName || branding.name || 'R3 Service & Solutions Inc.');
         document.querySelectorAll('.header-client-logo').forEach((img) => {
             img.src = logoSrc;
             img.alt = logoAlt;
+        });
+        document.querySelectorAll('[data-legal-client-name]').forEach((el) => {
+            el.textContent = legalName;
         });
     },
 
