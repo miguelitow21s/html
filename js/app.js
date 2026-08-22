@@ -1,6 +1,12 @@
 // @ts-nocheck
 import { createClient } from '@supabase/supabase-js';
-import '@fortawesome/fontawesome-free/css/all.min.css';
+// FontAwesome: cargamos SOLO el set solid + base. Antes se importaba
+// all.min.css que traía fa-brands-400 (~118 kB) + fa-regular-400 (~25 kB)
+// sin usar. Único ex-usuario de 'far' era supervisor.js con 'far fa-star'
+// (badge "sin tareas"), migrado a 'fa-regular' inline en solid via
+// display swap. Ahorro ~240 kB en fuentes + CSS.
+import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
+import '@fortawesome/fontawesome-free/css/solid.min.css';
 import { apiClient } from './api.js';
 import { getLang, setLang, applyTranslations, t } from './i18n.js';
 import {
@@ -1011,6 +1017,16 @@ const app = {
             });
         });
 
+        // A11y: cerrar modal top con ESC.
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') return;
+            const openModals = document.querySelectorAll('.modal.active');
+            if (openModals.length === 0) return;
+            const top = openModals[openModals.length - 1];
+            if (top?.dataset.locked === 'true') return;
+            this.closeModal(top.id);
+        });
+
         const adminSupervisorForm = document.getElementById('admin-supervisor-form');
         if (adminSupervisorForm) {
             adminSupervisorForm.addEventListener('submit', async (event) => {
@@ -1496,6 +1512,20 @@ const app = {
             console.error(`[openModal] prepare falló para ${modalId}`, prepareError);
         }
 
+        // A11y: semántica de diálogo y trap de foco.
+        if (!modal.getAttribute('role')) {
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            const h3 = modal.querySelector('.modal-header h3');
+            if (h3) {
+                if (!h3.id) h3.id = `${modalId}-title`;
+                modal.setAttribute('aria-labelledby', h3.id);
+            }
+        }
+        // Guardar el trigger que abrió el modal para restaurar foco al cerrar.
+        this._modalTriggerStack = this._modalTriggerStack || [];
+        this._modalTriggerStack.push({ modalId, trigger: document.activeElement });
+
         modal.classList.add('active');
         const scrollY = window.scrollY;
         document.body.style.position = 'fixed';
@@ -1547,6 +1577,18 @@ const app = {
             document.body.style.left = '';
             document.body.style.right = '';
             window.scrollTo(0, scrollY);
+        }
+        // A11y: restaurar foco al trigger que abrió este modal.
+        const stack = this._modalTriggerStack || [];
+        for (let i = stack.length - 1; i >= 0; i -= 1) {
+            if (stack[i].modalId === modalId) {
+                const trigger = stack[i].trigger;
+                stack.splice(i, 1);
+                if (trigger && typeof trigger.focus === 'function') {
+                    try { trigger.focus(); } catch (_) { /* ignore */ }
+                }
+                break;
+            }
         }
     },
 
@@ -1637,6 +1679,15 @@ const app = {
         const toast = document.createElement('div');
         toast.className = `app-toast app-toast-${normalizedTone}`;
         toast.dataset.toastId = toastId;
+        // A11y: errores interrumpen (role=alert / assertive); el resto
+        // usa status (polite) — el aria-live del contenedor sigue polite,
+        // los role explícitos ganan.
+        if (normalizedTone === 'error') {
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+        } else {
+            toast.setAttribute('role', 'status');
+        }
         toast.innerHTML = `
             <div class="app-toast-icon" aria-hidden="true">
                 <i class="fas ${iconMap[normalizedTone]}"></i>
@@ -5474,6 +5525,38 @@ const app = {
 
     async compressImage(file, maxWidth = 1280, quality = 0.78) {
         if (!file || !file.type?.startsWith('image/')) return file;
+        // Preferimos createImageBitmap con resize nativo: evita allocatear
+        // el bitmap full-res en memoria (una foto 12 MP ocupa ~48 MB RGBA
+        // antes de escalar). En iPhones viejos esto causaba jank/OOM al
+        // procesar varias fotos en paralelo.
+        if (typeof createImageBitmap === 'function') {
+            try {
+                const bitmap = await createImageBitmap(file, {
+                    resizeWidth: maxWidth,
+                    resizeQuality: 'high',
+                });
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                canvas.getContext('2d').drawImage(bitmap, 0, 0);
+                bitmap.close?.();
+                return await new Promise((resolve) => {
+                    canvas.toBlob(
+                        (blob) =>
+                            resolve(
+                                blob
+                                    ? new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' })
+                                    : file
+                            ),
+                        'image/jpeg',
+                        quality
+                    );
+                });
+            } catch (bitmapError) {
+                console.info('[compressImage] createImageBitmap falló, fallback a Image()', bitmapError?.message || bitmapError);
+                // fallback abajo
+            }
+        }
         return new Promise((resolve) => {
             const img = new Image();
             const srcUrl = URL.createObjectURL(file);

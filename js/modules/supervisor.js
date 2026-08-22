@@ -2805,7 +2805,8 @@ export const supervisorMethods = {
             const taskLine = document.createElement('p');
             taskLine.className = openTaskCount > 0 ? 'restaurant-card-task-alert' : 'restaurant-card-task-empty';
             const taskIcon = document.createElement('i');
-            taskIcon.className = openTaskCount > 0 ? 'fas fa-star' : 'far fa-star';
+            // Solo set 'solid' cargado; usamos star-half-stroke como sin-tareas.
+            taskIcon.className = openTaskCount > 0 ? 'fas fa-star' : 'fas fa-star-half-stroke';
             const taskLabel = openTaskCount > 0
                 ? ` ${openTaskCount} tarea${openTaskCount === 1 ? '' : 's'} especial${openTaskCount === 1 ? '' : 'es'} pendiente${openTaskCount === 1 ? '' : 's'}`
                 : ' Sin tareas especiales pendientes';
@@ -5133,6 +5134,11 @@ export const supervisorMethods = {
         const html = this.buildGeneratedReportPreviewHtml(report);
         const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
         const previewUrl = URL.createObjectURL(blob);
+        // Revocar preview anterior para no acumular blobs en memoria.
+        if (this._lastReportPreviewUrl) {
+            try { URL.revokeObjectURL(this._lastReportPreviewUrl); } catch (_) { /* ignore */ }
+        }
+        this._lastReportPreviewUrl = previewUrl;
         this.navigateToCurrentTab(previewUrl);
     },
 
@@ -5216,7 +5222,7 @@ export const supervisorMethods = {
                                 const safeUrl = sanitizeUrl(item.url);
                                 return `
                             <a class="phase-photo" href="${escapeHtml(safeUrl)}" aria-label="${escapeHtml(`${label} ${index + 1}`)}">
-                                <img src="${escapeHtml(safeUrl)}" alt="${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}">
+                                <img src="${escapeHtml(safeUrl)}" alt="${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}" loading="lazy" decoding="async">
                                 <span class="phase-photo-copy">
                                     <span class="phase-photo-label">${escapeHtml(this.getShiftEvidenceDisplayTitle(item))}</span>
                                     ${

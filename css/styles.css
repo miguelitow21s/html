@@ -12,6 +12,14 @@
     --primary: #0ea5e9;
     --primary-dark: #0284c7;
     --primary-rgb: 14, 165, 233;
+    /* Texto/links: --primary #0ea5e9 sobre blanco = 2.7:1, falla WCAG AA.
+       Usar --primary-text (#0369a1 sky-700, ~5.9:1) para texto interactivo
+       (links, nav-item activo, chip legal). --primary sigue OK para
+       fondos, bordes y decoración. */
+    --primary-text: #0369a1;
+    /* Gradiente oscurecido para .btn-primary: blanco sobre gradient-2
+       original = 2.5-2.75:1, falla AA. gradient-2-strong logra ≥5:1. */
+    --gradient-2-strong: linear-gradient(135deg, #0369a1 0%, #047857 100%);
     --secondary: #10b981;
     --danger: #ef4444;
     --warning: #f59e0b;
@@ -243,7 +251,7 @@ body.camera-capture-active {
 }
 
 .lang-btn.active {
-    color: var(--primary);
+    color: var(--primary-text);
     background: rgba(14, 165, 233, 0.1);
 }
 
@@ -362,7 +370,7 @@ body.camera-capture-active {
 }
 
 .consent-box-detailed a {
-    color: var(--primary);
+    color: var(--primary-text);
     text-decoration: underline;
 }
 
@@ -389,7 +397,7 @@ body.camera-capture-active {
 
 .login-provided-by-fallback {
     font-weight: 700;
-    color: var(--primary);
+    color: var(--primary-text);
     letter-spacing: 0.02em;
 }
 
@@ -499,7 +507,7 @@ body.camera-capture-active {
 }
 
 .btn-primary {
-    background: var(--gradient-2);
+    background: var(--gradient-2-strong);
     color: #ffffff;
     box-shadow: 0 4px 15px -3px rgba(var(--primary-rgb), 0.4);
 }
@@ -521,7 +529,7 @@ body.camera-capture-active {
 }
 
 .forgot-password a {
-    color: var(--primary);
+    color: var(--primary-text);
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
@@ -745,7 +753,7 @@ body.camera-capture-active {
 
 .header-brand i {
     font-size: 24px;
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 .header-brand span {
@@ -862,6 +870,35 @@ body.camera-capture-active {
     color: var(--text-secondary);
 }
 
+/* Botones que se ven como links (para reemplazar <a href="#"> que
+   dispara scroll al top y suena a "link" en screen readers). */
+.link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--primary-text);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.link-btn:hover,
+.link-btn:focus-visible {
+    color: var(--primary-dark);
+}
+
+/* iOS Safari hace zoom-in automático al enfocar un input con
+   font-size < 16px. Regla defensiva global en móvil para evitarlo
+   sin tener que perseguir cada sub-input pequeño. Desktop mantiene
+   los tamaños definidos por cada clase. */
+@media (max-width: 640px) {
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}
+
 @media (max-width: 480px) {
     .header.header-tri {
         padding: 10px 12px;
@@ -879,10 +916,22 @@ body.camera-capture-active {
     }
 
     .header-user-pill {
-        min-width: 40px;
-        height: 40px;
-        padding: 0 10px;
+        min-width: 44px;
+        height: 44px;
+        padding: 0 8px;
         font-size: 14px;
+    }
+
+    /* Header tri-col en pantallas ultra-angostas: colapsar el label
+       de "Inicio Admin" a solo icono para que no le robe espacio al
+       logo del centro. */
+    .header-tri .admin-return-btn {
+        min-width: 44px;
+        padding: 0 8px;
+    }
+
+    .header-tri .admin-return-btn span {
+        display: none;
     }
 }
 
@@ -893,8 +942,10 @@ body.camera-capture-active {
 }
 
 .header-btn {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -966,7 +1017,7 @@ body.camera-capture-active {
 }
 
 .nav-item.active {
-    color: var(--primary);
+    color: var(--primary-text);
     background: rgba(var(--primary-rgb), 0.08);
 }
 
@@ -1162,7 +1213,7 @@ canvas {
     margin-left: auto;
     background: transparent;
     border: 1px solid rgba(var(--primary-rgb), 0.4);
-    color: var(--primary);
+    color: var(--primary-text);
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 13px;
@@ -1454,14 +1505,14 @@ canvas {
 
 .area-chip:hover {
     border-color: rgba(var(--primary-rgb), 0.5);
-    color: var(--primary);
+    color: var(--primary-text);
     transform: translateY(-1px);
 }
 
 .area-chip.active {
     background: rgba(var(--primary-rgb), 0.16);
     border-color: rgba(var(--primary-rgb), 0.55);
-    color: var(--primary);
+    color: var(--primary-text);
     box-shadow: 0 10px 24px -18px rgba(var(--primary-rgb), 0.9);
 }
 
@@ -1566,7 +1617,7 @@ canvas {
 }
 
 .profile-role {
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: 14px;
     margin-top: 5px;
 }
@@ -1589,7 +1640,7 @@ canvas {
 .stat-value {
     font-size: 28px;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 .stat-label {
@@ -1631,7 +1682,7 @@ canvas {
 
 .quick-action-btn i {
     font-size: 28px;
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 .quick-action-btn span {
@@ -2064,7 +2115,7 @@ canvas {
     align-items: center;
     justify-content: center;
     background: rgba(var(--primary-rgb), 0.18);
-    color: var(--primary);
+    color: var(--primary-text);
     flex-shrink: 0;
 }
 
@@ -3075,7 +3126,7 @@ select.dark-control option:disabled {
     height: 42px;
     border-radius: 12px;
     background: rgba(var(--primary-rgb), 0.18);
-    color: var(--primary);
+    color: var(--primary-text);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3084,7 +3135,7 @@ select.dark-control option:disabled {
 
 .gps-verification-icon i {
     font-size: 18px;
-    color: var(--primary);
+    color: var(--primary-text);
     margin-bottom: 0;
 }
 
@@ -3750,7 +3801,7 @@ select.dark-control option:disabled {
     word-wrap: break-word;
 }
 .report-visit-meta i {
-    color: var(--primary);
+    color: var(--primary-text);
     width: 18px;
     font-size: 14px;
     flex-shrink: 0;
@@ -4011,7 +4062,7 @@ input[type='file'] {
     font-weight: 700;
     text-align: center;
     font-variant-numeric: tabular-nums;
-    color: var(--primary);
+    color: var(--primary-text);
     margin: 20px 0;
 }
 
@@ -5269,7 +5320,7 @@ input[type='file'] {
 }
 
 .ssg-header-cell.ssg-today {
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 .ssg-date-num {
@@ -5281,7 +5332,7 @@ input[type='file'] {
 }
 
 .ssg-today .ssg-date-num {
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 .ssg-employee-cell {
@@ -5341,7 +5392,7 @@ label,
 .ssg-shift-rest {
     font-size: 0.72rem;
     font-weight: 600;
-    color: var(--primary);
+    color: var(--primary-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -5750,7 +5801,7 @@ label,
     color: var(--text-primary);
 }
 .admin-view-btn:hover i {
-    color: var(--primary);
+    color: var(--primary-text);
 }
 .admin-view-btn-active {
     background: var(--gradient-2);

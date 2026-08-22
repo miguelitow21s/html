@@ -51,11 +51,11 @@
                     </div>
                     <div id="change-pin-error" class="error-message hidden"></div>
                     <div class="form-group">
-                        <label data-i18n="pin.new.label">Nueva Contraseña Numérica</label>
+                        <label for="change-pin-new" data-i18n="pin.new.label">Nueva Contraseña Numérica</label>
                         <input type="password" id="change-pin-new" class="dark-control" inputmode="numeric" autocomplete="new-password" data-i18n-placeholder="pin.new.placeholder" placeholder="Mínimo 6 dígitos" required>
                     </div>
                     <div class="form-group">
-                        <label data-i18n="pin.confirm.label">Confirmar Contraseña</label>
+                        <label for="change-pin-confirm" data-i18n="pin.confirm.label">Confirmar Contraseña</label>
                         <input type="password" id="change-pin-confirm" class="dark-control" inputmode="numeric" autocomplete="new-password" data-i18n-placeholder="pin.confirm.placeholder" placeholder="Repita la contraseña" required>
                     </div>
                 </div>
@@ -333,17 +333,17 @@
                 <div id="login-error" class="error-message hidden"></div>
 
                 <div class="form-group">
-                    <label data-i18n="login.email.label">Correo Electrónico</label>
+                    <label for="login-email" data-i18n="login.email.label">Correo Electrónico</label>
                     <div class="input-wrapper">
-                        <i class="fas fa-envelope"></i>
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
                         <input type="email" id="login-email" class="form-control" data-i18n-placeholder="login.email.placeholder" placeholder="usuario@worktrace.com" autocomplete="username" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label data-i18n="login.password.label">Contraseña Numérica</label>
+                    <label for="login-password" data-i18n="login.password.label">Contraseña Numérica</label>
                     <div class="input-wrapper">
-                        <i class="fas fa-lock"></i>
+                        <i class="fas fa-lock" aria-hidden="true"></i>
                         <input type="password" id="login-password" class="form-control pin-input" placeholder="••••••" inputmode="numeric" autocomplete="current-password" minlength="6" maxlength="6" pattern="[0-9]{6}" required>
                     </div>
                     <p class="input-helper" data-i18n="login.password.helper">Solo números. Debe tener exactamente 6 dígitos.</p>
@@ -361,7 +361,7 @@
             </form>
 
             <div class="forgot-password">
-                <a href="#" data-action="requestPasswordReset" data-i18n="login.forgot">¿Olvidé mi contraseña?</a>
+                <button type="button" class="link-btn" data-action="requestPasswordReset" data-i18n="login.forgot">¿Olvidé mi contraseña?</button>
             </div>
 
             <div class="login-provided-by" aria-label="Provisto por VerifiK">
@@ -450,7 +450,7 @@
         </main>
         
         <nav class="bottom-nav">
-            <button class="nav-item active" data-action="navigate" data-args="employee-dashboard">
+            <button class="nav-item active" aria-current="page" data-action="navigate" data-args="employee-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
@@ -523,7 +523,7 @@
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item active" data-action="navigate" data-args="employee-profile">
+            <button class="nav-item active" aria-current="page" data-action="navigate" data-args="employee-profile">
                 <i class="fas fa-user"></i>
                 <span data-i18n="nav.profile">Perfil</span>
             </button>
@@ -615,11 +615,11 @@
 
                 <div class="area-selection-panel" style="margin-top: 0;">
                     <div class="area-selection-header">
-                        <strong>Área a fotografiar</strong>
+                        <label for="employee-photo-area-select" class="area-selection-label"><strong>Área a fotografiar</strong></label>
                         <p class="muted-copy" style="font-size: 12px; margin: 4px 0 0;">Debes cubrir todas las áreas del sitio antes de iniciar la limpieza.</p>
                     </div>
                     <div class="area-selection-select-wrap">
-                        <span class="area-selection-select-icon">
+                        <span class="area-selection-select-icon" aria-hidden="true">
                             <i class="fas fa-layer-group"></i>
                         </span>
                         <select id="employee-photo-area-select" class="dark-control area-selection-select">
@@ -1277,7 +1277,7 @@
         </main>
         
         <nav class="bottom-nav">
-            <button class="nav-item active" data-action="navigate" data-args="supervisor-dashboard">
+            <button class="nav-item active" aria-current="page" data-action="navigate" data-args="supervisor-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
@@ -1527,7 +1527,7 @@
         </main>
         
         <nav class="bottom-nav">
-            <button class="nav-item active" data-action="navigate" data-args="admin-dashboard">
+            <button class="nav-item active" aria-current="page" data-action="navigate" data-args="admin-dashboard">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
@@ -1643,7 +1643,7 @@
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item active" data-action="navigate" data-args="admin-supervision-monitor">
+            <button class="nav-item active" aria-current="page" data-action="navigate" data-args="admin-supervision-monitor">
                 <i class="fas fa-clipboard-check"></i>
                 <span data-i18n="supervisor.nav.supervision">Auditar</span>
             </button>
@@ -1716,7 +1716,7 @@
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav.home">Inicio</span>
             </button>
-            <button class="nav-item active" data-action="navigate" data-args="admin-supervisors">
+            <button class="nav-item active" aria-current="page" data-action="navigate" data-args="admin-supervisors">
                 <i class="fas fa-user-shield"></i>
                 <span data-i18n="admin.nav.supervisors">Inspectores</span>
             </button>
