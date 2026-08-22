@@ -15,7 +15,7 @@ window.WORKTRACE_CONFIG = window.WORKTRACE_CONFIG || {
     clientBranding: {
         name: 'R3 Service & Solutions Inc.',
         legalName: 'R3 Service & Solutions Inc.',
-        logoSrc: 'css/logos/r3-logo.png',
+        logoSrc: '/css/logos/r3-logo.png',
         logoAlt: 'R3',
     },
     // URLs de los documentos legales — abren en nueva pestaña desde el

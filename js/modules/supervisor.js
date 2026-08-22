@@ -3519,10 +3519,21 @@ export const supervisorMethods = {
                 location = await this.captureLocation({ updateUi: false, highAccuracy: true });
             } catch (err) {
                 console.info('[auditoria-autodetect] GPS no disponible', err?.message || err);
+                // Feedback al usuario: sabe que la auto-detección no corrió.
+                this.showToast(
+                    'No pudimos leer tu ubicación. Elige el sitio manualmente y toca "Verificar ubicación".',
+                    { tone: 'info', title: 'Ubicación no disponible' }
+                );
                 return;
             }
         }
-        if (!location || !Number.isFinite(Number(location.lat))) return;
+        if (!location || !Number.isFinite(Number(location.lat))) {
+            this.showToast(
+                'No pudimos leer tu ubicación. Elige el sitio manualmente y toca "Verificar ubicación".',
+                { tone: 'info', title: 'Ubicación no disponible' }
+            );
+            return;
+        }
 
         const nearby = restaurants
             .map((restaurant) => {
@@ -3546,7 +3557,13 @@ export const supervisorMethods = {
             elegido: nearby[0]?.restaurant ? getRestaurantDisplayName(nearby[0].restaurant) : null,
         });
 
-        if (nearby.length === 0) return;
+        if (nearby.length === 0) {
+            this.showToast(
+                'No estás dentro del radio de ningún sitio. Elige el sitio manualmente y acércate para auditar.',
+                { tone: 'info', title: 'Sin sitios cercanos' }
+            );
+            return;
+        }
 
         // Preferimos el más cercano. Si hay varios, igual el más cercano
         // suele ser el correcto (radios rara vez se superponen).

@@ -664,7 +664,7 @@ const app = {
     applyClientBranding() {
         const config = window.WORKTRACE_CONFIG || {};
         const branding = config.clientBranding || {};
-        const logoSrc = String(branding.logoSrc || 'css/logos/r3-logo.png');
+        const logoSrc = String(branding.logoSrc || '/css/logos/r3-logo.png');
         const logoAlt = String(branding.logoAlt || branding.name || 'Cliente');
         const legalName = String(branding.legalName || branding.name || 'R3 Service & Solutions Inc.');
         document.querySelectorAll('.header-client-logo').forEach((img) => {
@@ -3490,20 +3490,12 @@ const app = {
         createRestaurantButton?.classList.toggle('hidden', !canShowSupervisorCreation);
         createEmployeeButton?.classList.toggle('hidden', !canShowSupervisorCreation);
 
-        // Botón "Inicio" en pantallas hijas: antes solo se mostraba a admins.
-        // Ahora también a supervisoras (llevando a supervisor-dashboard). El
-        // label se ajusta según el destino real.
-        const dashboardRoute = isAdmin ? 'admin-dashboard' : 'supervisor-dashboard';
-        const dashboardLabel = isAdmin ? 'Inicio Admin' : 'Inicio';
+        // Botón "casita" (admin-return-btn) del header retirado: el switcher
+        // inline "Vista Admin | Vista Supervisor" ya cumple la función de
+        // volver al panel admin, y el bottom-nav tiene "Inicio". Dejarlo
+        // aparte era redundante.
         document.querySelectorAll('.admin-return-btn').forEach((button) => {
-            const shouldShow = isAdmin || isSupervisor;
-            button.classList.toggle('hidden', !shouldShow);
-            if (shouldShow) {
-                button.dataset.args = dashboardRoute;
-                button.title = `Ir al panel principal`;
-                const label = button.querySelector('span');
-                if (label) label.textContent = dashboardLabel;
-            }
+            button.classList.add('hidden');
         });
 
         // Limpiar residuos de intentos anteriores en el header.
