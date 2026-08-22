@@ -56,6 +56,7 @@ import {
     asArray,
     getScheduledHours,
     getShiftRestaurantName,
+    extractErrorInfo,
 } from './utils.js';
 
 const console = createScopedConsole();
@@ -762,6 +763,11 @@ const app = {
             const target = event.target.closest('[data-action]');
             if (!target) return;
             const action = target.dataset.action;
+            // Convención: si el data-action tiene guión (kebab-case), lo
+            // maneja el switch de handleDelegatedClick — este delegador
+            // camelCase no lo conoce y no debe warnear. Antes generaba
+            // ~22 warns falsos en cada acción de admin/tabla.
+            if (action.includes('-')) return;
             const handler = this[action];
             if (typeof handler !== 'function') {
                 console.warn(`[data-action] método no encontrado: ${action}`);
@@ -994,6 +1000,23 @@ const app = {
                 this.handleSupervisionPhotoUpload(event);
             });
         }
+
+        // Migrados desde onchange inline (CSP estricta bloquea inline handlers).
+        const specialTaskEvidenceInput = document.getElementById('special-task-evidence-input');
+        if (specialTaskEvidenceInput) {
+            specialTaskEvidenceInput.addEventListener('change', (event) => {
+                this.handleSpecialTaskEvidenceUpload(event);
+            });
+        }
+
+        const supervisorEmployeesStatusFilter = document.getElementById('supervisor-employees-status-filter');
+        if (supervisorEmployeesStatusFilter) {
+            supervisorEmployeesStatusFilter.addEventListener('change', (event) => {
+                this.setSupervisorEmployeesStatusFilter(event.target.value);
+            });
+        }
+        // admin-supervision-supervisor-filter ya se bindea en
+        // populateAdminSupervisionMonitorSupervisorFilter (admin.js:301).
 
         const supervisionObservations = document.getElementById('supervision-observations');
         if (supervisionObservations) {
@@ -1819,13 +1842,28 @@ const app = {
         ).trim();
     },
 
+    // Política de preloads (best-effort al mount): fallan silenciosos
+    // porque la UI vuelve a intentar cuando el usuario entra a la sección.
+    // Los registramos con timestamp para que quede rastro (window.app._preloadErrors)
+    // sin molestar con toasts.
+    recordPreloadError(where, error) {
+        this._preloadErrors = this._preloadErrors || [];
+        this._preloadErrors.push({ where, at: new Date().toISOString(), error });
+        console.warn(`[preload:${where}] falló (no bloqueante)`, error);
+    },
+
     getErrorMessage(error, fallback = 'Ocurrió un error inesperado.') {
         if (!error) {
             return fallback;
         }
 
-        const status = Number(error?.status);
-        const payloadMessage = String(error?.payload?.error?.message || error?.payload?.message || '').trim();
+        // Normalizamos el shape del error una sola vez con extractErrorInfo.
+        // Cada rama del método sigue accediendo a error?.payload?...
+        // directamente por retrocompatibilidad — el helper existe para
+        // que nuevos usos no repitan el patrón `payload?.error?.details?.X`.
+        const info = extractErrorInfo(error);
+        const status = info.status != null ? info.status : Number(error?.status);
+        const payloadMessage = info.message;
         const rawMessage = String(error?.message || payloadMessage || fallback).trim();
         const normalizedMessage = rawMessage.toLowerCase();
         const errorCode = this.getErrorCode(error);
@@ -2479,7 +2517,7 @@ const app = {
 
                 if (this.isAdminRole()) {
                     void this.loadSystemSettingsIfAvailable().catch((settingsError) => {
-                        console.warn('No fue posible precargar los ajustes globales para admin.', settingsError);
+                        this.recordPreloadError('adminSystemSettings', settingsError);
                     });
                 }
 
@@ -3526,7 +3564,7 @@ const app = {
 
         if (!this.isCacheFresh('employeeHoursHistory', CACHE_TTLS.employeeHoursHistory)) {
             void this.loadEmployeeProfile().catch((error) => {
-                console.warn('No fue posible precargar el perfil del empleado.', error);
+                this.recordPreloadError('employeeProfile', error);
             });
         }
 
@@ -3542,7 +3580,7 @@ const app = {
 
         if (!this.isCacheFresh('supervisorEmployees', CACHE_TTLS.supervisorEmployees)) {
             void this.loadSupervisorEmployees().catch((error) => {
-                console.warn('No fue posible precargar empleados de supervisión.', error);
+                this.recordPreloadError('supervisorEmployees', error);
             });
         }
     },
@@ -3554,7 +3592,7 @@ const app = {
 
         if (!this.isCacheFresh('adminSupervisors', CACHE_TTLS.adminSupervisors)) {
             void this.loadAdminSupervisors().catch((error) => {
-                console.warn('No fue posible precargar la gestión de supervisoras.', error);
+                this.recordPreloadError('adminSupervisors', error);
             });
         }
     },
@@ -4600,12 +4638,11 @@ const app = {
         }
 
         const locale = getLang() === 'en' ? 'en-US' : 'es-CO';
-        dateElement.textContent = new Date().toLocaleDateString(locale, {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
+        dateElement.textContent = formatDate(
+            new Date(),
+            { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+            locale
+        );
     },
 
     setDefaultReportDates() {
@@ -5644,35 +5681,9 @@ const app = {
         }
     },
 
-    handlePhotoUpload(event) {
-        const file = event.target.files?.[0];
-        if (!file || !this.currentPhotoArea) {
-            return;
-        }
-
-        void this.processPhotoFile(file, 'start', this.currentPhotoArea).catch((error) => {
-            this.showToast(this.getErrorMessage(error, 'No fue posible procesar la imagen.'), {
-                tone: 'error',
-                title: t('app.toast.image.error'),
-            });
-        });
-        event.target.value = '';
-    },
-
-    handleEndPhotoUpload(event) {
-        const file = event.target.files?.[0];
-        if (!file || !this.currentPhotoArea) {
-            return;
-        }
-
-        void this.processPhotoFile(file, 'end', this.currentPhotoArea).catch((error) => {
-            this.showToast(this.getErrorMessage(error, 'No fue posible procesar la imagen final.'), {
-                tone: 'error',
-                title: t('app.toast.image.error'),
-            });
-        });
-        event.target.value = '';
-    },
+    // handlePhotoUpload/handleEndPhotoUpload eliminados: los inputs file
+    // que los disparaban (#photo-input, #end-photo-input) eran huérfanos
+    // y nunca se .click()eaban. La captura pasa por openCameraCapture.
 
     handleSupervisionPhotoUpload(event) {
         const file = event.target.files?.[0];

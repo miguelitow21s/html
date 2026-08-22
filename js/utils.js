@@ -133,7 +133,7 @@ export function toDateTimeLocalInput(value) {
     return local.toISOString().slice(0, 16);
 }
 
-export function formatDate(value, options = {}) {
+export function formatDate(value, options = {}, locale = 'es-CO') {
     if (!value) {
         return '-';
     }
@@ -143,7 +143,7 @@ export function formatDate(value, options = {}) {
         return '-';
     }
 
-    return date.toLocaleDateString('es-CO', options);
+    return date.toLocaleDateString(locale, options);
 }
 
 export function formatTime(value) {
@@ -307,6 +307,42 @@ export function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+/**
+ * Normaliza el shape variable del error del backend a un objeto plano.
+ * El wrapper del backend a veces envuelve en error.payload.error, otras
+ * en error.payload.details, otras en error directo. Este helper aplana
+ * las 3 ramas para no tener que hacer `err?.payload?.error?.details?.X ||
+ * err?.payload?.details?.X || err?.X` en 20 sitios.
+ *
+ * @param {any} error - Error crudo del apiClient o fetch.
+ * @returns {{ status: number|null, code: string, message: string, diagnosticCode: string, details: object }}
+ */
+export function extractErrorInfo(error) {
+    const src = error || {};
+    const payload = src.payload || {};
+    const nested = payload.error || {};
+    const details = nested.details || payload.details || src.details || {};
+
+    return {
+        status: Number.isFinite(Number(src.status)) ? Number(src.status) : null,
+        code: String(nested.code || payload.code || src.code || '').trim(),
+        message: String(
+            nested.message ||
+                payload.message ||
+                src.message ||
+                ''
+        ).trim(),
+        diagnosticCode: String(
+            details.diagnostic_code ||
+                nested.diagnostic_code ||
+                payload.diagnostic_code ||
+                src.diagnosticCode ||
+                ''
+        ).trim(),
+        details: details && typeof details === 'object' ? details : {},
+    };
 }
 
 // Devuelve la URL sanitizada si es http/https/blob/data-image; en cualquier

@@ -11,7 +11,12 @@ import {
     CACHE_TTLS,
     DEFAULT_SYSTEM_SETTINGS,
     REPORT_COLUMNS,
+    scopedConsole,
 } from '../constants.js';
+
+// Rebind local: info/warn/log noop en prod. error sí bindea al real.
+// eslint-disable-next-line no-unused-vars
+const console = scopedConsole;
 import { apiClient, buildIdempotencyKey } from '../api.js';
 import { t } from '../i18n.js';
 import {
@@ -3315,7 +3320,7 @@ export const supervisorMethods = {
         end.setDate(end.getDate() + 6);
         const shortOpts = { day: 'numeric', month: 'short' };
         const fullOpts = { day: 'numeric', month: 'short', year: 'numeric' };
-        return `${start.toLocaleDateString('es-CO', shortOpts)} — ${end.toLocaleDateString('es-CO', fullOpts)}`;
+        return `${formatDate(start, shortOpts)} — ${formatDate(end, fullOpts)}`;
     },
 
 

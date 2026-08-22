@@ -1,6 +1,11 @@
 // @ts-nocheck
 import { apiClient } from '../api.js';
-import { CACHE_TTLS, ROLE_LABELS } from '../constants.js';
+import { CACHE_TTLS, ROLE_LABELS, scopedConsole } from '../constants.js';
+
+// Rebind local: info/warn/log noop en prod (habilita con
+// WORKTRACE_CONFIG.debugConsole=true o en localhost).
+// eslint-disable-next-line no-unused-vars
+const console = scopedConsole;
 import { t } from '../i18n.js';
 import {
     asArray,
@@ -19,46 +24,55 @@ import {
 export const adminMethods = {
     async loadAdminDashboard() {
         const restaurants = await this.ensureAdminRestaurants();
+        // Guards: los containers #admin-metrics-summary y #admin-supervisions-list
+        // fueron removidos del dashboard admin en el rediseño de UI. Si no existen,
+        // saltamos los fetches para no gastar red/CPU en render que nadie ve.
+        const metricsContainer = document.getElementById('admin-metrics-summary');
+        const supervisionsContainer = document.getElementById('admin-supervisions-list');
+        const shouldLoadMetrics = Boolean(metricsContainer);
+        const shouldLoadSupervisions = Boolean(supervisionsContainer);
+
         const canUseMetricsCache =
             this.data.admin.metrics && this.isCacheFresh('adminMetrics', CACHE_TTLS.adminMetrics);
 
-        const metricsPromise = canUseMetricsCache
-            ? Promise.resolve(this.data.admin.metrics)
-            : !this.cache.adminMetricsUnavailable && restaurants.length > 0
-              ? apiClient
-                    .adminDashboardMetrics(
-                        {
-                            restaurant_id: restaurants[0].id || restaurants[0].restaurant_id,
-                            period_start: toInputDate(getMonthStart()),
-                            period_end: toInputDate(new Date()),
-                        },
-                        {
-                            retryOnInvalidJwt: false,
-                        }
-                    )
-                    .catch((error) => {
-                        if (error?.status === 401 || error?.status === 403) {
-                            this.cache.adminMetricsUnavailable = true;
-                        }
-                        console.warn('No fue posible cargar admin_dashboard_metrics.', error);
-                        return null;
-                    })
-              : Promise.resolve(null);
+        const metricsPromise = !shouldLoadMetrics
+            ? Promise.resolve(this.data.admin.metrics || null)
+            : canUseMetricsCache
+              ? Promise.resolve(this.data.admin.metrics)
+              : !this.cache.adminMetricsUnavailable && restaurants.length > 0
+                ? apiClient
+                      .adminDashboardMetrics(
+                          {
+                              restaurant_id: restaurants[0].id || restaurants[0].restaurant_id,
+                              period_start: toInputDate(getMonthStart()),
+                              period_end: toInputDate(new Date()),
+                          },
+                          {
+                              retryOnInvalidJwt: false,
+                          }
+                      )
+                      .catch((error) => {
+                          if (error?.status === 401 || error?.status === 403) {
+                              this.cache.adminMetricsUnavailable = true;
+                          }
+                          console.warn('No fue posible cargar admin_dashboard_metrics.', error);
+                          return null;
+                      })
+                : Promise.resolve(null);
 
-        const [metrics, supervisions] = await Promise.all([
-            metricsPromise,
-            this.fetchAdminSupervisions(restaurants, {
-                limit: 50,
-            }),
-        ]);
+        const supervisionsPromise = shouldLoadSupervisions
+            ? this.fetchAdminSupervisions(restaurants, { limit: 50 })
+            : Promise.resolve([]);
+
+        const [metrics, supervisions] = await Promise.all([metricsPromise, supervisionsPromise]);
 
         this.data.admin.metrics = metrics;
         this.data.admin.supervisions = supervisions;
-        if (!canUseMetricsCache) {
+        if (shouldLoadMetrics && !canUseMetricsCache) {
             this.touchCache('adminMetrics');
         }
-        this.renderAdminMetrics(restaurants, metrics);
-        this.renderAdminSupervisions(supervisions);
+        if (shouldLoadMetrics) this.renderAdminMetrics(restaurants, metrics);
+        if (shouldLoadSupervisions) this.renderAdminSupervisions(supervisions);
         this.warmAdminWorkspace();
     },
 
@@ -998,60 +1012,27 @@ export const adminMethods = {
             `adminSupervisors:${queryKey}:${force ? 'force' : 'default'}`,
             async () => {
                 const result = await apiClient.adminUsersManage('list', payload);
-                return Promise.all(
-                    asArray(result).map(async (item) => {
-                        const supervisorId = item.id || item.user_id;
-                        let assignments = [];
-
-                        if (supervisorId) {
-                            try {
-                                assignments = asArray(
-                                    await apiClient.adminSupervisorsManage('list_by_supervisor', {
-                                        supervisor_id: supervisorId,
-                                    })
-                                );
-                            } catch (error) {
-                                console.warn(
-                                    `No fue posible cargar asignaciones para la supervisora ${supervisorId}.`,
-                                    error
-                                );
-                            }
-                        }
-
-                        const normalizedAssignments = assignments
-                            .map((assignment) => {
-                                const restaurantId = assignment.restaurant_id || assignment.restaurant?.id;
-                                const restaurant = this.data.admin.restaurants.find(
-                                    (candidate) =>
-                                        String(candidate.id || candidate.restaurant_id) === String(restaurantId)
-                                );
-
-                                if (!restaurantId) {
-                                    return null;
-                                }
-
-                                return {
-                                    restaurant_id: restaurantId,
-                                    name: getRestaurantDisplayName(assignment, getRestaurantDisplayName(restaurant)),
-                                };
-                            })
-                            .filter(Boolean);
-
-                        return {
-                            id: supervisorId,
-                            full_name:
-                                item.full_name ||
-                                item.name ||
-                                `${item.first_name || ''} ${item.last_name || ''}`.trim() ||
-                                t('admin.supervisors.role.fallback'),
-                            email: item.email || '-',
-                            phone_e164: item.phone_e164 || item.phone_number || '-',
-                            is_active: item.is_active !== false,
-                            assignments: normalizedAssignments,
-                            raw: item,
-                        };
-                    })
-                );
+                // Antes se disparaba N+1: por cada inspector se llamaba
+                // adminSupervisorsManage('list_by_supervisor'). El bloque de
+                // asignación de restaurantes fue retirado del render (los
+                // inspectores auditan cualquier sitio activo sin asignación),
+                // así que las assignments se dejan vacías y evitamos N requests.
+                return asArray(result).map((item) => {
+                    const supervisorId = item.id || item.user_id;
+                    return {
+                        id: supervisorId,
+                        full_name:
+                            item.full_name ||
+                            item.name ||
+                            `${item.first_name || ''} ${item.last_name || ''}`.trim() ||
+                            t('admin.supervisors.role.fallback'),
+                        email: item.email || '-',
+                        phone_e164: item.phone_e164 || item.phone_number || '-',
+                        is_active: item.is_active !== false,
+                        assignments: [],
+                        raw: item,
+                    };
+                });
             }
         );
 
@@ -1186,23 +1167,9 @@ export const adminMethods = {
         }
     },
 
-    adminAction(action) {
-        const routes = {
-            supervisores: 'admin-supervisors',
-            'monitoreo-supervisoras': 'admin-supervision-monitor',
-        };
-
-        const page = routes[action];
-        if (!page) {
-            this.showToast(t('admin.toast.action.preparing'), {
-                tone: 'info',
-                title: t('toast.common.coming.soon'),
-            });
-            return;
-        }
-
-        this.navigate(page);
-    },
+    // adminAction() eliminado: los 2 botones que lo usaban ahora hacen
+    // data-action="navigate" directo con la ruta real (admin-supervisors,
+    // admin-supervision-monitor). Sin call-sites externos.
 
     showNotification() {
         const backendStatus = this.backend.connected ? 'Sistema listo' : 'Sistema en revisión';

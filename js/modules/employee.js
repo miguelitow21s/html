@@ -1,5 +1,11 @@
 // @ts-nocheck
-import { CACHE_TTLS, DEFAULT_SYSTEM_SETTINGS, SUPPORTED_EVIDENCE_IMAGE_ACCEPT } from '../constants.js';
+import { CACHE_TTLS, DEFAULT_SYSTEM_SETTINGS, SUPPORTED_EVIDENCE_IMAGE_ACCEPT, scopedConsole } from '../constants.js';
+
+// Rebind local: console.info/warn/log noop en prod (habilita con
+// WORKTRACE_CONFIG.debugConsole=true o en localhost). console.error
+// sigue bindeado al real.
+// eslint-disable-next-line no-unused-vars
+const console = scopedConsole;
 import { apiClient } from '../api.js';
 import { t } from '../i18n.js';
 import {
@@ -139,9 +145,15 @@ export const employeeMethods = {
         };
         setText('profile-hours-worked', formatHours(profileHours));
         setText('profile-total-shifts', String(history?.total_shifts || 0));
+        // #profile-pending-tasks y #profile-special-tasks-list fueron removidos
+        // del HTML del perfil contratista (PDF: la tarea pertenece al sitio, no
+        // al perfil). Solo escribimos si el nodo existe (setText es null-safe)
+        // y no llamamos a renderEmployeeProfileTasks si el container no está.
         setText('profile-pending-tasks', String(this.data.employee.dashboard?.pending_tasks_count || 0));
-        const visibleTasks = this.getVisibleEmployeeTasks(this.data.employee.dashboard);
-        this.renderEmployeeProfileTasks(visibleTasks);
+        if (document.getElementById('profile-special-tasks-list')) {
+            const visibleTasks = this.getVisibleEmployeeTasks(this.data.employee.dashboard);
+            this.renderEmployeeProfileTasks(visibleTasks);
+        }
         this.updateUserUI();
     },
 
