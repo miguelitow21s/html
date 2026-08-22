@@ -438,35 +438,40 @@ export const adminMethods = {
 
         // Log detallado por supervision — permite diagnosticar en 5 seg cuál
         // campo del payload contiene las fotos si el usuario ve 'Sin fotos'.
-        console.info('[admin] renderAdminSupervisions', {
-            containerId,
-            total: visibleItems.length,
-            supervisions: visibleItems.map((item, idx) => ({
-                idx,
-                id: item?.id || item?.supervisor_presence_id || null,
-                restaurant: item?.restaurant?.name || item?.restaurant_name,
-                supervisor:
-                    item?.supervisor?.full_name || item?.supervisor_name || null,
-                topLevelKeys: Object.keys(item || {}),
-                extractedEvidenceCount: this.extractSupervisionEvidences(item).length,
-                rawBuckets: {
-                    evidences_is_array: Array.isArray(item?.evidences),
-                    evidences_count: Array.isArray(item?.evidences) ? item.evidences.length : null,
-                    evidences_type: typeof item?.evidences,
-                    evidence_urls: asArray(item?.evidence_urls).length,
-                    photos: asArray(item?.photos).length,
-                    photo_urls: asArray(item?.photo_urls).length,
-                    images: asArray(item?.images).length,
-                    photo_count_field: item?.photo_count ?? item?.evidence_count ?? null,
-                },
-                firstEvidenceRecord: Array.isArray(item?.evidences) && item.evidences[0]
-                    ? {
-                          keys: Object.keys(item.evidences[0]),
-                          sample: item.evidences[0],
-                      }
-                    : null,
-            })),
-        });
+        // Solo construimos el payload si el debug real está activo; antes
+        // se evaluaba .map() con Object.keys por cada item aunque el
+        // console.info fuese noop en prod (scopedConsole).
+        if (globalThis.WORKTRACE_CONFIG?.debugConsole) {
+            console.info('[admin] renderAdminSupervisions', {
+                containerId,
+                total: visibleItems.length,
+                supervisions: visibleItems.map((item, idx) => ({
+                    idx,
+                    id: item?.id || item?.supervisor_presence_id || null,
+                    restaurant: item?.restaurant?.name || item?.restaurant_name,
+                    supervisor:
+                        item?.supervisor?.full_name || item?.supervisor_name || null,
+                    topLevelKeys: Object.keys(item || {}),
+                    extractedEvidenceCount: this.extractSupervisionEvidences(item).length,
+                    rawBuckets: {
+                        evidences_is_array: Array.isArray(item?.evidences),
+                        evidences_count: Array.isArray(item?.evidences) ? item.evidences.length : null,
+                        evidences_type: typeof item?.evidences,
+                        evidence_urls: asArray(item?.evidence_urls).length,
+                        photos: asArray(item?.photos).length,
+                        photo_urls: asArray(item?.photo_urls).length,
+                        images: asArray(item?.images).length,
+                        photo_count_field: item?.photo_count ?? item?.evidence_count ?? null,
+                    },
+                    firstEvidenceRecord: Array.isArray(item?.evidences) && item.evidences[0]
+                        ? {
+                              keys: Object.keys(item.evidences[0]),
+                              sample: item.evidences[0],
+                          }
+                        : null,
+                })),
+            });
+        }
 
         // Backend v3: cada item puede venir con supervisor_id plano SIN objeto
         // supervisor anidado. Resolvemos nombre/email con la lista cargada.

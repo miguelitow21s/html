@@ -16,7 +16,7 @@ export default defineConfig({
             },
             output: {
                 manualChunks: {
-                    supabase: ['@supabase/supabase-js']
+                    supabase: ['@supabase/auth-js']
                 },
                 chunkFileNames: 'js/[name]-[hash].js',
                 entryFileNames: 'js/[name]-[hash].js',

@@ -1,5 +1,9 @@
 // @ts-nocheck
-import { createClient } from '@supabase/supabase-js';
+// Antes: `@supabase/supabase-js` completo (~194 kB min) para usar solo el
+// módulo auth. Ahora instanciamos AuthClient directamente desde auth-js.
+// storage/functions/postgrest/realtime nunca se usaron (todo pasa por el
+// wrapper apiClient de js/api.js). Ahorro ~100-140 kB en el bundle.
+import { AuthClient } from '@supabase/auth-js';
 // FontAwesome: cargamos SOLO el set solid + base. Antes se importaba
 // all.min.css que traía fa-brands-400 (~118 kB) + fa-regular-400 (~25 kB)
 // sin usar. Único ex-usuario de 'far' era supervisor.js con 'far fa-star'
@@ -715,13 +719,27 @@ const app = {
             return;
         }
 
-        this.supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: false,
-                detectSessionInUrl: true,
+        // Reproducimos la config que usaba createClient(url, key) para el
+        // sub-módulo auth: URL termina en /auth/v1, headers con apikey +
+        // Authorization Bearer, storageKey por-proyecto para no chocar con
+        // otros deploys (ref = path 1 del hostname del proyecto Supabase).
+        const supabaseUrl = String(config.supabaseUrl || '').replace(/\/$/, '');
+        const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
+        const authClient = new AuthClient({
+            url: `${supabaseUrl}/auth/v1`,
+            headers: {
+                Authorization: `Bearer ${config.supabaseAnonKey}`,
+                apikey: config.supabaseAnonKey,
             },
+            storageKey: `sb-${projectRef}-auth-token`,
+            persistSession: true,
+            autoRefreshToken: false,
+            detectSessionInUrl: true,
+            flowType: 'implicit',
         });
+        // Fachada minima compatible con this.supabase.auth.* (todo el
+        // codigo del app lee this.supabase.auth.xxx, nada mas).
+        this.supabase = { auth: authClient };
 
         apiClient.setAccessTokenResolver(async (options = {}) => this.getValidAccessToken(options));
 
@@ -1040,14 +1058,35 @@ const app = {
             });
         });
 
-        // A11y: cerrar modal top con ESC.
+        // A11y: cerrar modal top con ESC + trap de foco con Tab.
         document.addEventListener('keydown', (event) => {
-            if (event.key !== 'Escape') return;
             const openModals = document.querySelectorAll('.modal.active');
             if (openModals.length === 0) return;
             const top = openModals[openModals.length - 1];
-            if (top?.dataset.locked === 'true') return;
-            this.closeModal(top.id);
+
+            if (event.key === 'Escape') {
+                if (top?.dataset.locked === 'true') return;
+                this.closeModal(top.id);
+                return;
+            }
+
+            if (event.key === 'Tab') {
+                const focusableSelector =
+                    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+                const focusables = Array.from(top.querySelectorAll(focusableSelector))
+                    .filter((el) => el.offsetParent !== null || el === document.activeElement);
+                if (focusables.length === 0) return;
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                const active = document.activeElement;
+                if (event.shiftKey && active === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && active === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
+            }
         });
 
         const adminSupervisorForm = document.getElementById('admin-supervisor-form');
@@ -1576,6 +1615,25 @@ const app = {
         if (modalId === 'modal-admin-restaurant') {
             await this.ensureAdminRestaurantMapReady();
         }
+
+        // A11y: mover foco al primer control accionable dentro del modal
+        // (input, select, textarea, botón) para que teclado y screen reader
+        // no queden fuera del diálogo. Si no hay controles, foco al header
+        // con tabindex=-1 como fallback.
+        window.requestAnimationFrame(() => {
+            const focusableSelector =
+                'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]):not(.btn-close), [tabindex]:not([tabindex="-1"])';
+            const firstFocusable = modal.querySelector(focusableSelector);
+            if (firstFocusable && typeof firstFocusable.focus === 'function') {
+                try { firstFocusable.focus({ preventScroll: true }); } catch (_) { /* ignore */ }
+            } else {
+                const h3 = modal.querySelector('.modal-header h3');
+                if (h3) {
+                    if (!h3.hasAttribute('tabindex')) h3.setAttribute('tabindex', '-1');
+                    try { h3.focus({ preventScroll: true }); } catch (_) { /* ignore */ }
+                }
+            }
+        });
     },
 
     async openAdminRestaurantModal() {
