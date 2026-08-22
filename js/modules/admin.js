@@ -852,11 +852,12 @@ export const adminMethods = {
         document.getElementById('admin-supervisor-full-name').value = supervisor.full_name || '';
         document.getElementById('admin-supervisor-email').value = supervisor.email || '';
         document.getElementById('admin-supervisor-phone').value = supervisor.phone_e164 || '';
-        // Cuenta activa: se mantiene siempre en true (chulo eliminado por
-        // pedido del cliente). El input existe hidden solo para no romper
-        // el payload que envía is_active.
+        // Cuenta activa: el chulo visible se quitó (pedido del cliente),
+        // pero al editar debemos PRESERVAR el estado actual — no forzar
+        // a true, o un admin editando el teléfono re-activaría un
+        // inspector previamente desactivado sin pedirlo.
         const activeCheckbox = document.getElementById('admin-supervisor-active');
-        if (activeCheckbox) activeCheckbox.checked = true;
+        if (activeCheckbox) activeCheckbox.checked = supervisor.is_active !== false;
         const modalTitle = document.getElementById('modal-admin-supervisor-title');
         if (modalTitle) modalTitle.textContent = 'Editar Inspector';
         const submitLabel = document.getElementById('admin-supervisor-submit-label');
@@ -1078,26 +1079,12 @@ export const adminMethods = {
             return;
         }
 
-        const canManagePhoneBinding = this.currentUser?.role === 'super_admin';
         container.innerHTML = supervisors
             .map((supervisor) => {
                 const supervisorId = String(supervisor.id || '');
-                const assignedRestaurants = supervisor.assignments || [];
-                const availableRestaurants = this.data.admin.restaurants.filter(
-                    (restaurant) =>
-                        !assignedRestaurants.some(
-                            (assignment) =>
-                                String(assignment.restaurant_id) === String(restaurant.id || restaurant.restaurant_id)
-                        )
-                );
-                const selectId = `admin-supervisor-assign-${supervisorId}`;
                 const statusLabel = supervisor.is_active ? 'Activa' : 'Inactiva';
                 const statusClass = supervisor.is_active ? 'badge-success' : 'badge-danger';
-                const assignDisabled = availableRestaurants.length === 0 ? 'disabled' : '';
-                // "Desvincular Teléfono" eliminado por pedido del cliente
-                // (PDF de cambios). El botón se retira del render pero el
-                // handler subyacente permanece por si vuelve a habilitarse
-                // desde otro flujo.
+                // "Desvincular Teléfono" eliminado por pedido del cliente.
                 const clearPhoneButton = '';
 
                 return `

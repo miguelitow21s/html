@@ -18,4 +18,11 @@ window.WORKTRACE_CONFIG = window.WORKTRACE_CONFIG || {
         logoSrc: 'css/logos/r3-logo.png',
         logoAlt: 'R3',
     },
+    // URLs de los documentos legales — abren en nueva pestaña desde el
+    // login. Configurables por deploy sin rebuild. Dejar '' desactiva
+    // el link visualmente.
+    legalUrls: {
+        terms: '',
+        privacy: '',
+    },
 };

@@ -663,6 +663,25 @@ const app = {
         document.querySelectorAll('[data-legal-client-name]').forEach((el) => {
             el.textContent = legalName;
         });
+        const legalUrls = config.legalUrls || {};
+        const applyLegalLink = (selector, href) => {
+            document.querySelectorAll(selector).forEach((a) => {
+                if (href) {
+                    a.href = href;
+                    a.style.pointerEvents = '';
+                    a.style.opacity = '';
+                } else {
+                    // Sin URL configurada: dejar el enlace visible pero
+                    // no clickeable en vez de romper con href="#".
+                    a.href = '#';
+                    a.style.pointerEvents = 'none';
+                    a.style.opacity = '0.75';
+                    a.title = 'Documento aún no publicado';
+                }
+            });
+        };
+        applyLegalLink('[data-terms-link]', legalUrls.terms);
+        applyLegalLink('[data-privacy-link]', legalUrls.privacy);
     },
 
     configureBackend() {
@@ -5581,11 +5600,21 @@ const app = {
         // Bloqueo pedido por el cliente: no aceptar fotos si el inspector
         // no está dentro del radio validado del sitio seleccionado. Antes
         // se podía enviar evidencia de cualquier sitio sin estar en él.
+        // Mensaje específico según el sub-caso para no perder info diagnóstica.
         if (!this.supervisionLocationVerified) {
-            this.showToast(
-                'Solo puedes tomar fotos de auditoría cuando estés dentro del sitio. Verifica tu ubicación primero.',
-                { tone: 'warning', title: 'Ubicación no validada' }
-            );
+            const check = this.supervisionLocationCheck || null;
+            let message = 'Verifica tu ubicación en el botón "Verificar ubicación" antes de tomar fotos.';
+            let title = 'Ubicación no validada';
+            if (check && Number.isFinite(Number(check.distanceMeters))) {
+                const distance = Math.round(Number(check.distanceMeters));
+                const radius = Math.round(Number(check.radiusMeters || 0));
+                message = `Estás a ${distance} m del sitio (radio permitido: ${radius} m). Acércate para tomar fotos.`;
+                title = 'Fuera del radio del sitio';
+            } else if (check && !check.ok && check.radiusMeters === 0) {
+                message = 'El sitio seleccionado no tiene ubicación/radio configurados. Coordina con el admin.';
+                title = 'Sitio sin geocerca';
+            }
+            this.showToast(message, { tone: 'warning', title });
             event.target.value = '';
             return;
         }

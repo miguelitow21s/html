@@ -2664,24 +2664,42 @@ export const supervisorMethods = {
         let restaurants = [];
         let shifts = [];
         let openTasks = [];
+        // Cache simple del listado de tareas open para no re-fetchear en
+        // cada render de sitios. TTL corto porque el badge por sitio
+        // puede volverse rancio rápido (crear/completar tarea invalida).
+        const OPEN_TASKS_TTL_MS = 60 * 1000;
+        const openTasksCache = this._openTasksBadgeCache;
+        const shouldFetchTasks =
+            force ||
+            !openTasksCache?.data ||
+            Date.now() - (openTasksCache?.ts || 0) > OPEN_TASKS_TTL_MS;
+
         try {
+            const tasksPromise = shouldFetchTasks
+                ? apiClient
+                      // Sin límite: contar tareas open por sitio exige la
+                      // lista completa. El backend pagina si es grande.
+                      .operationalTasksManage('list', { status: 'open' })
+                      .then((res) => asArray(res))
+                      .catch((taskErr) => {
+                          console.warn('No fue posible cargar tareas especiales para el render de sitios.', taskErr);
+                          return openTasksCache?.data || [];
+                      })
+                : Promise.resolve(openTasksCache.data);
             const [r, s, tasks] = await Promise.all([
                 this.getSupervisorRestaurants(force),
                 this.getSupervisorShiftList({ forceRestaurants: force }).catch((shiftErr) => {
                     console.warn('No fue posible cargar servicios para el render de sitios.', shiftErr);
                     return [];
                 }),
-                apiClient
-                    .operationalTasksManage('list', { status: 'open', limit: 200 })
-                    .then((res) => asArray(res))
-                    .catch((taskErr) => {
-                        console.warn('No fue posible cargar tareas especiales para el render de sitios.', taskErr);
-                        return [];
-                    }),
+                tasksPromise,
             ]);
             restaurants = r;
             shifts = s;
             openTasks = tasks;
+            if (shouldFetchTasks) {
+                this._openTasksBadgeCache = { data: openTasks, ts: Date.now() };
+            }
         } catch (error) {
             console.error('No fue posible cargar los sitios.', error);
             if (container) {
@@ -3455,10 +3473,8 @@ export const supervisorMethods = {
 
     async prepareSupervisorSupervisionPage() {
         // Bug reportado: al reabrir "Auditoría" quedaban fotos y notas
-        // de la sesión anterior. Reseteamos siempre al entrar, no solo
-        // después de enviar.
-        this.resetSupervisorSupervisionState();
-
+        // de la sesión anterior. Se resetea vía updateSupervisorSupervisionLocationLabel
+        // más abajo, que ya invoca resetSupervisorSupervisionState internamente.
         if (this.data.supervisor.restaurants.length === 0) {
             this.data.supervisor.restaurants = await this.getSupervisorRestaurants();
         }
@@ -3535,17 +3551,28 @@ export const supervisorMethods = {
         select.value = chosenId;
         select.dispatchEvent(new Event('change', { bubbles: true }));
 
-        // Validación silenciosa (sin toast) para dejar la UI en verde.
+        // Validación silenciosa (sin toast propio). El toast final se
+        // decide según el resultado real de la verificación para no
+        // mentir sobre la validación.
+        let verifyResult = null;
         try {
-            await this.verifySupervisorSupervisionLocation({ forceCapture: false, notify: false });
+            verifyResult = await this.verifySupervisorSupervisionLocation({ forceCapture: false, notify: false });
         } catch (err) {
             console.info('[auditoria-autodetect] verify falló', err?.message || err);
         }
 
-        this.showToast(
-            `Sitio detectado automáticamente: ${getRestaurantDisplayName(chosen)}. Ya puedes auditar.`,
-            { tone: 'success', title: 'Ubicación validada' }
-        );
+        const chosenName = getRestaurantDisplayName(chosen);
+        if (verifyResult?.ok && this.supervisionLocationVerified) {
+            this.showToast(
+                `Sitio detectado automáticamente: ${chosenName}. Ya puedes auditar.`,
+                { tone: 'success', title: 'Ubicación validada' }
+            );
+        } else {
+            this.showToast(
+                `Sitio detectado: ${chosenName}. Toca "Verificar ubicación" para confirmar antes de auditar.`,
+                { tone: 'info', title: 'Sitio pre-seleccionado' }
+            );
+        }
     },
 
     getSupervisorRestaurantGeofence(restaurant = null) {
