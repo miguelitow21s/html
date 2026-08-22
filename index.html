@@ -513,9 +513,6 @@
                         <span class="info-item-label" data-i18n="employee.profile.phone">Teléfono</span>
                         <span class="info-item-value" id="profile-phone">-</span>
                     </div>
-                    <button type="button" class="info-item-action" data-action="openPhoneChangeModal" aria-label="Cambiar teléfono">
-                        <i class="fas fa-pen"></i> Cambiar
-                    </button>
                 </div>
             </div>
 
@@ -1261,14 +1258,11 @@
                 <textarea id="supervision-observations" placeholder="Registre sus observaciones de la supervisión..."></textarea>
             </div>
 
-            <div class="card supervision-task-card">
-                <div class="card-header">
-                    <div class="card-title" data-i18n="supervisor.supervision.task">Tarea Especial del Sitio</div>
-                </div>
-                <button type="button" class="btn btn-secondary btn-inline" id="supervision-create-restaurant-task-btn" data-action="openSupervisorRestaurantTaskModalFromSupervision">
-                    <i class="fas fa-star"></i> <span data-i18n="audit.btn.create.task">Crear tarea especial</span>
-                </button>
-            </div>
+            <!-- Creación de tarea especial retirada del flujo de auditoría
+                 por pedido del cliente (PDF): las tareas especiales se
+                 crean desde el módulo Sitios, donde el video puede subirse
+                 de galería para tareas a distancia. La auditoría se limita
+                 a auditar. -->
 
             <button id="supervision-save-button" class="btn btn-success" data-action="saveSupervision">
                 <i class="fas fa-save"></i> <span data-i18n="supervisor.supervision.save">Guardar Auditoría</span>

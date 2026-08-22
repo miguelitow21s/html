@@ -9,4 +9,13 @@ window.WORKTRACE_CONFIG = window.WORKTRACE_CONFIG || {
     accessToken: '',
     shiftOtpToken: '',
     timeoutMs: 15000,
+    // Branding cliente: cambiable por deploy sin rebuild.
+    // Se aplica al slot izquierdo del header (Logo cliente).
+    // Los archivos deben vivir en /css/logos/ y ser referenciados como URL relativa.
+    clientBranding: {
+        name: 'R3 Service & Solutions Inc.',
+        legalName: 'R3 Service & Solutions Inc.',
+        logoSrc: 'css/logos/r3-logo.png',
+        logoAlt: 'R3',
+    },
 };

@@ -629,6 +629,7 @@ const app = {
         this._updateLangButtons();
         this.showLoading(t('app.toast.signing.in'), t('app.toast.signing.in.desc'));
         this.configureBackend();
+        this.applyClientBranding();
         this.initSupabase();
         this.bindEvents();
         this.removeLegacyUiArtifacts();
@@ -647,6 +648,17 @@ const app = {
 
         document.body.classList.remove('app-booting');
         this.hideLoading();
+    },
+
+    applyClientBranding() {
+        const config = window.WORKTRACE_CONFIG || {};
+        const branding = config.clientBranding || {};
+        const logoSrc = String(branding.logoSrc || 'css/logos/r3-logo.png');
+        const logoAlt = String(branding.logoAlt || branding.name || 'Cliente');
+        document.querySelectorAll('.header-client-logo').forEach((img) => {
+            img.src = logoSrc;
+            img.alt = logoAlt;
+        });
     },
 
     configureBackend() {

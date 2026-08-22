@@ -3474,6 +3474,78 @@ export const supervisorMethods = {
         this.selectedSupervisorShiftId = '';
         this.updateSupervisorSupervisionLocationLabel();
         this.updateSupervisionSupportCard();
+
+        // Auto-detección del sitio por geofence: mismo comportamiento
+        // que el contratista. Si el inspector está dentro del radio de
+        // UN solo sitio, lo pre-seleccionamos y validamos ubicación sin
+        // gesto adicional. Fire-and-forget para no bloquear el render.
+        void this.autoDetectSupervisorSupervisionSite();
+    },
+
+    async autoDetectSupervisorSupervisionSite() {
+        const select = document.getElementById('supervision-restaurant-select');
+        if (!select) return;
+        // Si el usuario ya eligió un sitio manualmente, no lo pisamos.
+        if (select.value) return;
+
+        const restaurants = asArray(this.data.supervisor.restaurants);
+        if (restaurants.length === 0) return;
+
+        let location = this.location;
+        if (!location || !Number.isFinite(Number(location.lat))) {
+            try {
+                location = await this.captureLocation({ updateUi: false, highAccuracy: true });
+            } catch (err) {
+                console.info('[auditoria-autodetect] GPS no disponible', err?.message || err);
+                return;
+            }
+        }
+        if (!location || !Number.isFinite(Number(location.lat))) return;
+
+        const nearby = restaurants
+            .map((restaurant) => {
+                const geofence = this.getSupervisorRestaurantGeofence(restaurant);
+                if (!geofence.hasCoordinates) return null;
+                const distance = calculateDistanceMeters(location, {
+                    lat: geofence.lat,
+                    lng: geofence.lng,
+                });
+                if (distance == null) return null;
+                const accuracyMeters = Math.max(0, Number(location.accuracy || 0));
+                const effectiveRadius = Math.max(geofence.radiusMeters || 0, 0) + Math.min(accuracyMeters, 35);
+                return { restaurant, distance, within: distance <= effectiveRadius };
+            })
+            .filter((entry) => entry && entry.within)
+            .sort((a, b) => a.distance - b.distance);
+
+        console.info('[auditoria-autodetect] candidatos dentro del radio', {
+            total: restaurants.length,
+            dentroRadio: nearby.length,
+            elegido: nearby[0]?.restaurant ? getRestaurantDisplayName(nearby[0].restaurant) : null,
+        });
+
+        if (nearby.length === 0) return;
+
+        // Preferimos el más cercano. Si hay varios, igual el más cercano
+        // suele ser el correcto (radios rara vez se superponen).
+        const chosen = nearby[0].restaurant;
+        const chosenId = String(getRestaurantRecordId(chosen) || '');
+        if (!chosenId) return;
+
+        select.value = chosenId;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+
+        // Validación silenciosa (sin toast) para dejar la UI en verde.
+        try {
+            await this.verifySupervisorSupervisionLocation({ forceCapture: false, notify: false });
+        } catch (err) {
+            console.info('[auditoria-autodetect] verify falló', err?.message || err);
+        }
+
+        this.showToast(
+            `Sitio detectado automáticamente: ${getRestaurantDisplayName(chosen)}. Ya puedes auditar.`,
+            { tone: 'success', title: 'Ubicación validada' }
+        );
     },
 
     getSupervisorRestaurantGeofence(restaurant = null) {
