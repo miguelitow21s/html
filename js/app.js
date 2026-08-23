@@ -3276,6 +3276,8 @@ const app = {
     },
 
     navigate(page) {
+        const previousPage = this.currentPage;
+
         this.getPageNodes().forEach((element) => {
             element.classList.add('hidden');
         });
@@ -3284,6 +3286,18 @@ const app = {
         if (!targetPage) {
             console.error('Page not found:', page);
             return;
+        }
+
+        // Al SALIR de la vista de auditoría hacia cualquier otra pantalla,
+        // limpiamos el estado (fotos, observaciones, input file). Antes solo
+        // se limpiaba al ENTRAR — si el inspector navegaba fuera y volvía
+        // rápido por caché, podía ver residuos por medio segundo.
+        if (
+            previousPage === 'supervisor-supervision' &&
+            page !== 'supervisor-supervision' &&
+            typeof this.resetSupervisorSupervisionState === 'function'
+        ) {
+            try { this.resetSupervisorSupervisionState(); } catch (_) { /* ignore */ }
         }
 
         targetPage.classList.remove('hidden');

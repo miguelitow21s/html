@@ -5855,7 +5855,7 @@ export const supervisorMethods = {
         const title = document.getElementById('modal-admin-employee-title');
         if (title) title.textContent = 'Nuevo Contratista';
         const submitBtn = document.getElementById('admin-employee-submit-btn');
-        if (submitBtn) submitBtn.textContent = 'Guardar';
+        if (submitBtn) submitBtn.innerHTML = '<i class="fas fa-save"></i> <span>Guardar Contratista</span>';
         const credentialNote = document.getElementById('admin-employee-credential-note');
         if (credentialNote) credentialNote.classList.remove('hidden');
     },
@@ -5883,7 +5883,7 @@ export const supervisorMethods = {
         const title = document.getElementById('modal-admin-employee-title');
         if (title) title.textContent = 'Editar Contratista';
         const submitBtn = document.getElementById('admin-employee-submit-btn');
-        if (submitBtn) submitBtn.textContent = 'Actualizar';
+        if (submitBtn) submitBtn.innerHTML = '<i class="fas fa-save"></i> <span>Actualizar Contratista</span>';
         const credentialNote = document.getElementById('admin-employee-credential-note');
         if (credentialNote) credentialNote.classList.add('hidden');
         this.openModal('modal-admin-employee');
@@ -5912,6 +5912,17 @@ export const supervisorMethods = {
                     tone: 'warning',
                     title: t('sup.toast.no.sites.audit.title'),
                 });
+                return;
+            }
+
+            // Bloqueo obligatorio: no permitir enviar la auditoría si el
+            // inspector no verificó su ubicación en el sitio. Antes se podía
+            // registrar auditoría sin haber tocado "Verificar ubicación".
+            if (!this.supervisionLocationVerified) {
+                this.showToast(
+                    'Debes verificar tu ubicación en el sitio antes de registrar la auditoría. Toca "Verificar ubicación".',
+                    { tone: 'warning', title: 'Ubicación sin verificar' }
+                );
                 return;
             }
 
