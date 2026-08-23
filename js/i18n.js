@@ -5,7 +5,7 @@ export const TRANSLATIONS = {
     es: {
         // Login
         'login.consent':
-            'Autorizo el uso de mis datos personales, ubicación GPS y cámara para fines de verificación de acceso a sitios de trabajo. Acepto los términos y condiciones del servicio.',
+            'Autorizo el uso de mi ubicación y cámara solo para verificar mis tareas, como se describe arriba.',
         'login.email.label': 'Correo Electrónico',
         'login.email.placeholder': 'usuario@worktrace.com',
         'login.password.label': 'Contraseña Numérica',
@@ -21,8 +21,10 @@ export const TRANSLATIONS = {
             'Si {email} existe, te enviaremos las instrucciones para recuperar el acceso. Revisa tu bandeja de entrada y la carpeta de spam.',
         'login.reset.notice':
             'No pudimos enviarte un correo en este momento. Contacta a tu Inspector de Calidad o al Administrador para que genere un nuevo PIN y te lo entregue de forma segura. Podrás cambiarlo en tu primer ingreso.',
+        // Legado; el texto legal actual vive directo en index.html con
+        // <span data-legal-client-name> para inyectar el nombre del cliente.
         'login.legal':
-            'Esta aplicación es una plataforma tecnológica de uso exclusivo para contratistas independientes comerciales de R3 Service & Solutions Inc. El uso de esta herramienta tiene como único fin la coordinación comercial, la entrega de evidencias de calidad (Anexo A) y la validación de acceso de seguridad a las locaciones de los clientes. El contratista retiene en todo momento su autonomía operativa, de horarios y de personal.',
+            'WorkTrace es una plataforma tecnológica provista por VerifiK, de uso exclusivo para contratistas independientes comerciales.',
 
         // OTP
         'otp.title': 'Verificación de Seguridad del Sitio',
@@ -759,7 +761,7 @@ export const TRANSLATIONS = {
     en: {
         // Login
         'login.consent':
-            'I authorize the use of my personal data, GPS location and camera for the purpose of verifying access to service sites. I accept the terms and conditions of service.',
+            'I authorize the use of my location and camera only to verify my tasks, as described above.',
         'login.email.label': 'Email Address',
         'login.email.placeholder': 'user@worktrace.com',
         'login.password.label': 'Numeric Password',
