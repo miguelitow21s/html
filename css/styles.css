@@ -827,9 +827,12 @@ body.camera-capture-active {
 }
 
 .header-wt-logo {
-    height: 32px;
+    /* Cambio: usamos worktrace-mark.svg (solo checkmark, ratio ~1:1) en
+       vez del lockup con texto — el PDF pidió "el Logo y no el nombre".
+       Altura mayor porque es un símbolo cuadrado. */
+    height: 40px;
     width: auto;
-    max-width: 160px;
+    max-width: 44px;
     object-fit: contain;
 }
 
@@ -927,8 +930,8 @@ body.camera-capture-active {
     }
 
     .header-wt-logo {
-        height: 26px;
-        max-width: 120px;
+        height: 34px;
+        max-width: 38px;
     }
 
     .header-user-pill {
