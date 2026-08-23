@@ -3511,21 +3511,26 @@ export const supervisorMethods = {
         if (select.value) return;
 
         const restaurants = asArray(this.data.supervisor.restaurants);
+        console.info('[auditoria-autodetect] entrada', {
+            totalRestaurants: restaurants.length,
+            firstRestaurantKeys: restaurants[0] ? Object.keys(restaurants[0]) : null,
+        });
         if (restaurants.length === 0) return;
 
-        let location = this.location;
-        if (!location || !Number.isFinite(Number(location.lat))) {
-            try {
-                location = await this.captureLocation({ updateUi: false, highAccuracy: true });
-            } catch (err) {
-                console.info('[auditoria-autodetect] GPS no disponible', err?.message || err);
-                // Feedback al usuario: sabe que la auto-detección no corrió.
-                this.showToast(
-                    'No pudimos leer tu ubicación. Elige el sitio manualmente y toca "Verificar ubicación".',
-                    { tone: 'info', title: 'Ubicación no disponible' }
-                );
-                return;
-            }
+        // SIEMPRE capturamos ubicación fresca al entrar. Reusar this.location
+        // vieja (de un flujo anterior en otro sitio) era la causa principal
+        // por la que no detectaba: el inspector podía haber cerrado sesión
+        // en otro sitio y las coords en memoria eran esas.
+        let location = null;
+        try {
+            location = await this.captureLocation({ updateUi: false, highAccuracy: true });
+        } catch (err) {
+            console.info('[auditoria-autodetect] GPS no disponible', err?.message || err);
+            this.showToast(
+                'No pudimos leer tu ubicación. Elige el sitio manualmente y toca "Verificar ubicación".',
+                { tone: 'info', title: 'Ubicación no disponible' }
+            );
+            return;
         }
         if (!location || !Number.isFinite(Number(location.lat))) {
             this.showToast(
@@ -3535,34 +3540,57 @@ export const supervisorMethods = {
             return;
         }
 
-        const nearby = restaurants
-            .map((restaurant) => {
-                const geofence = this.getSupervisorRestaurantGeofence(restaurant);
-                if (!geofence.hasCoordinates) return null;
-                const distance = calculateDistanceMeters(location, {
-                    lat: geofence.lat,
-                    lng: geofence.lng,
-                });
-                if (distance == null) return null;
-                const accuracyMeters = Math.max(0, Number(location.accuracy || 0));
-                const effectiveRadius = Math.max(geofence.radiusMeters || 0, 0) + Math.min(accuracyMeters, 35);
-                return { restaurant, distance, within: distance <= effectiveRadius };
-            })
-            .filter((entry) => entry && entry.within)
-            .sort((a, b) => a.distance - b.distance);
+        const accuracyMeters = Math.max(0, Number(location.accuracy || 0));
+        // Buffer más generoso (60m clamp, antes era 35). Los sitios reales
+        // suelen tener 100m de radio y en interiores el GPS pierde
+        // precisión facilmente 30-50m.
+        const accuracyBuffer = Math.min(accuracyMeters, 60);
 
-        console.info('[auditoria-autodetect] candidatos dentro del radio', {
-            total: restaurants.length,
-            dentroRadio: nearby.length,
-            elegido: nearby[0]?.restaurant ? getRestaurantDisplayName(nearby[0].restaurant) : null,
+        // Log por sitio con datos crudos — permite diagnosticar en dispositivo
+        // por qué no matcheó (falta de coords, radio muy chico, distancia grande).
+        const evaluated = restaurants.map((restaurant) => {
+            const geofence = this.getSupervisorRestaurantGeofence(restaurant);
+            const distance = geofence.hasCoordinates
+                ? calculateDistanceMeters(location, { lat: geofence.lat, lng: geofence.lng })
+                : null;
+            const effectiveRadius = Math.max(geofence.radiusMeters || 0, 0) + accuracyBuffer;
+            return {
+                name: getRestaurantDisplayName(restaurant),
+                hasCoords: geofence.hasCoordinates,
+                lat: geofence.lat,
+                lng: geofence.lng,
+                radius: geofence.radiusMeters,
+                distance: distance != null ? Math.round(distance) : null,
+                effectiveRadius: Math.round(effectiveRadius),
+                within: distance != null && distance <= effectiveRadius,
+                restaurant,
+            };
+        });
+        console.info('[auditoria-autodetect] evaluación por sitio', {
+            miUbicacion: { lat: location.lat, lng: location.lng, accuracy: Math.round(accuracyMeters) },
+            sitios: evaluated.map(({ restaurant, ...rest }) => rest),
         });
 
-        if (nearby.length === 0) {
+        const nearby = evaluated
+            .filter((e) => e.within)
+            .sort((a, b) => a.distance - b.distance);
+
+        // Fallback: si el inspector solo tiene 1 sitio en su lista completa,
+        // lo pre-seleccionamos aunque no matchee (radio mal configurado, GPS
+        // impreciso en interior). El inspector aún tiene que tocar "Verificar
+        // ubicación" antes de auditar, pero le ahorra el paso de elegirlo.
+        const singleSiteFallback = restaurants.length === 1 ? evaluated[0] : null;
+
+        if (nearby.length === 0 && !singleSiteFallback) {
             this.showToast(
                 'No estás dentro del radio de ningún sitio. Elige el sitio manualmente y acércate para auditar.',
                 { tone: 'info', title: 'Sin sitios cercanos' }
             );
             return;
+        }
+        // Si no hubo match pero hay UN solo sitio, lo usamos como fallback.
+        if (nearby.length === 0 && singleSiteFallback) {
+            nearby.push(singleSiteFallback);
         }
 
         // Preferimos el más cercano. Si hay varios, igual el más cercano
