@@ -874,6 +874,25 @@ body.camera-capture-active {
     font-weight: 600;
 }
 
+/* Placeholder "Sin tareas especiales pendientes" en la vista del
+   cronómetro (reemplazó el card "Cliente Restaurante #N" que el PDF
+   pidió quitar). */
+.task-card-empty {
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: 14px 12px;
+    border-radius: 12px;
+    border: 1px dashed var(--border-color);
+}
+
+.task-card-empty i {
+    color: var(--text-secondary);
+    margin-right: 6px;
+    opacity: 0.7;
+}
+
 .restaurant-card-task-empty {
     color: var(--text-secondary);
 }

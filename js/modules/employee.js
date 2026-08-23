@@ -1865,10 +1865,29 @@ export const employeeMethods = {
         const hasActiveShift = Boolean(this.data.currentShift?.id);
         const activeListId = hasActiveShift ? 'cleaning-restaurant-tasks-list' : null;
 
+        const emptyHtml = `
+            <div class="task-card task-card-empty">
+                <p><i class="fas fa-star"></i> Sin tareas especiales pendientes.</p>
+            </div>
+        `;
         surfaces.forEach(({ section: sectionId, list: listId }) => {
             const section = document.getElementById(sectionId);
             const list = document.getElementById(listId);
             if (!section || !list) return;
+
+            // Regla:
+            //  - En la pantalla del cronómetro (cleaning) la sección es
+            //    SIEMPRE visible; si no hay tareas se muestra "Sin tareas"
+            //    en el lugar del antiguo "Cliente Restaurante #".
+            //  - En las otras (dashboard u otras) se mantiene el
+            //    comportamiento anterior: ocultar cuando no hay tareas o
+            //    no es la lista activa del turno.
+            const isCleaningSurface = listId === 'cleaning-restaurant-tasks-list';
+            if (isCleaningSurface) {
+                section.classList.remove('hidden');
+                list.innerHTML = listId === activeListId && tasks.length > 0 ? html : emptyHtml;
+                return;
+            }
             if (listId !== activeListId || tasks.length === 0) {
                 section.classList.add('hidden');
                 list.innerHTML = '';

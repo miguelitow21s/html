@@ -683,18 +683,20 @@
                     </div>
                 </div>
 
-                <div class="info-item">
-                    <i class="fas fa-store"></i>
-                    <div class="info-item-content">
-                        <span class="info-item-label" data-i18n="employee.shift.restaurant">Cliente</span>
-                        <span class="info-item-value" id="cleaning-restaurant">-</span>
-                    </div>
-                </div>
+                <!-- Info-item "Cliente" removido por pedido cliente:
+                     durante el turno activo el nombre del sitio ya
+                     no aporta (el contratista está ahí). El slot lo
+                     usamos abajo para el estado de tarea especial. -->
+                <span id="cleaning-restaurant" class="hidden" aria-hidden="true"></span>
             </div>
 
-            <div id="cleaning-restaurant-tasks-section" class="hidden">
+            <div id="cleaning-restaurant-tasks-section">
                 <h3 class="section-heading"><i class="fas fa-store"></i> <span data-i18n="employee.tasks.section">Tareas del Sitio</span></h3>
-                <div id="cleaning-restaurant-tasks-list"></div>
+                <div id="cleaning-restaurant-tasks-list">
+                    <div class="task-card task-card-empty">
+                        <p><i class="fas fa-star"></i> Sin tareas especiales pendientes.</p>
+                    </div>
+                </div>
             </div>
 
             <button class="btn-large btn-success cta-sticky-bottom" data-action="navigateToShiftCompletion">
