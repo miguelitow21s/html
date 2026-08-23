@@ -176,68 +176,76 @@ export const adminMethods = {
         }
 
         return this.runPending(`adminSupervisions:${requestKey}`, async () => {
-            const grouped = [];
             const visibleRestaurants = restaurants.slice(0, restaurantLimit);
+            const grouped = [];
+            let hitRateLimit = false;
+            let permissionDenied = false;
 
-            for (let index = 0; index < visibleRestaurants.length; index += 1) {
-                const restaurant = visibleRestaurants[index];
-
-                try {
-                    const result = await apiClient.supervisorPresenceManage(
-                        'list_by_restaurant',
-                        {
-                            restaurant_id: restaurant.id || restaurant.restaurant_id,
-                            from,
-                            to,
-                            limit,
-                        },
-                        {
-                            retryOnInvalidJwt: false,
+            // Paralelizado por tandas (confirmado por backend: rate limit real
+            // 40 req/60s por usuario; concurrency 5 con 20-40 sitios queda
+            // holgadamente bajo el límite). Antes: for serial + sleep(120ms)
+            // = ~20 RTTs + 2.4s ociosos.
+            const CONCURRENCY = 5;
+            for (let i = 0; i < visibleRestaurants.length; i += CONCURRENCY) {
+                if (permissionDenied) break;
+                const batch = visibleRestaurants.slice(i, i + CONCURRENCY);
+                // eslint-disable-next-line no-await-in-loop
+                await Promise.all(
+                    batch.map(async (restaurant) => {
+                        if (hitRateLimit || permissionDenied) return;
+                        try {
+                            const result = await apiClient.supervisorPresenceManage(
+                                'list_by_restaurant',
+                                {
+                                    restaurant_id: restaurant.id || restaurant.restaurant_id,
+                                    from,
+                                    to,
+                                    limit,
+                                },
+                                { retryOnInvalidJwt: false }
+                            );
+                            const rawItems = asArray(result);
+                            grouped.push(
+                                ...rawItems.map((item) => ({
+                                    ...item,
+                                    restaurant_name: getRestaurantDisplayName(item, getRestaurantDisplayName(restaurant)),
+                                    restaurant: item.restaurant || {
+                                        id: restaurant.id || restaurant.restaurant_id,
+                                        name: getRestaurantDisplayName(restaurant),
+                                    },
+                                }))
+                            );
+                        } catch (error) {
+                            if (error?.status === 401 || error?.status === 403) {
+                                this.cache.adminSupervisionsUnavailable = true;
+                                permissionDenied = true;
+                                console.warn(
+                                    'No fue posible cargar supervisor_presence_manage para el dashboard admin.',
+                                    error
+                                );
+                                return;
+                            }
+                            if (error?.status === 429) {
+                                hitRateLimit = true;
+                                this.cache.adminSupervisionsRateLimitedUntil = Date.now() + 90 * 1000;
+                                console.warn(
+                                    'Se alcanzó el rate limit de supervisor_presence_manage para el monitoreo admin.',
+                                    error
+                                );
+                                return;
+                            }
+                            console.warn(
+                                `No fue posible listar auditorías para ${restaurant?.name || restaurant?.id}.`,
+                                error
+                            );
                         }
-                    );
+                    })
+                );
+            }
 
-                    const rawItems = asArray(result);
-                    if (rawItems.length > 0) {
-                        console.log(
-                            '[admin] supervisor_presence raw item sample:',
-                            JSON.stringify(rawItems[0], null, 2)
-                        );
-                    }
-                    grouped.push(
-                        ...rawItems.map((item) => ({
-                            ...item,
-                            restaurant_name: getRestaurantDisplayName(item, getRestaurantDisplayName(restaurant)),
-                            restaurant: item.restaurant || {
-                                id: restaurant.id || restaurant.restaurant_id,
-                                name: getRestaurantDisplayName(restaurant),
-                            },
-                        }))
-                    );
-                } catch (error) {
-                    if (error?.status === 401 || error?.status === 403) {
-                        this.cache.adminSupervisionsUnavailable = true;
-                        console.warn(
-                            'No fue posible cargar supervisor_presence_manage para el dashboard admin.',
-                            error
-                        );
-                        return [];
-                    }
-
-                    if (error?.status === 429) {
-                        this.cache.adminSupervisionsRateLimitedUntil = Date.now() + 90 * 1000;
-                        console.warn(
-                            'Se alcanzó el rate limit de supervisor_presence_manage para el monitoreo admin.',
-                            error
-                        );
-                        return cachedSupervisions.length > 0 ? cachedSupervisions : grouped;
-                    }
-
-                    console.warn(`No fue posible listar auditorías para ${restaurant?.name || restaurant?.id}.`, error);
-                }
-
-                if (index < visibleRestaurants.length - 1) {
-                    await new Promise((resolve) => setTimeout(resolve, 120));
-                }
+            if (permissionDenied) return [];
+            if (hitRateLimit && grouped.length === 0 && cachedSupervisions.length > 0) {
+                return cachedSupervisions;
             }
 
             const sorted = grouped.sort((left, right) => {
@@ -248,7 +256,7 @@ export const adminMethods = {
 
             this.data.admin.supervisions = sorted;
             this.cache.adminSupervisionsQuery = requestKey;
-            this.cache.adminSupervisionsRateLimitedUntil = 0;
+            if (!hitRateLimit) this.cache.adminSupervisionsRateLimitedUntil = 0;
             this.touchCache('adminSupervisions');
             return sorted;
         });

@@ -1189,35 +1189,39 @@ export const employeeMethods = {
     async uploadObservationAttachments(shiftId, location) {
         const files = this._observationsAttachments || [];
         if (files.length === 0 || !shiftId) return [];
-        const uploaded = [];
-        for (const file of files) {
-            const rawType = String(file.type || '').toLowerCase();
-            const mime = rawType || (rawType.startsWith('video/') ? 'video/mp4' : 'image/jpeg');
-            const requestUpload = await apiClient.requestShiftEvidenceUpload(shiftId, 'fin', mime);
-            const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
-            const path = requestUpload?.path || requestUpload?.upload?.path;
-            if (!signedUrl || !path) throw new Error('No fue posible preparar la subida del adjunto.');
-            await apiClient.uploadToSignedUrl(signedUrl, file, mime);
-            try {
-                await apiClient.finalizeShiftEvidenceUpload({
-                    shift_id: shiftId,
-                    type: 'fin',
-                    path,
-                    lat: location?.lat,
-                    lng: location?.lng,
-                    accuracy: Math.round(location?.accuracy || 0),
-                    captured_at: new Date().toISOString(),
-                    meta: {
-                        source: 'observations',
-                        content_kind: rawType.startsWith('video/') ? 'video' : 'photo',
-                    },
-                });
-            } catch (finalizeError) {
-                console.warn('No fue posible finalizar el adjunto de observaciones.', finalizeError);
-            }
-            uploaded.push(path);
-        }
-        return uploaded;
+        // Paralelizado (confirmado por backend: shift_photos INSERT por
+        // request_id único, sin race en photo_count). Antes: N × (request
+        // + upload + finalize) en serie = 12 hops secuenciales con 4 archivos.
+        const results = await Promise.all(
+            files.map(async (file) => {
+                const rawType = String(file.type || '').toLowerCase();
+                const mime = rawType || (rawType.startsWith('video/') ? 'video/mp4' : 'image/jpeg');
+                const requestUpload = await apiClient.requestShiftEvidenceUpload(shiftId, 'fin', mime);
+                const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
+                const path = requestUpload?.path || requestUpload?.upload?.path;
+                if (!signedUrl || !path) throw new Error('No fue posible preparar la subida del adjunto.');
+                await apiClient.uploadToSignedUrl(signedUrl, file, mime);
+                try {
+                    await apiClient.finalizeShiftEvidenceUpload({
+                        shift_id: shiftId,
+                        type: 'fin',
+                        path,
+                        lat: location?.lat,
+                        lng: location?.lng,
+                        accuracy: Math.round(location?.accuracy || 0),
+                        captured_at: new Date().toISOString(),
+                        meta: {
+                            source: 'observations',
+                            content_kind: rawType.startsWith('video/') ? 'video' : 'photo',
+                        },
+                    });
+                } catch (finalizeError) {
+                    console.warn('No fue posible finalizar el adjunto de observaciones.', finalizeError);
+                }
+                return path;
+            })
+        );
+        return results;
     },
 
     async uploadTaskEvidence(taskId, file) {
@@ -1937,12 +1941,17 @@ export const employeeMethods = {
 
         this.showLoading(t('toast.uploading.evidence'), t('toast.wait'));
         try {
-            const paths = [];
-            for (const file of files) {
-                const path = await this.uploadTaskEvidence(numericTaskId, file);
-                if (!path) throw new Error('No se recibió la ruta de la evidencia subida.');
-                paths.push(path);
-            }
+            // Paralelizado (confirmado por backend: request_evidence_upload
+            // es stateless — solo genera signed URLs; el complete final trae
+            // todos los paths en un solo request). Antes: N × (request + upload)
+            // en serie. Los paths conservan su orden con Promise.all.
+            const paths = await Promise.all(
+                files.map(async (file) => {
+                    const path = await this.uploadTaskEvidence(numericTaskId, file);
+                    if (!path) throw new Error('No se recibió la ruta de la evidencia subida.');
+                    return path;
+                })
+            );
             const completePayload = {
                 task_id: numericTaskId,
                 // Compat: evidence_path (primero) para backends viejos.
