@@ -3492,23 +3492,31 @@ export const supervisorMethods = {
             this.data.supervisor.shifts = await this.getSupervisorShiftList({ forceRestaurants: false });
         }
 
-        this.populateSupervisorRestaurantOptions('supervision-restaurant-select', false);
+        // Placeholder true para NO pre-seleccionar el primer sitio de la
+        // lista (Bug reportado: al entrar se veía "Burbank" seleccionado
+        // aunque el inspector estuviera en otro sitio, y el auto-detect
+        // no corría porque el select ya tenía value).
+        this.populateSupervisorRestaurantOptions('supervision-restaurant-select', true);
         this.selectedSupervisorShiftId = '';
         this.updateSupervisorSupervisionLocationLabel();
         this.updateSupervisionSupportCard();
 
-        // Auto-detección del sitio por geofence: mismo comportamiento
-        // que el contratista. Si el inspector está dentro del radio de
-        // UN solo sitio, lo pre-seleccionamos y validamos ubicación sin
-        // gesto adicional. Fire-and-forget para no bloquear el render.
+        // Auto-detección del sitio por geofence. Corre SIEMPRE al entrar y
+        // pisa cualquier value residual (el populate deja el placeholder
+        // vacío, pero por seguridad el propio auto-detect no respeta
+        // valores previos).
         void this.autoDetectSupervisorSupervisionSite();
     },
 
     async autoDetectSupervisorSupervisionSite() {
         const select = document.getElementById('supervision-restaurant-select');
         if (!select) return;
-        // Si el usuario ya eligió un sitio manualmente, no lo pisamos.
-        if (select.value) return;
+        // El auto-detect corre SIEMPRE al entrar y pisa cualquier valor
+        // preexistente. Antes se abortaba si select.value existía, pero
+        // populateSupervisorRestaurantOptions con includePlaceholder=false
+        // seleccionaba el primer sitio de la lista y este check bloqueaba
+        // la detección — el inspector veía "Burbank" aunque estuviera en
+        // otro sitio.
 
         const restaurants = asArray(this.data.supervisor.restaurants);
         console.info('[auditoria-autodetect] entrada', {
