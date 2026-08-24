@@ -3098,8 +3098,8 @@ export const supervisorMethods = {
             auditMeta.className = 'audit-meta';
             auditMeta.textContent =
                 employee.is_active === false
-                    ? 'Contratista inactivo para nuevas asignaciones.'
-                    : 'Disponible para asignarse a cualquier sitio.';
+                    ? 'Contratista inactivo. No puede iniciar visitas.'
+                    : 'Disponible para visitar cualquier sitio.';
 
             info.append(heading, contact, auditMeta);
 
