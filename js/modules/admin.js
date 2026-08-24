@@ -684,7 +684,7 @@ export const adminMethods = {
                                 const label = ev.label || `Evidencia ${i + 1}`;
                                 if (ev.is_video) {
                                     return `<div style="border-radius:8px;overflow:hidden;background:rgba(0,0,0,0.35);">
-                                        <video controls playsinline preload="metadata" style="width:100%;max-height:220px;background:#000;" src="${safe}"></video>
+                                        <video controls preload="metadata" style="width:100%;max-height:220px;background:#000;" src="${safe}"></video>
                                         <div style="padding:6px 8px;font-size:12px;">${escapeHtml(label)}</div>
                                     </div>`;
                                 }

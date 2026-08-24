@@ -1745,7 +1745,7 @@ export const employeeMethods = {
         const safeVideoUrl = sanitizeUrl(instructionsVideoUrl);
         const videoHtml = safeVideoUrl
             ? `<div class="rtask-video-wrap" style="margin:8px 0;">
-                <video controls playsinline preload="metadata" style="width:100%;border-radius:8px;background:#000;max-height:240px;" src="${escapeHtml(safeVideoUrl)}"></video>
+                <video controls preload="metadata" style="width:100%;border-radius:8px;background:#000;max-height:240px;" src="${escapeHtml(safeVideoUrl)}"></video>
                 <p class="muted-copy" style="font-size:12px;margin:4px 0 0;">
                     <i class="fas fa-video"></i> ${escapeHtml(t('rtask.video.viewer.label'))}
                 </p>
@@ -2272,7 +2272,7 @@ export const employeeMethods = {
                     if (ev?.is_video) {
                         return `
                         <div class="task-evidence-tile">
-                            <video controls playsinline preload="metadata" src="${escapeHtml(url)}"></video>
+                            <video controls preload="metadata" src="${escapeHtml(url)}"></video>
                             <span class="task-evidence-caption"><i class="fas fa-video"></i> Video ${i + 1}</span>
                         </div>`;
                     }
