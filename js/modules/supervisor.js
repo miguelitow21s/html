@@ -2416,6 +2416,12 @@ export const supervisorMethods = {
     },
 
     resetSupervisorSupervisionState() {
+        // Al resetear estado, revertimos también el chip auto-lock para
+        // que la próxima entrada arranque con picker visible (o el chip
+        // según lo que detecte el auto-detect).
+        if (typeof this.setSupervisionRestaurantAutoLock === 'function') {
+            try { this.setSupervisionRestaurantAutoLock(null); } catch (_) { /* ignore */ }
+        }
         this.services.images.clearMap(this.supervisionPhotos);
         this.supervisionPhotos = {};
         this.supervisionPhotoFiles = {};
@@ -2602,12 +2608,14 @@ export const supervisorMethods = {
         const alertsContainer = document.getElementById('supervisor-alerts-container');
         if (!alertsContainer) return;
         try {
-            const result = await apiClient.operationalTasksManage('list', {
-                status: 'completed',
-                limit: 5,
+            // Endpoint dedicado (backend confirmó): trae nombres ya resueltos
+            // (contratista, sitio), fecha de completado, notas y count de
+            // evidencias en un solo request.
+            const result = await apiClient.operationalTasksManage('list_recent_completed', {
+                limit: 20,
             });
-            const items = asArray(result);
-            console.info('[supervisor-alerts] tareas completadas recientes', {
+            const items = asArray(result?.items || result);
+            console.info('[supervisor-alerts] list_recent_completed', {
                 count: items.length,
                 sample_keys: items[0] ? Object.keys(items[0]) : null,
             });
@@ -2618,25 +2626,27 @@ export const supervisorMethods = {
             alertsContainer.innerHTML = items
                 .map((task) => {
                     const title = escapeHtml(task.title || 'Tarea sin título');
-                    const restaurant = escapeHtml(
-                        task.restaurant_name || task.restaurant?.name || 'Sitio'
-                    );
-                    const completedBy = escapeHtml(
-                        task.completed_by || task.completed_by_name || 'Contratista'
-                    );
+                    const restaurant = escapeHtml(task.restaurant_name || 'Sitio');
+                    const completedBy = escapeHtml(task.completed_by || 'Contratista');
                     const completedAt = task.completed_at
                         ? escapeHtml(formatDateTime(task.completed_at))
                         : '';
-                    const taskId = escapeHtml(String(task.id || task.task_id || ''));
+                    const taskId = escapeHtml(String(task.task_id || task.id || ''));
+                    const notes = task.notes ? escapeHtml(String(task.notes)) : '';
+                    const evidenceCount = Number(task.evidence_count || 0);
+                    const evidenceLabel = evidenceCount > 0
+                        ? `<i class="fas fa-images"></i> Ver evidencias (${evidenceCount})`
+                        : '<i class="fas fa-images"></i> Ver detalle';
                     return `
                         <div class="alert alert-success" style="margin-bottom:8px;">
                             <i class="fas fa-check-circle"></i>
                             <div style="flex:1;min-width:0;">
                                 <strong>${title}</strong><br>
                                 <small>${restaurant} · ${completedBy}${completedAt ? ` · ${completedAt}` : ''}</small>
+                                ${notes ? `<p class="muted-copy" style="margin:4px 0 0;font-size:12px;">${notes}</p>` : ''}
                                 ${taskId ? `<div style="margin-top:6px;">
                                     <button type="button" class="btn btn-secondary btn-inline" data-action="openTaskEvidencesModal" data-args="${taskId}" style="padding:4px 10px;font-size:12px;">
-                                        <i class="fas fa-images"></i> Ver evidencias
+                                        ${evidenceLabel}
                                     </button>
                                 </div>` : ''}
                             </div>
@@ -3614,6 +3624,19 @@ export const supervisorMethods = {
         }
 
         const chosenName = getRestaurantDisplayName(chosen);
+
+        // UX: si solo hay UN candidato dentro del radio, ocultamos el
+        // picker y mostramos un chip con el nombre + link "Elegir otro
+        // sitio" (por si el auto-detect se equivocó). Si hay múltiples
+        // candidatos o el fallback single-site no matcheó, dejamos el
+        // picker visible para que el inspector elija.
+        const strictNearbyCount = evaluated.filter((e) => e.within).length;
+        if (strictNearbyCount === 1) {
+            this.setSupervisionRestaurantAutoLock(chosenName);
+        } else {
+            this.setSupervisionRestaurantAutoLock(null);
+        }
+
         if (verifyResult?.ok && this.supervisionLocationVerified) {
             this.showToast(
                 `Sitio detectado automáticamente: ${chosenName}. Ya puedes auditar.`,
@@ -3625,6 +3648,36 @@ export const supervisorMethods = {
                 { tone: 'info', title: 'Sitio pre-seleccionado' }
             );
         }
+    },
+
+    /**
+     * Alterna la visibilidad del select "Sitio / Cliente" en la vista
+     * de auditoría. Si name != null, oculta el picker y muestra el chip
+     * "Auditando en <name>". Si name == null, revierte a picker visible.
+     */
+    setSupervisionRestaurantAutoLock(name) {
+        const picker = document.getElementById('supervision-restaurant-picker');
+        const chip = document.getElementById('supervision-restaurant-chip');
+        const chipName = document.getElementById('supervision-restaurant-chip-name');
+        if (!picker || !chip) return;
+        if (name) {
+            picker.classList.add('hidden');
+            chip.classList.remove('hidden');
+            if (chipName) chipName.textContent = String(name);
+        } else {
+            picker.classList.remove('hidden');
+            chip.classList.add('hidden');
+            if (chipName) chipName.textContent = '';
+        }
+    },
+
+    /**
+     * Handler del "Elegir otro sitio" del chip. Desbloquea el picker
+     * para que el inspector elija manualmente aunque el auto-detect
+     * haya matcheado un sitio.
+     */
+    supervisorPickAnotherSite() {
+        this.setSupervisionRestaurantAutoLock(null);
     },
 
     getSupervisorRestaurantGeofence(restaurant = null) {

@@ -1210,11 +1210,23 @@
                 </div>
             </div>
 
-            <div class="form-group supervision-restaurant-picker">
+            <!-- Cuando el auto-detect encuentra UN solo sitio en el radio,
+                 este picker se oculta y se muestra el chip de abajo. Si hay
+                 múltiples cercanos o ninguno, se muestra el select para
+                 elegir manualmente. -->
+            <div class="form-group supervision-restaurant-picker" id="supervision-restaurant-picker">
                 <label data-i18n="supervisor.supervision.restaurant">Sitio / Cliente</label>
                 <select id="supervision-restaurant-select">
                     <option value="" data-i18n="supervisor.restaurants.loading">Cargando sitios...</option>
                 </select>
+            </div>
+
+            <div class="supervision-restaurant-chip hidden" id="supervision-restaurant-chip">
+                <div class="supervision-restaurant-chip-copy">
+                    <span class="supervision-restaurant-chip-label">Auditando en</span>
+                    <strong class="supervision-restaurant-chip-name" id="supervision-restaurant-chip-name">-</strong>
+                </div>
+                <button type="button" class="link-btn" data-action="supervisorPickAnotherSite">Elegir otro sitio</button>
             </div>
 
             <div class="card">
