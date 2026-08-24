@@ -817,22 +817,22 @@ body.camera-capture-active {
 }
 
 .header-client-logo {
-    width: 44px;
-    height: 44px;
+    /* Ajuste: usuario pidió más tamaño para el logo cliente. */
+    width: 56px;
+    height: 56px;
     object-fit: contain;
-    border-radius: 10px;
+    border-radius: 12px;
     background: rgba(255, 255, 255, 0.95);
     padding: 4px;
     box-shadow: var(--shadow-sm);
 }
 
 .header-wt-logo {
-    /* Cambio: usamos worktrace-mark.svg (solo checkmark, ratio ~1:1) en
-       vez del lockup con texto — el PDF pidió "el Logo y no el nombre".
-       Altura mayor porque es un símbolo cuadrado. */
+    /* Logo WorkTrace = lockup completo (checkmark verde + "worktrace" +
+       subtítulo). Ratio ~4.7:1 (viewBox 586x125). */
     height: 40px;
     width: auto;
-    max-width: 44px;
+    max-width: 180px;
     object-fit: contain;
 }
 
@@ -944,13 +944,13 @@ body.camera-capture-active {
     }
 
     .header-client-logo {
-        width: 36px;
-        height: 36px;
+        width: 46px;
+        height: 46px;
     }
 
     .header-wt-logo {
-        height: 34px;
-        max-width: 38px;
+        height: 30px;
+        max-width: 130px;
     }
 
     .header-user-pill {
