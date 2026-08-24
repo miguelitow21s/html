@@ -2373,24 +2373,28 @@ canvas {
     max-height: 100dvh;
     border-radius: 0;
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    /* Sin header ahora: solo body (cámara full-screen) + footer sticky. */
+    grid-template-rows: 1fr auto;
     overflow: hidden;
     animation: none;
+    background: #020617;
 }
 
 .camera-capture-frame {
-    margin-top: 6px;
-    border-radius: 24px;
+    /* Full-screen: sin margen, sin border, sin radios — la cámara ocupa
+       todo el área disponible del body. */
+    margin: 0;
+    border-radius: 0;
     overflow: hidden;
-    background: rgba(2, 6, 23, 0.92);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: #020617;
+    border: none;
     min-height: 0;
     height: 100%;
     max-height: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.03);
+    box-shadow: none;
 }
 
 .camera-capture-frame,
@@ -2406,20 +2410,31 @@ canvas {
     object-fit: cover;
 }
 
-.camera-modal .modal-header,
 .camera-modal .modal-footer {
     position: relative;
     z-index: 1;
     background: rgba(30, 41, 59, 0.98);
 }
 
+/* Error message overlay dentro del body de la cámara: si aparece, lo
+   flotamos abajo del video sin quitarle espacio a la cámara. */
+.camera-modal #camera-capture-error:not(.hidden) {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    z-index: 2;
+    margin: 0;
+}
+
 .camera-modal .modal-body {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    gap: 12px;
+    /* Sin helper text arriba: solo (video 1fr) + (error auto). */
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 0;
     min-height: 0;
     overflow: hidden;
-    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    padding: 0;
 }
 
 @media (max-width: 640px) {

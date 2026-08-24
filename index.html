@@ -173,14 +173,11 @@
         </div>
     </div>
 
-    <div id="modal-camera-capture" class="modal camera-modal" data-locked="true">
+    <div id="modal-camera-capture" class="modal camera-modal camera-modal-fullscreen" data-locked="true">
         <div class="modal-content camera-modal-content">
-            <div class="modal-header">
-                <h3 id="camera-capture-title" data-i18n="camera.title">Capturar evidencia</h3>
-                <button class="btn-close" aria-label="Cerrar" data-i18n-aria-label="a11y.close" id="camera-close-btn" type="button">&times;</button>
-            </div>
+            <!-- Header (título + X) y helper eliminados: eran redundantes
+                 con el botón Cancelar. La vista es cámara full-screen. -->
             <div class="modal-body">
-                <p id="camera-capture-helper" class="muted-copy" data-i18n="camera.helper">Usa la cámara del dispositivo para registrar la foto requerida.</p>
                 <div class="camera-capture-frame">
                     <video id="camera-capture-video" autoplay playsinline muted></video>
                     <canvas id="camera-capture-canvas" class="hidden"></canvas>
