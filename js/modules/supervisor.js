@@ -4230,13 +4230,20 @@ export const supervisorMethods = {
             }
 
             const objectUrl = URL.createObjectURL(file);
+            const isImage = String(file.type || '').startsWith('image/');
             let durationSeconds = 0;
             let probeFailed = false;
-            try {
-                durationSeconds = await this.probeVideoDurationSeconds(objectUrl);
-            } catch (probeError) {
-                probeFailed = true;
-                console.warn('No fue posible medir la duración del video de instrucciones.', probeError);
+
+            // Sólo probamos duración si es video. Imágenes no tienen duración
+            // (soportamos accept="image/*,video/*" desde el fix de "biblioteca
+            // de fotos debería dejar subir fotos").
+            if (!isImage) {
+                try {
+                    durationSeconds = await this.probeVideoDurationSeconds(objectUrl);
+                } catch (probeError) {
+                    probeFailed = true;
+                    console.warn('No fue posible medir la duración del video de instrucciones.', probeError);
+                }
             }
 
             // Race guard: si el user seleccionó otro archivo mientras esperábamos el probe,
@@ -4246,7 +4253,7 @@ export const supervisorMethods = {
                 return;
             }
 
-            if (probeFailed) {
+            if (!isImage && probeFailed) {
                 rejectFile({
                     preview,
                     label,
@@ -4258,7 +4265,7 @@ export const supervisorMethods = {
                 return;
             }
 
-            if (durationSeconds > MAX_VIDEO_SECONDS) {
+            if (!isImage && durationSeconds > MAX_VIDEO_SECONDS) {
                 const mmss = this.formatSecondsAsMmSs(durationSeconds);
                 rejectFile({
                     preview,
@@ -4272,13 +4279,24 @@ export const supervisorMethods = {
             }
 
             if (preview) {
-                preview.src = objectUrl;
-                preview.classList.remove('hidden');
+                // Si es imagen, no seteamos src en el <video> (produciría error).
+                // El <video> queda oculto; el nombre del archivo en el label es
+                // suficiente feedback de "listo para subir".
+                if (isImage) {
+                    preview.removeAttribute('src');
+                    preview.classList.add('hidden');
+                } else {
+                    preview.src = objectUrl;
+                    preview.classList.remove('hidden');
+                }
             }
             if (text) {
                 const shortName = file.name.length > 24 ? `${file.name.slice(0, 24)}…` : file.name;
-                const durationText = durationSeconds > 0 ? ` · ${this.formatSecondsAsMmSs(durationSeconds)}` : '';
-                text.textContent = `${t('rtask.video.ready')}: ${shortName}${durationText}`;
+                const durationText = !isImage && durationSeconds > 0
+                    ? ` · ${this.formatSecondsAsMmSs(durationSeconds)}`
+                    : '';
+                const kindPrefix = isImage ? 'Foto' : t('rtask.video.ready');
+                text.textContent = `${kindPrefix}: ${shortName}${durationText}`;
             }
             label?.classList.add('rtask-file-label-has-file');
         });
