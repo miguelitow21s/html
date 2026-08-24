@@ -1268,6 +1268,16 @@
             <div class="form-group supervision-notes-group">
                 <label for="supervision-observations">Observaciones</label>
                 <textarea id="supervision-observations" placeholder="Registre sus observaciones de la supervisión..."></textarea>
+                <!-- Adjuntos de observaciones (fotos/videos): mismo patrón
+                     que el contratista al finalizar servicio. -->
+                <div class="rtask-evidence-wrap" style="padding: 0; margin-top: 8px;">
+                    <input type="file" id="supervision-observations-file" accept="image/*,video/*" multiple style="display:none;">
+                    <div class="rtask-attachments" id="supervision-observations-attachments"></div>
+                    <label for="supervision-observations-file" id="supervision-observations-file-label" class="rtask-file-label">
+                        <i class="fas fa-plus"></i>
+                        <span class="rtask-file-label-text">Agregar foto o video</span>
+                    </label>
+                </div>
             </div>
 
             <!-- Creación de tarea especial retirada del flujo de auditoría

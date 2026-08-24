@@ -2444,9 +2444,114 @@ export const supervisorMethods = {
         if (observations) {
             observations.value = '';
         }
+        // Adjuntos de observaciones del inspector (foto/video): mismo
+        // patrón que _observationsAttachments del contratista.
+        this._supervisionObservationsAttachments = [];
+        const obsInput = document.getElementById('supervision-observations-file');
+        if (obsInput) {
+            try { obsInput.value = ''; } catch (_) { /* ignore */ }
+        }
+        if (typeof this.renderSupervisionObservationsAttachments === 'function') {
+            try { this.renderSupervisionObservationsAttachments(); } catch (_) { /* ignore */ }
+        }
         this.populateSupervisorAreaOptions();
         this.renderSupervisorPhotoGrid();
         this.hideSupervisionSupportCard();
+    },
+
+    bindSupervisionObservationsAttachmentsOnce() {
+        const input = document.getElementById('supervision-observations-file');
+        if (!input || input.dataset.observationsBound === '1') return;
+        input.dataset.observationsBound = '1';
+
+        input.addEventListener('change', () => {
+            const files = Array.from(input.files || []);
+            if (files.length === 0) return;
+            this._supervisionObservationsAttachments = [
+                ...(this._supervisionObservationsAttachments || []),
+                ...files,
+            ];
+            input.value = '';
+            this.renderSupervisionObservationsAttachments();
+        });
+
+        const container = document.getElementById('supervision-observations-attachments');
+        if (container && !container.dataset.observationsDelegation) {
+            container.dataset.observationsDelegation = '1';
+            container.addEventListener('click', (event) => {
+                const btn = event.target.closest('[data-supervision-observations-action="remove"]');
+                if (!btn) return;
+                const index = Number(btn.dataset.index);
+                if (Number.isFinite(index) && this._supervisionObservationsAttachments) {
+                    this._supervisionObservationsAttachments.splice(index, 1);
+                    this.renderSupervisionObservationsAttachments();
+                }
+            });
+        }
+    },
+
+    renderSupervisionObservationsAttachments() {
+        const wrap = document.getElementById('supervision-observations-attachments');
+        if (!wrap) return;
+        const files = this._supervisionObservationsAttachments || [];
+        const label = document.getElementById('supervision-observations-file-label');
+        const textSpan = label?.querySelector('.rtask-file-label-text');
+
+        if (files.length === 0) {
+            wrap.innerHTML = '';
+            if (textSpan) textSpan.textContent = 'Agregar foto o video';
+            label?.classList.remove('rtask-file-label-has-file');
+            return;
+        }
+
+        if (textSpan) textSpan.textContent = `Agregar otra (${files.length})`;
+        label?.classList.add('rtask-file-label-has-file');
+
+        wrap.innerHTML = files
+            .map((file, index) => {
+                const isVideo = String(file.type || '').startsWith('video/');
+                const icon = isVideo ? 'fa-video' : 'fa-image';
+                const shortName = file.name.length > 22 ? `${file.name.slice(0, 22)}…` : file.name;
+                const sizeMb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+                return `<div class="rtask-attachment-item">
+                    <i class="fas ${icon}"></i>
+                    <span class="rtask-attachment-name">${escapeHtml(shortName)}</span>
+                    <span class="rtask-attachment-size">${sizeMb} MB</span>
+                    <button type="button" class="rtask-attachment-remove" data-supervision-observations-action="remove" data-index="${index}" aria-label="Quitar adjunto">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>`;
+            })
+            .join('');
+    },
+
+    async uploadSupervisionObservationAttachments() {
+        const files = this._supervisionObservationsAttachments || [];
+        if (files.length === 0) return [];
+        // Paralelizado. Cada archivo pasa por request_evidence_upload →
+        // upload signed → finalize (mismo flow que los evidences por área,
+        // pero con label 'Observación' para diferenciarlas en el reporte).
+        const results = await Promise.all(
+            files.map(async (file) => {
+                const mimeType = String(file.type || '').toLowerCase() || 'image/jpeg';
+                const requestUpload = await apiClient.supervisorPresenceManage('request_evidence_upload', {
+                    phase: 'start',
+                    mime_type: mimeType,
+                });
+                const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
+                const path = requestUpload?.path || requestUpload?.upload?.path;
+                if (!signedUrl || !path) throw new Error('No fue posible preparar la subida del adjunto de observaciones.');
+                await apiClient.uploadToSignedUrl(signedUrl, file, mimeType);
+                await apiClient.supervisorPresenceManage('finalize_evidence_upload', { path });
+                return {
+                    path,
+                    label: 'Observación',
+                    mime_type: mimeType,
+                    size_bytes: file.size || undefined,
+                };
+            })
+        );
+        return results;
     },
 
     getShiftReferenceDate(shift) {
@@ -3503,6 +3608,13 @@ export const supervisorMethods = {
         this.selectedSupervisorShiftId = '';
         this.updateSupervisorSupervisionLocationLabel();
         this.updateSupervisionSupportCard();
+
+        // Adjuntos de observaciones: bind del input (una vez) y render
+        // del listado. El buffer _supervisionObservationsAttachments se
+        // limpia en resetSupervisorSupervisionState al entrar/salir.
+        this._supervisionObservationsAttachments = this._supervisionObservationsAttachments || [];
+        this.bindSupervisionObservationsAttachmentsOnce();
+        this.renderSupervisionObservationsAttachments();
 
         // Auto-detección del sitio por geofence. Corre SIEMPRE al entrar y
         // pisa cualquier value residual (el populate deja el placeholder
@@ -6097,7 +6209,14 @@ export const supervisorMethods = {
                 const locationCheck = await this.ensureSupervisorSupervisionLocationVerified();
                 const location = locationCheck?.location || this.location;
                 const notes = document.getElementById('supervision-observations')?.value?.trim();
-                const evidences = await this.uploadSupervisorSupervisionEvidence();
+                // Adjuntos por área + adjuntos libres de observaciones (foto/video)
+                // se envían todos en el mismo array evidences. Los libres llevan
+                // label 'Observación' para diferenciarlos.
+                const [areaEvidences, observationEvidences] = await Promise.all([
+                    this.uploadSupervisorSupervisionEvidence(),
+                    this.uploadSupervisionObservationAttachments(),
+                ]);
+                const evidences = [...areaEvidences, ...observationEvidences];
                 supervisionPayload = {
                     restaurant_id: targetRestaurant.restaurant_id || targetRestaurant.id,
                     phase: 'start',
