@@ -4229,6 +4229,27 @@ export const supervisorMethods = {
                 return;
             }
 
+            // Validación geofence: si el inspector NO está en el sitio
+            // seleccionado, solo permitir archivos de galería (no recién
+            // tomados con cámara). Heurística: si el file.lastModified es
+            // de los últimos 2 minutos, se asume cámara → rechazar.
+            const geofenceCheck = await this.validateRestaurantTaskFileByGeofence(file);
+            if (!geofenceCheck.ok) {
+                this.showToast(geofenceCheck.reason, {
+                    tone: 'warning',
+                    title: 'Foto/video con cámara solo en sitio',
+                    duration: 7000,
+                });
+                input.value = '';
+                if (preview) {
+                    preview.removeAttribute('src');
+                    preview.classList.add('hidden');
+                }
+                if (text) text.textContent = t('rtask.video.placeholder');
+                label?.classList.remove('rtask-file-label-has-file');
+                return;
+            }
+
             const objectUrl = URL.createObjectURL(file);
             const isImage = String(file.type || '').startsWith('image/');
             let durationSeconds = 0;
@@ -4353,6 +4374,64 @@ export const supervisorMethods = {
         const minutes = Math.floor(rounded / 60);
         const seconds = rounded % 60;
         return `${minutes}:${String(seconds).padStart(2, '0')}`;
+    },
+
+    /**
+     * Reglas al elegir archivo de instrucciones de tarea especial:
+     * - Si el inspector está DENTRO del radio del sitio seleccionado → todo
+     *   permitido (cámara + galería).
+     * - Si NO está en sitio → solo galería. Como HTML no permite forzar
+     *   "solo galería" en el picker de iOS, usamos heurística sobre
+     *   file.lastModified: si el archivo fue tomado en los últimos 2
+     *   minutos se asume cámara reciente y se rechaza.
+     * Si no hay coords del sitio o falla el GPS, no bloqueamos (deja pasar).
+     */
+    async validateRestaurantTaskFileByGeofence(file) {
+        try {
+            const restaurantId = String(
+                document.getElementById('supervisor-restaurant-task-restaurant')?.value || ''
+            ).trim();
+            if (!restaurantId) return { ok: true };
+
+            const restaurant = asArray(this.data.supervisor.restaurants).find(
+                (r) => String(getRestaurantRecordId(r)) === restaurantId
+            );
+            if (!restaurant) return { ok: true };
+
+            const geofence = this.getSupervisorRestaurantGeofence(restaurant);
+            if (!geofence.hasCoordinates) return { ok: true };
+
+            let location = null;
+            try {
+                location = await this.captureLocation({ updateUi: false, highAccuracy: true });
+            } catch (_) {
+                return { ok: true }; // sin GPS no bloqueamos
+            }
+            if (!location || !Number.isFinite(Number(location.lat))) return { ok: true };
+
+            const distance = calculateDistanceMeters(location, { lat: geofence.lat, lng: geofence.lng });
+            if (distance == null) return { ok: true };
+            const accuracyBuffer = Math.min(Number(location.accuracy || 0), 60);
+            const effectiveRadius = Math.max(geofence.radiusMeters || 0, 0) + accuracyBuffer;
+            const insideSite = distance <= effectiveRadius;
+
+            if (insideSite) return { ok: true };
+
+            // Fuera del sitio: rechazar archivos de cámara reciente.
+            const fileAge = Date.now() - Number(file.lastModified || 0);
+            const isFreshCamera = Number.isFinite(fileAge) && fileAge < 2 * 60 * 1000;
+            if (isFreshCamera) {
+                const siteName = getRestaurantDisplayName(restaurant);
+                return {
+                    ok: false,
+                    reason: `Estás fuera de ${siteName}. Para usar la cámara debes estar en el sitio. Elige un archivo de tu galería.`,
+                };
+            }
+            return { ok: true };
+        } catch (err) {
+            console.info('[rtask-file-geofence] validación falló, dejamos pasar', err?.message || err);
+            return { ok: true };
+        }
     },
 
     async uploadRestaurantTaskInstructionsVideo(videoFile, restaurantId) {
