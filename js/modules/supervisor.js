@@ -3111,17 +3111,10 @@ export const supervisorMethods = {
                 employee.is_active === false ? t('contractor.badge.inactive') : t('contractor.badge.active');
             actions.appendChild(badge);
 
-            const phoneBindingAction = this.getPhoneBindingActionState(employee);
-            if (canManagePhoneBinding && phoneBindingAction.visible) {
-                const clearPhoneBtn = document.createElement('button');
-                clearPhoneBtn.type = 'button';
-                clearPhoneBtn.className = 'btn btn-warning btn-inline';
-                clearPhoneBtn.dataset.action = 'clear-phone-user';
-                clearPhoneBtn.dataset.userId = String(employee.id || '');
-                clearPhoneBtn.textContent = t('contractor.btn.unlink.phone');
-                clearPhoneBtn.title = 'Remover el teléfono actual del perfil para poder registrar otro.';
-                actions.appendChild(clearPhoneBtn);
-            }
+            // "Desvincular Teléfono" para contratistas retirado por pedido
+            // del cliente (consistencia con la vista de inspectores, donde
+            // también se quitó). El handler clear-phone-user sigue en el
+            // dispatcher por si vuelve a habilitarse desde otro flujo.
 
             if (employee.is_active !== false) {
                 const editBtn = document.createElement('button');
