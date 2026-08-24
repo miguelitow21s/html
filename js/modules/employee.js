@@ -253,6 +253,10 @@ export const employeeMethods = {
                 const distanceLabel = `A ${Math.round(r._distanceMeters)} m del centro del sitio`;
                 // Aceptar aliases: restaurant_id (contrato oficial), id (fallback).
                 const idValue = r.restaurant_id ?? r.id ?? '';
+                // Mostrar el nombre EN el botón elimina la ambigüedad cuando
+                // hay varios sitios cercanos (usuario reportó tocar motosmart
+                // y arrancar "El ingenio" — asegurando visualmente qué sitio
+                // se inicia con cada tap).
                 return `
                     <div class="info-item" style="margin-top:8px;">
                         <i class="fas fa-store"></i>
@@ -260,8 +264,9 @@ export const employeeMethods = {
                             <span class="info-item-label">${name}</span>
                             <span class="info-item-value" style="font-size:12px;color:var(--gray);">${cityState ? cityState + ' · ' : ''}${distanceLabel}</span>
                         </div>
-                        <button type="button" class="btn btn-primary btn-inline" data-action="startAdHocVisit" data-args="${escapeHtml(String(idValue))}" style="flex-shrink:0;">
-                            <i class="fas fa-play"></i> Iniciar visita
+                        <button type="button" class="btn btn-primary btn-inline" data-action="startAdHocVisit" data-args="${escapeHtml(String(idValue))}" style="flex-shrink:0;flex-direction:column;gap:2px;padding:8px 12px;">
+                            <span style="font-size:11px;opacity:0.85;"><i class="fas fa-play"></i> Iniciar en</span>
+                            <strong style="font-size:13px;">${name}</strong>
                         </button>
                     </div>
                 `;

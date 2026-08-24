@@ -934,10 +934,17 @@
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><i class="fas fa-bell"></i> Tareas especiales completadas</div>
+                    <div class="card-title"><i class="fas fa-bell"></i> Tareas especiales</div>
                 </div>
+                <!-- Pill "Pendientes: N" arriba (solo número, no despliega
+                     lista). Debajo, lista de las tareas completadas HOY. -->
+                <div class="supervisor-alerts-pending hidden" id="supervisor-alerts-pending">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span>Pendientes: <strong id="supervisor-alerts-pending-count">0</strong></span>
+                </div>
+                <p class="muted-copy" style="margin:8px 0 6px;font-size:12px;">Completadas hoy</p>
                 <div id="supervisor-alerts-container">
-                    <p class="muted-copy" style="margin:0;">Aquí verás las tareas especiales del sitio que los contratistas completaron recientemente.</p>
+                    <p class="muted-copy" style="margin:0;">Aquí verás las tareas especiales completadas hoy.</p>
                 </div>
             </div>
         </main>

@@ -2713,19 +2713,44 @@ export const supervisorMethods = {
         const alertsContainer = document.getElementById('supervisor-alerts-container');
         if (!alertsContainer) return;
         try {
-            // Endpoint dedicado (backend confirmó): trae nombres ya resueltos
-            // (contratista, sitio), fecha de completado, notas y count de
-            // evidencias en un solo request.
-            const result = await apiClient.operationalTasksManage('list_recent_completed', {
-                limit: 20,
+            // Traemos en paralelo:
+            //  - Completadas recientes (para filtrar por HOY)
+            //  - Pendientes (para el contador "Pendientes: N" arriba)
+            const [recentResult, pendingResult] = await Promise.all([
+                apiClient.operationalTasksManage('list_recent_completed', { limit: 50 }),
+                apiClient.operationalTasksManage('list', { status: 'open', limit: 200 }).catch(() => []),
+            ]);
+
+            // Contador de pendientes (chip arriba)
+            const pendingItems = asArray(pendingResult);
+            const pendingCount = pendingItems.length;
+            const pendingPill = document.getElementById('supervisor-alerts-pending');
+            const pendingCountEl = document.getElementById('supervisor-alerts-pending-count');
+            if (pendingCountEl) pendingCountEl.textContent = String(pendingCount);
+            if (pendingPill) {
+                pendingPill.classList.toggle('hidden', pendingCount === 0);
+            }
+
+            // Filtro por HOY (día local del navegador). completed_at viene ISO.
+            const allItems = asArray(recentResult?.items || recentResult);
+            const now = new Date();
+            const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const items = allItems.filter((task) => {
+                if (!task?.completed_at) return false;
+                const d = new Date(task.completed_at);
+                if (Number.isNaN(d.getTime())) return false;
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                return key === todayKey;
             });
-            const items = asArray(result?.items || result);
-            console.info('[supervisor-alerts] list_recent_completed', {
-                count: items.length,
-                sample_keys: items[0] ? Object.keys(items[0]) : null,
+
+            console.info('[supervisor-alerts] tareas', {
+                pendingCount,
+                completedTodayCount: items.length,
+                completedRecentTotal: allItems.length,
             });
+
             if (items.length === 0) {
-                alertsContainer.innerHTML = `<p class="muted-copy" style="margin:0;">Aún no hay tareas especiales completadas para mostrar.</p>`;
+                alertsContainer.innerHTML = `<p class="muted-copy" style="margin:0;">Aún no hay tareas especiales completadas hoy.</p>`;
                 return;
             }
             alertsContainer.innerHTML = items

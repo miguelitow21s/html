@@ -939,6 +939,30 @@ body.camera-capture-active {
     font-size: 13px;
 }
 
+/* Pill "Pendientes: N" arriba del card de tareas especiales del supervisor. */
+.supervisor-alerts-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(180, 83, 9, 0.10);
+    color: #b45309;
+    border: 1px solid rgba(180, 83, 9, 0.25);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.supervisor-alerts-pending i {
+    font-size: 12px;
+}
+
+.supervisor-alerts-pending strong {
+    font-weight: 700;
+    font-size: 14px;
+}
+
 /* Botones que se ven como links (para reemplazar <a href="#"> que
    dispara scroll al top y suena a "link" en screen readers). */
 .link-btn {
