@@ -3397,6 +3397,15 @@ const app = {
                     await this.prepareSupervisorReportsPage();
                     break;
                 case 'supervisor-supervision':
+                    // Reset SÍNCRONO antes del await del prepare. Sin esto,
+                    // el user veía las fotos de la sesión anterior mientras
+                    // el prepare esperaba getSupervisorRestaurants(), y a
+                    // veces esos thumbs quedaban en el DOM sin actualizarse
+                    // (bug reportado: "las fotos siguen al volver, solo se
+                    // quitan al refrescar").
+                    if (typeof this.resetSupervisorSupervisionState === 'function') {
+                        try { this.resetSupervisorSupervisionState(); } catch (_) { /* ignore */ }
+                    }
                     await this.prepareSupervisorSupervisionPage();
                     break;
                 case 'admin-dashboard':

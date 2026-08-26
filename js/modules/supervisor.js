@@ -2455,7 +2455,15 @@ export const supervisorMethods = {
             try { this.renderSupervisionObservationsAttachments(); } catch (_) { /* ignore */ }
         }
         this.populateSupervisorAreaOptions();
-        this.renderSupervisorPhotoGrid();
+        // Render SÍNCRONO — antes usaba queueUiRender (debounced) y quedaba
+        // el grid con thumbs viejos hasta el próximo tick. Ahora forzamos
+        // el flush inmediato para que el DOM se limpie al mismo tiempo
+        // que el buffer.
+        if (typeof this.renderSupervisorPhotoGridNow === 'function') {
+            try { this.renderSupervisorPhotoGridNow(); } catch (_) { /* ignore */ }
+        } else {
+            this.renderSupervisorPhotoGrid();
+        }
         this.hideSupervisionSupportCard();
     },
 
@@ -4335,14 +4343,22 @@ export const supervisorMethods = {
             requiresEvidence: true,
             // Prioridad fija en Alta (el select fue removido por la misma razon).
             priority: 'high',
-            videoFile: document.getElementById('supervisor-restaurant-task-video')?.files?.[0] || null,
+            // El archivo puede venir de cualquiera de los 2 inputs (cámara
+            // o galería). Buscamos en ambos.
+            videoFile:
+                document.getElementById('supervisor-restaurant-task-video-camera')?.files?.[0] ||
+                document.getElementById('supervisor-restaurant-task-video-gallery')?.files?.[0] ||
+                null,
             source: this.restaurantTaskDraftSource || 'restaurants',
         };
     },
 
     resetSupervisorRestaurantTaskVideoUi() {
-        const input = document.getElementById('supervisor-restaurant-task-video');
-        if (input) input.value = '';
+        // Limpiar AMBOS inputs (cámara + galería).
+        ['supervisor-restaurant-task-video-camera', 'supervisor-restaurant-task-video-gallery'].forEach((id) => {
+            const inp = document.getElementById(id);
+            if (inp) inp.value = '';
+        });
 
         const preview = document.getElementById('supervisor-restaurant-task-video-preview');
         if (preview) {
@@ -4353,17 +4369,29 @@ export const supervisorMethods = {
             preview.classList.add('hidden');
         }
 
+        // Ocultar el status label (aparece solo cuando hay archivo listo).
         const label = document.getElementById('supervisor-restaurant-task-video-label');
+        if (label) label.classList.add('hidden');
         const text = label?.querySelector('.rtask-file-label-text');
         if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s recomendado)';
         label?.classList.remove('rtask-file-label-has-file');
     },
 
     bindSupervisorRestaurantTaskVideoOnce() {
-        const input = document.getElementById('supervisor-restaurant-task-video');
-        if (!input || input.dataset.videoBound === '1') return;
-        input.dataset.videoBound = '1';
+        // Bindeamos AMBOS inputs (cámara y galería) al mismo handler común.
+        // Cada input dispara la misma lógica de validación + preview.
+        ['supervisor-restaurant-task-video-camera', 'supervisor-restaurant-task-video-gallery'].forEach((id) => {
+            const inp = document.getElementById(id);
+            if (!inp || inp.dataset.videoBound === '1') return;
+            inp.dataset.videoBound = '1';
+            inp.addEventListener('change', () => this._handleSupervisorRestaurantTaskFile(inp));
+        });
+    },
 
+    // Handler común para los 2 inputs (cámara/galería). Antes vivía inline
+    // en bindSupervisorRestaurantTaskVideoOnce cuando había un solo input.
+    async _handleSupervisorRestaurantTaskFile(input) {
+        if (!input) return;
         const MAX_VIDEO_SECONDS = 60;
 
         const rejectFile = ({ preview, label, text, objectUrl, toastMsg, toastTitle }) => {
@@ -4373,6 +4401,7 @@ export const supervisorMethods = {
                 preview.removeAttribute('src');
                 preview.classList.add('hidden');
             }
+            if (label) label.classList.add('hidden');
             if (text) text.textContent = t('rtask.video.placeholder');
             label?.classList.remove('rtask-file-label-has-file');
             if (toastMsg) {
@@ -4383,127 +4412,113 @@ export const supervisorMethods = {
                 });
             }
         };
+        // Cuando un input agarra archivo, limpiamos el OTRO para que no
+        // queden 2 archivos "seleccionados" a la vez.
+        const otherId = input.id === 'supervisor-restaurant-task-video-camera'
+            ? 'supervisor-restaurant-task-video-gallery'
+            : 'supervisor-restaurant-task-video-camera';
+        const otherInput = document.getElementById(otherId);
+        if (otherInput) otherInput.value = '';
 
-        input.addEventListener('change', async () => {
-            const preview = document.getElementById('supervisor-restaurant-task-video-preview');
-            const label = document.getElementById('supervisor-restaurant-task-video-label');
-            const text = label?.querySelector('.rtask-file-label-text');
-            const file = input.files?.[0];
+        const preview = document.getElementById('supervisor-restaurant-task-video-preview');
+        const label = document.getElementById('supervisor-restaurant-task-video-label');
+        const text = label?.querySelector('.rtask-file-label-text');
+        const file = input.files?.[0];
 
-            // Token de generación: cada change bump-ea el token. Si el user elige otro archivo
-            // mientras el probe del anterior aún corre, cuando resuelva veremos que el token
-            // cambió y salimos sin tocar el estado del archivo actual.
-            const token = (Number(this._videoProbeToken) || 0) + 1;
-            this._videoProbeToken = token;
+        const token = (Number(this._videoProbeToken) || 0) + 1;
+        this._videoProbeToken = token;
 
-            // Revocar el objectUrl previo del preview antes de reemplazar.
-            const previousPreviewSrc = preview?.src;
-            if (previousPreviewSrc && previousPreviewSrc.startsWith('blob:')) {
-                URL.revokeObjectURL(previousPreviewSrc);
-            }
+        const previousPreviewSrc = preview?.src;
+        if (previousPreviewSrc && previousPreviewSrc.startsWith('blob:')) {
+            URL.revokeObjectURL(previousPreviewSrc);
+        }
 
-            if (!file) {
-                if (preview) {
-                    preview.removeAttribute('src');
-                    preview.classList.add('hidden');
-                }
-                if (text) text.textContent = t('rtask.video.placeholder');
-                label?.classList.remove('rtask-file-label-has-file');
-                return;
-            }
-
-            // Validación geofence: si el inspector NO está en el sitio
-            // seleccionado, solo permitir archivos de galería (no recién
-            // tomados con cámara). Heurística: si el file.lastModified es
-            // de los últimos 2 minutos, se asume cámara → rechazar.
-            const geofenceCheck = await this.validateRestaurantTaskFileByGeofence(file);
-            if (!geofenceCheck.ok) {
-                this.showToast(geofenceCheck.reason, {
-                    tone: 'warning',
-                    title: 'Foto/video con cámara solo en sitio',
-                    duration: 7000,
-                });
-                input.value = '';
-                if (preview) {
-                    preview.removeAttribute('src');
-                    preview.classList.add('hidden');
-                }
-                if (text) text.textContent = t('rtask.video.placeholder');
-                label?.classList.remove('rtask-file-label-has-file');
-                return;
-            }
-
-            const objectUrl = URL.createObjectURL(file);
-            const isImage = String(file.type || '').startsWith('image/');
-            let durationSeconds = 0;
-            let probeFailed = false;
-
-            // Sólo probamos duración si es video. Imágenes no tienen duración
-            // (soportamos accept="image/*,video/*" desde el fix de "biblioteca
-            // de fotos debería dejar subir fotos").
-            if (!isImage) {
-                try {
-                    durationSeconds = await this.probeVideoDurationSeconds(objectUrl);
-                } catch (probeError) {
-                    probeFailed = true;
-                    console.warn('No fue posible medir la duración del video de instrucciones.', probeError);
-                }
-            }
-
-            // Race guard: si el user seleccionó otro archivo mientras esperábamos el probe,
-            // este handler es obsoleto — no debe tocar el estado del handler más nuevo.
-            if (token !== this._videoProbeToken) {
-                URL.revokeObjectURL(objectUrl);
-                return;
-            }
-
-            if (!isImage && probeFailed) {
-                rejectFile({
-                    preview,
-                    label,
-                    text,
-                    objectUrl,
-                    toastMsg: t('rtask.video.error.unreadable'),
-                    toastTitle: t('rtask.video.error.unreadable.title'),
-                });
-                return;
-            }
-
-            if (!isImage && durationSeconds > MAX_VIDEO_SECONDS) {
-                const mmss = this.formatSecondsAsMmSs(durationSeconds);
-                rejectFile({
-                    preview,
-                    label,
-                    text,
-                    objectUrl,
-                    toastMsg: t('rtask.video.error.toolong', { duration: mmss }),
-                    toastTitle: t('rtask.video.error.toolong.title'),
-                });
-                return;
-            }
-
+        if (!file) {
             if (preview) {
-                // Si es imagen, no seteamos src en el <video> (produciría error).
-                // El <video> queda oculto; el nombre del archivo en el label es
-                // suficiente feedback de "listo para subir".
-                if (isImage) {
-                    preview.removeAttribute('src');
-                    preview.classList.add('hidden');
-                } else {
-                    preview.src = objectUrl;
-                    preview.classList.remove('hidden');
-                }
+                preview.removeAttribute('src');
+                preview.classList.add('hidden');
             }
-            if (text) {
-                const shortName = file.name.length > 24 ? `${file.name.slice(0, 24)}…` : file.name;
-                const durationText = !isImage && durationSeconds > 0
-                    ? ` · ${this.formatSecondsAsMmSs(durationSeconds)}`
-                    : '';
-                const kindPrefix = isImage ? 'Foto' : t('rtask.video.ready');
-                text.textContent = `${kindPrefix}: ${shortName}${durationText}`;
+            if (label) label.classList.add('hidden');
+            if (text) text.textContent = t('rtask.video.placeholder');
+            label?.classList.remove('rtask-file-label-has-file');
+            return;
+        }
+
+        const geofenceCheck = await this.validateRestaurantTaskFileByGeofence(file);
+        if (!geofenceCheck.ok) {
+            this.showToast(geofenceCheck.reason, {
+                tone: 'warning',
+                title: 'Foto/video con cámara solo en sitio',
+                duration: 7000,
+            });
+            input.value = '';
+            if (preview) {
+                preview.removeAttribute('src');
+                preview.classList.add('hidden');
             }
-            label?.classList.add('rtask-file-label-has-file');
-        });
+            if (label) label.classList.add('hidden');
+            if (text) text.textContent = t('rtask.video.placeholder');
+            label?.classList.remove('rtask-file-label-has-file');
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        const isImage = String(file.type || '').startsWith('image/');
+        let durationSeconds = 0;
+        let probeFailed = false;
+
+        if (!isImage) {
+            try {
+                durationSeconds = await this.probeVideoDurationSeconds(objectUrl);
+            } catch (probeError) {
+                probeFailed = true;
+                console.warn('No fue posible medir la duración del video de instrucciones.', probeError);
+            }
+        }
+
+        if (token !== this._videoProbeToken) {
+            URL.revokeObjectURL(objectUrl);
+            return;
+        }
+
+        if (!isImage && probeFailed) {
+            rejectFile({
+                preview, label, text, objectUrl,
+                toastMsg: t('rtask.video.error.unreadable'),
+                toastTitle: t('rtask.video.error.unreadable.title'),
+            });
+            return;
+        }
+
+        if (!isImage && durationSeconds > MAX_VIDEO_SECONDS) {
+            const mmss = this.formatSecondsAsMmSs(durationSeconds);
+            rejectFile({
+                preview, label, text, objectUrl,
+                toastMsg: t('rtask.video.error.toolong', { duration: mmss }),
+                toastTitle: t('rtask.video.error.toolong.title'),
+            });
+            return;
+        }
+
+        if (preview) {
+            if (isImage) {
+                preview.removeAttribute('src');
+                preview.classList.add('hidden');
+            } else {
+                preview.src = objectUrl;
+                preview.classList.remove('hidden');
+            }
+        }
+        if (label) label.classList.remove('hidden');
+        if (text) {
+            const shortName = file.name.length > 24 ? `${file.name.slice(0, 24)}…` : file.name;
+            const durationText = !isImage && durationSeconds > 0
+                ? ` · ${this.formatSecondsAsMmSs(durationSeconds)}`
+                : '';
+            const kindPrefix = isImage ? 'Foto' : t('rtask.video.ready');
+            text.textContent = `${kindPrefix}: ${shortName}${durationText}`;
+        }
+        label?.classList.add('rtask-file-label-has-file');
     },
 
     probeVideoDurationSeconds(objectUrl, { timeoutMs = 5000 } = {}) {
