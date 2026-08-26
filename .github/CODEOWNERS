@@ -1,9 +1,11 @@
 # CODEOWNERS de WorkTrace
 #
 # Regla: TODO cambio en cualquier archivo del repo requiere
-# review y aprobación de @miguelitow21s antes de mergear a main.
+# review y aprobación de Miguel antes de mergear a main.
+# Miguel opera con 2 cuentas de GitHub (@miguelitow21s owner del
+# repo, @miguelitow22 alternativa), cualquiera sirve como Code Owner.
 # Combinado con branch protection (required reviewers + reviews
 # from Code Owners), esto asegura que ningún commit llegue a main
-# sin pasar por Miguel.
+# sin pasar por él.
 
-*   @miguelitow21s
+*   @miguelitow21s @miguelitow22
