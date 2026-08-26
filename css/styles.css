@@ -2511,11 +2511,8 @@ canvas {
     padding: 0;
 }
 
-@media (max-width: 640px) {
-    .camera-capture-frame {
-        min-height: min(66dvh, 620px);
-    }
-}
+/* Regla obsoleta de min-height 66dvh removida — el frame ahora ocupa
+   100% del body en fullscreen (grid-template-rows: 1fr auto). */
 
 .camera-modal .modal-footer {
     position: sticky;
@@ -4678,19 +4675,21 @@ input[type='file'] {
         margin: 0 !important;
     }
 
+    /* Fullscreen mobile: nada de border-radius ni max-height en el frame.
+       El video ocupa toda la altura disponible del body. */
     .camera-capture-frame {
-        border-radius: 20px;
-        max-height: min(46vh, 430px);
+        border-radius: 0;
+        max-height: none;
     }
 
     .camera-modal .modal-body {
-        gap: 10px;
-        padding-bottom: 18px;
+        gap: 0;
+        padding: 0;
     }
 
     .camera-modal .modal-footer {
         padding-top: 12px;
-        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px) + 34px);
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px) + 20px);
     }
 
     .app-toast-stack {
@@ -5099,14 +5098,14 @@ input[type='file'] {
         border-radius: 0;
     }
 
+    /* Fullscreen: sin padding en el body para que el video ocupe todo. */
     .camera-modal .modal-body {
-        padding: 16px;
-        padding-bottom: 10px;
+        padding: 0;
     }
 
-    .camera-modal .modal-header,
     .camera-modal .modal-footer {
         padding: 16px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px) + 20px);
     }
 
     .app-toast {
