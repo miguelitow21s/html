@@ -5697,6 +5697,34 @@ label,
     font-size: 18px;
 }
 
+/* Contenedor de los 2 botones "Tomar" / "Elegir de galería" para
+   crear tarea especial. Uno al lado del otro, wrap en móvil. */
+.rtask-file-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.rtask-file-label-half {
+    flex: 1 1 45%;
+    min-width: 140px;
+    font-size: 13px;
+    padding: 12px 10px;
+}
+
+.rtask-file-label-half i {
+    font-size: 16px;
+}
+
+/* Status label (aparece cuando hay archivo listo, oculto por default). */
+.rtask-file-label-status {
+    margin-top: 8px;
+    background: rgba(3, 105, 161, 0.10);
+    border-color: rgba(3, 105, 161, 0.35);
+    color: var(--primary-text);
+    cursor: default;
+}
+
 .rtask-file-label:active {
     background: rgba(14, 165, 233, 0.22);
 }
