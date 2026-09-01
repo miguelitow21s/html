@@ -2821,7 +2821,10 @@ select.dark-control {
 
 select.dark-control option,
 select.dark-control optgroup {
-    background: #1e293b;
+    /* Fondo blanco + texto oscuro. Antes fondo #1e293b (slate) con
+       --text-primary #0f172a (casi negro) daba texto invisible en el
+       dropdown nativo del OS (Edge/Chrome desktop). */
+    background: #ffffff;
     color: var(--text-primary);
 }
 
