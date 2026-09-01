@@ -3560,7 +3560,7 @@ const app = {
             </button>
             <button type="button" class="admin-view-btn ${isInSupervisorView ? 'admin-view-btn-active' : ''}" data-action="navigate" data-args="supervisor-dashboard">
                 <i class="fas fa-user-tie"></i>
-                <span class="admin-view-btn-title">Vista Supervisor</span>
+                <span class="admin-view-btn-title">Vista Inspector</span>
                 <span class="admin-view-btn-sub">Auditoría y reportes</span>
             </button>
         `;
