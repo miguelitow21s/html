@@ -300,11 +300,11 @@
             <div class="logo">
                 <div class="login-cobranding">
                     <picture>
-                        <source srcset="/css/logos/r3-logo.webp" type="image/webp">
-                        <img src="/css/logos/r3-logo.png" alt="R3" class="login-logo-r3">
+                        <source srcset="/css/logos/r3-logo.webp?v=2" type="image/webp">
+                        <img src="/css/logos/r3-logo.png?v=2" alt="R3" class="login-logo-r3">
                     </picture>
                     <div class="login-logo-sep"></div>
-                    <img src="/css/logos/worktrace.svg" alt="WorkTrace" class="login-logo-wt">
+                    <img src="/css/logos/worktrace.svg?v=2" alt="WorkTrace" class="login-logo-wt">
                 </div>
             </div>
 
@@ -363,7 +363,7 @@
 
             <div class="login-provided-by" aria-label="Provisto por VerifiK">
                 <span class="login-provided-by-label">By</span>
-                <img src="/css/logos/VerifiK.svg" alt="VerifiK" class="login-provided-by-logo" width="72" height="20" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'login-provided-by-fallback',textContent:'VerifiK'}));">
+                <img src="/css/logos/VerifiK.svg?v=2" alt="VerifiK" class="login-provided-by-logo" width="72" height="20" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('span'),{className:'login-provided-by-fallback',textContent:'VerifiK'}));">
             </div>
         </div>
     </div>
@@ -377,10 +377,10 @@
     <div id="page-employee-dashboard" class="app-container hidden">
         <header class="header header-tri">
             <button class="header-slot header-slot-left" data-action="navigateToRoleDashboard" aria-label="Inicio">
-                <img class="header-client-logo" src="/css/logos/r3-logo.png" alt="R3" width="40" height="40" loading="lazy">
+                <img class="header-client-logo" src="/css/logos/r3-logo.png?v=2" alt="R3" width="40" height="40" loading="lazy">
             </button>
             <div class="header-slot header-slot-center">
-                <img class="header-wt-logo" src="/css/logos/worktrace.svg" alt="WorkTrace" loading="lazy">
+                <img class="header-wt-logo" src="/css/logos/worktrace.svg?v=2" alt="WorkTrace" loading="lazy">
             </div>
             <div class="header-slot header-slot-right">
                 <button class="header-user-pill" data-action="navigate" data-args="employee-profile" aria-label="Mi perfil">
@@ -891,10 +891,10 @@
     <div id="page-supervisor-dashboard" class="app-container hidden">
         <header class="header header-tri">
             <button class="header-slot header-slot-left" data-action="navigateToRoleDashboard" aria-label="Inicio">
-                <img class="header-client-logo" src="/css/logos/r3-logo.png" alt="R3" width="40" height="40" loading="lazy">
+                <img class="header-client-logo" src="/css/logos/r3-logo.png?v=2" alt="R3" width="40" height="40" loading="lazy">
             </button>
             <div class="header-slot header-slot-center">
-                <img class="header-wt-logo" src="/css/logos/worktrace.svg" alt="WorkTrace" loading="lazy">
+                <img class="header-wt-logo" src="/css/logos/worktrace.svg?v=2" alt="WorkTrace" loading="lazy">
             </div>
             <div class="header-slot header-slot-right">
                 <button class="header-btn header-pill-btn hidden admin-return-btn" data-action="navigate" data-args="admin-dashboard" title="Volver al panel admin" aria-label="Volver al panel admin">
@@ -1360,7 +1360,11 @@
                                  accept genérico y iOS mostraba Drive + "Elegir
                                  archivo" que el usuario no quería. -->
                             <input type="file" id="supervisor-restaurant-task-video-camera" accept="image/*,video/*" capture="environment" style="opacity:0;position:absolute;pointer-events:none;width:1px;height:1px;">
-                            <input type="file" id="supervisor-restaurant-task-video-gallery" accept="image/*,video/*" style="opacity:0;position:absolute;pointer-events:none;width:1px;height:1px;">
+                            <!-- MIME types específicos (no wildcards): iOS
+                                 Safari en algunas versiones oculta las opciones
+                                 "Tomar foto" y "Seleccionar archivo" cuando el
+                                 accept no es genérico, dejando solo Fototeca. -->
+                            <input type="file" id="supervisor-restaurant-task-video-gallery" accept="image/jpeg,image/png,image/heic,image/heif,image/webp,video/mp4,video/quicktime,video/mov" style="opacity:0;position:absolute;pointer-events:none;width:1px;height:1px;">
                             <div class="rtask-file-actions" id="supervisor-restaurant-task-video-actions">
                                 <label for="supervisor-restaurant-task-video-camera" class="rtask-file-label rtask-file-label-half">
                                     <i class="fas fa-camera"></i>
@@ -1545,10 +1549,10 @@
     <div id="page-admin-dashboard" class="app-container hidden">
         <header class="header header-tri">
             <button class="header-slot header-slot-left" data-action="navigateToRoleDashboard" aria-label="Inicio">
-                <img class="header-client-logo" src="/css/logos/r3-logo.png" alt="R3" width="40" height="40" loading="lazy">
+                <img class="header-client-logo" src="/css/logos/r3-logo.png?v=2" alt="R3" width="40" height="40" loading="lazy">
             </button>
             <div class="header-slot header-slot-center">
-                <img class="header-wt-logo" src="/css/logos/worktrace.svg" alt="WorkTrace" loading="lazy">
+                <img class="header-wt-logo" src="/css/logos/worktrace.svg?v=2" alt="WorkTrace" loading="lazy">
             </div>
             <div class="header-slot header-slot-right">
                 <span class="header-user-pill header-user-pill-static" aria-label="Identificación del admin">
