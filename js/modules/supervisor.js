@@ -2721,17 +2721,15 @@ export const supervisorMethods = {
         const alertsContainer = document.getElementById('supervisor-alerts-container');
         if (!alertsContainer) return;
         try {
-            // Traemos en paralelo:
-            //  - Completadas recientes (para filtrar por HOY)
-            //  - Pendientes (para el contador "Pendientes: N" arriba)
-            const [recentResult, pendingResult] = await Promise.all([
-                apiClient.operationalTasksManage('list_recent_completed', { limit: 50 }),
-                apiClient.operationalTasksManage('list', { status: 'open', limit: 200 }).catch(() => []),
-            ]);
+            // 1 solo fetch: list_recent_completed ya trae pending_count
+            // exacto (confirmado por backend). Antes hacíamos también
+            // list status=open limit=200 en paralelo, era redundante.
+            const recentResult = await apiClient.operationalTasksManage('list_recent_completed', { limit: 50 });
 
-            // Contador de pendientes (chip arriba)
-            const pendingItems = asArray(pendingResult);
-            const pendingCount = pendingItems.length;
+            // Contador de pendientes (chip arriba) — viene con el mismo request.
+            const pendingCount = Number(
+                recentResult?.pending_count ?? recentResult?.data?.pending_count ?? 0
+            ) || 0;
             const pendingPill = document.getElementById('supervisor-alerts-pending');
             const pendingCountEl = document.getElementById('supervisor-alerts-pending-count');
             if (pendingCountEl) pendingCountEl.textContent = String(pendingCount);
@@ -2740,7 +2738,7 @@ export const supervisorMethods = {
             }
 
             // Filtro por HOY (día local del navegador). completed_at viene ISO.
-            const allItems = asArray(recentResult?.items || recentResult);
+            const allItems = asArray(recentResult?.items || recentResult?.data?.items || recentResult);
             const now = new Date();
             const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const items = allItems.filter((task) => {
@@ -2830,10 +2828,13 @@ export const supervisorMethods = {
         try {
             const tasksPromise = shouldFetchTasks
                 ? apiClient
-                      // Sin límite: contar tareas open por sitio exige la
-                      // lista completa. El backend pagina si es grande.
-                      .operationalTasksManage('list', { status: 'open' })
-                      .then((res) => asArray(res))
+                      // Nuevo endpoint dedicado del backend: list_pending
+                      // trae items con restaurant_id + restaurant_name ya
+                      // resueltos y pending_count exacto (no depende del
+                      // limit). Antes usábamos 'list' con status=open que
+                      // truncaba a 200 y no daba pending_count fiable.
+                      .operationalTasksManage('list_pending', { limit: 500 })
+                      .then((res) => asArray(res?.items || res?.data?.items || res))
                       .catch((taskErr) => {
                           console.warn('No fue posible cargar tareas especiales para el render de sitios.', taskErr);
                           return openTasksCache?.data || [];
