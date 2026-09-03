@@ -1278,15 +1278,19 @@
                 <!-- Adjuntos de observaciones (fotos/videos): mismo patrón
                      que el contratista al finalizar servicio. -->
                 <div class="rtask-evidence-wrap" style="padding: 0; margin-top: 8px;">
-                    <!-- Solo imágenes: backend actualmente NO acepta video
-                         en evidences de auditoría (supervisor_presence_manage
-                         register). Si en el futuro se habilita, cambiar a
-                         accept="image/*,video/*". -->
-                    <input type="file" id="supervision-observations-file" accept="image/*" multiple style="display:none;">
+                    <!-- Cámara directo con opción foto O video (sin galería,
+                         sin Drive, sin Files). capture=environment fuerza la
+                         cámara trasera nativa que trae switch FOTO/VIDEO.
+                         Nota backend: video acepta subir al Storage pero el
+                         register de auditoría por ahora rechaza mime video.
+                         Se pidió al backend agregar video al enum del register;
+                         mientras tanto el guard cliente en saveSupervision
+                         bloquea el envío con toast amigable si hay video. -->
+                    <input type="file" id="supervision-observations-file" accept="image/*,video/*" capture="environment" multiple style="display:none;">
                     <div class="rtask-attachments" id="supervision-observations-attachments"></div>
                     <label for="supervision-observations-file" id="supervision-observations-file-label" class="rtask-file-label">
-                        <i class="fas fa-plus"></i>
-                        <span class="rtask-file-label-text">Agregar foto</span>
+                        <i class="fas fa-camera"></i>
+                        <span class="rtask-file-label-text">Tomar foto o video</span>
                     </label>
                 </div>
             </div>
