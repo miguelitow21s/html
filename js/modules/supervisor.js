@@ -4344,22 +4344,15 @@ export const supervisorMethods = {
             requiresEvidence: true,
             // Prioridad fija en Alta (el select fue removido por la misma razon).
             priority: 'high',
-            // El archivo puede venir de cualquiera de los 2 inputs (cámara
-            // o galería). Buscamos en ambos.
             videoFile:
-                document.getElementById('supervisor-restaurant-task-video-camera')?.files?.[0] ||
-                document.getElementById('supervisor-restaurant-task-video-gallery')?.files?.[0] ||
-                null,
+                document.getElementById('supervisor-restaurant-task-video')?.files?.[0] || null,
             source: this.restaurantTaskDraftSource || 'restaurants',
         };
     },
 
     resetSupervisorRestaurantTaskVideoUi() {
-        // Limpiar AMBOS inputs (cámara + galería).
-        ['supervisor-restaurant-task-video-camera', 'supervisor-restaurant-task-video-gallery'].forEach((id) => {
-            const inp = document.getElementById(id);
-            if (inp) inp.value = '';
-        });
+        const input = document.getElementById('supervisor-restaurant-task-video');
+        if (input) input.value = '';
 
         const preview = document.getElementById('supervisor-restaurant-task-video-preview');
         if (preview) {
@@ -4370,23 +4363,17 @@ export const supervisorMethods = {
             preview.classList.add('hidden');
         }
 
-        // Ocultar el status label (aparece solo cuando hay archivo listo).
         const label = document.getElementById('supervisor-restaurant-task-video-label');
-        if (label) label.classList.add('hidden');
         const text = label?.querySelector('.rtask-file-label-text');
-        if (text) text.textContent = 'Grabar o adjuntar video (máx. 60s recomendado)';
+        if (text) text.textContent = 'Subir evidencia';
         label?.classList.remove('rtask-file-label-has-file');
     },
 
     bindSupervisorRestaurantTaskVideoOnce() {
-        // Bindeamos AMBOS inputs (cámara y galería) al mismo handler común.
-        // Cada input dispara la misma lógica de validación + preview.
-        ['supervisor-restaurant-task-video-camera', 'supervisor-restaurant-task-video-gallery'].forEach((id) => {
-            const inp = document.getElementById(id);
-            if (!inp || inp.dataset.videoBound === '1') return;
-            inp.dataset.videoBound = '1';
-            inp.addEventListener('change', () => this._handleSupervisorRestaurantTaskFile(inp));
-        });
+        const input = document.getElementById('supervisor-restaurant-task-video');
+        if (!input || input.dataset.videoBound === '1') return;
+        input.dataset.videoBound = '1';
+        input.addEventListener('change', () => this._handleSupervisorRestaurantTaskFile(input));
     },
 
     // Handler común para los 2 inputs (cámara/galería). Antes vivía inline
@@ -4402,7 +4389,6 @@ export const supervisorMethods = {
                 preview.removeAttribute('src');
                 preview.classList.add('hidden');
             }
-            if (label) label.classList.add('hidden');
             if (text) text.textContent = t('rtask.video.placeholder');
             label?.classList.remove('rtask-file-label-has-file');
             if (toastMsg) {
@@ -4413,13 +4399,6 @@ export const supervisorMethods = {
                 });
             }
         };
-        // Cuando un input agarra archivo, limpiamos el OTRO para que no
-        // queden 2 archivos "seleccionados" a la vez.
-        const otherId = input.id === 'supervisor-restaurant-task-video-camera'
-            ? 'supervisor-restaurant-task-video-gallery'
-            : 'supervisor-restaurant-task-video-camera';
-        const otherInput = document.getElementById(otherId);
-        if (otherInput) otherInput.value = '';
 
         const preview = document.getElementById('supervisor-restaurant-task-video-preview');
         const label = document.getElementById('supervisor-restaurant-task-video-label');
@@ -4439,7 +4418,6 @@ export const supervisorMethods = {
                 preview.removeAttribute('src');
                 preview.classList.add('hidden');
             }
-            if (label) label.classList.add('hidden');
             if (text) text.textContent = t('rtask.video.placeholder');
             label?.classList.remove('rtask-file-label-has-file');
             return;
@@ -4457,7 +4435,6 @@ export const supervisorMethods = {
                 preview.removeAttribute('src');
                 preview.classList.add('hidden');
             }
-            if (label) label.classList.add('hidden');
             if (text) text.textContent = t('rtask.video.placeholder');
             label?.classList.remove('rtask-file-label-has-file');
             return;
@@ -4510,7 +4487,6 @@ export const supervisorMethods = {
                 preview.classList.remove('hidden');
             }
         }
-        if (label) label.classList.remove('hidden');
         if (text) {
             const shortName = file.name.length > 24 ? `${file.name.slice(0, 24)}…` : file.name;
             const durationText = !isImage && durationSeconds > 0
@@ -6252,13 +6228,14 @@ export const supervisorMethods = {
                 const notes = document.getElementById('supervision-observations')?.value?.trim();
 
                 // Guards del backend (supervisor_presence_manage register):
-                //   - evidences <= 50 (subió de 20 en la última actualización)
-                //   - solo imágenes (jpeg/png/heic/heif/webp), NO video
-                //   - <= 8 MB por archivo
-                // Chequeamos ANTES de subir a Storage para no gastar red
-                // en archivos que van a ser rechazados.
+                //   - evidences <= 50
+                //   - imágenes hasta 8 MB
+                //   - videos hasta 50 MB (mp4, quicktime, webm — habilitado
+                //     migración 065)
+                // Chequeamos ANTES de subir a Storage para no gastar red.
                 const MAX_EVIDENCES_PER_AUDIT = 50;
-                const MAX_BYTES_PER_EVIDENCE = 8 * 1024 * 1024; // 8 MB
+                const MAX_BYTES_IMAGE = 8 * 1024 * 1024; // 8 MB
+                const MAX_BYTES_VIDEO = 50 * 1024 * 1024; // 50 MB
 
                 const areaBufferCount = Object.keys(this.supervisionPhotoFiles || {}).length;
                 const observationAttachments = this._supervisionObservationsAttachments || [];
@@ -6274,30 +6251,19 @@ export const supervisorMethods = {
                     return;
                 }
 
-                // Validar adjuntos libres: video pendiente de habilitar en
-                // backend (el register de auditoría aún rechaza mime video).
-                // Se pidió al equipo backend agregar video al enum; mientras
-                // tanto rechazamos con toast claro.
-                const invalidVideo = observationAttachments.find((f) =>
-                    String(f?.type || '').toLowerCase().startsWith('video/')
-                );
-                if (invalidVideo) {
-                    this.showToast(
-                        'El envío de video aún no está habilitado en el servidor. Podés tomarlo pero no se puede enviar todavía — quitalo para guardar la auditoría con las fotos.',
-                        { tone: 'warning', title: 'Video pendiente de habilitar', duration: 8000 }
-                    );
-                    return;
-                }
-
-                // Validar tamaño (imágenes ya vienen del canvas pero los
-                // adjuntos libres pueden venir de galería y ser pesados).
-                const oversized = observationAttachments.find(
-                    (f) => Number(f?.size || 0) > MAX_BYTES_PER_EVIDENCE
-                );
+                // Validar tamaño según tipo: 8 MB imágenes, 50 MB videos.
+                const oversized = observationAttachments.find((f) => {
+                    const isVideo = String(f?.type || '').toLowerCase().startsWith('video/');
+                    const limit = isVideo ? MAX_BYTES_VIDEO : MAX_BYTES_IMAGE;
+                    return Number(f?.size || 0) > limit;
+                });
                 if (oversized) {
+                    const isVideo = String(oversized.type || '').toLowerCase().startsWith('video/');
                     const mb = Math.round((oversized.size / (1024 * 1024)) * 10) / 10;
+                    const limitMb = isVideo ? 50 : 8;
+                    const kindLabel = isVideo ? 'video' : 'foto';
                     this.showToast(
-                        `El archivo "${oversized.name}" pesa ${mb} MB. Máximo 8 MB por foto.`,
+                        `El archivo "${oversized.name}" pesa ${mb} MB. Máximo ${limitMb} MB por ${kindLabel}.`,
                         { tone: 'warning', title: 'Archivo muy pesado', duration: 7000 }
                     );
                     return;

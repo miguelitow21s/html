@@ -1361,32 +1361,15 @@
                         </div>
 
                         <div class="form-group">
-                            <label data-i18n="rtask.video.label">Foto o video de instrucciones (opcional)</label>
-                            <!-- 2 inputs SEPARADOS: uno fuerza cámara (capture),
-                                 el otro va directo a la galería (sin capture pero
-                                 con accept específico). Antes había uno solo con
-                                 accept genérico y iOS mostraba Drive + "Elegir
-                                 archivo" que el usuario no quería. -->
-                            <input type="file" id="supervisor-restaurant-task-video-camera" accept="image/*,video/*" capture="environment" style="opacity:0;position:absolute;pointer-events:none;width:1px;height:1px;">
-                            <!-- MIME types específicos (no wildcards): iOS
-                                 Safari en algunas versiones oculta las opciones
-                                 "Tomar foto" y "Seleccionar archivo" cuando el
-                                 accept no es genérico, dejando solo Fototeca. -->
-                            <input type="file" id="supervisor-restaurant-task-video-gallery" accept="image/jpeg,image/png,image/heic,image/heif,image/webp,video/mp4,video/quicktime,video/mov" style="opacity:0;position:absolute;pointer-events:none;width:1px;height:1px;">
-                            <div class="rtask-file-actions" id="supervisor-restaurant-task-video-actions">
-                                <label for="supervisor-restaurant-task-video-camera" class="rtask-file-label rtask-file-label-half">
-                                    <i class="fas fa-camera"></i>
-                                    <span>Tomar foto o video</span>
-                                </label>
-                                <label for="supervisor-restaurant-task-video-gallery" class="rtask-file-label rtask-file-label-half">
-                                    <i class="fas fa-images"></i>
-                                    <span>Elegir de galería</span>
-                                </label>
-                            </div>
-                            <div id="supervisor-restaurant-task-video-label" class="rtask-file-label rtask-file-label-status hidden">
-                                <i class="fas fa-check-circle"></i>
-                                <span class="rtask-file-label-text" data-i18n="rtask.video.placeholder">Grabar o elegir foto/video (video máx. 60s)</span>
-                            </div>
+                            <label for="supervisor-restaurant-task-video" data-i18n="rtask.video.label">Foto o video de instrucciones (opcional)</label>
+                            <!-- 1 solo input sin capture: el picker nativo de iOS
+                                 ya ofrece las 3 opciones (Fototeca, Tomar foto,
+                                 Tomar video). Simplifica UX vs 2 botones. -->
+                            <input type="file" id="supervisor-restaurant-task-video" accept="image/jpeg,image/png,image/heic,image/heif,image/webp,video/mp4,video/quicktime,video/mov" style="opacity:0;position:absolute;pointer-events:none;width:1px;height:1px;">
+                            <label for="supervisor-restaurant-task-video" id="supervisor-restaurant-task-video-label" class="rtask-file-label">
+                                <i class="fas fa-cloud-arrow-up"></i>
+                                <span class="rtask-file-label-text" data-i18n="rtask.video.placeholder">Subir evidencia</span>
+                            </label>
                             <video id="supervisor-restaurant-task-video-preview" class="hidden" controls style="width:100%;margin-top:8px;border-radius:8px;background:#000;max-height:220px;"></video>
                             <p class="muted-copy" style="font-size:12px;margin:6px 0 0;" data-i18n="rtask.video.hint">
                                 Máximo 1 minuto. El contratista podrá reproducir este video antes de completar la tarea.
