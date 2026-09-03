@@ -1434,19 +1434,21 @@ export const adminModalMethods = {
         }
 
         const selectedKey = normalizeAreaToken(this.selectedSupervisorArea);
-        select.innerHTML = `
-            <option value="">Selecciona un área</option>
-            ${availableAreas
-                .map((areaLabel) => {
-                    const optionKey = normalizeAreaToken(areaLabel);
-                    return `
-                    <option value="${escapeHtml(areaLabel)}" ${optionKey === selectedKey ? 'selected' : ''}>
-                        ${escapeHtml(areaLabel)}
-                    </option>
-                `;
-                })
-                .join('')}
-        `;
+        // Placeholder "Selecciona un área" removido: siempre hay una área
+        // por default. Ojo: esta función DUPLICA la de app.js (mismo nombre
+        // populateSupervisorAreaOptions) — ambas populan el mismo select y
+        // se pisan según orden de carga. Cualquier cambio en una debe
+        // aplicarse a la otra hasta consolidar el duplicado.
+        select.innerHTML = availableAreas
+            .map((areaLabel) => {
+                const optionKey = normalizeAreaToken(areaLabel);
+                return `
+                <option value="${escapeHtml(areaLabel)}" ${optionKey === selectedKey ? 'selected' : ''}>
+                    ${escapeHtml(areaLabel)}
+                </option>
+            `;
+            })
+            .join('');
     },
 
     setSupervisorSelectedArea(areaLabel = '') {
