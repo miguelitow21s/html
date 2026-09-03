@@ -6250,6 +6250,25 @@ export const supervisorMethods = {
                 const locationCheck = await this.ensureSupervisorSupervisionLocationVerified();
                 const location = locationCheck?.location || this.location;
                 const notes = document.getElementById('supervision-observations')?.value?.trim();
+
+                // Guard: el backend valida evidences <= 20 (respuesta 422
+                // VALIDATION). Contamos ANTES de subir a Storage para no
+                // gastar ancho de banda en fotos que después el register
+                // va a rechazar. Contamos por buffers locales (no por
+                // paths ya subidos).
+                const MAX_EVIDENCES_PER_AUDIT = 20;
+                const areaBufferCount = Object.keys(this.supervisionPhotoFiles || {}).length;
+                const observationBufferCount = (this._supervisionObservationsAttachments || []).length;
+                const totalCount = areaBufferCount + observationBufferCount;
+                if (totalCount > MAX_EVIDENCES_PER_AUDIT) {
+                    const excess = totalCount - MAX_EVIDENCES_PER_AUDIT;
+                    this.showToast(
+                        `Tenés ${totalCount} evidencias (fotos + observaciones). Máximo ${MAX_EVIDENCES_PER_AUDIT} por auditoría. Quitá al menos ${excess}.`,
+                        { tone: 'warning', title: 'Demasiadas evidencias', duration: 7000 }
+                    );
+                    return;
+                }
+
                 // Adjuntos por área + adjuntos libres de observaciones (foto/video)
                 // se envían todos en el mismo array evidences. Los libres llevan
                 // label 'Observación' para diferenciarlos.
