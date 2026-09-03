@@ -2477,13 +2477,16 @@ export const supervisorMethods = {
             input.value = ''; // limpiar SIEMPRE para permitir re-elegir
             if (files.length === 0) return;
 
-            // Límites por bloque de observaciones:
-            //   - Máx 5 imágenes + 5 videos
+            // Límites por bloque de observaciones (adicionales a las fotos
+            // obligatorias por subárea, que van aparte):
+            //   - Máx 5 imágenes + 2 videos
             //   - Videos ≤ 30 segundos cada uno
-            // Los rechazos se acumulan y se muestran juntos al final para
-            // no bombardear con toasts sucesivos.
+            // Validación INMEDIATA al elegir el archivo (no al enviar) —
+            // el user no debe subir 10 archivos y enterarse al final que
+            // había un tope. Los rechazos se acumulan y se muestran
+            // juntos al final para no bombardear con toasts sucesivos.
             const MAX_IMAGES = 5;
-            const MAX_VIDEOS = 5;
+            const MAX_VIDEOS = 2;
             const MAX_VIDEO_SECONDS = 30;
 
             const current = this._supervisionObservationsAttachments || [];
