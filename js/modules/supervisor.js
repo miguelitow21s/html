@@ -2507,7 +2507,7 @@ export const supervisorMethods = {
 
         if (files.length === 0) {
             wrap.innerHTML = '';
-            if (textSpan) textSpan.textContent = 'Agregar foto o video';
+            if (textSpan) textSpan.textContent = 'Agregar foto';
             label?.classList.remove('rtask-file-label-has-file');
             return;
         }
@@ -6251,20 +6251,51 @@ export const supervisorMethods = {
                 const location = locationCheck?.location || this.location;
                 const notes = document.getElementById('supervision-observations')?.value?.trim();
 
-                // Guard: el backend valida evidences <= 20 (respuesta 422
-                // VALIDATION). Contamos ANTES de subir a Storage para no
-                // gastar ancho de banda en fotos que después el register
-                // va a rechazar. Contamos por buffers locales (no por
-                // paths ya subidos).
-                const MAX_EVIDENCES_PER_AUDIT = 20;
+                // Guards del backend (supervisor_presence_manage register):
+                //   - evidences <= 50 (subió de 20 en la última actualización)
+                //   - solo imágenes (jpeg/png/heic/heif/webp), NO video
+                //   - <= 8 MB por archivo
+                // Chequeamos ANTES de subir a Storage para no gastar red
+                // en archivos que van a ser rechazados.
+                const MAX_EVIDENCES_PER_AUDIT = 50;
+                const MAX_BYTES_PER_EVIDENCE = 8 * 1024 * 1024; // 8 MB
+
                 const areaBufferCount = Object.keys(this.supervisionPhotoFiles || {}).length;
-                const observationBufferCount = (this._supervisionObservationsAttachments || []).length;
+                const observationAttachments = this._supervisionObservationsAttachments || [];
+                const observationBufferCount = observationAttachments.length;
                 const totalCount = areaBufferCount + observationBufferCount;
+
                 if (totalCount > MAX_EVIDENCES_PER_AUDIT) {
                     const excess = totalCount - MAX_EVIDENCES_PER_AUDIT;
                     this.showToast(
                         `Tenés ${totalCount} evidencias (fotos + observaciones). Máximo ${MAX_EVIDENCES_PER_AUDIT} por auditoría. Quitá al menos ${excess}.`,
                         { tone: 'warning', title: 'Demasiadas evidencias', duration: 7000 }
+                    );
+                    return;
+                }
+
+                // Validar adjuntos libres: solo imágenes, no videos.
+                const invalidVideo = observationAttachments.find((f) =>
+                    String(f?.type || '').toLowerCase().startsWith('video/')
+                );
+                if (invalidVideo) {
+                    this.showToast(
+                        'Las auditorías por ahora solo aceptan fotos, no videos. Quitá el video de las observaciones.',
+                        { tone: 'warning', title: 'Video no permitido', duration: 7000 }
+                    );
+                    return;
+                }
+
+                // Validar tamaño (imágenes ya vienen del canvas pero los
+                // adjuntos libres pueden venir de galería y ser pesados).
+                const oversized = observationAttachments.find(
+                    (f) => Number(f?.size || 0) > MAX_BYTES_PER_EVIDENCE
+                );
+                if (oversized) {
+                    const mb = Math.round((oversized.size / (1024 * 1024)) * 10) / 10;
+                    this.showToast(
+                        `El archivo "${oversized.name}" pesa ${mb} MB. Máximo 8 MB por foto.`,
+                        { tone: 'warning', title: 'Archivo muy pesado', duration: 7000 }
                     );
                     return;
                 }

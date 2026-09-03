@@ -1278,11 +1278,15 @@
                 <!-- Adjuntos de observaciones (fotos/videos): mismo patrón
                      que el contratista al finalizar servicio. -->
                 <div class="rtask-evidence-wrap" style="padding: 0; margin-top: 8px;">
-                    <input type="file" id="supervision-observations-file" accept="image/*,video/*" multiple style="display:none;">
+                    <!-- Solo imágenes: backend actualmente NO acepta video
+                         en evidences de auditoría (supervisor_presence_manage
+                         register). Si en el futuro se habilita, cambiar a
+                         accept="image/*,video/*". -->
+                    <input type="file" id="supervision-observations-file" accept="image/*" multiple style="display:none;">
                     <div class="rtask-attachments" id="supervision-observations-attachments"></div>
                     <label for="supervision-observations-file" id="supervision-observations-file-label" class="rtask-file-label">
                         <i class="fas fa-plus"></i>
-                        <span class="rtask-file-label-text">Agregar foto o video</span>
+                        <span class="rtask-file-label-text">Agregar foto</span>
                     </label>
                 </div>
             </div>
