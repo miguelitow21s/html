@@ -2472,15 +2472,75 @@ export const supervisorMethods = {
         if (!input || input.dataset.observationsBound === '1') return;
         input.dataset.observationsBound = '1';
 
-        input.addEventListener('change', () => {
+        input.addEventListener('change', async () => {
             const files = Array.from(input.files || []);
+            input.value = ''; // limpiar SIEMPRE para permitir re-elegir
             if (files.length === 0) return;
-            this._supervisionObservationsAttachments = [
-                ...(this._supervisionObservationsAttachments || []),
-                ...files,
-            ];
-            input.value = '';
-            this.renderSupervisionObservationsAttachments();
+
+            // Límites por bloque de observaciones (adicionales a las fotos
+            // obligatorias por subárea, que van aparte):
+            //   - Máx 5 imágenes + 2 videos
+            //   - Videos ≤ 30 segundos cada uno
+            // Validación INMEDIATA al elegir el archivo (no al enviar) —
+            // el user no debe subir 10 archivos y enterarse al final que
+            // había un tope. Los rechazos se acumulan y se muestran
+            // juntos al final para no bombardear con toasts sucesivos.
+            const MAX_IMAGES = 5;
+            const MAX_VIDEOS = 2;
+            const MAX_VIDEO_SECONDS = 30;
+
+            const current = this._supervisionObservationsAttachments || [];
+            let imageCount = current.filter((f) => String(f?.type || '').toLowerCase().startsWith('image/')).length;
+            let videoCount = current.filter((f) => String(f?.type || '').toLowerCase().startsWith('video/')).length;
+
+            const accepted = [];
+            const rejections = [];
+
+            for (const file of files) {
+                const isVideo = String(file.type || '').toLowerCase().startsWith('video/');
+
+                // Cap por tipo
+                if (isVideo && videoCount >= MAX_VIDEOS) {
+                    rejections.push(`"${file.name}" — ya tenés ${MAX_VIDEOS} videos (máximo).`);
+                    continue;
+                }
+                if (!isVideo && imageCount >= MAX_IMAGES) {
+                    rejections.push(`"${file.name}" — ya tenés ${MAX_IMAGES} imágenes (máximo).`);
+                    continue;
+                }
+
+                // Duración de video ≤ 30s
+                if (isVideo) {
+                    let seconds = 0;
+                    let probeUrl = null;
+                    try {
+                        probeUrl = URL.createObjectURL(file);
+                        seconds = await this.probeVideoDurationSeconds(probeUrl);
+                    } catch (_) { /* si falla, dejamos pasar y backend rechazará */ }
+                    finally { if (probeUrl) URL.revokeObjectURL(probeUrl); }
+                    if (Number.isFinite(seconds) && seconds > MAX_VIDEO_SECONDS) {
+                        const mmss = this.formatSecondsAsMmSs(seconds);
+                        rejections.push(`"${file.name}" — dura ${mmss}, máximo ${MAX_VIDEO_SECONDS}s.`);
+                        continue;
+                    }
+                }
+
+                accepted.push(file);
+                if (isVideo) videoCount += 1;
+                else imageCount += 1;
+            }
+
+            if (accepted.length > 0) {
+                this._supervisionObservationsAttachments = [...current, ...accepted];
+                this.renderSupervisionObservationsAttachments();
+            }
+            if (rejections.length > 0) {
+                this.showToast(rejections.join('\n'), {
+                    tone: 'warning',
+                    title: rejections.length === 1 ? 'No se agregó' : `No se agregaron ${rejections.length} archivos`,
+                    duration: 8000,
+                });
+            }
         });
 
         const container = document.getElementById('supervision-observations-attachments');
