@@ -3848,23 +3848,41 @@ const app = {
     },
 
     renderSupervisionAreaNav() {
-        const container = document.getElementById('supervision-area-nav');
-        if (!container) return;
+        // Actualizamos 2 navs simultáneos: uno ARRIBA del grid y otro
+        // ABAJO. El inspector puede navegar entre áreas sin scrollear.
+        const topContainer = document.getElementById('supervision-area-nav-top');
+        const bottomContainer = document.getElementById('supervision-area-nav');
+        const containers = [topContainer, bottomContainer].filter(Boolean);
+        if (containers.length === 0) return;
+
         const areas = this.getSupervisorAvailableAreas();
         if (areas.length <= 1) {
-            container.classList.add('hidden');
+            containers.forEach((c) => c.classList.add('hidden'));
             return;
         }
-        container.classList.remove('hidden');
+        containers.forEach((c) => c.classList.remove('hidden'));
+
         const current = this.selectedSupervisorArea || areas[0];
         const idx = areas.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
         const safeIdx = idx >= 0 ? idx : 0;
-        const progressNode = document.getElementById('supervision-area-nav-progress');
-        if (progressNode) progressNode.textContent = `Área ${safeIdx + 1} de ${areas.length}`;
-        const prevBtn = document.getElementById('supervision-area-nav-prev');
-        const nextBtn = document.getElementById('supervision-area-nav-next');
-        if (prevBtn) prevBtn.classList.toggle('btn-not-ready', safeIdx <= 0);
-        if (nextBtn) nextBtn.classList.toggle('btn-not-ready', safeIdx >= areas.length - 1);
+        const progressText = `Área ${safeIdx + 1} de ${areas.length}`;
+
+        // Progreso en ambos navs
+        [
+            document.getElementById('supervision-area-nav-progress'),
+            document.getElementById('supervision-area-nav-top-progress'),
+        ].forEach((node) => {
+            if (node) node.textContent = progressText;
+        });
+
+        // Estado de botones prev/next en ambos navs (los del nav-top
+        // no tienen id específico, los buscamos por selector).
+        containers.forEach((container) => {
+            const prevBtn = container.querySelector('[data-action="goToPreviousSupervisionArea"]');
+            const nextBtn = container.querySelector('[data-action="goToNextSupervisionArea"]');
+            if (prevBtn) prevBtn.classList.toggle('btn-not-ready', safeIdx <= 0);
+            if (nextBtn) nextBtn.classList.toggle('btn-not-ready', safeIdx >= areas.length - 1);
+        });
     },
 
     goToPreviousSupervisionArea() {
