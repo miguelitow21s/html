@@ -2507,12 +2507,12 @@ export const supervisorMethods = {
 
         if (files.length === 0) {
             wrap.innerHTML = '';
-            if (textSpan) textSpan.textContent = 'Agregar foto';
+            if (textSpan) textSpan.textContent = 'Tomar foto o video';
             label?.classList.remove('rtask-file-label-has-file');
             return;
         }
 
-        if (textSpan) textSpan.textContent = `Agregar otra (${files.length})`;
+        if (textSpan) textSpan.textContent = `Tomar otra (${files.length})`;
         label?.classList.add('rtask-file-label-has-file');
 
         wrap.innerHTML = files
@@ -6274,14 +6274,17 @@ export const supervisorMethods = {
                     return;
                 }
 
-                // Validar adjuntos libres: solo imágenes, no videos.
+                // Validar adjuntos libres: video pendiente de habilitar en
+                // backend (el register de auditoría aún rechaza mime video).
+                // Se pidió al equipo backend agregar video al enum; mientras
+                // tanto rechazamos con toast claro.
                 const invalidVideo = observationAttachments.find((f) =>
                     String(f?.type || '').toLowerCase().startsWith('video/')
                 );
                 if (invalidVideo) {
                     this.showToast(
-                        'Las auditorías por ahora solo aceptan fotos, no videos. Quitá el video de las observaciones.',
-                        { tone: 'warning', title: 'Video no permitido', duration: 7000 }
+                        'El envío de video aún no está habilitado en el servidor. Podés tomarlo pero no se puede enviar todavía — quitalo para guardar la auditoría con las fotos.',
+                        { tone: 'warning', title: 'Video pendiente de habilitar', duration: 8000 }
                     );
                     return;
                 }
