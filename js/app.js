@@ -3821,19 +3821,19 @@ const app = {
         }
 
         const selectedKey = normalizeAreaToken(this.selectedSupervisorArea);
-        select.innerHTML = `
-            <option value="">Selecciona un área</option>
-            ${availableAreas
-                .map((areaLabel) => {
-                    const optionKey = normalizeAreaToken(areaLabel);
-                    return `
-                    <option value="${escapeHtml(areaLabel)}" ${optionKey === selectedKey ? 'selected' : ''}>
-                        ${escapeHtml(areaLabel)}
-                    </option>
-                `;
-                })
-                .join('')}
-        `;
+        // Placeholder "Selecciona un área" removido: siempre hay una área
+        // seleccionada por default (la primera). El user solo ve opciones
+        // válidas — no una entrada muerta que al elegirla vaciaba el grid.
+        select.innerHTML = availableAreas
+            .map((areaLabel) => {
+                const optionKey = normalizeAreaToken(areaLabel);
+                return `
+                <option value="${escapeHtml(areaLabel)}" ${optionKey === selectedKey ? 'selected' : ''}>
+                    ${escapeHtml(areaLabel)}
+                </option>
+            `;
+            })
+            .join('');
         this.renderSupervisionAreaNav();
     },
 
@@ -3923,7 +3923,10 @@ const app = {
         ['employee-photo-area-select', 'employee-end-photo-area-select'].forEach((selectId) => {
             const select = document.getElementById(selectId);
             if (!select) return;
-            select.innerHTML = `<option value="">Selecciona un área</option>${optionsHtml}`;
+            // Placeholder "Selecciona un área" removido: siempre hay una
+            // área seleccionada por default. El nav de flechas navega entre
+            // ellas y este dropdown lista solo opciones válidas.
+            select.innerHTML = optionsHtml;
             if (activeArea && select.value !== activeArea) {
                 select.value = activeArea;
             }
