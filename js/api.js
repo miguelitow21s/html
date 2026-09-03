@@ -711,7 +711,14 @@ export class WorkTraceApiClient {
         return this.callAction('/evidence_upload', 'warm', {}).catch(() => {});
     }
 
-    async uploadToSignedUrl(signedUrl, file, contentType = file?.type, timeoutMs = 60000) {
+    async uploadToSignedUrl(signedUrl, file, contentType = file?.type, timeoutMs) {
+        // Timeout dinámico según tamaño real del archivo si no se pasa uno.
+        // Videos de 30-50 MB en 4G/edge tardan más que 60s. Base 60s +
+        // 15s por cada 5 MB, con techo 180s (3 min).
+        if (!Number.isFinite(timeoutMs)) {
+            const sizeMb = Math.max(0, Number(file?.size || 0) / (1024 * 1024));
+            timeoutMs = Math.min(180000, 60000 + Math.ceil(sizeMb / 5) * 15000);
+        }
         const headers = contentType ? { 'Content-Type': contentType } : {};
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -733,9 +740,12 @@ export class WorkTraceApiClient {
             return true;
         } catch (error) {
             if (error.name === 'AbortError') {
-                throw buildRequestError('Tiempo de espera agotado al subir la foto.', {
-                    code: 'UPLOAD_TIMEOUT',
-                });
+                const isVideo = String(contentType || '').toLowerCase().startsWith('video/');
+                const kind = isVideo ? 'el video' : 'la foto';
+                throw buildRequestError(
+                    `Tiempo de espera agotado al subir ${kind}. Revisá tu conexión e intentá de nuevo.`,
+                    { code: 'UPLOAD_TIMEOUT' }
+                );
             }
             throw error;
         } finally {
