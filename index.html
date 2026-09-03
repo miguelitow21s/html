@@ -610,7 +610,12 @@
                     </div>
                 </div>
 
-                <div class="area-selection-panel" style="margin-top: 0;">
+                <!-- El dropdown "Selecciona un área" queda oculto: la
+                     navegación entre áreas ahora es solo por flechas
+                     Anterior/Siguiente (arriba y abajo del grid). Se
+                     conserva el <select> en el DOM porque varios flows
+                     del JS leen/escriben su .value, pero no se muestra. -->
+                <div class="area-selection-panel hidden" style="margin-top: 0;" aria-hidden="true">
                     <div class="area-selection-header">
                         <label for="employee-photo-area-select" class="area-selection-label"><strong>Área a fotografiar</strong></label>
                         <p class="muted-copy" style="font-size: 12px; margin: 4px 0 0;">Debes cubrir todas las áreas del sitio antes de iniciar la limpieza.</p>
@@ -722,7 +727,10 @@
                     </div>
                 </div>
 
-                <div class="area-selection-panel" style="margin-top: 0;">
+                <!-- Panel de selección oculto por diseño (nav de flechas
+                     Anterior/Siguiente cubre la navegación). El <select>
+                     se conserva por compatibilidad con el JS. -->
+                <div class="area-selection-panel hidden" style="margin-top: 0;" aria-hidden="true">
                     <div class="area-selection-header">
                         <strong>Área a fotografiar</strong>
                         <p class="muted-copy" style="font-size: 12px; margin: 4px 0 0;">Registra la evidencia final de las mismas áreas trabajadas al inicio.</p>
@@ -1241,7 +1249,10 @@
                     <div class="card-title" data-i18n="supervisor.supervision.photos">Evidencias de Auditoría</div>
                 </div>
 
-                <div class="area-selection-panel" style="margin-top: 0;">
+                <!-- Panel de selección oculto: nav de flechas (arriba y
+                     abajo del grid) reemplaza el dropdown. El <select>
+                     queda para compatibilidad JS. -->
+                <div class="area-selection-panel hidden" style="margin-top: 0;" aria-hidden="true">
                     <div class="area-selection-header">
                         <strong data-i18n="supervisor.supervision.area.strong">Área</strong>
                     </div>
