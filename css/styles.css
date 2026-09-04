@@ -1739,6 +1739,31 @@ canvas {
     flex: 0 0 auto;
 }
 
+/* Aviso de límites de adjuntos de observaciones (5 fotos + 2 videos ≤30s).
+   Va debajo del textarea, antes de la lista de archivos ya adjuntados. */
+.supervision-attachments-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 10px 0 6px 0;
+    padding: 10px 12px;
+    background: rgba(3, 105, 161, 0.08);
+    border: 1px solid rgba(3, 105, 161, 0.2);
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+.supervision-attachments-hint i {
+    color: #0369a1;
+    margin-top: 2px;
+    flex: 0 0 auto;
+}
+.supervision-attachments-hint strong {
+    color: #0369a1;
+    font-weight: 700;
+}
+
 /* Profile Page */
 .profile-header {
     text-align: center;

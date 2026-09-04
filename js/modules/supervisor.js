@@ -2826,13 +2826,15 @@ export const supervisorMethods = {
             .map((file, index) => {
                 const isVideo = String(file.type || '').startsWith('video/');
                 const icon = isVideo ? 'fa-video' : 'fa-image';
-                const shortName = file.name.length > 22 ? `${file.name.slice(0, 22)}…` : file.name;
+                // Ya no mostramos file.name — el nombre real que asigna la cámara
+                // ("image.jpg") no aporta info al inspector. Usamos un label
+                // amable "Foto N" / "Video N" y el tamaño en MB.
+                const kindLabel = isVideo ? 'Video' : 'Foto';
+                const displayLabel = `${kindLabel} ${index + 1}`;
                 const sizeMb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
-                // Badge de estado de upload progresivo (data-attribute lo actualiza
-                // updateSupervisionUploadBadge). Empieza hidden y se muestra al enqueue.
                 return `<div class="rtask-attachment-item">
                     <i class="fas ${icon}"></i>
-                    <span class="rtask-attachment-name">${escapeHtml(shortName)}</span>
+                    <span class="rtask-attachment-name">${escapeHtml(displayLabel)}</span>
                     <span class="rtask-attachment-size">${sizeMb} MB</span>
                     <span class="supervision-upload-badge supervision-upload-badge-inline" data-supervision-upload-badge="obs:${index}" hidden></span>
                     <button type="button" class="rtask-attachment-remove" data-supervision-observations-action="remove" data-index="${index}" aria-label="Quitar adjunto">

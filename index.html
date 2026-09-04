@@ -1289,6 +1289,13 @@
             <div class="form-group supervision-notes-group">
                 <label for="supervision-observations">Observaciones</label>
                 <textarea id="supervision-observations" placeholder="Registre sus observaciones de la supervisión..."></textarea>
+                <!-- Recordatorio de límites: los guards reales están en
+                     bindSupervisionObservationsAttachmentsOnce (supervisor.js).
+                     Esto solo lo comunica al inspector antes de intentar. -->
+                <p class="supervision-attachments-hint">
+                    <i class="fas fa-info-circle"></i>
+                    Máximo <strong>5 fotos</strong> y <strong>2 videos</strong> de hasta <strong>30 segundos</strong> cada uno.
+                </p>
                 <!-- Adjuntos de observaciones (fotos/videos): mismo patrón
                      que el contratista al finalizar servicio. -->
                 <div class="rtask-evidence-wrap" style="padding: 0; margin-top: 8px;">

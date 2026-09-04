@@ -1419,62 +1419,11 @@ export const adminModalMethods = {
         return this.getSupervisorAvailableAreas();
     },
 
-    populateSupervisorAreaOptions() {
-        const select = document.getElementById('supervision-area-select');
-        if (!select) {
-            return;
-        }
-
-        const availableAreas = this.getSupervisorAvailableAreas();
-        const hasCurrentSelection = availableAreas.some(
-            (areaLabel) => normalizeAreaToken(areaLabel) === normalizeAreaToken(this.selectedSupervisorArea)
-        );
-        if (!hasCurrentSelection) {
-            this.selectedSupervisorArea = availableAreas[0] || '';
-        }
-
-        const selectedKey = normalizeAreaToken(this.selectedSupervisorArea);
-        // Placeholder "Selecciona un área" removido: siempre hay una área
-        // por default. Ojo: esta función DUPLICA la de app.js (mismo nombre
-        // populateSupervisorAreaOptions) — ambas populan el mismo select y
-        // se pisan según orden de carga. Cualquier cambio en una debe
-        // aplicarse a la otra hasta consolidar el duplicado.
-        select.innerHTML = availableAreas
-            .map((areaLabel) => {
-                const optionKey = normalizeAreaToken(areaLabel);
-                return `
-                <option value="${escapeHtml(areaLabel)}" ${optionKey === selectedKey ? 'selected' : ''}>
-                    ${escapeHtml(areaLabel)}
-                </option>
-            `;
-            })
-            .join('');
-    },
-
-    setSupervisorSelectedArea(areaLabel = '') {
-        this.selectedSupervisorArea = areaLabel || '';
-        const select = document.getElementById('supervision-area-select');
-        if (select && select.value !== this.selectedSupervisorArea) {
-            select.value = this.selectedSupervisorArea;
-        }
-        this.renderSupervisorPhotoGrid();
-    },
-
-    resetSupervisorSupervisionState() {
-        this.services.images.clearMap(this.supervisionPhotos);
-        this.supervisionPhotos = {};
-        this.supervisionPhotoFiles = {};
-        this.selectedSupervisorArea = '';
-        this.supervisionPhotoCatalog = [];
-        this.clearSupervisionRegisterRetryState();
-        if (this.currentPhotoType === 'supervision') {
-            this.currentPhotoArea = null;
-            this.currentPhotoContext = null;
-        }
-        this.populateSupervisorAreaOptions();
-        this.renderSupervisorPhotoGrid();
-        this.hideSupervisionSupportCard();
-    },
+    // NOTA: populateSupervisorAreaOptions / setSupervisorSelectedArea /
+    // resetSupervisorSupervisionState vivían acá DUPLICADAS y pisaban las de
+    // app.js (mismo namespace WorkTraceApp). Eso escondía el fix del PR #16
+    // (placeholder) y del PR #18 (upload progresivo + renderSupervisionAreaNav).
+    // Eliminadas — la versión buena es la de app.js:3809/3840/en supervisor.js.
 
     async getSupervisorRestaurants(force = false) {
         if (
