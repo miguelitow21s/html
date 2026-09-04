@@ -2739,13 +2739,14 @@ export const supervisorMethods = {
             for (const file of files) {
                 const isVideo = String(file.type || '').toLowerCase().startsWith('video/');
 
-                // Cap por tipo
+                // Cap por tipo. Mensaje sin file.name (el nombre real de
+                // cámara "image.jpg" no aporta al inspector y hace ruido).
                 if (isVideo && videoCount >= MAX_VIDEOS) {
-                    rejections.push(`"${file.name}" — ya tenés ${MAX_VIDEOS} videos (máximo).`);
+                    rejections.push(`Ya tenés el máximo de ${MAX_VIDEOS} videos agregados.`);
                     continue;
                 }
                 if (!isVideo && imageCount >= MAX_IMAGES) {
-                    rejections.push(`"${file.name}" — ya tenés ${MAX_IMAGES} imágenes (máximo).`);
+                    rejections.push(`Ya tenés el máximo de ${MAX_IMAGES} imágenes agregadas.`);
                     continue;
                 }
 
@@ -2760,7 +2761,7 @@ export const supervisorMethods = {
                     finally { if (probeUrl) URL.revokeObjectURL(probeUrl); }
                     if (Number.isFinite(seconds) && seconds > MAX_VIDEO_SECONDS) {
                         const mmss = this.formatSecondsAsMmSs(seconds);
-                        rejections.push(`"${file.name}" — dura ${mmss}, máximo ${MAX_VIDEO_SECONDS}s.`);
+                        rejections.push(`Video muy largo (${mmss}) — máximo ${MAX_VIDEO_SECONDS}s.`);
                         continue;
                     }
                 }
@@ -6647,8 +6648,8 @@ export const supervisorMethods = {
                 this.invalidateCache('supervisorShifts');
                 this.showToast(
                     alreadyExists
-                        ? 'La supervisión ya existía y se tomó como registrada.'
-                        : 'Supervisión registrada correctamente.',
+                        ? 'La auditoría ya existía y se tomó como registrada.'
+                        : 'Auditoría registrada correctamente.',
                     {
                         tone: 'success',
                         title: t('sup.toast.audit.success'),
