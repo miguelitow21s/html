@@ -5756,6 +5756,13 @@ const app = {
         this.services.images.replaceInMap(targetPreviews, area, previewUrl);
         this.updatePhotoSlot(area, type, previewUrl);
 
+        // Progresivo: apenas se agrega una foto de auditoría, disparamos el
+        // upload en background (compresión → PUT → attach_evidence). El
+        // saveSupervision final solo espera Promise.allSettled y llama finalize.
+        if (type === 'supervision' && typeof this.enqueueSupervisionSlotUpload === 'function') {
+            this.enqueueSupervisionSlotUpload(area, file);
+        }
+
         if (type === 'start') {
             console.info('[photos] guardada', {
                 area,
@@ -5941,6 +5948,25 @@ const app = {
         const overlayText = descriptor?.subareaLabel || area;
         if (overlay.textContent !== overlayText) {
             overlay.textContent = overlayText;
+        }
+
+        // Badge de estado de upload progresivo (solo para auditoría). El helper
+        // updateSupervisionUploadBadge lo busca por data-supervision-upload-badge
+        // y le pone ⏳/✓/⚠ según status. Empieza hidden hasta que un enqueue lo active.
+        if (type === 'supervision') {
+            let badge = slot.querySelector('.supervision-upload-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'supervision-upload-badge';
+                badge.hidden = true;
+                slot.appendChild(badge);
+            }
+            badge.setAttribute('data-supervision-upload-badge', `slot:${area}`);
+            // Si ya hay un estado conocido para este slot, refrescar visual.
+            const known = this._supervisionSlotUploads?.get(area);
+            if (known && typeof this.updateSupervisionUploadBadge === 'function') {
+                this.updateSupervisionUploadBadge('slot', area, known.status);
+            }
         }
     },
 
