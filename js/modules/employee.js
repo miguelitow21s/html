@@ -2059,21 +2059,47 @@ export const employeeMethods = {
                 </button>
             </div>`;
 
-        const instructionsVideoUrl = String(
-            task.instructions_video_url ||
+        // Instrucción del inspector puede ser video O imagen (backend 2026-09).
+        // Preferimos instructions_media_url (nuevo); fallback a instructions_video_url
+        // por compat con tareas viejas. Tipo se decide por la extensión del path,
+        // no por el URL (URLs firmadas a veces no tienen extensión visible).
+        const instructionsUrl = String(
+            task.instructions_media_url ||
+                task.instructions_video_url ||
+                task.instructions_media?.url ||
                 task.instructions_video?.url ||
+                task.meta?.instructions_media_url ||
                 task.meta?.instructions_video_url ||
+                task.metadata?.instructions_media_url ||
                 task.metadata?.instructions_video_url ||
                 ''
         ).trim();
-        const safeVideoUrl = sanitizeUrl(instructionsVideoUrl);
-        const videoHtml = safeVideoUrl
-            ? `<div class="rtask-video-wrap" style="margin:8px 0;">
-                <video controls preload="metadata" style="width:100%;border-radius:8px;background:#000;max-height:240px;" src="${escapeHtml(safeVideoUrl)}"></video>
-                <p class="muted-copy" style="font-size:12px;margin:4px 0 0;">
-                    <i class="fas fa-video"></i> ${escapeHtml(t('rtask.video.viewer.label'))}
-                </p>
-            </div>`
+        const instructionsPath = String(
+            task.instructions_media_path ||
+                task.instructions_video_path ||
+                task.meta?.instructions_media_path ||
+                task.meta?.instructions_video_path ||
+                task.metadata?.instructions_media_path ||
+                task.metadata?.instructions_video_path ||
+                ''
+        ).trim();
+        const isImageInstruction = /\.(jpe?g|png|heic|heif|webp|gif)(\?|$)/i.test(instructionsPath)
+            || /^image\//i.test(String(task.instructions_media_mime || task.instructions_media?.mime || ''));
+        const safeInstructionsUrl = sanitizeUrl(instructionsUrl);
+        const videoHtml = safeInstructionsUrl
+            ? (isImageInstruction
+                ? `<div class="rtask-video-wrap" style="margin:8px 0;">
+                    <img src="${escapeHtml(safeInstructionsUrl)}" alt="Instrucción del inspector" style="width:100%;border-radius:8px;background:#f1f5f9;max-height:240px;object-fit:contain;">
+                    <p class="muted-copy" style="font-size:12px;margin:4px 0 0;">
+                        <i class="fas fa-image"></i> ${escapeHtml(t('rtask.video.viewer.label'))}
+                    </p>
+                </div>`
+                : `<div class="rtask-video-wrap" style="margin:8px 0;">
+                    <video controls preload="metadata" style="width:100%;border-radius:8px;background:#000;max-height:240px;" src="${escapeHtml(safeInstructionsUrl)}"></video>
+                    <p class="muted-copy" style="font-size:12px;margin:4px 0 0;">
+                        <i class="fas fa-video"></i> ${escapeHtml(t('rtask.video.viewer.label'))}
+                    </p>
+                </div>`)
             : '';
 
         return `<div class="rtask-card" data-task-id="${taskId}">

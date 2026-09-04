@@ -5047,6 +5047,10 @@ export const supervisorMethods = {
             requires_evidence: draft.requiresEvidence,
             priority: draft.priority || undefined,
             origin_page: draft.source,
+            // Backend acepta ambos nombres (compat): mandamos el nuevo
+            // instructions_media_path como primario. La misma clave sirve
+            // para imagen o video — el backend decide por extensión.
+            instructions_media_path: instructionsVideoPath || undefined,
             instructions_video_path: instructionsVideoPath || undefined,
         };
         const payloadVariants = payloadBase.priority
