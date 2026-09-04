@@ -847,6 +847,13 @@
                 <div class="form-group">
                     <textarea id="early-end-reason" placeholder="Observaciones (opcional)"></textarea>
                 </div>
+                <!-- Aviso de límites: mismo patrón que auditoría (5 fotos +
+                     2 videos de máx 30 s). El guard real vive en
+                     bindObservationsAttachmentsOnce (employee.js). -->
+                <p class="supervision-attachments-hint">
+                    <i class="fas fa-info-circle"></i>
+                    Máximo <strong>5 fotos</strong> y <strong>2 videos</strong> de hasta <strong>30 segundos</strong> cada uno.
+                </p>
                 <div class="rtask-evidence-wrap" style="padding: 0;">
                     <input type="file" id="shift-observations-file" accept="image/*,video/*" capture="environment" multiple style="display:none;">
                     <div class="rtask-attachments" id="shift-observations-attachments"></div>

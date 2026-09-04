@@ -1412,17 +1412,71 @@ export const employeeMethods = {
         if (!input || input.dataset.observationsBound === '1') return;
         input.dataset.observationsBound = '1';
 
-        input.addEventListener('change', () => {
+        input.addEventListener('change', async () => {
             const files = Array.from(input.files || []);
+            input.value = ''; // limpiar SIEMPRE para permitir re-elegir
             if (files.length === 0) return;
-            const baseIndex = (this._observationsAttachments || []).length;
-            this._observationsAttachments = [...(this._observationsAttachments || []), ...files];
-            input.value = '';
-            this.renderObservationsAttachments();
-            // Progresivo: disparar upload background para cada nueva observación.
-            if (typeof this.enqueueEmployeeObservationUpload === 'function') {
-                files.forEach((file, i) => {
-                    this.enqueueEmployeeObservationUpload(baseIndex + i, file);
+
+            // Mismos límites que en observaciones de auditoría del inspector:
+            //   - Máx 5 imágenes + 2 videos
+            //   - Videos ≤ 30 s cada uno
+            // Validación al elegir (no al enviar) para feedback inmediato.
+            // Los rechazos se acumulan en un solo toast al final.
+            const MAX_IMAGES = 5;
+            const MAX_VIDEOS = 2;
+            const MAX_VIDEO_SECONDS = 30;
+
+            const current = this._observationsAttachments || [];
+            let imageCount = current.filter((f) => String(f?.type || '').toLowerCase().startsWith('image/')).length;
+            let videoCount = current.filter((f) => String(f?.type || '').toLowerCase().startsWith('video/')).length;
+
+            const accepted = [];
+            const rejections = [];
+
+            for (const file of files) {
+                const isVideo = String(file.type || '').toLowerCase().startsWith('video/');
+                if (isVideo && videoCount >= MAX_VIDEOS) {
+                    rejections.push(`Ya tenés el máximo de ${MAX_VIDEOS} videos agregados.`);
+                    continue;
+                }
+                if (!isVideo && imageCount >= MAX_IMAGES) {
+                    rejections.push(`Ya tenés el máximo de ${MAX_IMAGES} imágenes agregadas.`);
+                    continue;
+                }
+                if (isVideo) {
+                    let seconds = 0;
+                    let probeUrl = null;
+                    try {
+                        probeUrl = URL.createObjectURL(file);
+                        seconds = await this.probeVideoDurationSeconds(probeUrl);
+                    } catch (_) { /* si falla, dejamos pasar; backend valida tamaño */ }
+                    finally { if (probeUrl) URL.revokeObjectURL(probeUrl); }
+                    if (Number.isFinite(seconds) && seconds > MAX_VIDEO_SECONDS) {
+                        const mmss = this.formatSecondsAsMmSs(seconds);
+                        rejections.push(`Video muy largo (${mmss}) — máximo ${MAX_VIDEO_SECONDS}s.`);
+                        continue;
+                    }
+                }
+                accepted.push(file);
+                if (isVideo) videoCount += 1;
+                else imageCount += 1;
+            }
+
+            if (accepted.length > 0) {
+                const baseIndex = (this._observationsAttachments || []).length;
+                this._observationsAttachments = [...(this._observationsAttachments || []), ...accepted];
+                this.renderObservationsAttachments();
+                if (typeof this.enqueueEmployeeObservationUpload === 'function') {
+                    accepted.forEach((file, i) => {
+                        this.enqueueEmployeeObservationUpload(baseIndex + i, file);
+                    });
+                }
+            }
+            if (rejections.length > 0) {
+                this.showToast(rejections.join('\n'), {
+                    tone: 'warning',
+                    title: rejections.length === 1 ? 'No se agregó' : `No se agregaron ${rejections.length} archivos`,
+                    duration: 8000,
                 });
             }
         });
