@@ -4894,14 +4894,65 @@ export const supervisorMethods = {
     },
 
     /**
-     * Al elegir archivo de instrucciones de tarea especial: NO hay guard
-     * de geofence ni heurística de "foto reciente". El inspector programa
-     * tareas para el futuro desde donde sea (casa, oficina), y el archivo
-     * puede ser reciente o viejo — cualquier caso es legítimo. Se dejó
-     * como no-op por si volvemos a habilitar el guard en el futuro.
+     * Regla al elegir archivo de instrucciones de tarea especial:
+     * - DENTRO del radio del sitio → cualquier origen (cámara o galería).
+     * - FUERA del sitio → solo galería/archivos (NO cámara).
+     *
+     * iOS no permite forzar "solo galería" en el file picker HTML. Heurística:
+     * si el file.lastModified es de los últimos 60 segundos, se asume cámara
+     * abierta desde el picker y se rechaza. Umbral 60s (antes 2min) para
+     * reducir falsos positivos con fotos recién tomadas y luego elegidas
+     * desde galería — 60s alcanza porque abrir Cámara → tomar → cerrar →
+     * abrir Safari → picker toma más que eso.
+     *
+     * Si el sitio no tiene coords o falla el GPS: dejamos pasar (mejor
+     * permitir de más que bloquear al inspector legítimo).
      */
-    async validateRestaurantTaskFileByGeofence(_file) {
-        return { ok: true };
+    async validateRestaurantTaskFileByGeofence(file) {
+        try {
+            const restaurantId = String(
+                document.getElementById('supervisor-restaurant-task-restaurant')?.value || ''
+            ).trim();
+            if (!restaurantId) return { ok: true };
+
+            const restaurant = asArray(this.data.supervisor.restaurants).find(
+                (r) => String(getRestaurantRecordId(r)) === restaurantId
+            );
+            if (!restaurant) return { ok: true };
+
+            const geofence = this.getSupervisorRestaurantGeofence(restaurant);
+            if (!geofence.hasCoordinates) return { ok: true };
+
+            let location = null;
+            try {
+                location = await this.captureLocation({ updateUi: false, highAccuracy: true });
+            } catch (_) {
+                return { ok: true };
+            }
+            if (!location || !Number.isFinite(Number(location.lat))) return { ok: true };
+
+            const distance = calculateDistanceMeters(location, { lat: geofence.lat, lng: geofence.lng });
+            if (distance == null) return { ok: true };
+            const accuracyBuffer = Math.min(Number(location.accuracy || 0), 60);
+            const effectiveRadius = Math.max(geofence.radiusMeters || 0, 0) + accuracyBuffer;
+            const insideSite = distance <= effectiveRadius;
+            if (insideSite) return { ok: true };
+
+            // Fuera del sitio: rechazar cámara reciente (últimos 60s).
+            const fileAge = Date.now() - Number(file.lastModified || 0);
+            const isFreshCamera = Number.isFinite(fileAge) && fileAge < 60 * 1000;
+            if (isFreshCamera) {
+                const siteName = getRestaurantDisplayName(restaurant);
+                return {
+                    ok: false,
+                    reason: `Estás fuera de ${siteName}. Elegí una foto o video de tu galería o archivos — la cámara solo se puede usar en el sitio.`,
+                };
+            }
+            return { ok: true };
+        } catch (err) {
+            console.info('[rtask-file-geofence] validación falló, dejamos pasar', err?.message || err);
+            return { ok: true };
+        }
     },
 
     async uploadRestaurantTaskInstructionsVideo(videoFile, restaurantId) {
