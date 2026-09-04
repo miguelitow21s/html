@@ -5762,6 +5762,13 @@ const app = {
         if (type === 'supervision' && typeof this.enqueueSupervisionSlotUpload === 'function') {
             this.enqueueSupervisionSlotUpload(area, file);
         }
+        // Progresivo contratista: mismo patrón. Necesita shift_id ya creado
+        // (shifts_start corre antes de esta pantalla). El enqueue verifica y
+        // hace no-op si no hay shift. completeShiftStartPhotos / completeShift
+        // esperan pendientes con awaitAllEmployeeUploads.
+        if ((type === 'start' || type === 'end') && typeof this.enqueueEmployeeSlotUpload === 'function') {
+            this.enqueueEmployeeSlotUpload(type, area, file);
+        }
 
         if (type === 'start') {
             console.info('[photos] guardada', {
@@ -5950,9 +5957,11 @@ const app = {
             overlay.textContent = overlayText;
         }
 
-        // Badge de estado de upload progresivo (solo para auditoría). El helper
-        // updateSupervisionUploadBadge lo busca por data-supervision-upload-badge
-        // y le pone ⏳/✓/⚠ según status. Empieza hidden hasta que un enqueue lo active.
+        // Badge de estado de upload progresivo. Auditoría e inspector usan la
+        // misma clase visual (.supervision-upload-badge — el CSS no distingue
+        // dueño). El data-attribute cambia según el flow:
+        //   supervision → data-supervision-upload-badge="slot:{area}"
+        //   start/end   → data-employee-upload-badge="{type}:{area}"
         if (type === 'supervision') {
             let badge = slot.querySelector('.supervision-upload-badge');
             if (!badge) {
@@ -5962,10 +5971,23 @@ const app = {
                 slot.appendChild(badge);
             }
             badge.setAttribute('data-supervision-upload-badge', `slot:${area}`);
-            // Si ya hay un estado conocido para este slot, refrescar visual.
             const known = this._supervisionSlotUploads?.get(area);
             if (known && typeof this.updateSupervisionUploadBadge === 'function') {
                 this.updateSupervisionUploadBadge('slot', area, known.status);
+            }
+        } else if (type === 'start' || type === 'end') {
+            let badge = slot.querySelector('.supervision-upload-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'supervision-upload-badge';
+                badge.hidden = true;
+                slot.appendChild(badge);
+            }
+            badge.setAttribute('data-employee-upload-badge', `${type}:${area}`);
+            const stateMap = type === 'start' ? this._employeeStartUploads : this._employeeEndUploads;
+            const known = stateMap?.get(area);
+            if (known && typeof this.updateEmployeeUploadBadge === 'function') {
+                this.updateEmployeeUploadBadge(type, area, known.status);
             }
         }
     },
@@ -6074,6 +6096,10 @@ const app = {
         this.supervisionPhotoFiles = {};
         this.uploadedStartAreas = {};
         this.uploadedEndAreas = {};
+        // Progresivo contratista: limpiar mapas de uploads background.
+        if (typeof this.resetEmployeeProgressiveState === 'function') {
+            this.resetEmployeeProgressiveState();
+        }
         this.currentPhotoArea = null;
         this.currentPhotoContext = null;
         this.currentPhotoType = 'start';
