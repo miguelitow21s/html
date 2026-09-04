@@ -4893,72 +4893,31 @@ export const supervisorMethods = {
     },
 
     /**
-     * Reglas al elegir archivo de instrucciones de tarea especial:
-     * - Si el inspector está DENTRO del radio del sitio seleccionado → todo
-     *   permitido (cámara + galería).
-     * - Si NO está en sitio → solo galería. Como HTML no permite forzar
-     *   "solo galería" en el picker de iOS, usamos heurística sobre
-     *   file.lastModified: si el archivo fue tomado en los últimos 2
-     *   minutos se asume cámara reciente y se rechaza.
-     * Si no hay coords del sitio o falla el GPS, no bloqueamos (deja pasar).
+     * Al elegir archivo de instrucciones de tarea especial: NO hay guard
+     * de geofence ni heurística de "foto reciente". El inspector programa
+     * tareas para el futuro desde donde sea (casa, oficina), y el archivo
+     * puede ser reciente o viejo — cualquier caso es legítimo. Se dejó
+     * como no-op por si volvemos a habilitar el guard en el futuro.
      */
-    async validateRestaurantTaskFileByGeofence(file) {
-        try {
-            const restaurantId = String(
-                document.getElementById('supervisor-restaurant-task-restaurant')?.value || ''
-            ).trim();
-            if (!restaurantId) return { ok: true };
-
-            const restaurant = asArray(this.data.supervisor.restaurants).find(
-                (r) => String(getRestaurantRecordId(r)) === restaurantId
-            );
-            if (!restaurant) return { ok: true };
-
-            const geofence = this.getSupervisorRestaurantGeofence(restaurant);
-            if (!geofence.hasCoordinates) return { ok: true };
-
-            let location = null;
-            try {
-                location = await this.captureLocation({ updateUi: false, highAccuracy: true });
-            } catch (_) {
-                return { ok: true }; // sin GPS no bloqueamos
-            }
-            if (!location || !Number.isFinite(Number(location.lat))) return { ok: true };
-
-            const distance = calculateDistanceMeters(location, { lat: geofence.lat, lng: geofence.lng });
-            if (distance == null) return { ok: true };
-            const accuracyBuffer = Math.min(Number(location.accuracy || 0), 60);
-            const effectiveRadius = Math.max(geofence.radiusMeters || 0, 0) + accuracyBuffer;
-            const insideSite = distance <= effectiveRadius;
-
-            if (insideSite) return { ok: true };
-
-            // Fuera del sitio: rechazar archivos de cámara reciente.
-            const fileAge = Date.now() - Number(file.lastModified || 0);
-            const isFreshCamera = Number.isFinite(fileAge) && fileAge < 2 * 60 * 1000;
-            if (isFreshCamera) {
-                const siteName = getRestaurantDisplayName(restaurant);
-                return {
-                    ok: false,
-                    reason: `Estás fuera de ${siteName}. Para usar la cámara debes estar en el sitio. Elige un archivo de tu galería.`,
-                };
-            }
-            return { ok: true };
-        } catch (err) {
-            console.info('[rtask-file-geofence] validación falló, dejamos pasar', err?.message || err);
-            return { ok: true };
-        }
+    async validateRestaurantTaskFileByGeofence(_file) {
+        return { ok: true };
     },
 
     async uploadRestaurantTaskInstructionsVideo(videoFile, restaurantId) {
-        // Contract con backend: operational_tasks_manage.request_instructions_upload
-        // devuelve { signedUrl, path, max_bytes, allowed_mime } para storage.
-        // Después la ruta se envía en instructions_video_path al crear la tarea.
-        const contentType = videoFile.type || 'video/mp4';
+        // A pesar del nombre "Video", el input acepta también imágenes como
+        // instrucción (label UI es "Foto o video de instrucciones"). El content_type
+        // se detecta del archivo real y se envía al backend; si backend rechaza
+        // imágenes, dejamos que la respuesta HTTP lo diga en vez de bloquear en
+        // cliente (con toast claro al user).
+        const rawType = String(videoFile.type || '').toLowerCase();
+        const isImage = rawType.startsWith('image/');
+        const contentType = rawType || (isImage ? 'image/jpeg' : 'video/mp4');
+        const filename = videoFile.name || (isImage ? 'instructions.jpg' : 'instructions.mp4');
+
         const requestUpload = await apiClient.operationalTasksManage('request_instructions_upload', {
             restaurant_id: this.normalizeTaskCreatePayloadValue(restaurantId),
             content_type: contentType,
-            filename: videoFile.name || 'instructions.mp4',
+            filename,
         });
 
         const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
@@ -4974,8 +4933,14 @@ export const supervisorMethods = {
             throw new Error(t('rtask.video.error.toobig', { fileMb, maxMb }));
         }
 
+        // Guard MIME local: SOLO rechaza si el backend declaró allowed_mime Y
+        // el tipo del archivo no está. Antes esto bloqueaba imágenes cuando el
+        // backend solo declaraba videos — reportado por Miguel (2026-09). Si
+        // backend acepta imágenes ahora, ampliará su allowed_mime y este guard
+        // no dispara. Si aún no las acepta, dejamos que el PUT/backend responda
+        // con un error específico en vez de un mensaje MIME poco claro.
         const allowedMime = asArray(requestUpload?.allowed_mime || requestUpload?.upload?.allowed_mime);
-        if (allowedMime.length > 0 && !allowedMime.includes(contentType)) {
+        if (allowedMime.length > 0 && !allowedMime.includes(contentType) && !isImage) {
             throw new Error(
                 t('rtask.video.error.mime', {
                     mime: contentType || 'desconocido',
