@@ -2601,7 +2601,11 @@ export const supervisorMethods = {
         // pero con label 'Observación' para diferenciarlas en el reporte).
         const results = await Promise.all(
             files.map(async (file) => {
-                const mimeType = String(file.type || '').toLowerCase() || 'image/jpeg';
+                const rawType = String(file.type || '').toLowerCase();
+                const isVideo = rawType.startsWith('video/');
+                // Comprimimos solo imágenes; videos suben tal cual.
+                const payload = isVideo ? file : await this.compressImage(file);
+                const mimeType = isVideo ? (rawType || 'video/mp4') : (payload.type || 'image/jpeg');
                 const requestUpload = await apiClient.supervisorPresenceManage('request_evidence_upload', {
                     phase: 'start',
                     mime_type: mimeType,
@@ -2609,13 +2613,13 @@ export const supervisorMethods = {
                 const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
                 const path = requestUpload?.path || requestUpload?.upload?.path;
                 if (!signedUrl || !path) throw new Error('No fue posible preparar la subida del adjunto de observaciones.');
-                await apiClient.uploadToSignedUrl(signedUrl, file, mimeType);
+                await apiClient.uploadToSignedUrl(signedUrl, payload, mimeType);
                 await apiClient.supervisorPresenceManage('finalize_evidence_upload', { path });
                 return {
                     path,
                     label: 'Observación',
                     mime_type: mimeType,
-                    size_bytes: file.size || undefined,
+                    size_bytes: payload.size || undefined,
                 };
             })
         );
@@ -5990,7 +5994,10 @@ export const supervisorMethods = {
             }
 
             const slot = this.getPhotoSlotDefinition(slotKey, 'supervision');
-            const mimeType = this.getEvidenceFileContentType(file) || 'image/jpeg';
+            // Fotos de auditoría por área: siempre son imágenes (nunca video en
+            // slots). Comprimimos antes de subir.
+            const payload = await this.compressImage(file);
+            const mimeType = this.getEvidenceFileContentType(payload) || 'image/jpeg';
 
             const requestUpload = await apiClient.supervisorPresenceManage('request_evidence_upload', {
                 phase: 'start',
@@ -6004,14 +6011,14 @@ export const supervisorMethods = {
                 throw new Error('No fue posible preparar la subida de la foto de supervisión.');
             }
 
-            await apiClient.uploadToSignedUrl(signedUrl, file, mimeType);
+            await apiClient.uploadToSignedUrl(signedUrl, payload, mimeType);
             await apiClient.supervisorPresenceManage('finalize_evidence_upload', { path });
 
             evidences.push({
                 path,
                 label: slot?.title || slotKey,
                 mime_type: mimeType,
-                size_bytes: file.size || undefined,
+                size_bytes: payload.size || undefined,
             });
         }
 

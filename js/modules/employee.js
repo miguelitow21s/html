@@ -1200,12 +1200,15 @@ export const employeeMethods = {
         const results = await Promise.all(
             files.map(async (file) => {
                 const rawType = String(file.type || '').toLowerCase();
-                const mime = rawType || (rawType.startsWith('video/') ? 'video/mp4' : 'image/jpeg');
+                const isVideo = rawType.startsWith('video/');
+                // Solo comprimimos imágenes. Videos van tal cual (30s / 50MB max).
+                const payload = isVideo ? file : await this.compressImage(file);
+                const mime = isVideo ? (rawType || 'video/mp4') : (payload.type || 'image/jpeg');
                 const requestUpload = await apiClient.requestShiftEvidenceUpload(shiftId, 'fin', mime);
                 const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
                 const path = requestUpload?.path || requestUpload?.upload?.path;
                 if (!signedUrl || !path) throw new Error('No fue posible preparar la subida del adjunto.');
-                await apiClient.uploadToSignedUrl(signedUrl, file, mime);
+                await apiClient.uploadToSignedUrl(signedUrl, payload, mime);
                 try {
                     await apiClient.finalizeShiftEvidenceUpload({
                         shift_id: shiftId,
@@ -1237,9 +1240,11 @@ export const employeeMethods = {
             throw new Error('Formato no soportado. Usa una imagen (JPG/PNG/WebP/HEIC) o un video (MP4/MOV/WebM).');
         }
 
+        // Comprimimos solo imágenes; videos van tal cual.
+        const payload = isVideo ? file : await this.compressImage(file);
         const mimeType = isVideo
             ? rawType || 'video/mp4'
-            : this.getEvidenceFileContentType(file) || 'image/jpeg';
+            : this.getEvidenceFileContentType(payload) || 'image/jpeg';
         const numericTaskId = Number(taskId);
         const requestUpload = await apiClient.operationalTasksManage('request_evidence_upload', {
             task_id: Number.isFinite(numericTaskId) ? numericTaskId : taskId,
@@ -1254,7 +1259,7 @@ export const employeeMethods = {
             throw new Error('No fue posible preparar la subida de la evidencia de la tarea.');
         }
 
-        await apiClient.uploadToSignedUrl(signedUrl, file, mimeType);
+        await apiClient.uploadToSignedUrl(signedUrl, payload, mimeType);
         return path;
     },
 

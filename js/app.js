@@ -5654,67 +5654,65 @@ const app = {
         return SUPPORTED_EVIDENCE_IMAGE_TYPES.includes(this.getEvidenceFileContentType(file));
     },
 
-    async compressImage(file, maxWidth = 1280, quality = 0.78) {
+    async compressImage(file, maxDimension = 2560, quality = 0.85) {
+        // Compresión "sin pérdida visible": max 2560px por lado (suficiente para
+        // impresión, PDF y pantalla), JPEG quality 0.85 (ojo humano no distingue
+        // de original en fotos naturales). Baja fotos de móvil de 5-8 MB a ~800
+        // KB-1.5 MB. Se aplica antes de todos los uploads de imagen (contratista,
+        // auditoría, observaciones, tareas). Videos NO se comprimen — requiere
+        // FFmpeg.wasm (25MB de librería, muy lento en móvil).
         if (!file || !file.type?.startsWith('image/')) return file;
-        // Preferimos createImageBitmap con resize nativo: evita allocatear
-        // el bitmap full-res en memoria (una foto 12 MP ocupa ~48 MB RGBA
-        // antes de escalar). En iPhones viejos esto causaba jank/OOM al
-        // procesar varias fotos en paralelo.
-        if (typeof createImageBitmap === 'function') {
-            try {
-                const bitmap = await createImageBitmap(file, {
-                    resizeWidth: maxWidth,
-                    resizeQuality: 'high',
-                });
-                const canvas = document.createElement('canvas');
-                canvas.width = bitmap.width;
-                canvas.height = bitmap.height;
-                canvas.getContext('2d').drawImage(bitmap, 0, 0);
-                bitmap.close?.();
-                return await new Promise((resolve) => {
-                    canvas.toBlob(
-                        (blob) =>
-                            resolve(
-                                blob
-                                    ? new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' })
-                                    : file
-                            ),
-                        'image/jpeg',
-                        quality
-                    );
-                });
-            } catch (bitmapError) {
-                console.info('[compressImage] createImageBitmap falló, fallback a Image()', bitmapError?.message || bitmapError);
-                // fallback abajo
+        if (typeof createImageBitmap !== 'function') return file;
+
+        try {
+            // Probe rápido para conocer dimensiones reales. imageOrientation
+            // 'from-image' honra el EXIF de rotación (iOS guarda fotos
+            // horizontales pero con metadata de portrait — sin esto salían
+            // acostadas después de recomprimir).
+            const probe = await createImageBitmap(file, { imageOrientation: 'from-image' });
+            const { width: origW, height: origH } = probe;
+            probe.close?.();
+
+            const longest = Math.max(origW, origH);
+            // Si ya es chica Y el archivo pesa poco, no vale la pena
+            // decodificar+recomprimir (fotos ya comprimidas por otras apps,
+            // capturas de pantalla, etc). Devuelve el original tal cual.
+            if (longest <= maxDimension && file.size <= 1_500_000) {
+                return file;
             }
+
+            const scale = longest > maxDimension ? maxDimension / longest : 1;
+            const targetW = Math.round(origW * scale);
+            const targetH = Math.round(origH * scale);
+
+            const bitmap = await createImageBitmap(file, {
+                resizeWidth: targetW,
+                resizeHeight: targetH,
+                resizeQuality: 'high',
+                imageOrientation: 'from-image',
+            });
+            const canvas = document.createElement('canvas');
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            canvas.getContext('2d').drawImage(bitmap, 0, 0);
+            bitmap.close?.();
+
+            const blob = await new Promise((resolve) => {
+                canvas.toBlob(resolve, 'image/jpeg', quality);
+            });
+
+            // Si la "compresión" resultó más grande que el original (raro pero
+            // pasa con HEIC/WebP ya bien empaquetados), quedarse con el original.
+            if (!blob || blob.size >= file.size) return file;
+
+            return new File([blob], file.name.replace(/\.\w+$/i, '.jpg'), {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+            });
+        } catch (error) {
+            console.info('[compressImage] falló, se sube original:', error?.message || error);
+            return file;
         }
-        return new Promise((resolve) => {
-            const img = new Image();
-            const srcUrl = URL.createObjectURL(file);
-            img.onload = () => {
-                URL.revokeObjectURL(srcUrl);
-                const scale = Math.min(1, maxWidth / Math.max(img.width, img.height));
-                const w = Math.round(img.width * scale);
-                const h = Math.round(img.height * scale);
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                canvas.toBlob(
-                    (blob) =>
-                        resolve(
-                            blob ? new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }) : file
-                        ),
-                    'image/jpeg',
-                    quality
-                );
-            };
-            img.onerror = () => {
-                URL.revokeObjectURL(srcUrl);
-                resolve(file);
-            };
-            img.src = srcUrl;
-        });
     },
 
     async processPhotoFile(file, type, area) {
