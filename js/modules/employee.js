@@ -930,16 +930,16 @@ export const employeeMethods = {
         if (!slotKey || !file) return;
         if (type !== 'start' && type !== 'end') return;
 
-        // Diagnóstico: reportado por Miguel que el badge no aparecía en el
-        // contratista. Antes hacíamos silent-return si no había shift_id.
-        // Ahora: log siempre + retry con delay (por si el shift se está
-        // creando en paralelo) + fallback a badge 'error' con tooltip
-        // explicativo si tras retries no aparece.
+        // Lazy init de los maps — si el user retomó una visita activa sin
+        // pasar por resetShiftState (o el módulo se cargó tarde), los maps
+        // podían ser undefined y hacíamos silent-return sin mostrar badge.
+        // Ese era el bug reportado por Miguel (badge nunca aparecía).
+        if (!this._employeeStartUploads) this._employeeStartUploads = new Map();
+        if (!this._employeeEndUploads) this._employeeEndUploads = new Map();
+        if (!this._employeeObsUploads) this._employeeObsUploads = new Map();
+        if (!this._employeeTaskUploads) this._employeeTaskUploads = new Map();
+
         const stateMap = type === 'start' ? this._employeeStartUploads : this._employeeEndUploads;
-        if (!stateMap) {
-            console.warn('[employee.enqueue] stateMap ausente para type=', type);
-            return;
-        }
 
         const state = { status: 'uploading', promise: null, path: null, error: null, retries: 0 };
         stateMap.set(slotKey, state);
