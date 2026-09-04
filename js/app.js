@@ -3896,17 +3896,38 @@ const app = {
     },
 
     scrollSupervisionAreaToTop() {
-        // Al cambiar de zona, subir al inicio del área (selector + label
-        // "Cocina/Comedor…"). Antes hacíamos scroll al grid, que dejaba el
-        // dropdown fuera de vista. Preferimos el select como ancla.
-        const anchor =
-            document.getElementById('supervision-area-select')?.closest('.form-group') ||
-            document.getElementById('supervision-area-select');
-        if (anchor) {
-            anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        // Al cambiar de zona, subir al inicio del área. Reporte de Miguel:
+        // en algunas transiciones (1→2, 3→4) no scrolleaba. Causa: en iOS
+        // Safari el smooth scroll se cancela si el DOM sigue reflowando
+        // durante la animación (setSupervisorSelectedArea dispara re-render
+        // del grid con distinto contenido y distinto height). Solución:
+        //   1) Doble rAF para dejar que el reflow post-render termine.
+        //   2) Fallback en setTimeout por si el rAF no llega a estabilizar.
+        //   3) Preferir window.scrollTo (top absoluto) — más consistente
+        //      que scrollIntoView con anchor cuando el layout cambia.
+        const runScroll = () => {
+            try {
+                window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+            } catch (_) {
+                // Safari viejos sin options object: fallback imperativo.
+                window.scrollTo(0, 0);
+            }
+        };
+        requestAnimationFrame(() => {
+            requestAnimationFrame(runScroll);
+        });
+        // Red de seguridad: si el smooth se canceló mid-flight, forzamos
+        // top a los 350ms (duración típica de smooth scroll). No visible
+        // si el smooth ya llegó — window.scrollTo(0,0) es idempotente.
+        setTimeout(() => {
+            if (window.scrollY > 0) {
+                try {
+                    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+                } catch (_) {
+                    window.scrollTo(0, 0);
+                }
+            }
+        }, 350);
     },
 
     populateEmployeePhotoAreaOptions() {
