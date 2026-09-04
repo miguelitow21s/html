@@ -3848,41 +3848,29 @@ const app = {
     },
 
     renderSupervisionAreaNav() {
-        // Actualizamos 2 navs simultáneos: uno ARRIBA del grid y otro
-        // ABAJO. El inspector puede navegar entre áreas sin scrollear.
-        const topContainer = document.getElementById('supervision-area-nav-top');
-        const bottomContainer = document.getElementById('supervision-area-nav');
-        const containers = [topContainer, bottomContainer].filter(Boolean);
-        if (containers.length === 0) return;
+        // Solo la nav de ABAJO (la de arriba se quitó por pedido).
+        const container = document.getElementById('supervision-area-nav');
+        if (!container) return;
 
         const areas = this.getSupervisorAvailableAreas();
         if (areas.length <= 1) {
-            containers.forEach((c) => c.classList.add('hidden'));
+            container.classList.add('hidden');
             return;
         }
-        containers.forEach((c) => c.classList.remove('hidden'));
+        container.classList.remove('hidden');
 
         const current = this.selectedSupervisorArea || areas[0];
         const idx = areas.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
         const safeIdx = idx >= 0 ? idx : 0;
         const progressText = `Área ${safeIdx + 1} de ${areas.length}`;
 
-        // Progreso en ambos navs
-        [
-            document.getElementById('supervision-area-nav-progress'),
-            document.getElementById('supervision-area-nav-top-progress'),
-        ].forEach((node) => {
-            if (node) node.textContent = progressText;
-        });
+        const progress = document.getElementById('supervision-area-nav-progress');
+        if (progress) progress.textContent = progressText;
 
-        // Estado de botones prev/next en ambos navs (los del nav-top
-        // no tienen id específico, los buscamos por selector).
-        containers.forEach((container) => {
-            const prevBtn = container.querySelector('[data-action="goToPreviousSupervisionArea"]');
-            const nextBtn = container.querySelector('[data-action="goToNextSupervisionArea"]');
-            if (prevBtn) prevBtn.classList.toggle('btn-not-ready', safeIdx <= 0);
-            if (nextBtn) nextBtn.classList.toggle('btn-not-ready', safeIdx >= areas.length - 1);
-        });
+        const prevBtn = container.querySelector('[data-action="goToPreviousSupervisionArea"]');
+        const nextBtn = container.querySelector('[data-action="goToNextSupervisionArea"]');
+        if (prevBtn) prevBtn.classList.toggle('btn-not-ready', safeIdx <= 0);
+        if (nextBtn) nextBtn.classList.toggle('btn-not-ready', safeIdx >= areas.length - 1);
     },
 
     goToPreviousSupervisionArea() {
@@ -3892,7 +3880,7 @@ const app = {
         const idx = areas.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
         if (idx > 0) {
             this.setSupervisorSelectedArea(areas[idx - 1]);
-            document.getElementById('supervision-photo-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            this.scrollSupervisionAreaToTop();
         }
     },
 
@@ -3903,7 +3891,21 @@ const app = {
         const idx = areas.findIndex((a) => normalizeAreaToken(a) === normalizeAreaToken(current));
         if (idx >= 0 && idx < areas.length - 1) {
             this.setSupervisorSelectedArea(areas[idx + 1]);
-            document.getElementById('supervision-photo-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            this.scrollSupervisionAreaToTop();
+        }
+    },
+
+    scrollSupervisionAreaToTop() {
+        // Al cambiar de zona, subir al inicio del área (selector + label
+        // "Cocina/Comedor…"). Antes hacíamos scroll al grid, que dejaba el
+        // dropdown fuera de vista. Preferimos el select como ancla.
+        const anchor =
+            document.getElementById('supervision-area-select')?.closest('.form-group') ||
+            document.getElementById('supervision-area-select');
+        if (anchor) {
+            anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     },
 

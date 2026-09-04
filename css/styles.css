@@ -1706,21 +1706,28 @@ canvas {
    superior derecha de la foto por área; para observaciones va inline con el chip.
    Colores: uploading = azul brand / done = verde / error = rojo. */
 .supervision-upload-badge {
+    /* Oculto por default. El JS setea data-status para mostrarlo. Antes usábamos
+       el atributo [hidden] pero display:inline-flex de este selector le ganaba
+       (más específico que la regla UA), y el badge quedaba visible SIN status,
+       mostrando un círculo gris fantasma en cada foto. Fix: display:none base,
+       inline-flex solo con data-status. */
+    display: none;
     position: absolute;
     top: 8px;
     right: 8px;
     width: 26px;
     height: 26px;
-    display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 999px;
     font-size: 12px;
     color: #ffffff;
-    background: rgba(15, 23, 42, 0.55);
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.3);
     z-index: 3;
     pointer-events: none;
+}
+.supervision-upload-badge[data-status] {
+    display: inline-flex;
 }
 .supervision-upload-badge[data-status="uploading"] {
     background: rgba(3, 105, 161, 0.9);
