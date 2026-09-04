@@ -822,6 +822,107 @@ export const employeeMethods = {
     resetEmployeeProgressiveState() {
         this._employeeStartUploads = new Map();
         this._employeeEndUploads = new Map();
+        this._employeeObsUploads = new Map();
+        this._employeeTaskUploads = new Map();
+    },
+
+    enqueueEmployeeObservationUpload(index, file) {
+        // Observaciones al finalizar servicio (fotos/videos libres). Sube en
+        // background al agregarlas al buffer. Al completar el shift, el batch
+        // de uploadObservationAttachments espera solo las pendientes.
+        if (!Number.isFinite(index) || !file) return;
+        const shiftId = this.data?.currentShift?.id;
+        if (!shiftId) return;
+        if (!this._employeeObsUploads) this._employeeObsUploads = new Map();
+
+        const state = { status: 'uploading', promise: null, path: null, error: null };
+        this._employeeObsUploads.set(index, state);
+        this.updateEmployeeUploadBadge('obs', index, 'uploading');
+
+        state.promise = this._runEmployeeObservationUpload(file)
+            .then(({ path }) => {
+                state.status = 'done';
+                state.path = path;
+                this.updateEmployeeUploadBadge('obs', index, 'done');
+            })
+            .catch((err) => {
+                state.status = 'error';
+                state.error = err;
+                this.updateEmployeeUploadBadge('obs', index, 'error');
+                console.warn('[employee] upload obs background falló', index, err?.message || err);
+            });
+    },
+
+    async _runEmployeeObservationUpload(file) {
+        const shiftId = this.data.currentShift.id;
+        const rawType = String(file?.type || '').toLowerCase();
+        const isVideo = rawType.startsWith('video/');
+        const payload = isVideo ? file : await this.compressImage(file);
+        const mime = isVideo ? (rawType || 'video/mp4') : (payload.type || 'image/jpeg');
+
+        // Location cache: reusa la de start/end si es fresca; si no, captura.
+        const now = Date.now();
+        const cached = this._employeeLocationCache;
+        let location;
+        if (cached && (now - cached.timestamp) < 120_000) {
+            location = cached.value;
+        } else {
+            location = await this.captureLocation({ updateUi: false, highAccuracy: true });
+            this._employeeLocationCache = { value: location, timestamp: now };
+        }
+
+        const requestUpload = await apiClient.requestShiftEvidenceUpload(shiftId, 'fin', mime);
+        const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
+        const path = requestUpload?.path || requestUpload?.upload?.path;
+        if (!signedUrl || !path) throw new Error('No fue posible preparar la subida del adjunto.');
+
+        await apiClient.uploadToSignedUrl(signedUrl, payload, mime);
+        try {
+            await apiClient.finalizeShiftEvidenceUpload({
+                shift_id: shiftId,
+                type: 'fin',
+                path,
+                lat: location.lat,
+                lng: location.lng,
+                accuracy: Math.round(location.accuracy || 0),
+                captured_at: new Date().toISOString(),
+                meta: {
+                    source: 'observations',
+                    content_kind: isVideo ? 'video' : 'photo',
+                },
+            });
+        } catch (finalizeError) {
+            console.warn('No fue posible finalizar el adjunto de observaciones.', finalizeError);
+        }
+        return { path };
+    },
+
+    enqueueEmployeeTaskEvidenceUpload(taskId, file) {
+        // Evidencia de tarea especial (1 archivo por tarea). Sube en background
+        // al momento de seleccionar el archivo; al confirmar la tarea, el
+        // completeShift usa el path ya subido en vez de re-uploadear.
+        if (!taskId || !file) return;
+        const shiftId = this.data?.currentShift?.id;
+        if (!shiftId) return;
+        if (!this._employeeTaskUploads) this._employeeTaskUploads = new Map();
+
+        const key = String(taskId);
+        const state = { status: 'uploading', promise: null, path: null, error: null };
+        this._employeeTaskUploads.set(key, state);
+        this.updateEmployeeUploadBadge('task', key, 'uploading');
+
+        state.promise = this.uploadTaskEvidence(taskId, file)
+            .then((path) => {
+                state.status = 'done';
+                state.path = path;
+                this.updateEmployeeUploadBadge('task', key, 'done');
+            })
+            .catch((err) => {
+                state.status = 'error';
+                state.error = err;
+                this.updateEmployeeUploadBadge('task', key, 'error');
+                console.warn('[employee] upload tarea background falló', taskId, err?.message || err);
+            });
     },
 
     enqueueEmployeeSlotUpload(type, slotKey, file) {
@@ -1286,9 +1387,16 @@ export const employeeMethods = {
         input.addEventListener('change', () => {
             const files = Array.from(input.files || []);
             if (files.length === 0) return;
+            const baseIndex = (this._observationsAttachments || []).length;
             this._observationsAttachments = [...(this._observationsAttachments || []), ...files];
             input.value = '';
             this.renderObservationsAttachments();
+            // Progresivo: disparar upload background para cada nueva observación.
+            if (typeof this.enqueueEmployeeObservationUpload === 'function') {
+                files.forEach((file, i) => {
+                    this.enqueueEmployeeObservationUpload(baseIndex + i, file);
+                });
+            }
         });
 
         const container = document.getElementById('shift-observations-attachments');
@@ -1327,31 +1435,50 @@ export const employeeMethods = {
             .map((file, index) => {
                 const isVideo = String(file.type || '').startsWith('video/');
                 const icon = isVideo ? 'fa-video' : 'fa-image';
-                const shortName = file.name.length > 22 ? `${file.name.slice(0, 22)}…` : file.name;
+                const kindLabel = isVideo ? 'Video' : 'Foto';
+                const displayLabel = `${kindLabel} ${index + 1}`;
                 const sizeMb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+                // Badge de estado de upload progresivo — data-employee-upload-badge="obs:{idx}"
                 return `<div class="rtask-attachment-item">
                     <i class="fas ${icon}"></i>
-                    <span class="rtask-attachment-name">${escapeHtml(shortName)}</span>
+                    <span class="rtask-attachment-name">${escapeHtml(displayLabel)}</span>
                     <span class="rtask-attachment-size">${sizeMb} MB</span>
+                    <span class="supervision-upload-badge supervision-upload-badge-inline" data-employee-upload-badge="obs:${index}"></span>
                     <button type="button" class="rtask-attachment-remove" data-observations-action="remove" data-index="${index}" aria-label="Quitar adjunto">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>`;
             })
             .join('');
+
+        // Refrescar badges de estados conocidos tras re-render.
+        if (this._employeeObsUploads && typeof this.updateEmployeeUploadBadge === 'function') {
+            this._employeeObsUploads.forEach((state, idx) => {
+                this.updateEmployeeUploadBadge('obs', idx, state.status);
+            });
+        }
     },
 
     async uploadObservationAttachments(shiftId, location) {
         const files = this._observationsAttachments || [];
         if (files.length === 0 || !shiftId) return [];
-        // Paralelizado (confirmado por backend: shift_photos INSERT por
-        // request_id único, sin race en photo_count). Antes: N × (request
-        // + upload + finalize) en serie = 12 hops secuenciales con 4 archivos.
+
+        // Progresivo: la mayoría de las obs ya se están subiendo en background
+        // desde el momento en que se agregaron. Esperamos pendientes primero
+        // y solo reintentamos las que fallaron o nunca arrancaron (edge: sin
+        // shift al momento de agregar, o compresión falló).
+        const obsStates = this._employeeObsUploads || new Map();
+        await Promise.allSettled(Array.from(obsStates.values()).map((s) => s.promise));
+
         const results = await Promise.all(
-            files.map(async (file) => {
+            files.map(async (file, index) => {
+                const known = obsStates.get(index);
+                if (known?.status === 'done' && known.path) {
+                    return known.path;
+                }
+                // Reintento sync para las que faltaron.
                 const rawType = String(file.type || '').toLowerCase();
                 const isVideo = rawType.startsWith('video/');
-                // Solo comprimimos imágenes. Videos van tal cual (30s / 50MB max).
                 const payload = isVideo ? file : await this.compressImage(file);
                 const mime = isVideo ? (rawType || 'video/mp4') : (payload.type || 'image/jpeg');
                 const requestUpload = await apiClient.requestShiftEvidenceUpload(shiftId, 'fin', mime);
@@ -1375,6 +1502,10 @@ export const employeeMethods = {
                     });
                 } catch (finalizeError) {
                     console.warn('No fue posible finalizar el adjunto de observaciones.', finalizeError);
+                }
+                if (this._employeeObsUploads) {
+                    this._employeeObsUploads.set(index, { status: 'done', promise: Promise.resolve(), path });
+                    this.updateEmployeeUploadBadge('obs', index, 'done');
                 }
                 return path;
             })
