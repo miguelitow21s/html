@@ -5790,7 +5790,10 @@ const app = {
         // hace no-op si no hay shift. completeShiftStartPhotos / completeShift
         // esperan pendientes con awaitAllEmployeeUploads.
         if ((type === 'start' || type === 'end') && typeof this.enqueueEmployeeSlotUpload === 'function') {
+            console.info('[photos.hook] llamando enqueueEmployeeSlotUpload', { type, area });
             this.enqueueEmployeeSlotUpload(type, area, file);
+        } else if (type === 'start' || type === 'end') {
+            console.warn('[photos.hook] enqueueEmployeeSlotUpload NO existe en this — el badge no aparecerá', { type });
         }
 
         if (type === 'start') {

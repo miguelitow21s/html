@@ -929,40 +929,68 @@ export const employeeMethods = {
         // type ∈ 'start' (evidencia 'inicio') | 'end' ('fin')
         if (!slotKey || !file) return;
         if (type !== 'start' && type !== 'end') return;
-        const shiftId = this.data?.currentShift?.id;
-        if (!shiftId) return; // sin shift no hay parent; el batch viejo lo maneja
 
+        // Diagnóstico: reportado por Miguel que el badge no aparecía en el
+        // contratista. Antes hacíamos silent-return si no había shift_id.
+        // Ahora: log siempre + retry con delay (por si el shift se está
+        // creando en paralelo) + fallback a badge 'error' con tooltip
+        // explicativo si tras retries no aparece.
         const stateMap = type === 'start' ? this._employeeStartUploads : this._employeeEndUploads;
-        if (!stateMap) return;
+        if (!stateMap) {
+            console.warn('[employee.enqueue] stateMap ausente para type=', type);
+            return;
+        }
 
-        const state = { status: 'uploading', promise: null, path: null, error: null };
+        const state = { status: 'uploading', promise: null, path: null, error: null, retries: 0 };
         stateMap.set(slotKey, state);
         this.updateEmployeeUploadBadge(type, slotKey, 'uploading');
+        console.info('[employee.enqueue] arrancando', {
+            type, slotKey,
+            shiftId: this.data?.currentShift?.id,
+            fileSize: file?.size,
+            fileType: file?.type,
+        });
 
-        state.promise = this._runEmployeeUpload(type, slotKey, file)
+        const startPipeline = () => this._runEmployeeUpload(type, slotKey, file)
             .then(({ path }) => {
                 state.status = 'done';
                 state.path = path;
-                // Marcar en el mapa legacy para que el batch viejo NO reintente.
                 const uploadedMap = type === 'start' ? this.uploadedStartAreas : this.uploadedEndAreas;
                 if (uploadedMap) uploadedMap[slotKey] = true;
                 this.updateEmployeeUploadBadge(type, slotKey, 'done');
+                console.info('[employee.enqueue] OK', { type, slotKey, path });
             })
             .catch((err) => {
+                // Retry si el problema es "no hay shift_id" (shift creándose).
+                const message = String(err?.message || err || '');
+                const isMissingShift = /shift|servicio activo/i.test(message);
+                if (isMissingShift && state.retries < 3) {
+                    state.retries += 1;
+                    console.info('[employee.enqueue] retry por shift ausente', {
+                        type, slotKey, retry: state.retries,
+                    });
+                    state.promise = new Promise((resolve) => setTimeout(resolve, 800 * state.retries))
+                        .then(startPipeline);
+                    return;
+                }
                 state.status = 'error';
                 state.error = err;
                 this.updateEmployeeUploadBadge(type, slotKey, 'error');
-                console.warn('[employee] upload background falló', type, slotKey, err?.message || err);
+                console.warn('[employee.enqueue] upload background falló', type, slotKey, message);
             });
+
+        state.promise = startPipeline();
     },
 
     async _runEmployeeUpload(type, slotKey, file) {
         // Pipeline: comprime → request_evidence_upload → PUT → finalize.
-        // captureLocation con highAccuracy: la evidencia lleva lat/lng propios.
-        // Usamos this.location si es reciente para evitar N GPS calls; si no,
-        // capturamos fresh.
+        // Se lee shift_id al MOMENTO del pipeline (no en enqueue) para que
+        // los retries alcancen el shift creado async.
         const backendType = type === 'start' ? 'inicio' : 'fin';
-        const shiftId = this.data.currentShift.id;
+        const shiftId = this.data?.currentShift?.id;
+        if (!shiftId) {
+            throw new Error('No hay servicio activo aún — reintentando…');
+        }
 
         // Location: fresca si no hay o si tiene >2min. Evita N calls duros de GPS
         // durante ráfagas de fotos (el user toma 5 fotos seguidas — todas se hacen
