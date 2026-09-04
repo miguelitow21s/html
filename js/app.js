@@ -6072,6 +6072,63 @@ const app = {
         this.queueUiRender('employee-photo-progress');
     },
 
+    // Helpers de duración de video: usados por contratista (respuesta a
+    // tarea especial, observaciones) y por inspector (auditoría). Antes
+    // vivían solo en supervisorMethods; el contratista no los tenía y no
+    // podía validar duración de videos al responder tareas.
+    probeVideoDurationSeconds(objectUrl, { timeoutMs = 5000 } = {}) {
+        return new Promise((resolve, reject) => {
+            const probe = document.createElement('video');
+            probe.preload = 'metadata';
+            probe.muted = true;
+            probe.playsInline = true;
+            let settled = false;
+            const cleanup = () => {
+                probe.removeAttribute('src');
+                probe.load?.();
+            };
+            const timeoutId = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(new Error('Timeout leyendo la duración del video.'));
+            }, timeoutMs);
+            const safeResolve = (value) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+                cleanup();
+                resolve(value);
+            };
+            const safeReject = (error) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+                cleanup();
+                reject(error);
+            };
+            probe.addEventListener('loadedmetadata', () => {
+                const seconds = Number(probe.duration);
+                if (!Number.isFinite(seconds) || seconds <= 0) {
+                    safeReject(new Error('Duración no disponible.'));
+                } else {
+                    safeResolve(seconds);
+                }
+            });
+            probe.addEventListener('error', () => {
+                safeReject(new Error('No se pudo leer el video.'));
+            });
+            probe.src = objectUrl;
+        });
+    },
+
+    formatSecondsAsMmSs(totalSeconds) {
+        const rounded = Math.max(0, Math.round(Number(totalSeconds) || 0));
+        const minutes = Math.floor(rounded / 60);
+        const seconds = rounded % 60;
+        return `${minutes}:${String(seconds).padStart(2, '0')}`;
+    },
+
     updateProgressNow() {
         const progress = this.getStartEvidenceProgressSnapshot();
         const count = progress.completedCount;
