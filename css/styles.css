@@ -1702,6 +1702,43 @@ canvas {
     padding: 0 10px;
 }
 
+/* Badge de estado de upload progresivo (auditoría). Se posiciona en la esquina
+   superior derecha de la foto por área; para observaciones va inline con el chip.
+   Colores: uploading = azul brand / done = verde / error = rojo. */
+.supervision-upload-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 12px;
+    color: #ffffff;
+    background: rgba(15, 23, 42, 0.55);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.3);
+    z-index: 3;
+    pointer-events: none;
+}
+.supervision-upload-badge[data-status="uploading"] {
+    background: rgba(3, 105, 161, 0.9);
+}
+.supervision-upload-badge[data-status="done"] {
+    background: rgba(4, 120, 87, 0.95);
+}
+.supervision-upload-badge[data-status="error"] {
+    background: rgba(180, 83, 9, 0.95);
+}
+.supervision-upload-badge-inline {
+    position: static;
+    width: 22px;
+    height: 22px;
+    margin-left: 6px;
+    flex: 0 0 auto;
+}
+
 /* Profile Page */
 .profile-header {
     text-align: center;

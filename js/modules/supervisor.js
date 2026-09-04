@@ -2415,6 +2415,233 @@ export const supervisorMethods = {
         };
     },
 
+    // ========== UPLOAD PROGRESIVO DE AUDITORÍA ==========
+    // Flujo nuevo (2026-09): en vez de esperar al final para subir 20-50 fotos
+    // (60-90s bloqueante), el inspector crea un "draft" al verificar ubicación
+    // y cada foto/observación se sube en background durante el recorrido.
+    //
+    // Backend: supervisor_presence_manage (actions start / get_active_draft /
+    // attach_evidence / finalize). El draft es un supervisor_presence_logs
+    // con status='draft'; finalize lo pasa a 'completed'.
+    //
+    // State:
+    //   supervisionDraftId          → presence_id del draft actual
+    //   supervisionDraftPromise     → inflight promise de start() (evita dobles)
+    //   _supervisionSlotUploads     → Map(slotKey → { status, promise, evidence_id, path, error })
+    //   _supervisionObsUploads      → Map(index    → { status, promise, evidence_id, path, error })
+    // status ∈ 'uploading' | 'done' | 'error'
+
+    resetSupervisionProgressiveState() {
+        this.supervisionDraftId = null;
+        this.supervisionDraftPromise = null;
+        this.supervisionDraftRestaurantId = null;
+        this._supervisionSlotUploads = new Map();
+        this._supervisionObsUploads = new Map();
+    },
+
+    async ensureSupervisionDraft() {
+        // Devuelve el presence_id del draft actual. Si no existe, lo crea con
+        // action:'start'. La llamada es idempotente por Idempotency-Key único
+        // por request; ante double-tap el backend devuelve already_exists:true.
+        if (this.supervisionDraftId) return this.supervisionDraftId;
+        if (this.supervisionDraftPromise) return await this.supervisionDraftPromise;
+
+        const { restaurant } = this.getSupervisorSupervisionReference() || {};
+        const restaurantId = restaurant?.restaurant_id || restaurant?.id;
+        if (!restaurantId) {
+            throw new Error('No hay sitio seleccionado para iniciar la auditoría.');
+        }
+        const location = this.supervisionLocationCheck?.location || this.location;
+        if (!location) {
+            throw new Error('Verificá tu ubicación antes de tomar fotos.');
+        }
+
+        this.supervisionDraftPromise = (async () => {
+            try {
+                const res = await apiClient.supervisorPresenceManage(
+                    'start',
+                    {
+                        restaurant_id: restaurantId,
+                        lat: location.lat,
+                        lng: location.lng,
+                        accuracy: Math.round(location.accuracy || 0),
+                    },
+                    {
+                        requiresIdempotency: false,
+                        headers: { 'Idempotency-Key': buildIdempotencyKey() },
+                    }
+                );
+                const presenceId = res?.presence_id || res?.supervision_id
+                    || res?.data?.presence_id || res?.data?.supervision_id;
+                if (!presenceId) {
+                    throw new Error('El backend no devolvió presence_id para el start de auditoría.');
+                }
+                this.supervisionDraftId = presenceId;
+                this.supervisionDraftRestaurantId = restaurantId;
+                return presenceId;
+            } finally {
+                this.supervisionDraftPromise = null;
+            }
+        })();
+        return await this.supervisionDraftPromise;
+    },
+
+    async resumeSupervisionDraftIfAny() {
+        // Reanudación: si el inspector cerró la app y vuelve con una auditoría
+        // en curso, backend devuelve el draft abierto (mismo día, mismo sitio).
+        // Corre después de seleccionar restaurant y ANTES de verificar ubicación.
+        try {
+            const { restaurant } = this.getSupervisorSupervisionReference() || {};
+            const restaurantId = restaurant?.restaurant_id || restaurant?.id;
+            if (!restaurantId) return null;
+            if (this.supervisionDraftId && this.supervisionDraftRestaurantId === restaurantId) {
+                return this.supervisionDraftId;
+            }
+            const res = await apiClient.supervisorPresenceManage('get_active_draft', {
+                restaurant_id: restaurantId,
+            });
+            const draft = res?.draft || res?.data?.draft || null;
+            if (draft) {
+                this.supervisionDraftId = draft.presence_id || draft.supervision_id;
+                this.supervisionDraftRestaurantId = restaurantId;
+                const count = Number(draft.evidence_count || 0);
+                this.showToast(
+                    count > 0
+                        ? `Retomando auditoría en curso (${count} evidencia${count === 1 ? '' : 's'} ya subida${count === 1 ? '' : 's'}).`
+                        : 'Retomando auditoría en curso.',
+                    { tone: 'info', title: 'Auditoría reanudada' }
+                );
+                return this.supervisionDraftId;
+            }
+            return null;
+        } catch (err) {
+            console.warn('[supervision] get_active_draft falló:', err?.message || err);
+            return null;
+        }
+    },
+
+    enqueueSupervisionSlotUpload(slotKey, file) {
+        // Dispara upload background para una foto por área. Si ya había un
+        // upload en curso para ese slot y era 'error', lo reemplaza. Si estaba
+        // 'uploading' o 'done', aceptamos duplicado (backend permite hasta 50).
+        if (!slotKey || !file) return;
+        if (!this._supervisionSlotUploads) this._supervisionSlotUploads = new Map();
+
+        const slot = this.getPhotoSlotDefinition
+            ? this.getPhotoSlotDefinition(slotKey, 'supervision')
+            : null;
+        const label = slot?.title || slotKey;
+        const meta = { area: slot?.groupLabel || null, subarea: slot?.subareaLabel || null };
+
+        const state = { status: 'uploading', promise: null, evidence_id: null, path: null, error: null };
+        this._supervisionSlotUploads.set(slotKey, state);
+        this.updateSupervisionUploadBadge('slot', slotKey, 'uploading');
+
+        state.promise = this._runSupervisionUpload(file, { label, meta })
+            .then((result) => {
+                state.status = 'done';
+                state.evidence_id = result.evidence_id;
+                state.path = result.path;
+                this.updateSupervisionUploadBadge('slot', slotKey, 'done');
+            })
+            .catch((err) => {
+                state.status = 'error';
+                state.error = err;
+                this.updateSupervisionUploadBadge('slot', slotKey, 'error');
+                console.warn('[supervision] upload slot falló', slotKey, err?.message || err);
+            });
+    },
+
+    enqueueSupervisionObservationUpload(index, file) {
+        if (!Number.isFinite(index) || !file) return;
+        if (!this._supervisionObsUploads) this._supervisionObsUploads = new Map();
+
+        const state = { status: 'uploading', promise: null, evidence_id: null, path: null, error: null };
+        this._supervisionObsUploads.set(index, state);
+        this.updateSupervisionUploadBadge('obs', index, 'uploading');
+
+        state.promise = this._runSupervisionUpload(file, { label: 'Observación', meta: { source: 'observation' } })
+            .then((result) => {
+                state.status = 'done';
+                state.evidence_id = result.evidence_id;
+                state.path = result.path;
+                this.updateSupervisionUploadBadge('obs', index, 'done');
+            })
+            .catch((err) => {
+                state.status = 'error';
+                state.error = err;
+                this.updateSupervisionUploadBadge('obs', index, 'error');
+                console.warn('[supervision] upload obs falló', index, err?.message || err);
+            });
+    },
+
+    async _runSupervisionUpload(file, { label, meta }) {
+        // Pipeline: ensureDraft → compress → request signed URL → PUT → attach_evidence.
+        const presenceId = await this.ensureSupervisionDraft();
+
+        const rawType = String(file?.type || '').toLowerCase();
+        const isVideo = rawType.startsWith('video/');
+        const payload = isVideo ? file : await this.compressImage(file);
+        const mimeType = isVideo ? (rawType || 'video/mp4') : (payload.type || 'image/jpeg');
+
+        const requestUpload = await apiClient.supervisorPresenceManage('request_evidence_upload', {
+            phase: 'start',
+            mime_type: mimeType,
+        });
+        const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
+        const path = requestUpload?.path || requestUpload?.upload?.path;
+        if (!signedUrl || !path) throw new Error('No fue posible preparar la subida.');
+
+        await apiClient.uploadToSignedUrl(signedUrl, payload, mimeType);
+
+        const attach = await apiClient.supervisorPresenceManage(
+            'attach_evidence',
+            { presence_id: presenceId, path, label, meta },
+            {
+                requiresIdempotency: false,
+                headers: { 'Idempotency-Key': buildIdempotencyKey() },
+            }
+        );
+        return {
+            evidence_id: attach?.evidence_id || attach?.data?.evidence_id || null,
+            path,
+        };
+    },
+
+    async awaitAllSupervisionUploads() {
+        // Espera todos los uploads pendientes. Devuelve { done, failed, total }.
+        const collect = (m) => Array.from((m || new Map()).values());
+        const all = [...collect(this._supervisionSlotUploads), ...collect(this._supervisionObsUploads)];
+        if (all.length === 0) return { done: 0, failed: 0, total: 0 };
+        await Promise.allSettled(all.map((s) => s.promise));
+        const failed = all.filter((s) => s.status === 'error').length;
+        const done = all.filter((s) => s.status === 'done').length;
+        return { done, failed, total: all.length };
+    },
+
+    updateSupervisionUploadBadge(kind, key, status) {
+        // Inyecta/actualiza un badge visual en la miniatura correspondiente.
+        // 'uploading' → ⏳ (spinner) / 'done' → ✓ verde / 'error' → ⚠ rojo.
+        // Buscamos el elemento por convención: data-supervision-upload-badge="{kind}:{key}".
+        try {
+            const selector = `[data-supervision-upload-badge="${kind}:${String(key).replace(/"/g, '\\"')}"]`;
+            const badge = document.querySelector(selector);
+            if (!badge) return;
+            badge.dataset.status = status;
+            badge.hidden = false;
+            if (status === 'uploading') {
+                badge.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                badge.title = 'Subiendo…';
+            } else if (status === 'done') {
+                badge.innerHTML = '<i class="fas fa-check"></i>';
+                badge.title = 'Subida';
+            } else if (status === 'error') {
+                badge.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                badge.title = 'Error al subir — se reintentará al finalizar';
+            }
+        } catch (_) { /* ignore DOM issues */ }
+    },
+
     resetSupervisorSupervisionState() {
         // Al resetear estado, revertimos también el chip auto-lock para
         // que la próxima entrada arranque con picker visible (o el chip
@@ -2422,6 +2649,8 @@ export const supervisorMethods = {
         if (typeof this.setSupervisionRestaurantAutoLock === 'function') {
             try { this.setSupervisionRestaurantAutoLock(null); } catch (_) { /* ignore */ }
         }
+        // Progresivo: limpiar draft y buffers de upload.
+        this.resetSupervisionProgressiveState();
         this.services.images.clearMap(this.supervisionPhotos);
         this.supervisionPhotos = {};
         this.supervisionPhotoFiles = {};
@@ -2531,8 +2760,15 @@ export const supervisorMethods = {
             }
 
             if (accepted.length > 0) {
+                const baseIndex = current.length;
                 this._supervisionObservationsAttachments = [...current, ...accepted];
                 this.renderSupervisionObservationsAttachments();
+                // Progresivo: disparar upload background para cada nueva observación.
+                if (typeof this.enqueueSupervisionObservationUpload === 'function') {
+                    accepted.forEach((file, i) => {
+                        this.enqueueSupervisionObservationUpload(baseIndex + i, file);
+                    });
+                }
             }
             if (rejections.length > 0) {
                 this.showToast(rejections.join('\n'), {
@@ -2581,16 +2817,26 @@ export const supervisorMethods = {
                 const icon = isVideo ? 'fa-video' : 'fa-image';
                 const shortName = file.name.length > 22 ? `${file.name.slice(0, 22)}…` : file.name;
                 const sizeMb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+                // Badge de estado de upload progresivo (data-attribute lo actualiza
+                // updateSupervisionUploadBadge). Empieza hidden y se muestra al enqueue.
                 return `<div class="rtask-attachment-item">
                     <i class="fas ${icon}"></i>
                     <span class="rtask-attachment-name">${escapeHtml(shortName)}</span>
                     <span class="rtask-attachment-size">${sizeMb} MB</span>
+                    <span class="supervision-upload-badge supervision-upload-badge-inline" data-supervision-upload-badge="obs:${index}" hidden></span>
                     <button type="button" class="rtask-attachment-remove" data-supervision-observations-action="remove" data-index="${index}" aria-label="Quitar adjunto">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>`;
             })
             .join('');
+
+        // Refrescar badges de estados conocidos tras re-render.
+        if (this._supervisionObsUploads && typeof this.updateSupervisionUploadBadge === 'function') {
+            this._supervisionObsUploads.forEach((state, idx) => {
+                this.updateSupervisionUploadBadge('obs', idx, state.status);
+            });
+        }
     },
 
     async uploadSupervisionObservationAttachments() {
@@ -4273,6 +4519,24 @@ export const supervisorMethods = {
                         title: result.ok ? 'Ubicación validada' : 'Fuera de rango',
                     }
                 );
+            }
+
+            // Progresivo: apenas la ubicación es OK, disparamos el 'start' en
+            // background para tener presence_id listo cuando el inspector tome
+            // la primera foto (así el primer upload no espera round-trip extra).
+            // Fire-and-forget: si falla, el próximo enqueueSupervisionSlotUpload
+            // lo reintenta vía ensureSupervisionDraft. Antes chequeamos reanudación.
+            if (result.ok) {
+                (async () => {
+                    try {
+                        const resumed = await this.resumeSupervisionDraftIfAny();
+                        if (!resumed) {
+                            await this.ensureSupervisionDraft();
+                        }
+                    } catch (err) {
+                        console.warn('[supervision] no se pudo preparar el draft:', err?.message || err);
+                    }
+                })();
             }
 
             return result;
@@ -6285,29 +6549,31 @@ export const supervisorMethods = {
                 return;
             }
 
-            this.showLoading(t('sup.toast.audit.uploading'), t('toast.wait.short'));
+            this.showLoading('Finalizando auditoría…', t('toast.wait.short'));
 
             let supervisionPayload = null;
 
             try {
-                const locationCheck = await this.ensureSupervisorSupervisionLocationVerified();
-                const location = locationCheck?.location || this.location;
+                // La ubicación ya fue verificada arriba. Ya NO forzamos una
+                // nueva captura — el draft se creó al 'start' con la geocerca
+                // validada; el finalize NO revalida geocerca (el inspector
+                // puede estar escribiendo notas ya fuera del sitio, acordado
+                // con backend). Solo leemos notes.
                 const notes = document.getElementById('supervision-observations')?.value?.trim();
 
-                // Guards del backend (supervisor_presence_manage register):
-                //   - evidences <= 50
+                // Guards del backend (supervisor_presence_manage):
+                //   - evidences <= 50 total
                 //   - imágenes hasta 8 MB
-                //   - videos hasta 50 MB (mp4, quicktime, webm — habilitado
-                //     migración 065)
-                // Chequeamos ANTES de subir a Storage para no gastar red.
+                //   - videos hasta 50 MB (mp4, quicktime, webm)
+                // Chequeamos igual porque el user pudo llegar acá sin haber
+                // disparado uploads (ej. red offline durante todo el recorrido).
                 const MAX_EVIDENCES_PER_AUDIT = 50;
-                const MAX_BYTES_IMAGE = 8 * 1024 * 1024; // 8 MB
-                const MAX_BYTES_VIDEO = 50 * 1024 * 1024; // 50 MB
+                const MAX_BYTES_IMAGE = 8 * 1024 * 1024;
+                const MAX_BYTES_VIDEO = 50 * 1024 * 1024;
 
                 const areaBufferCount = Object.keys(this.supervisionPhotoFiles || {}).length;
                 const observationAttachments = this._supervisionObservationsAttachments || [];
-                const observationBufferCount = observationAttachments.length;
-                const totalCount = areaBufferCount + observationBufferCount;
+                const totalCount = areaBufferCount + observationAttachments.length;
 
                 if (totalCount > MAX_EVIDENCES_PER_AUDIT) {
                     const excess = totalCount - MAX_EVIDENCES_PER_AUDIT;
@@ -6318,7 +6584,6 @@ export const supervisorMethods = {
                     return;
                 }
 
-                // Validar tamaño según tipo: 8 MB imágenes, 50 MB videos.
                 const oversized = observationAttachments.find((f) => {
                     const isVideo = String(f?.type || '').toLowerCase().startsWith('video/');
                     const limit = isVideo ? MAX_BYTES_VIDEO : MAX_BYTES_IMAGE;
@@ -6336,45 +6601,66 @@ export const supervisorMethods = {
                     return;
                 }
 
-                // Adjuntos por área + adjuntos libres de observaciones (foto/video)
-                // se envían todos en el mismo array evidences. Los libres llevan
-                // label 'Observación' para diferenciarlos.
-                const [areaEvidences, observationEvidences] = await Promise.all([
-                    this.uploadSupervisorSupervisionEvidence(),
-                    this.uploadSupervisionObservationAttachments(),
-                ]);
-                const evidences = [...areaEvidences, ...observationEvidences];
-                supervisionPayload = {
-                    restaurant_id: targetRestaurant.restaurant_id || targetRestaurant.id,
-                    phase: 'start',
-                    lat: location.lat,
-                    lng: location.lng,
-                    accuracy: Math.round(location.accuracy || 0),
-                    observed_at: new Date().toISOString(),
-                    notes,
-                    evidences,
-                };
+                // Flujo progresivo: las fotos ya se subieron en background durante
+                // el recorrido vía enqueueSupervisionSlotUpload/ObservationUpload.
+                // Acá solo esperamos las que aún estén en vuelo y llamamos finalize.
+                //
+                // Fallback: si por alguna razón NO hay draft (ubicación no verificada,
+                // red caída al arrancar, etc.) creamos uno ahora y forzamos los
+                // uploads en el momento. Cubre el edge case del inspector que
+                // llegó hasta acá sin haber tocado "Verificar ubicación" — aunque
+                // hay guard arriba, este safety net evita perder trabajo.
+                if (!this.supervisionDraftId) {
+                    try {
+                        await this.ensureSupervisionDraft();
+                    } catch (draftErr) {
+                        // Si tampoco podemos crear el draft (ej. sin ubicación) mostramos
+                        // el mismo error y salimos.
+                        this.showToast(draftErr?.message || 'No fue posible iniciar la auditoría.', {
+                            tone: 'error',
+                            title: 'No se pudo abrir la auditoría',
+                        });
+                        return;
+                    }
+                    // Enqueue lo que haya en buffer que no tenga upload iniciado
+                    // (usualmente estará vacío si el user siguió el flow normal).
+                    Object.entries(this.supervisionPhotoFiles || {}).forEach(([slotKey, file]) => {
+                        if (file && !this._supervisionSlotUploads?.get(slotKey)) {
+                            this.enqueueSupervisionSlotUpload(slotKey, file);
+                        }
+                    });
+                    (this._supervisionObservationsAttachments || []).forEach((file, idx) => {
+                        if (file && !this._supervisionObsUploads?.get(idx)) {
+                            this.enqueueSupervisionObservationUpload(idx, file);
+                        }
+                    });
+                }
 
-                const supervisionSignature = this.buildSupervisionRegisterSignature(supervisionPayload);
-                const reuseCurrentIdempotencyKey = Boolean(
-                    this.supervisionRegisterIdempotencyKey &&
-                    this.supervisionRegisterRetrySignature &&
-                    this.supervisionRegisterRetrySignature === supervisionSignature
+                const uploadSummary = await this.awaitAllSupervisionUploads();
+
+                if (uploadSummary.failed > 0) {
+                    // Warning informativo — backend permite finalize aunque falten
+                    // evidencias (acordado en el diseño). No bloqueamos.
+                    this.showToast(
+                        `${uploadSummary.failed} evidencia${uploadSummary.failed === 1 ? '' : 's'} no se pudo${uploadSummary.failed === 1 ? '' : 'n'} subir. Se guarda la auditoría con las ${uploadSummary.done} que sí llegaron.`,
+                        { tone: 'warning', title: 'Evidencias parciales', duration: 8000 }
+                    );
+                }
+
+                const presenceId = this.supervisionDraftId;
+                supervisionPayload = { presence_id: presenceId, notes };
+
+                const registerResult = await apiClient.supervisorPresenceManage(
+                    'finalize',
+                    supervisionPayload,
+                    {
+                        requiresIdempotency: false,
+                        headers: { 'Idempotency-Key': buildIdempotencyKey() },
+                    }
                 );
-                const supervisionIdempotencyKey = reuseCurrentIdempotencyKey
-                    ? this.supervisionRegisterIdempotencyKey
-                    : buildIdempotencyKey();
-                this.supervisionRegisterIdempotencyKey = supervisionIdempotencyKey;
-                this.supervisionRegisterRetrySignature = supervisionSignature;
-
-                const registerResult = await apiClient.supervisorPresenceManage('register', supervisionPayload, {
-                    requiresIdempotency: false,
-                    headers: {
-                        'Idempotency-Key': supervisionIdempotencyKey,
-                    },
-                });
                 const alreadyExists =
-                    registerResult?.already_exists === true || registerResult?.data?.already_exists === true;
+                    registerResult?.already_completed === true ||
+                    registerResult?.data?.already_completed === true;
 
                 this.invalidateCache('supervisorShifts');
                 this.showToast(
