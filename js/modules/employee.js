@@ -805,6 +805,149 @@ export const employeeMethods = {
     },
 
 
+    // ========== UPLOAD PROGRESIVO CONTRATISTA ==========
+    // Mismo patrón que auditoría (ver supervisor.js), pero acá NO se necesita
+    // draft porque el "parent" ya existe: shifts_start crea el shift y cada
+    // foto se cuelga de shift_id vía request/upload/finalize evidence.
+    //
+    // State:
+    //   _employeeStartUploads   → Map(slotKey → { status, promise, path, error })
+    //   _employeeEndUploads     → Map(slotKey → mismo shape)
+    // status ∈ 'uploading' | 'done' | 'error'
+    //
+    // Flujo: al tomar foto (processPhotoFile type='start'|'end') se dispara
+    // enqueueEmployeeSlotUpload en background. completeShiftStartPhotos /
+    // completeShift esperan solo las pendientes con awaitAllEmployeeUploads.
+
+    resetEmployeeProgressiveState() {
+        this._employeeStartUploads = new Map();
+        this._employeeEndUploads = new Map();
+    },
+
+    enqueueEmployeeSlotUpload(type, slotKey, file) {
+        // type ∈ 'start' (evidencia 'inicio') | 'end' ('fin')
+        if (!slotKey || !file) return;
+        if (type !== 'start' && type !== 'end') return;
+        const shiftId = this.data?.currentShift?.id;
+        if (!shiftId) return; // sin shift no hay parent; el batch viejo lo maneja
+
+        const stateMap = type === 'start' ? this._employeeStartUploads : this._employeeEndUploads;
+        if (!stateMap) return;
+
+        const state = { status: 'uploading', promise: null, path: null, error: null };
+        stateMap.set(slotKey, state);
+        this.updateEmployeeUploadBadge(type, slotKey, 'uploading');
+
+        state.promise = this._runEmployeeUpload(type, slotKey, file)
+            .then(({ path }) => {
+                state.status = 'done';
+                state.path = path;
+                // Marcar en el mapa legacy para que el batch viejo NO reintente.
+                const uploadedMap = type === 'start' ? this.uploadedStartAreas : this.uploadedEndAreas;
+                if (uploadedMap) uploadedMap[slotKey] = true;
+                this.updateEmployeeUploadBadge(type, slotKey, 'done');
+            })
+            .catch((err) => {
+                state.status = 'error';
+                state.error = err;
+                this.updateEmployeeUploadBadge(type, slotKey, 'error');
+                console.warn('[employee] upload background falló', type, slotKey, err?.message || err);
+            });
+    },
+
+    async _runEmployeeUpload(type, slotKey, file) {
+        // Pipeline: comprime → request_evidence_upload → PUT → finalize.
+        // captureLocation con highAccuracy: la evidencia lleva lat/lng propios.
+        // Usamos this.location si es reciente para evitar N GPS calls; si no,
+        // capturamos fresh.
+        const backendType = type === 'start' ? 'inicio' : 'fin';
+        const shiftId = this.data.currentShift.id;
+
+        // Location: fresca si no hay o si tiene >2min. Evita N calls duros de GPS
+        // durante ráfagas de fotos (el user toma 5 fotos seguidas — todas se hacen
+        // aprox en el mismo lugar).
+        const now = Date.now();
+        const cached = this._employeeLocationCache;
+        const cacheAgeMs = cached ? now - cached.timestamp : Infinity;
+        let location;
+        if (cached && cacheAgeMs < 120_000) {
+            location = cached.value;
+        } else {
+            location = await this.captureLocation({ updateUi: false, highAccuracy: true });
+            this._employeeLocationCache = { value: location, timestamp: now };
+        }
+
+        const compressed = await this.compressImage(file);
+        const mimeType = this.getEvidenceFileContentType(compressed) || 'image/jpeg';
+
+        const requestUpload = await apiClient.requestShiftEvidenceUpload(shiftId, backendType, mimeType);
+        const signedUrl = requestUpload?.upload?.signedUrl || requestUpload?.signedUrl;
+        const path = requestUpload?.path || requestUpload?.upload?.path;
+        if (!signedUrl || !path) throw new Error('No fue posible preparar la subida.');
+
+        await apiClient.uploadToSignedUrl(signedUrl, compressed, mimeType);
+
+        const slot = this.getPhotoSlotDefinition(slotKey, type === 'start' ? 'start' : 'end');
+        const areaMeta = buildAreaMeta(slot?.groupLabel || slotKey);
+        const finalizePayload = await apiClient.finalizeShiftEvidenceUpload({
+            shift_id: shiftId,
+            type: backendType,
+            path,
+            lat: location.lat,
+            lng: location.lng,
+            accuracy: Math.round(location.accuracy || 0),
+            captured_at: new Date().toISOString(),
+            meta: {
+                ...areaMeta,
+                subarea_key: normalizeAreaToken(slot?.subareaLabel || slotKey),
+                subarea_label: slot?.subareaLabel || slotKey,
+                photo_label: slot?.title || slotKey,
+            },
+        });
+        this.recordShiftRequestTrace(
+            'finalize_upload',
+            this.extractRequestId(finalizePayload, apiClient.lastResponseMeta),
+            this.data.currentShift
+        );
+        return { path };
+    },
+
+    async awaitAllEmployeeUploads(type) {
+        // type opcional. Devuelve {done, failed, total}.
+        const collect = (m) => Array.from((m || new Map()).values());
+        const maps = type === 'start'
+            ? [this._employeeStartUploads]
+            : type === 'end'
+                ? [this._employeeEndUploads]
+                : [this._employeeStartUploads, this._employeeEndUploads];
+        const all = maps.flatMap(collect);
+        if (all.length === 0) return { done: 0, failed: 0, total: 0 };
+        await Promise.allSettled(all.map((s) => s.promise));
+        const failed = all.filter((s) => s.status === 'error').length;
+        const done = all.filter((s) => s.status === 'done').length;
+        return { done, failed, total: all.length };
+    },
+
+    updateEmployeeUploadBadge(type, slotKey, status) {
+        try {
+            const selector = `[data-employee-upload-badge="${type}:${String(slotKey).replace(/"/g, '\\"')}"]`;
+            const badge = document.querySelector(selector);
+            if (!badge) return;
+            badge.dataset.status = status;
+            badge.hidden = false;
+            if (status === 'uploading') {
+                badge.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                badge.title = 'Subiendo…';
+            } else if (status === 'done') {
+                badge.innerHTML = '<i class="fas fa-check"></i>';
+                badge.title = 'Subida';
+            } else if (status === 'error') {
+                badge.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                badge.title = 'Error al subir — se reintentará al continuar';
+            }
+        } catch (_) { /* ignore */ }
+    },
+
     async uploadShiftEvidenceBatch(type, filesMap, uploadedMap) {
         const entries = Object.entries(filesMap).filter(([area, file]) => file && !uploadedMap[area]);
         const shiftId = this.data.currentShift?.id;
@@ -961,6 +1104,13 @@ export const employeeMethods = {
         this.showLoading(t('toast.uploading.images'), t('toast.wait.short'));
 
         try {
+            // Progresivo: las fotos ya arrancaron a subir en background al ser
+            // tomadas (enqueueEmployeeSlotUpload). Esperamos las pendientes
+            // primero; las que hicieron done marcaron uploadedStartAreas[area]=true
+            // y el batch viejo las saltea. Solo queda subir en el batch las que
+            // fallaron en background o nunca arrancaron (edge: sin shift al tomar).
+            await this.awaitAllEmployeeUploads('start');
+
             // OTP se pide solo al login; el token queda vigente mientras dure la sesión.
             // Si el token expiró/se limpió (típico tras 12h o refresh), envolvemos con
             // auto-retry: modal OTP → nuevo token → reintenta el upload completo.
@@ -1425,8 +1575,13 @@ export const employeeMethods = {
                 return;
             }
 
-            const uploadEndEvidence = () =>
-                this.uploadShiftEvidenceBatch('fin', this.endPhotoFiles, this.uploadedEndAreas);
+            // Progresivo: primero esperamos las fotos end que ya se estaban
+            // subiendo en background al ser tomadas; luego el batch legacy
+            // sube solo las que fallaron o nunca arrancaron.
+            const uploadEndEvidence = async () => {
+                await this.awaitAllEmployeeUploads('end');
+                return this.uploadShiftEvidenceBatch('fin', this.endPhotoFiles, this.uploadedEndAreas);
+            };
             const uploadEndWithRetry = uploadEndEvidence().catch(async (uploadErr) => {
                 if (this.isOtpSessionError?.(uploadErr)) {
                     return this.retryWithFreshOtp(uploadEndEvidence, { purpose: 'evidence_upload' });
