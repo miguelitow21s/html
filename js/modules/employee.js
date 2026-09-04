@@ -2013,6 +2013,8 @@ export const employeeMethods = {
         const taskId = escapeHtml(String(task.task_id || task.id || ''));
         const status = task.status || 'pending';
         const requiresEvidence = task.requires_evidence === true;
+        const notesRequired = task.notes_required === true;
+        const notesPlaceholder = notesRequired ? 'Observaciones (obligatorio)' : 'Observaciones (opcional)';
         const restaurantName = this.getEmployeeTaskRestaurantName(task, dashboard);
         const dueText = task.due_at ? formatDateTime(task.due_at) : '';
         const isDone = status === 'completed' || status === 'cancelled' || status === 'closed';
@@ -2043,7 +2045,7 @@ export const employeeMethods = {
                         <i class="fas fa-plus"></i>
                         <span class="rtask-file-label-text">Agregar foto o video</span>
                     </label>
-                    <input type="text" placeholder="Observaciones (opcional)" class="rtask-notes-input dark-control" id="rtask-notes-${taskId}">
+                    <input type="text" placeholder="${escapeHtml(notesPlaceholder)}" class="rtask-notes-input dark-control" id="rtask-notes-${taskId}">
                     <div class="rtask-evidence-buttons">
                         <button type="button" class="btn btn-primary btn-sm" data-rtask-action="submit-evidence" data-task-id="${taskId}">
                             <i class="fas fa-paper-plane"></i> Enviar evidencia
@@ -2151,15 +2153,49 @@ export const employeeMethods = {
                     }
                 }
             });
-            list.addEventListener('change', (e) => {
+            list.addEventListener('change', async (e) => {
                 const fileInput = e.target.closest('.rtask-file-input');
                 if (!fileInput) return;
                 const taskId = fileInput.id.replace('rtask-file-', '');
                 const files = Array.from(fileInput.files || []);
+                fileInput.value = ''; // limpiar SIEMPRE para permitir re-elegir
                 if (files.length === 0) return;
-                this._rtaskAttachments[taskId] = [...(this._rtaskAttachments[taskId] || []), ...files];
-                fileInput.value = '';
-                this.renderRtaskAttachments(taskId);
+
+                // Validación de duración: videos ≤ 30 segundos. Rechazamos al
+                // seleccionar (no al enviar) para dar feedback inmediato.
+                const MAX_VIDEO_SECONDS = 30;
+                const accepted = [];
+                const rejections = [];
+                for (const file of files) {
+                    const isVideo = String(file.type || '').toLowerCase().startsWith('video/');
+                    if (isVideo) {
+                        let seconds = 0;
+                        let probeUrl = null;
+                        try {
+                            probeUrl = URL.createObjectURL(file);
+                            seconds = await this.probeVideoDurationSeconds(probeUrl);
+                        } catch (_) { /* si falla, dejamos pasar; backend valida tamaño */ }
+                        finally { if (probeUrl) URL.revokeObjectURL(probeUrl); }
+                        if (Number.isFinite(seconds) && seconds > MAX_VIDEO_SECONDS) {
+                            const mmss = this.formatSecondsAsMmSs(seconds);
+                            rejections.push(`Video muy largo (${mmss}) — máximo ${MAX_VIDEO_SECONDS}s.`);
+                            continue;
+                        }
+                    }
+                    accepted.push(file);
+                }
+
+                if (accepted.length > 0) {
+                    this._rtaskAttachments[taskId] = [...(this._rtaskAttachments[taskId] || []), ...accepted];
+                    this.renderRtaskAttachments(taskId);
+                }
+                if (rejections.length > 0) {
+                    this.showToast(rejections.join('\n'), {
+                        tone: 'warning',
+                        title: rejections.length === 1 ? 'No se agregó' : `No se agregaron ${rejections.length} archivos`,
+                        duration: 8000,
+                    });
+                }
             });
         });
     },
