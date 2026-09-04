@@ -2443,14 +2443,25 @@ export const supervisorMethods = {
         // Devuelve el presence_id del draft actual. Si no existe, lo crea con
         // action:'start'. La llamada es idempotente por Idempotency-Key único
         // por request; ante double-tap el backend devuelve already_exists:true.
-        if (this.supervisionDraftId) return this.supervisionDraftId;
-        if (this.supervisionDraftPromise) return await this.supervisionDraftPromise;
-
+        //
+        // Guard de restaurant: backend permite drafts paralelos (uno por sitio).
+        // Si el user cambió de sitio dentro de la página sin resetear, el
+        // supervisionDraftId cacheado apunta al sitio anterior — hay que
+        // invalidarlo o las fotos se attachearían al draft equivocado.
         const { restaurant } = this.getSupervisorSupervisionReference() || {};
         const restaurantId = restaurant?.restaurant_id || restaurant?.id;
         if (!restaurantId) {
             throw new Error('No hay sitio seleccionado para iniciar la auditoría.');
         }
+        if (this.supervisionDraftId && this.supervisionDraftRestaurantId
+            && String(this.supervisionDraftRestaurantId) !== String(restaurantId)) {
+            // Cambió el sitio — descartar el draft cacheado; se creará uno nuevo.
+            this.supervisionDraftId = null;
+            this.supervisionDraftPromise = null;
+            this.supervisionDraftRestaurantId = null;
+        }
+        if (this.supervisionDraftId) return this.supervisionDraftId;
+        if (this.supervisionDraftPromise) return await this.supervisionDraftPromise;
         const location = this.supervisionLocationCheck?.location || this.location;
         if (!location) {
             throw new Error('Verificá tu ubicación antes de tomar fotos.');
