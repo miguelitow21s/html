@@ -839,7 +839,26 @@ export const employeeMethods = {
         this._employeeObsUploads.set(index, state);
         this.updateEmployeeUploadBadge('obs', index, 'uploading');
 
-        state.promise = this._runEmployeeObservationUpload(file)
+        // Wrapper con retry OTP: request_upload/finalize_upload requieren OTP
+        // session (requiresOtp:true en api.js). Si el token OTP expiró (típico
+        // tras varias horas), cada upload background falla silencioso con
+        // 401/403 → badge naranja. Retry con OTP fresco cubre ese caso, igual
+        // a como hace el batch legacy en completeShift.
+        const runWithOtpRetry = async () => {
+            try {
+                return await this._runEmployeeObservationUpload(file);
+            } catch (err) {
+                if (this.isOtpSessionError?.(err)) {
+                    return await this.retryWithFreshOtp(
+                        () => this._runEmployeeObservationUpload(file),
+                        { purpose: 'evidence_upload' }
+                    );
+                }
+                throw err;
+            }
+        };
+
+        state.promise = runWithOtpRetry()
             .then(({ path }) => {
                 state.status = 'done';
                 state.path = path;
@@ -849,7 +868,13 @@ export const employeeMethods = {
                 state.status = 'error';
                 state.error = err;
                 this.updateEmployeeUploadBadge('obs', index, 'error');
-                console.warn('[employee] upload obs background falló', index, err?.message || err);
+                console.warn('[employee.obs.enqueue] falló', {
+                    index,
+                    message: err?.message,
+                    status: err?.status || err?.payload?.status,
+                    code: err?.code || err?.payload?.error?.code,
+                    payload: err?.payload,
+                });
             });
     },
 
@@ -951,7 +976,25 @@ export const employeeMethods = {
             fileType: file?.type,
         });
 
-        const startPipeline = () => this._runEmployeeUpload(type, slotKey, file)
+        // Wrapper con retry OTP: request/finalize_upload requieren OTP session.
+        // Si el token OTP expiró (tras varias horas), cada upload background
+        // fallaba silencioso → badge naranja. Retry con OTP fresco igual al
+        // batch legacy (completeShiftStartPhotos → retryWithFreshOtp).
+        const runWithOtpRetry = async () => {
+            try {
+                return await this._runEmployeeUpload(type, slotKey, file);
+            } catch (err) {
+                if (this.isOtpSessionError?.(err)) {
+                    return await this.retryWithFreshOtp(
+                        () => this._runEmployeeUpload(type, slotKey, file),
+                        { purpose: 'evidence_upload' }
+                    );
+                }
+                throw err;
+            }
+        };
+
+        const startPipeline = () => runWithOtpRetry()
             .then(({ path }) => {
                 state.status = 'done';
                 state.path = path;
