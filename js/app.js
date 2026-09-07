@@ -2075,14 +2075,34 @@ const app = {
      * Devuelve el resultado del retryFn o lanza el error del retry.
      */
     async retryWithFreshOtp(retryFn, { purpose = 'action' } = {}) {
-        apiClient.setShiftOtpToken('');
-        localStorage.removeItem(STORAGE_KEYS.shiftOtpExpiresAt);
-        this.showToast(t('otp.retry.toast.msg'), {
-            tone: 'info',
-            title: t('otp.retry.toast.title'),
-            duration: 3500,
-        });
-        await this.ensureOtpVerification({ force: true, purpose });
+        // Mutex: uploads en paralelo (obs del contratista, evidencias por
+        // subárea) pueden fallar TODOS a la vez cuando el OTP expira mid-batch.
+        // Sin mutex, cada uno abriría su propio modal OTP → race condition
+        // (N modales apilados, tokens que se pisan, algunos uploads con token
+        // viejo). Ahora todos los que fallen se agarran de la misma promise:
+        // el primero abre el modal, el resto espera; cuando termina, todos
+        // reintentan con el nuevo token ya seteado.
+        if (this._otpRefreshInFlight) {
+            await this._otpRefreshInFlight;
+            return retryFn();
+        }
+
+        this._otpRefreshInFlight = (async () => {
+            try {
+                apiClient.setShiftOtpToken('');
+                localStorage.removeItem(STORAGE_KEYS.shiftOtpExpiresAt);
+                this.showToast(t('otp.retry.toast.msg'), {
+                    tone: 'info',
+                    title: t('otp.retry.toast.title'),
+                    duration: 3500,
+                });
+                await this.ensureOtpVerification({ force: true, purpose });
+            } finally {
+                this._otpRefreshInFlight = null;
+            }
+        })();
+
+        await this._otpRefreshInFlight;
         return retryFn();
     },
 
