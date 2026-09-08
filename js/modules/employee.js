@@ -249,24 +249,24 @@ export const employeeMethods = {
         list.innerHTML = nearby
             .map((r) => {
                 const name = escapeHtml(String(r.name || 'Sitio sin nombre'));
-                const cityState = [r.city, r.state].filter(Boolean).map((v) => escapeHtml(String(v))).join(', ');
-                const distanceLabel = `A ${Math.round(r._distanceMeters)} m del centro del sitio`;
                 // Aceptar aliases: restaurant_id (contrato oficial), id (fallback).
                 const idValue = r.restaurant_id ?? r.id ?? '';
-                // Mostrar el nombre EN el botón elimina la ambigüedad cuando
-                // hay varios sitios cercanos (usuario reportó tocar motosmart
-                // y arrancar "El ingenio" — asegurando visualmente qué sitio
-                // se inicia con cada tap).
+                // El nombre del sitio vivía TAMBIÉN dentro del botón (para
+                // desambiguar cuando hay varios sitios cercanos). Con nombres
+                // largos ese botón —flex-shrink:0— se comía el ancho de la
+                // fila y el nombre de la izquierda quedaba en una columna de
+                // una palabra por línea. Ahora el botón dice solo "Iniciar" y
+                // el nombre se lee una sola vez, a la izquierda, con espacio.
+                // La desambiguación se mantiene: cada fila muestra su sitio y
+                // tiene su propio botón, y el aria-label conserva el nombre.
                 return `
-                    <div class="info-item" style="margin-top:8px;">
+                    <div class="info-item" style="margin-top:8px;gap:10px;padding:12px;">
                         <i class="fas fa-store"></i>
                         <div class="info-item-content">
-                            <span class="info-item-label">${name}</span>
-                            <span class="info-item-value" style="font-size:12px;color:var(--gray);">${cityState ? cityState + ' · ' : ''}${distanceLabel}</span>
+                            <span class="info-item-value" style="display:block;font-weight:600;">${name}</span>
                         </div>
-                        <button type="button" class="btn btn-primary btn-inline" data-action="startAdHocVisit" data-args="${escapeHtml(String(idValue))}" style="flex-shrink:0;flex-direction:column;gap:2px;padding:8px 12px;">
-                            <span style="font-size:11px;opacity:0.85;"><i class="fas fa-play"></i> Iniciar en</span>
-                            <strong style="font-size:13px;">${name}</strong>
+                        <button type="button" class="btn btn-primary btn-inline" data-action="startAdHocVisit" data-args="${escapeHtml(String(idValue))}" aria-label="Iniciar en ${name}" style="flex-shrink:0;padding:10px 16px;">
+                            <i class="fas fa-play"></i> Iniciar
                         </button>
                     </div>
                 `;
