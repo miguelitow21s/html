@@ -5494,7 +5494,7 @@ const app = {
         if (helper) {
             helper.textContent =
                 type === 'supervision'
-                    ? 'Usa la cámara del dispositivo para registrar la evidencia de supervisión.'
+                    ? 'Usa la cámara del dispositivo para registrar la evidencia de la auditoría.'
                     : 'Se abrirá la cámara del dispositivo. Toma la foto y confírmala desde aquí.';
         }
 
@@ -5866,7 +5866,7 @@ const app = {
         }
 
         void this.processPhotoFile(file, 'supervision', this.currentPhotoArea).catch((error) => {
-            this.showToast(this.getErrorMessage(error, 'No fue posible procesar la evidencia de supervisión.'), {
+            this.showToast(this.getErrorMessage(error, 'No fue posible procesar la evidencia de la auditoría.'), {
                 tone: 'error',
                 title: t('app.toast.image.error'),
             });
@@ -6077,7 +6077,7 @@ const app = {
             'supervision',
             this.supervisionPhotoSlots,
             availableAreas.length > 0
-                ? 'Selecciona un área para ver las subáreas de supervisión requeridas.'
+                ? 'Selecciona un área para ver las subáreas requeridas de la auditoría.'
                 : 'No hay áreas configuradas para este sitio.'
         );
 
