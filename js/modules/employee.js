@@ -2140,7 +2140,7 @@ export const employeeMethods = {
                     <div class="rtask-attachments" id="rtask-attachments-${taskId}"></div>
                     <label for="rtask-file-${taskId}" class="rtask-file-label" id="rtask-file-label-${taskId}">
                         <i class="fas fa-plus"></i>
-                        <span class="rtask-file-label-text">Agregar foto o video</span>
+                        <span class="rtask-file-label-text">Agregar foto o video (máx. 5 fotos · 2 videos de 30s)</span>
                     </label>
                     <input type="text" placeholder="${escapeHtml(notesPlaceholder)}" class="rtask-notes-input dark-control" id="rtask-notes-${taskId}">
                     <div class="rtask-evidence-buttons">
@@ -2258,14 +2258,27 @@ export const employeeMethods = {
                 fileInput.value = ''; // limpiar SIEMPRE para permitir re-elegir
                 if (files.length === 0) return;
 
-                // Validación de duración: videos ≤ 30 segundos. Rechazamos al
-                // seleccionar (no al enviar) para dar feedback inmediato.
+                // Mismos límites que observaciones de contratista e inspector:
+                // 5 imágenes + 2 videos de máximo 30s. Se valida al AGREGAR
+                // (no al enviar) para dar feedback inmediato, y se cuenta
+                // contra lo que ya está adjunto en esta tarea.
                 const MAX_VIDEO_SECONDS = 30;
+                const MAX_IMAGES = 5;
+                const MAX_VIDEOS = 2;
+                const current = this._rtaskAttachments[taskId] || [];
+                const isVideoFile = (f) => String(f?.type || '').toLowerCase().startsWith('video/');
+                let imageCount = current.filter((f) => !isVideoFile(f)).length;
+                let videoCount = current.filter((f) => isVideoFile(f)).length;
+
                 const accepted = [];
                 const rejections = [];
                 for (const file of files) {
-                    const isVideo = String(file.type || '').toLowerCase().startsWith('video/');
+                    const isVideo = isVideoFile(file);
                     if (isVideo) {
+                        if (videoCount >= MAX_VIDEOS) {
+                            rejections.push(`${file.name}: máximo ${MAX_VIDEOS} videos.`);
+                            continue;
+                        }
                         let seconds = 0;
                         let probeUrl = null;
                         try {
@@ -2278,6 +2291,13 @@ export const employeeMethods = {
                             rejections.push(`Video muy largo (${mmss}) — máximo ${MAX_VIDEO_SECONDS}s.`);
                             continue;
                         }
+                        videoCount += 1;
+                    } else {
+                        if (imageCount >= MAX_IMAGES) {
+                            rejections.push(`${file.name}: máximo ${MAX_IMAGES} fotos.`);
+                            continue;
+                        }
+                        imageCount += 1;
                     }
                     accepted.push(file);
                 }
@@ -2304,14 +2324,20 @@ export const employeeMethods = {
         const label = document.getElementById(`rtask-file-label-${taskId}`);
         const textSpan = label?.querySelector('.rtask-file-label-text');
 
+        // El conteo va en el propio label para que el límite (5 fotos + 2
+        // videos, igual que en observaciones) sea visible antes de chocar
+        // contra el rechazo.
+        const videoTotal = files.filter((f) => String(f?.type || '').toLowerCase().startsWith('video/')).length;
+        const imageTotal = files.length - videoTotal;
+
         if (files.length === 0) {
             wrap.innerHTML = '';
-            if (textSpan) textSpan.textContent = 'Agregar foto o video';
+            if (textSpan) textSpan.textContent = 'Agregar foto o video (máx. 5 fotos · 2 videos de 30s)';
             label?.classList.remove('rtask-file-label-has-file');
             return;
         }
 
-        if (textSpan) textSpan.textContent = `Agregar otra (${files.length})`;
+        if (textSpan) textSpan.textContent = `Agregar otra (fotos ${imageTotal}/5 · videos ${videoTotal}/2)`;
         label?.classList.add('rtask-file-label-has-file');
 
         wrap.innerHTML = files
@@ -2647,127 +2673,5 @@ export const employeeMethods = {
         } finally {
             this.hideLoading();
         }
-    },
-
-    // -----------------------------------------------------------------
-    // Vista detalle de tarea especial: consumo backend list_evidences.
-    // Aparece en la card de tarea cuando status === completed/closed.
-    // -----------------------------------------------------------------
-    async openTaskEvidencesModal(taskIdArg) {
-        const taskId = Number(taskIdArg);
-        if (!Number.isFinite(taskId)) {
-            this.showToast('No se pudo identificar la tarea.', { tone: 'error', title: 'Tarea inválida' });
-            return;
-        }
-
-        const body = document.getElementById('task-evidences-body');
-        const titleNode = document.getElementById('task-evidences-title');
-        if (titleNode) titleNode.textContent = 'Evidencias de la tarea';
-        if (body) {
-            body.innerHTML = `
-                <div class="task-evidences-loading" style="padding: 40px 20px; text-align: center;">
-                    <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--primary);"></i>
-                    <p class="muted-copy" style="margin-top: 12px;">Cargando evidencias…</p>
-                </div>
-            `;
-        }
-        this.openModal('modal-task-evidences');
-
-        try {
-            const detail = await apiClient.operationalTasksManage('list_evidences', { task_id: taskId });
-            this.renderTaskEvidencesModal(detail || {});
-        } catch (error) {
-            console.warn('[task-evidences] fallo la carga', error);
-            if (body) {
-                body.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        <div>
-                            <strong>No fue posible cargar las evidencias.</strong><br>
-                            <small>${escapeHtml(this.getErrorMessage(error, 'Intenta de nuevo en unos segundos.'))}</small>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-    },
-
-    closeTaskEvidencesModal() {
-        this.closeModal('modal-task-evidences');
-    },
-
-    renderTaskEvidencesModal(detail) {
-        const body = document.getElementById('task-evidences-body');
-        const titleNode = document.getElementById('task-evidences-title');
-        if (!body) return;
-
-        const title = detail?.title || 'Tarea del sitio';
-        const restaurant = detail?.restaurant_name || '—';
-        const completedBy = detail?.completed_by || '—';
-        const completedAt = detail?.completed_at ? formatDateTime(detail.completed_at) : '—';
-        const notes = String(detail?.notes || '').trim();
-        const evidences = asArray(detail?.evidences);
-
-        if (titleNode) titleNode.textContent = title;
-
-        const metaHtml = `
-            <div class="task-evidences-meta">
-                <div class="info-item">
-                    <i class="fas fa-store"></i>
-                    <div class="info-item-content">
-                        <span class="info-item-label">Sitio</span>
-                        <span class="info-item-value">${escapeHtml(restaurant)}</span>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-user"></i>
-                    <div class="info-item-content">
-                        <span class="info-item-label">Contratista</span>
-                        <span class="info-item-value">${escapeHtml(completedBy)}</span>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-clock"></i>
-                    <div class="info-item-content">
-                        <span class="info-item-label">Completada</span>
-                        <span class="info-item-value">${escapeHtml(completedAt)}</span>
-                    </div>
-                </div>
-                ${notes ? `
-                <div class="info-item">
-                    <i class="fas fa-clipboard"></i>
-                    <div class="info-item-content">
-                        <span class="info-item-label">Observaciones</span>
-                        <span class="info-item-value">${escapeHtml(notes)}</span>
-                    </div>
-                </div>` : ''}
-            </div>
-        `;
-
-        const galleryHtml = evidences.length === 0
-            ? `<p class="muted-copy" style="margin-top: 16px; text-align: center;">La tarea no tiene evidencias registradas.</p>`
-            : `
-            <h4 style="margin: 20px 0 10px; font-size: 15px;">Evidencias (${evidences.length})</h4>
-            <div class="task-evidences-gallery">
-                ${evidences.map((ev, i) => {
-                    const url = sanitizeUrl(ev?.signed_url || '');
-                    if (!url) return '';
-                    if (ev?.is_video) {
-                        return `
-                        <div class="task-evidence-tile">
-                            <video controls preload="metadata" src="${escapeHtml(url)}"></video>
-                            <span class="task-evidence-caption"><i class="fas fa-video"></i> Video ${i + 1}</span>
-                        </div>`;
-                    }
-                    return `
-                        <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="task-evidence-tile">
-                            <img src="${escapeHtml(url)}" alt="Evidencia ${i + 1}" loading="lazy">
-                            <span class="task-evidence-caption"><i class="fas fa-image"></i> Foto ${i + 1}</span>
-                        </a>`;
-                }).filter(Boolean).join('')}
-            </div>
-            `;
-
-        body.innerHTML = metaHtml + galleryHtml;
     },
 };

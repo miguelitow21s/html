@@ -5797,6 +5797,14 @@ label,
     cursor: default;
 }
 
+/* Estado mientras se resuelve el GPS del guard de geofence al elegir el
+   archivo de instrucciones. Sin este feedback parecía que el archivo no
+   había quedado cargado. */
+.rtask-file-label-checking {
+    opacity: 0.75;
+    cursor: progress;
+}
+
 .rtask-file-label:active {
     background: rgba(14, 165, 233, 0.22);
 }

@@ -4765,7 +4765,20 @@ export const supervisorMethods = {
             return;
         }
 
+        // Feedback INMEDIATO: el chequeo de geofence hace un captureLocation
+        // de alta precisión que puede tardar varios segundos. Sin esto el
+        // label seguía diciendo "Subir evidencia" después de elegir el
+        // archivo y parecía que el archivo no había quedado cargado.
+        const labelIcon = label?.querySelector('i');
+        const labelIconClass = labelIcon?.className || 'fas fa-cloud-arrow-up';
+        if (text) text.textContent = 'Verificando ubicación…';
+        if (labelIcon) labelIcon.className = 'fas fa-spinner fa-spin';
+        label?.classList.remove('rtask-file-label-has-file');
+        label?.classList.add('rtask-file-label-checking');
+
         const geofenceCheck = await this.validateRestaurantTaskFileByGeofence(file);
+        label?.classList.remove('rtask-file-label-checking');
+        if (labelIcon) labelIcon.className = labelIconClass;
         if (!geofenceCheck.ok) {
             this.showToast(geofenceCheck.reason, {
                 tone: 'warning',
@@ -4924,13 +4937,23 @@ export const supervisorMethods = {
             const geofence = this.getSupervisorRestaurantGeofence(restaurant);
             if (!geofence.hasCoordinates) return { ok: true };
 
-            let location = null;
-            try {
-                location = await this.captureLocation({ updateUi: false, highAccuracy: true });
-            } catch (_) {
+            // captureLocation con highAccuracy tiene timeout interno de 15s.
+            // Es demasiado para un handler de <input type=file>: el inspector
+            // queda mirando un label que no cambia. Le ponemos un techo propio
+            // de 8s y, si vence, dejamos pasar el archivo (mismo criterio que
+            // cuando el GPS falla: sin ubicación no podemos concluir nada).
+            const GEOFENCE_GPS_TIMEOUT_MS = 8000;
+            // El .catch va DENTRO del race: si el GPS rechaza después de que
+            // ganó el timeout, el race ya resolvió y el rechazo tardío sería
+            // un unhandled rejection.
+            const location = await Promise.race([
+                this.captureLocation({ updateUi: false, highAccuracy: true }).catch(() => null),
+                new Promise((resolve) => setTimeout(() => resolve(null), GEOFENCE_GPS_TIMEOUT_MS)),
+            ]);
+            if (!location || !Number.isFinite(Number(location.lat))) {
+                console.info('[rtask-file-geofence] sin ubicación a tiempo — dejamos pasar');
                 return { ok: true };
             }
-            if (!location || !Number.isFinite(Number(location.lat))) return { ok: true };
 
             const distance = calculateDistanceMeters(location, { lat: geofence.lat, lng: geofence.lng });
             if (distance == null) return { ok: true };
