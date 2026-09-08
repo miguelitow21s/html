@@ -4022,10 +4022,6 @@ export const supervisorMethods = {
         }
 
         const accuracyMeters = Math.max(0, Number(location.accuracy || 0));
-        // Buffer más generoso (60m clamp, antes era 35). Los sitios reales
-        // suelen tener 100m de radio y en interiores el GPS pierde
-        // precisión facilmente 30-50m.
-        const accuracyBuffer = Math.min(accuracyMeters, 60);
 
         // Log por sitio con datos crudos — permite diagnosticar en dispositivo
         // por qué no matcheó (falta de coords, radio muy chico, distancia grande).
@@ -4034,7 +4030,7 @@ export const supervisorMethods = {
             const distance = geofence.hasCoordinates
                 ? calculateDistanceMeters(location, { lat: geofence.lat, lng: geofence.lng })
                 : null;
-            const effectiveRadius = Math.max(geofence.radiusMeters || 0, 0) + accuracyBuffer;
+            const effectiveRadius = this.getSupervisionEffectiveRadius(geofence.radiusMeters, accuracyMeters);
             return {
                 name: getRestaurantDisplayName(restaurant),
                 hasCoords: geofence.hasCoordinates,
@@ -4148,6 +4144,28 @@ export const supervisorMethods = {
      */
     supervisorPickAnotherSite() {
         this.setSupervisionRestaurantAutoLock(null);
+    },
+
+    /**
+     * Tolerancia GPS ÚNICA para la geocerca de auditoría.
+     *
+     * Antes había dos cálculos distintos: el auto-detect usaba buffer de 60 m
+     * y `verifySupervisorSupervisionLocation` usaba 35 m. Resultado: el sitio
+     * se pre-seleccionaba ("Ubicación lista para verificar en Burbank") pero
+     * al tocar Verificar decía "fuera de rango" — el bug que reportó Henry.
+     *
+     * Reglas (mismas que el guard de tarea especial, PR #33):
+     * - piso de radio de 50 m (hay sitios cargados con radios de 20-30 m).
+     * - buffer = accuracy real, con tope de 150 m (GPS indoor pierde fácil
+     *   50-120 m; sin tope cualquiera validaría desde cualquier lado).
+     */
+    getSupervisionEffectiveRadius(radiusMeters, accuracyMeters) {
+        const rawRadius = Math.max(Number(radiusMeters) || 0, 0);
+        const accuracy = Math.max(Number(accuracyMeters) || 0, 0);
+        const MIN_RADIUS_METERS = 50;
+        const MAX_ACCURACY_BUFFER_METERS = 150;
+        const accuracyBuffer = Math.min(accuracy, MAX_ACCURACY_BUFFER_METERS);
+        return Math.max(rawRadius, MIN_RADIUS_METERS) + accuracyBuffer;
     },
 
     getSupervisorRestaurantGeofence(restaurant = null) {
@@ -4440,7 +4458,7 @@ export const supervisorMethods = {
             label.textContent = !hasValidDistance
                 ? `No pudimos leer tu ubicación para ${restaurantName}. Verifica que el GPS esté activo y reintenta.`
                 : isOutsideRange
-                  ? `Fuera de rango para ${restaurantName}: ${Math.round(distanceMeters)} m de distancia con radio de ${Math.round(radiusMeters)} m.`
+                  ? `Fuera de rango para ${restaurantName}: ${Math.round(distanceMeters)} m de distancia, se permiten hasta ${Math.round(allowedRadiusMeters)} m.`
                   : `La ubicación detectada para ${restaurantName} está dentro del radio configurado (${Math.round(distanceMeters)} m de ${Math.round(radiusMeters)} m), pero la validación no se completó. Reintenta la verificación GPS.`;
             if (button) {
                 button.disabled = false;
@@ -4506,7 +4524,7 @@ export const supervisorMethods = {
             });
             const hasDistanceMeters = Number.isFinite(Number(distanceMeters));
             const accuracyMeters = Math.max(0, Number(location?.accuracy || 0));
-            const effectiveRadiusMeters = Math.max(geofence.radiusMeters || 0, 0) + Math.min(accuracyMeters, 35);
+            const effectiveRadiusMeters = this.getSupervisionEffectiveRadius(geofence.radiusMeters, accuracyMeters);
             const result = {
                 restaurantId: String(getRestaurantRecordId(restaurant) || ''),
                 restaurantName,
@@ -4519,6 +4537,17 @@ export const supervisorMethods = {
                 accuracyMeters,
             };
 
+            // Log diagnóstico: mismo formato que [rtask-file-geofence] para
+            // poder comparar ambos guards desde el device del inspector.
+            console.info('[auditoria-verify] calc', {
+                sitio: restaurantName,
+                distancia: Number.isFinite(Number(distanceMeters)) ? Math.round(distanceMeters) : null,
+                radioConfigurado: Math.round(geofence.radiusMeters || 0),
+                radioEfectivo: Math.round(effectiveRadiusMeters),
+                accuracy: Math.round(accuracyMeters),
+                ok: result.ok,
+            });
+
             this.supervisionLocationVerified = result.ok;
             this.supervisionLocationCheck = result;
             this.updateSupervisorSupervisionLocationUi(result);
@@ -4527,7 +4556,7 @@ export const supervisorMethods = {
                 this.showToast(
                     result.ok
                         ? `Ubicación validada para ${restaurantName}. Ya puedes registrar la auditoría.`
-                        : `No estás dentro del radio permitido de ${restaurantName}. Acércate al sitio para registrar la auditoría.`,
+                        : `No estás dentro del radio permitido de ${restaurantName} (${Math.round(Number(distanceMeters) || 0)} m de distancia, máximo ${Math.round(effectiveRadiusMeters)} m). Acércate al sitio para registrar la auditoría.`,
                     {
                         tone: result.ok ? 'success' : 'warning',
                         title: result.ok ? 'Ubicación validada' : 'Fuera de rango',
@@ -4601,7 +4630,7 @@ export const supervisorMethods = {
         });
 
         if (!result) {
-            throw new Error('No fue posible verificar la ubicación para registrar la supervisión.');
+            throw new Error('No fue posible verificar la ubicación para registrar la auditoría.');
         }
 
         if (!result?.ok) {
@@ -4610,16 +4639,25 @@ export const supervisorMethods = {
             if (!Number.isFinite(distanceMeters)) {
                 throw new Error(
                     result?.errorMessage ||
-                        `No fue posible verificar la ubicación para registrar la supervisión en ${resolvedRestaurantName}.`
+                        `No fue posible verificar la ubicación para registrar la auditoría en ${resolvedRestaurantName}.`
                 );
             }
 
-            const radiusText = Number.isFinite(Number(result.radiusMeters))
-                ? `${Math.round(result.radiusMeters)} m`
+            // Mostramos el radio EFECTIVO (con tolerancia GPS ya aplicada), no
+            // el configurado: si no, el mensaje dice "radio 100 m" cuando en
+            // realidad se aceptaban 200 m y confunde al inspector.
+            const allowedMeters = Number.isFinite(Number(result.effectiveRadiusMeters))
+                ? Number(result.effectiveRadiusMeters)
+                : Number(result.radiusMeters);
+            const radiusText = Number.isFinite(allowedMeters)
+                ? `${Math.round(allowedMeters)} m`
                 : 'el radio configurado';
+            const accuracyText = Number.isFinite(Number(result.accuracyMeters))
+                ? ` Precisión del GPS: ±${Math.round(result.accuracyMeters)} m.`
+                : '';
 
             throw new Error(
-                `No puedes registrar la supervisión porque tu ubicación está fuera del rango permitido de ${resolvedRestaurantName}. Distancia detectada: ${Math.round(distanceMeters)} m. Radio base: ${radiusText}.`
+                `No puedes registrar la auditoría porque tu ubicación está fuera del rango permitido de ${resolvedRestaurantName}. Distancia detectada: ${Math.round(distanceMeters)} m. Máximo permitido: ${radiusText}.${accuracyText}`
             );
         }
 
@@ -6327,7 +6365,7 @@ export const supervisorMethods = {
             const path = requestUpload?.path || requestUpload?.upload?.path;
 
             if (!signedUrl || !path) {
-                throw new Error('No fue posible preparar la subida de la foto de supervisión.');
+                throw new Error('No fue posible preparar la subida de la foto de la auditoría.');
             }
 
             await apiClient.uploadToSignedUrl(signedUrl, payload, mimeType);
@@ -6748,9 +6786,9 @@ export const supervisorMethods = {
                     error?.payload?.error?.message ||
                         error?.payload?.message ||
                         error?.message ||
-                        'No fue posible registrar la supervisión.'
+                        'No fue posible registrar la auditoría.'
                 ).trim();
-                this.showToast(supervisionErrorMessage || 'No fue posible registrar la supervisión.', {
+                this.showToast(supervisionErrorMessage || 'No fue posible registrar la auditoría.', {
                     tone: 'error',
                     title: t('sup.toast.audit.fail'),
                 });
