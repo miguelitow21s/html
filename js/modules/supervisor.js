@@ -4896,17 +4896,18 @@ export const supervisorMethods = {
     /**
      * Regla al elegir archivo de instrucciones de tarea especial:
      * - DENTRO del radio del sitio → cualquier origen (cámara o galería).
-     * - FUERA del sitio → solo galería/archivos (NO cámara).
+     * - FUERA del sitio → solo galería/archivos (NO cámara reciente).
      *
-     * iOS no permite forzar "solo galería" en el file picker HTML. Heurística:
-     * si el file.lastModified es de los últimos 60 segundos, se asume cámara
-     * abierta desde el picker y se rechaza. Umbral 60s (antes 2min) para
-     * reducir falsos positivos con fotos recién tomadas y luego elegidas
-     * desde galería — 60s alcanza porque abrir Cámara → tomar → cerrar →
-     * abrir Safari → picker toma más que eso.
+     * Tolerancia GPS: indoor (dentro de locales) el GPS suele reportar
+     * accuracy 100-200m. Antes limitábamos el buffer a 60m — con radio de
+     * sitio pequeño (20-30m) y GPS indoor, effectiveRadius quedaba <100m y
+     * el inspector adentro del sitio quedaba "fuera". Ahora usamos toda la
+     * accuracy (cap 250m para no volver global) + radio mínimo 50m.
      *
-     * Si el sitio no tiene coords o falla el GPS: dejamos pasar (mejor
-     * permitir de más que bloquear al inspector legítimo).
+     * Además: si location.accuracy > 200m (GPS muy pobre), dejamos pasar
+     * SIEMPRE (no podemos concluir nada de la posición).
+     *
+     * Console.info del cálculo para diagnóstico si vuelve a fallar.
      */
     async validateRestaurantTaskFileByGeofence(file) {
         try {
@@ -4933,9 +4934,28 @@ export const supervisorMethods = {
 
             const distance = calculateDistanceMeters(location, { lat: geofence.lat, lng: geofence.lng });
             if (distance == null) return { ok: true };
-            const accuracyBuffer = Math.min(Number(location.accuracy || 0), 60);
-            const effectiveRadius = Math.max(geofence.radiusMeters || 0, 0) + accuracyBuffer;
+
+            const accuracy = Number(location.accuracy || 0);
+            // GPS demasiado pobre → no podemos concluir posición, dejamos pasar.
+            if (accuracy > 200) {
+                console.info('[rtask-file-geofence] GPS accuracy >200m — bypass', { accuracy });
+                return { ok: true };
+            }
+
+            const accuracyBuffer = Math.min(accuracy, 250);
+            const rawRadius = Math.max(geofence.radiusMeters || 0, 0);
+            const minRadius = 50; // Ningún sitio debería tener geocerca efectiva <50m para este chequeo.
+            const effectiveRadius = Math.max(rawRadius, minRadius) + accuracyBuffer;
             const insideSite = distance <= effectiveRadius;
+
+            console.info('[rtask-file-geofence] calc', {
+                distance: Math.round(distance),
+                rawRadius,
+                effectiveRadius: Math.round(effectiveRadius),
+                accuracy: Math.round(accuracy),
+                insideSite,
+            });
+
             if (insideSite) return { ok: true };
 
             // Fuera del sitio: rechazar cámara reciente (últimos 60s).
@@ -4943,9 +4963,10 @@ export const supervisorMethods = {
             const isFreshCamera = Number.isFinite(fileAge) && fileAge < 60 * 1000;
             if (isFreshCamera) {
                 const siteName = getRestaurantDisplayName(restaurant);
+                const distanceKm = distance > 1000 ? `${(distance / 1000).toFixed(1)} km` : `${Math.round(distance)} m`;
                 return {
                     ok: false,
-                    reason: `Estás fuera de ${siteName}. Elegí una foto o video de tu galería o archivos — la cámara solo se puede usar en el sitio.`,
+                    reason: `GPS te ubica a ${distanceKm} de ${siteName}. Si estás en el sitio, elegí un archivo de tu galería que no sea de los últimos segundos.`,
                 };
             }
             return { ok: true };
