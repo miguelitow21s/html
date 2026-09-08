@@ -1495,8 +1495,7 @@ export const employeeMethods = {
                     } catch (_) { /* si falla, dejamos pasar; backend valida tamaño */ }
                     finally { if (probeUrl) URL.revokeObjectURL(probeUrl); }
                     if (Number.isFinite(seconds) && seconds > MAX_VIDEO_SECONDS) {
-                        const mmss = this.formatSecondsAsMmSs(seconds);
-                        rejections.push(`Video muy largo (${mmss}) — máximo ${MAX_VIDEO_SECONDS}s.`);
+                        rejections.push(`El video supera los ${MAX_VIDEO_SECONDS} segundos permitidos.`);
                         continue;
                     }
                 }
@@ -2287,8 +2286,7 @@ export const employeeMethods = {
                         } catch (_) { /* si falla, dejamos pasar; backend valida tamaño */ }
                         finally { if (probeUrl) URL.revokeObjectURL(probeUrl); }
                         if (Number.isFinite(seconds) && seconds > MAX_VIDEO_SECONDS) {
-                            const mmss = this.formatSecondsAsMmSs(seconds);
-                            rejections.push(`Video muy largo (${mmss}) — máximo ${MAX_VIDEO_SECONDS}s.`);
+                            rejections.push(`El video supera los ${MAX_VIDEO_SECONDS} segundos permitidos.`);
                             continue;
                         }
                         videoCount += 1;
