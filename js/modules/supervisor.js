@@ -47,6 +47,7 @@ import {
     isShiftEndedEarly,
     normalizeAreaToken,
     normalizeLinkedPhoneValue,
+    normalizePhoneToE164,
     normalizeRestaurantId,
     pickMeaningfulRestaurantName,
     sanitizeUrl,
@@ -6604,7 +6605,11 @@ export const supervisorMethods = {
         const editId = document.getElementById('admin-employee-edit-id')?.value?.trim();
         const fullName = document.getElementById('admin-employee-name')?.value?.trim();
         const email = document.getElementById('admin-employee-email')?.value?.trim();
-        const phone = document.getElementById('admin-employee-phone')?.value?.trim();
+        // Normaliza antes de validar: el input puede traer caracteres
+        // invisibles de iOS, espacios o venir sin "+" (ver normalizePhoneToE164).
+        const phoneInput = document.getElementById('admin-employee-phone');
+        const phoneCheck = normalizePhoneToE164(phoneInput?.value);
+        const phone = phoneCheck.phone;
         const isActive = true;
 
         if (!fullName || !email || !phone) {
@@ -6615,13 +6620,18 @@ export const supervisorMethods = {
             return;
         }
 
-        if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-            this.showToast(t('toast.common.phone.format'), {
-                tone: 'warning',
-                title: t('toast.common.invalid.phone'),
-            });
+        if (!phoneCheck.ok) {
+            this.showToast(
+                t(phoneCheck.needsCountryCode ? 'toast.common.phone.country' : 'toast.common.phone.format'),
+                {
+                    tone: 'warning',
+                    title: t('toast.common.invalid.phone'),
+                }
+            );
             return;
         }
+        // Que el input muestre exactamente lo que se va a guardar.
+        if (phoneInput) phoneInput.value = phone;
 
         const isEditing = Boolean(editId);
         this.showLoading(

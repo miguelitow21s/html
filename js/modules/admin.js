@@ -17,6 +17,7 @@ import {
     getTodayEnd,
     getTodayStart,
     initials,
+    normalizePhoneToE164,
     toInputDate,
     toIsoDate,
 } from '../utils.js';
@@ -897,7 +898,11 @@ export const adminMethods = {
         const editId = document.getElementById('admin-supervisor-edit-id')?.value?.trim();
         const fullName = document.getElementById('admin-supervisor-full-name')?.value?.trim();
         const email = document.getElementById('admin-supervisor-email')?.value?.trim();
-        const phone = document.getElementById('admin-supervisor-phone')?.value?.trim();
+        // Normaliza antes de validar: el input puede traer caracteres
+        // invisibles de iOS, espacios o venir sin "+" (ver normalizePhoneToE164).
+        const phoneInput = document.getElementById('admin-supervisor-phone');
+        const phoneCheck = normalizePhoneToE164(phoneInput?.value);
+        const phone = phoneCheck.phone;
         const isActive = document.getElementById('admin-supervisor-active')?.checked ?? true;
 
         if (!fullName || !email || !phone) {
@@ -908,13 +913,18 @@ export const adminMethods = {
             return;
         }
 
-        if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-            this.showToast(t('toast.common.phone.format'), {
-                tone: 'warning',
-                title: t('toast.common.invalid.phone'),
-            });
+        if (!phoneCheck.ok) {
+            this.showToast(
+                t(phoneCheck.needsCountryCode ? 'toast.common.phone.country' : 'toast.common.phone.format'),
+                {
+                    tone: 'warning',
+                    title: t('toast.common.invalid.phone'),
+                }
+            );
             return;
         }
+        // Que el input muestre exactamente lo que se va a guardar.
+        if (phoneInput) phoneInput.value = phone;
 
         const isEditing = Boolean(editId);
         const payload = isEditing

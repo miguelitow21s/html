@@ -1137,6 +1137,43 @@ export function normalizeLinkedPhoneValue(value) {
     return phone;
 }
 
+/**
+ * Normaliza un teléfono escrito a mano a E.164 (+<código país><número>).
+ *
+ * El input se ve como "+573044000001" pero puede traer basura invisible:
+ * iOS mete marcas de dirección (U+202A/U+202C, U+2066–U+2069) al
+ * autocompletar o pegar desde Contactos/WhatsApp, más espacios duros o el
+ * "+" de ancho completo. `.trim()` no quita nada de eso y el regex E.164
+ * rechazaba números que en pantalla eran correctos.
+ *
+ * - Quita caracteres de formato (\p{Cf}), espacios (incluye NBSP) y
+ *   separadores - . ( ).
+ * - "00" inicial → "+" (prefijo internacional).
+ * - 11 a 15 dígitos sin "+" → ya incluyen el código de país: se antepone "+".
+ * - 10 dígitos sin "+" es ambiguo (Colombia +57 o EE. UU. +1): no se
+ *   adivina, se marca needsCountryCode para pedirlo.
+ *
+ * @returns {{ phone: string, ok: boolean, needsCountryCode: boolean }}
+ */
+export function normalizePhoneToE164(value) {
+    let phone = String(value ?? '')
+        .replace(/\p{Cf}/gu, '')
+        .replace(/\uFF0B/g, '+')
+        .replace(/[\s\-.()]/g, '');
+    if (phone.startsWith('00')) {
+        phone = `+${phone.slice(2)}`;
+    }
+    const hasPlus = phone.startsWith('+');
+    if (!hasPlus && /^\d{11,15}$/.test(phone)) {
+        phone = `+${phone}`;
+    }
+    return {
+        phone,
+        ok: /^\+[1-9]\d{7,14}$/.test(phone),
+        needsCountryCode: !hasPlus && /^\d{10}$/.test(phone),
+    };
+}
+
 export function getHoursFromRange(startValue, endValue) {
     if (!startValue || !endValue) {
         return null;
