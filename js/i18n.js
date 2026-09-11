@@ -218,7 +218,8 @@ export const TRANSLATIONS = {
         // Common toast/loading titles
         'toast.common.missing.data': 'Faltan datos',
         'toast.common.invalid.phone': 'Teléfono inválido',
-        'toast.common.phone.format': 'El teléfono debe estar en formato E.164, por ejemplo +573001112233.',
+        'toast.common.phone.format': 'Escribe el teléfono con el código del país, por ejemplo +573001112233.',
+        'toast.common.phone.country': 'Falta el código del país: +57 para Colombia o +1 para EE. UU. Ejemplo: +573001112233.',
         'toast.common.invalid': 'Datos inválidos',
         'toast.common.success': 'Éxito',
         'toast.common.saved': 'Cambio guardado',
@@ -968,7 +969,8 @@ export const TRANSLATIONS = {
         // Common toast/loading titles
         'toast.common.missing.data': 'Missing data',
         'toast.common.invalid.phone': 'Invalid phone',
-        'toast.common.phone.format': 'Phone must be in E.164 format, e.g. +13105551234.',
+        'toast.common.phone.format': 'Enter the phone with the country code, e.g. +13105551234.',
+        'toast.common.phone.country': 'Missing country code: +1 for the US or +57 for Colombia. Example: +13105551234.',
         'toast.common.invalid': 'Invalid data',
         'toast.common.success': 'Success',
         'toast.common.saved': 'Saved',
