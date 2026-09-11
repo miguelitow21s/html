@@ -3831,7 +3831,8 @@ export const supervisorMethods = {
         // Antes solo si el input estaba vacio; el navegador puede restaurar
         // valores de sesion previa (autofill), asi que forzamos hoy siempre.
         // Si el usuario cambia la fecha manualmente ya generara con lo elegido.
-        const todayIso = new Date().toISOString().slice(0, 10);
+        // Fecha LOCAL, no UTC (toISOString daba mañana después de las 7 p. m.).
+        const todayIso = toLocalDateKey(new Date());
         if (startInput) startInput.value = todayIso;
         if (endInput) endInput.value = todayIso;
 
@@ -3891,12 +3892,12 @@ export const supervisorMethods = {
         const startInput = document.getElementById('audit-report-start-date');
         const endInput = document.getElementById('audit-report-end-date');
 
-        // Fecha actual como default (mismo criterio que el reporte de turnos).
+        // Fecha actual LOCAL como default (mismo criterio que el reporte de visitas).
         if (startInput) {
-            startInput.value = new Date().toISOString().slice(0, 10);
+            startInput.value = toLocalDateKey(new Date());
         }
         if (endInput) {
-            endInput.value = new Date().toISOString().slice(0, 10);
+            endInput.value = toLocalDateKey(new Date());
         }
 
         if (restaurantSelect) {

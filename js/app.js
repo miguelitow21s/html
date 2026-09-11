@@ -4830,7 +4830,8 @@ const app = {
     setDateInputToToday(inputId = '') {
         const input = document.getElementById(String(inputId || '').trim());
         if (!input) return;
-        input.value = new Date().toISOString().slice(0, 10);
+        // Fecha LOCAL, no UTC (toISOString daba mañana después de las 7 p. m.).
+        input.value = toInputDate(new Date());
         // Disparar change para que cualquier handler que escuche el input
         // se entere del nuevo valor (ej. sched-shift-*).
         input.dispatchEvent(new Event('change', { bubbles: true }));

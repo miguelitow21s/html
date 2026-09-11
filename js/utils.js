@@ -18,12 +18,15 @@ export function toInputDate(value) {
         return '';
     }
 
-    const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        return '';
+    // 'YYYY-MM-DD' ya es fecha civil: tal cual. new Date() la leería como
+    // medianoche UTC y en Colombia (UTC-5) daría el día anterior.
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+        return value.trim();
     }
 
-    return date.toISOString().slice(0, 10);
+    // Fecha LOCAL del dispositivo. Antes era toISOString().slice(0, 10), que
+    // es la fecha UTC: después de las 7 p. m. en Colombia devolvía mañana.
+    return toLocalDateKey(value);
 }
 
 export function toLocalDateKey(value) {
