@@ -1822,9 +1822,10 @@ canvas {
 /* Aviso de límites de adjuntos de observaciones (5 fotos + 2 videos ≤30s).
    Va debajo del textarea, antes de la lista de archivos ya adjuntados. */
 .supervision-attachments-hint {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
+    /* Bloque, no flex: con flex cada tramo de texto y cada <strong> era
+       un item aparte y la frase se partía en columnas de una palabra. */
+    display: block;
+    text-align: center;
     margin: 10px 0 6px 0;
     padding: 10px 12px;
     background: rgba(3, 105, 161, 0.08);
@@ -1836,8 +1837,7 @@ canvas {
 }
 .supervision-attachments-hint i {
     color: #0369a1;
-    margin-top: 2px;
-    flex: 0 0 auto;
+    margin-right: 6px;
 }
 .supervision-attachments-hint strong {
     color: #0369a1;
