@@ -5841,7 +5841,7 @@ export const supervisorMethods = {
                 )
                     ? formatHours(this.data.lastGeneratedReport.resolved_totals.restaurant_scheduled_hours_total)
                     : formatHours(this.data.lastGeneratedReport.resolved_totals.total_scheduled_hours);
-                restaurantTotalsCopy.textContent = `En este rango el sitio acumula ${restaurantWorkedText} trabajadas y ${restaurantScheduledText} programadas.`;
+                restaurantTotalsCopy.textContent = `En este rango el sitio acumula ${restaurantWorkedText} ejecutadas y ${restaurantScheduledText} programadas.`;
             }
 
             const statusBreakdown = document.getElementById('report-status-breakdown');
