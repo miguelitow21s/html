@@ -897,6 +897,79 @@ body.camera-capture-active {
     color: var(--text-secondary);
 }
 
+/* Línea "N tareas especiales pendientes" cuando hay pendientes: es un
+   botón que abre la lista del sitio. Se ve como la línea de texto de
+   siempre, con chevron para indicar que se puede tocar. */
+.restaurant-card-task-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    margin: 0;
+    padding: 4px 0;
+    background: none;
+    border: 0;
+    font: inherit;
+    /* Mismo tamaño que las otras líneas (.restaurant-card p): un <button>
+       no hereda esa regla. */
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+.restaurant-card-task-link:active {
+    opacity: 0.7;
+}
+
+.restaurant-card-task-chevron {
+    margin-left: auto;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.pending-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pending-task-item {
+    padding: 12px 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.pending-task-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.pending-task-head strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--text-primary);
+}
+
+.pending-task-head .badge {
+    flex-shrink: 0;
+}
+
+.pending-task-meta {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.pending-task-meta i {
+    width: 14px;
+    margin-right: 4px;
+}
+
 /* Chip "Auditando en <sitio>" que reemplaza al select cuando el
    auto-detect encuentra UN solo sitio dentro del radio. */
 .supervision-restaurant-chip {

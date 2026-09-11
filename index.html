@@ -173,6 +173,21 @@
         </div>
     </div>
 
+    <!-- Tareas especiales pendientes de un sitio: se abre al tocar la
+         línea "N tareas especiales pendientes" de la tarjeta del sitio. -->
+    <div id="modal-restaurant-pending-tasks" class="modal">
+        <div class="modal-content" style="max-width: 560px;">
+            <div class="modal-header">
+                <h3 id="restaurant-pending-tasks-title">Tareas especiales pendientes</h3>
+                <button class="btn-close" aria-label="Cerrar" type="button" data-action="closeModal" data-args="modal-restaurant-pending-tasks">&times;</button>
+            </div>
+            <div class="modal-body" id="restaurant-pending-tasks-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-action="closeModal" data-args="modal-restaurant-pending-tasks">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-camera-capture" class="modal camera-modal camera-modal-fullscreen" data-locked="true">
         <div class="modal-content camera-modal-content">
             <!-- Header (título + X) y helper eliminados: eran redundantes

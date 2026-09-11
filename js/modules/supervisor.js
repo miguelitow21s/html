@@ -3147,19 +3147,24 @@ export const supervisorMethods = {
             force ||
             !openTasksCache?.data ||
             Date.now() - (openTasksCache?.ts || 0) > OPEN_TASKS_TTL_MS;
+        // Si la carga de tareas falla y no hay cache, NO podemos decir
+        // "Sin tareas especiales pendientes": sería mentir. Antes pasaba
+        // exactamente eso — el catch devolvía [] y todos los sitios
+        // mostraban "Sin tareas" aunque hubiera pendientes.
+        let openTasksUnavailable = false;
 
         try {
             const tasksPromise = shouldFetchTasks
                 ? apiClient
-                      // Nuevo endpoint dedicado del backend: list_pending
-                      // trae items con restaurant_id + restaurant_name ya
-                      // resueltos y pending_count exacto (no depende del
-                      // limit). Antes usábamos 'list' con status=open que
-                      // truncaba a 200 y no daba pending_count fiable.
-                      .operationalTasksManage('list_pending', { limit: 500 })
+                      // list_pending trae items con restaurant_id +
+                      // restaurant_name ya resueltos. El backend valida
+                      // limit <= 200: con 500 respondía 422 y el catch lo
+                      // convertía en lista vacía en silencio.
+                      .operationalTasksManage('list_pending', { limit: 200 })
                       .then((res) => asArray(res?.items || res?.data?.items || res))
                       .catch((taskErr) => {
                           console.warn('No fue posible cargar tareas especiales para el render de sitios.', taskErr);
+                          if (!openTasksCache?.data) openTasksUnavailable = true;
                           return openTasksCache?.data || [];
                       })
                 : Promise.resolve(openTasksCache.data);
@@ -3174,7 +3179,7 @@ export const supervisorMethods = {
             restaurants = r;
             shifts = s;
             openTasks = tasks;
-            if (shouldFetchTasks) {
+            if (shouldFetchTasks && !openTasksUnavailable) {
                 this._openTasksBadgeCache = { data: openTasks, ts: Date.now() };
             }
         } catch (error) {
@@ -3279,15 +3284,36 @@ export const supervisorMethods = {
             // de tarea especial. Mostramos badge activo si hay al menos
             // una tarea open; si no, indicamos "sin tareas".
             const openTaskCount = openTasksByRestaurant[restaurantIdKey] || 0;
-            const taskLine = document.createElement('p');
-            taskLine.className = openTaskCount > 0 ? 'restaurant-card-task-alert' : 'restaurant-card-task-empty';
+            // Con pendientes la línea es un botón: al tocarla abre la lista
+            // de pendientes de ESE sitio. Sin pendientes (o si la carga
+            // falló) queda como texto plano.
+            const taskLine = document.createElement(openTaskCount > 0 && !openTasksUnavailable ? 'button' : 'p');
             const taskIcon = document.createElement('i');
-            // Solo set 'solid' cargado; usamos star-half-stroke como sin-tareas.
-            taskIcon.className = openTaskCount > 0 ? 'fas fa-star' : 'fas fa-star-half-stroke';
-            const taskLabel = openTaskCount > 0
-                ? ` ${openTaskCount} tarea${openTaskCount === 1 ? '' : 's'} especial${openTaskCount === 1 ? '' : 'es'} pendiente${openTaskCount === 1 ? '' : 's'}`
-                : ' Sin tareas especiales pendientes';
+            let taskLabel;
+            if (openTasksUnavailable) {
+                taskLine.className = 'restaurant-card-task-empty';
+                taskIcon.className = 'fas fa-triangle-exclamation';
+                taskLabel = ' No se pudieron cargar las tareas especiales';
+            } else if (openTaskCount > 0) {
+                taskLine.type = 'button';
+                taskLine.className = 'restaurant-card-task-alert restaurant-card-task-link';
+                taskLine.dataset.action = 'open-restaurant-pending-tasks';
+                taskLine.dataset.restaurantId = restaurantIdKey;
+                taskLine.dataset.restaurantName = getRestaurantDisplayName(restaurant);
+                taskIcon.className = 'fas fa-star';
+                taskLabel = ` ${openTaskCount} tarea${openTaskCount === 1 ? '' : 's'} especial${openTaskCount === 1 ? '' : 'es'} pendiente${openTaskCount === 1 ? '' : 's'}`;
+            } else {
+                taskLine.className = 'restaurant-card-task-empty';
+                // Solo set 'solid' cargado; usamos star-half-stroke como sin-tareas.
+                taskIcon.className = 'fas fa-star-half-stroke';
+                taskLabel = ' Sin tareas especiales pendientes';
+            }
             taskLine.append(taskIcon, document.createTextNode(taskLabel));
+            if (taskLine.tagName === 'BUTTON') {
+                const chevron = document.createElement('i');
+                chevron.className = 'fas fa-chevron-right restaurant-card-task-chevron';
+                taskLine.appendChild(chevron);
+            }
 
             card.append(title, address, employeesLine, taskLine);
 
@@ -4680,6 +4706,96 @@ export const supervisorMethods = {
         this.restaurantTaskDraftRestaurantId = String(restaurantId || '').trim();
         this.restaurantTaskDraftSource = String(source || '').trim() || 'restaurants';
         await this.openModal('modal-supervisor-restaurant-task');
+    },
+
+    // Lista de tareas especiales pendientes de UN sitio. Se abre al tocar
+    // la línea "N tareas especiales pendientes" de la tarjeta del sitio.
+    // Pide list_pending filtrado por restaurant_id (fresco, no usa el cache
+    // del badge) y filtra también en cliente por si el backend devolviera
+    // tareas de otros sitios.
+    async openSupervisorRestaurantPendingTasksModal(restaurantId, restaurantName = '') {
+        const rid = String(restaurantId || '').trim();
+        if (!rid) return;
+
+        const body = document.getElementById('restaurant-pending-tasks-body');
+        const titleNode = document.getElementById('restaurant-pending-tasks-title');
+        if (titleNode) {
+            titleNode.textContent = restaurantName ? `Pendientes · ${restaurantName}` : 'Tareas especiales pendientes';
+        }
+        if (body) {
+            body.innerHTML = `
+                <div style="padding: 40px 20px; text-align: center;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--primary);"></i>
+                    <p class="muted-copy" style="margin-top: 12px;">Cargando tareas pendientes…</p>
+                </div>
+            `;
+        }
+        await this.openModal('modal-restaurant-pending-tasks');
+
+        try {
+            // Backend valida limit <= 200 (con más responde 422).
+            const res = await apiClient.operationalTasksManage('list_pending', {
+                limit: 200,
+                restaurant_id: this.normalizeTaskCreatePayloadValue(rid),
+            });
+            const items = asArray(res?.items || res?.data?.items || res).filter(
+                (task) => String(task?.restaurant_id ?? task?.restaurant?.id ?? '') === rid
+            );
+            this.renderSupervisorRestaurantPendingTasks(items);
+        } catch (error) {
+            console.warn('[restaurant-pending-tasks] fallo la carga', error);
+            if (body) {
+                body.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <div>
+                            <strong>No fue posible cargar las tareas pendientes.</strong><br>
+                            <small>${escapeHtml(this.getErrorMessage(error, 'Intenta de nuevo en unos segundos.'))}</small>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    },
+
+    renderSupervisorRestaurantPendingTasks(items) {
+        const body = document.getElementById('restaurant-pending-tasks-body');
+        if (!body) return;
+
+        const tasks = asArray(items)
+            .slice()
+            .sort((a, b) => new Date(b?.created_at || 0) - new Date(a?.created_at || 0));
+
+        if (tasks.length === 0) {
+            body.innerHTML = '<p class="muted-copy" style="text-align:center;padding:24px 0;margin:0;">Este sitio no tiene tareas especiales pendientes.</p>';
+            return;
+        }
+
+        const countText = `${tasks.length} tarea${tasks.length === 1 ? '' : 's'} especial${tasks.length === 1 ? '' : 'es'} pendiente${tasks.length === 1 ? '' : 's'}`;
+        body.innerHTML = `
+            <p class="muted-copy" style="margin:0 0 12px;">${escapeHtml(countText)}</p>
+            <div class="pending-task-list">
+                ${tasks
+                    .map((task) => {
+                        const meta = [
+                            task?.created_by_name ? `Creada por ${escapeHtml(task.created_by_name)}` : '',
+                            task?.created_at ? escapeHtml(formatDateTime(task.created_at)) : '',
+                        ].filter(Boolean).join(' · ');
+                        return `
+                        <div class="pending-task-item">
+                            <div class="pending-task-head">
+                                <strong>${escapeHtml(task?.title || 'Tarea sin título')}</strong>
+                                <span class="badge badge-warning">Pendiente</span>
+                            </div>
+                            ${meta ? `<p class="pending-task-meta">${meta}</p>` : ''}
+                            ${task?.due_at ? `<p class="pending-task-meta"><i class="fas fa-clock"></i> Vence: ${escapeHtml(formatDateTime(task.due_at))}</p>` : ''}
+                            ${task?.assigned_to_name ? `<p class="pending-task-meta"><i class="fas fa-user"></i> Asignada a ${escapeHtml(task.assigned_to_name)}</p>` : ''}
+                            ${task?.requires_evidence ? '<p class="pending-task-meta"><i class="fas fa-camera"></i> Requiere foto de evidencia</p>' : ''}
+                        </div>`;
+                    })
+                    .join('')}
+            </div>
+        `;
     },
 
     updateSupervisorRestaurantTaskContextCopy() {},
