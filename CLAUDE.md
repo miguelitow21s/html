@@ -143,6 +143,7 @@ Salida esperada: `Deployment turnos-front-XXXX ready.` alias a `turnos-front-thr
 - **`filterEmployeeTasksByKnownShifts`** es pass-through (no filtra) — no re-agregar filtro o Henry (contratista de otro sitio) pierde tareas.
 - **Tablas dispositivo/OTP** ya no aceptan escritura directa desde cliente — solo `trusted_device_*` / `phone_otp_*` endpoints.
 - **Duplicaciones de funciones entre app.js y adminModals.js**: mismo namespace `WorkTraceApp`; la última cargada pisa. Bug histórico repetido (populateSupervisorAreaOptions, setSupervisorSelectedArea, resetSupervisorSupervisionState). Al agregar métodos verificar que no exista otra definición del mismo nombre. Consolidadas en app.js (PR #16, #22).
+- **`operational_tasks_manage` valida `limit <= 200`** — con más responde 422 `PAYLOAD_VALIDATION_FAILED`. Pasó con `list_pending` (limit 500): el `catch` devolvía `[]` y TODAS las tarjetas de Sitios decían "Sin tareas especiales pendientes" aunque hubiera 19. Si la carga falla, la tarjeta ahora dice "No se pudieron cargar" en vez de mentir.
 - **Badge `.supervision-upload-badge` con `hidden` no funciona**: el CSS `display: inline-flex` pisaba `[hidden]`. Se usa la ausencia/presencia de `data-status` para toggle (`.badge:not([data-status]){display:none}`). Ver `css/styles.css`.
 
 ## Upload progresivo end-to-end (2026-09, arquitectura vigente)

@@ -1284,6 +1284,18 @@ const app = {
                 await this.openSupervisorRestaurantTaskModal(restaurantId, 'restaurants');
                 return;
             }
+            case 'open-restaurant-pending-tasks': {
+                const restaurantId = String(source.dataset.restaurantId || '').trim();
+                if (!restaurantId) {
+                    return;
+                }
+                event.preventDefault();
+                await this.openSupervisorRestaurantPendingTasksModal?.(
+                    restaurantId,
+                    String(source.dataset.restaurantName || '')
+                );
+                return;
+            }
             // 'admin-assign-restaurant' / 'admin-unassign-restaurant' retirados
             // en el corte "Sin asignacion de sitios".
             case 'admin-edit-supervisor': {
