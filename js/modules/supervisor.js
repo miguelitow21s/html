@@ -5647,6 +5647,18 @@ export const supervisorMethods = {
         }
         wrap.classList.remove('hidden');
 
+        // La supervisora solo puede bajar el informe individual de SUS
+        // auditorías (backend: 403 FORBIDDEN si es ajena); super_admin, todas.
+        // rows[].supervisor_id es el mismo id del usuario de sesión. Si no
+        // viniera (o no hay sesión), mostramos los botones y el 403 lo maneja
+        // downloadIndividualAuditReport.
+        const isAdmin = this.isAdminRole?.() === true;
+        const myIds = new Set([this.currentUser?.id, this.session?.user?.id].filter(Boolean).map(String));
+        const canDownloadAudit = (audit) => {
+            const ownerId = String(audit?.supervisor_id || '').trim();
+            return isAdmin || !ownerId || myIds.size === 0 || myIds.has(ownerId);
+        };
+
         const parseCivilDate = (value) => {
             const [y, m, d] = String(value || '').split('-').map(Number);
             return Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d) ? new Date(y, m - 1, d, 12, 0) : null;
@@ -5681,7 +5693,13 @@ export const supervisorMethods = {
                         ${shortObservations ? `<p class="muted-copy" style="margin:6px 0 0;font-size:13px;">“${escapeHtml(shortObservations)}”</p>` : ''}
                     </div>
                 </div>
-                ${auditId ? `
+                ${auditId && !canDownloadAudit(audit) ? `
+                <div class="report-visit-actions">
+                    <span class="muted-copy" style="font-size:12px;"><i class="fas fa-lock"></i> Solo el inspector que la hizo puede descargar su informe</span>
+                    <span class="report-visit-index">Auditoría #${index + 1}</span>
+                </div>
+                ` : ''}
+                ${auditId && canDownloadAudit(audit) ? `
                 <div class="report-visit-actions">
                     <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualAuditReport" data-args="${escapeHtml(auditId)}|pdf">
                         <i class="fas fa-file-pdf"></i> PDF
