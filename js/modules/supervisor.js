@@ -3404,9 +3404,11 @@ export const supervisorMethods = {
             this.invalidateScopedCache('supervisorRestaurantStaff');
             this.invalidateScopedCache('supervisorAssignableEmployees');
 
+            // loadSupervisorShifts se eliminó en la migración a Visitas
+            // (0c31f0d, 2026-08-12) pero esta llamada quedó: el sitio se
+            // borraba OK y después el refresh tiraba TypeError → toast de error.
             await Promise.all([
                 this.loadSupervisorRestaurants(true),
-                this.loadSupervisorShifts(true),
                 this.loadSupervisorDashboard(),
                 this.isAdminRole() ? this.loadAdminDashboard() : Promise.resolve(),
             ]);
@@ -3416,7 +3418,7 @@ export const supervisorMethods = {
                 title: t('toast.common.deleted'),
             });
         } catch (error) {
-            const title = this.isAdminRole() ? 'No fue posible eliminar el sitio' : 'Permiso insuficiente';
+            const title = error?.status === 403 ? 'Permiso insuficiente' : 'No fue posible eliminar el sitio';
             this.showToast(this.getErrorMessage(error, 'No fue posible eliminar el sitio.'), {
                 tone: 'error',
                 title,
@@ -3777,9 +3779,9 @@ export const supervisorMethods = {
             this.invalidateCache('supervisorEmployees', 'supervisorShifts');
             this.invalidateScopedCache('supervisorAssignableEmployees');
 
+            // Ver deactivateRestaurant: loadSupervisorShifts ya no existe.
             await Promise.all([
                 this.loadSupervisorEmployees(true),
-                this.loadSupervisorShifts(true),
                 this.loadSupervisorDashboard(),
             ]);
 
