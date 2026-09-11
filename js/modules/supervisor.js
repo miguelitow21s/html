@@ -5630,6 +5630,185 @@ export const supervisorMethods = {
         }
     },
 
+    // Informe de auditoría: una tarjeta por auditoría del rango, cada una con
+    // su PDF/Excel individual. Mismo diseño que "Visitas del período".
+    renderAuditReportList(rows) {
+        const wrap = document.getElementById('audit-report-list-wrap');
+        const list = document.getElementById('audit-report-list');
+        if (!wrap || !list) return;
+
+        const audits = asArray(rows)
+            .slice()
+            .sort((a, b) => new Date(b?.recorded_at || 0) - new Date(a?.recorded_at || 0));
+        if (audits.length === 0) {
+            wrap.classList.add('hidden');
+            list.innerHTML = '';
+            return;
+        }
+        wrap.classList.remove('hidden');
+
+        const parseCivilDate = (value) => {
+            const [y, m, d] = String(value || '').split('-').map(Number);
+            return Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d) ? new Date(y, m - 1, d, 12, 0) : null;
+        };
+
+        list.innerHTML = audits
+            .map((audit, index) => {
+                const auditId = String(audit?.audit_id ?? '').trim();
+                const civilDate = parseCivilDate(audit?.local_date);
+                const dateText =
+                    [
+                        civilDate
+                            ? formatDate(civilDate, { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
+                            : '',
+                        String(audit?.local_time || '').trim(),
+                    ]
+                        .filter(Boolean)
+                        .join(' · ') || 'Fecha no disponible';
+                const evidenceCount = Number(audit?.evidence_count ?? asArray(audit?.evidences).length) || 0;
+                const evidenceText = evidenceCount === 1 ? '1 evidencia' : `${evidenceCount} evidencias`;
+                const observations = String(audit?.observations || '').trim();
+                const shortObservations = observations.length > 140 ? `${observations.slice(0, 140)}…` : observations;
+                return `<article class="report-day-shift-card">
+                <div class="report-day-shift-top">
+                    <div style="flex:1; min-width:0;">
+                        <div class="report-visit-date">${escapeHtml(dateText)}</div>
+                        <div class="report-visit-meta">
+                            <span><i class="fas fa-store"></i> ${escapeHtml(audit?.restaurant_name || 'Sitio sin nombre visible')}</span>
+                            <span><i class="fas fa-user"></i> ${escapeHtml(audit?.supervisor_name || 'Inspector sin nombre visible')}</span>
+                            <span><i class="fas fa-camera"></i> ${escapeHtml(evidenceText)}</span>
+                        </div>
+                        ${shortObservations ? `<p class="muted-copy" style="margin:6px 0 0;font-size:13px;">“${escapeHtml(shortObservations)}”</p>` : ''}
+                    </div>
+                </div>
+                ${auditId ? `
+                <div class="report-visit-actions">
+                    <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualAuditReport" data-args="${escapeHtml(auditId)}|pdf">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-inline" data-action="downloadIndividualAuditReport" data-args="${escapeHtml(auditId)}|excel">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                    <span class="report-visit-index">Auditoría #${index + 1}</span>
+                </div>
+                ` : ''}
+            </article>`;
+            })
+            .join('');
+    },
+
+    // Informe individual de UNA auditoría. Contrato backend (2026-09):
+    // reports_generate { report_type: 'audits', audit_id, export_format }.
+    // Con audit_id el período se deriva de la auditoría. La supervisora solo
+    // puede las suyas (403 FORBIDDEN); inexistente → 404 AUDIT_NOT_FOUND.
+    // Mismo manejo de popup que downloadIndividualShiftReport (Safari iOS).
+    async downloadIndividualAuditReport(auditIdArg, formatArg = 'pdf') {
+        const auditId = String(auditIdArg ?? '').trim();
+        const format = formatArg === 'excel' ? 'excel' : 'pdf';
+        if (!auditId) {
+            this.showToast('No se pudo identificar la auditoría.', { tone: 'error', title: 'Auditoría no válida' });
+            return;
+        }
+
+        // Abrir la pestaña SINCRÓNICO, antes de cualquier await: después
+        // Safari iOS ya no lo considera gesto del usuario y lo bloquea.
+        const previewWindow = window.open('about:blank', '_blank');
+        if (previewWindow && !previewWindow.closed) {
+            try {
+                previewWindow.document.open();
+                previewWindow.document.write(`<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Generando informe...</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f172a; color: #e2e8f0; text-align: center; padding: 24px; }
+    .spinner { width: 48px; height: 48px; border-radius: 50%; border: 4px solid rgba(148,163,184,0.25);
+        border-top-color: #38bdf8; margin: 0 auto 20px; animation: spin 0.9s linear infinite; }
+    h1 { font-size: 18px; font-weight: 600; margin: 0 0 8px; }
+    p { font-size: 14px; color: #94a3b8; margin: 0; line-height: 1.4; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style></head>
+<body><div style="max-width:320px"><div class="spinner"></div>
+<h1>Generando el informe de la auditoría...</h1>
+<p>Se abrirá aquí automáticamente en unos segundos. No cierres esta pestaña.</p></div></body></html>`);
+                previewWindow.document.close();
+            } catch (writeError) {
+                console.warn('[audit-individual-report] no se pudo pintar placeholder', writeError);
+            }
+        }
+        const closePreview = () => {
+            if (previewWindow && !previewWindow.closed) {
+                try {
+                    previewWindow.close();
+                } catch (_) {
+                    /* ignore */
+                }
+            }
+        };
+
+        this.showLoading('Generando informe', 'Preparando el informe de la auditoría.');
+        try {
+            const accessToken = await this.getValidAccessToken();
+            apiClient.setAccessToken(accessToken);
+            const numericId = Number(auditId);
+            const payload = {
+                report_type: 'audits',
+                audit_id: Number.isFinite(numericId) && String(numericId) === auditId ? numericId : auditId,
+                export_format: 'both',
+            };
+            const result = await apiClient.reportsGenerate(payload, {
+                accessToken,
+                requiresIdempotency: false,
+                headers: { 'Idempotency-Key': buildIdempotencyKey() },
+                timeoutMs: 45000,
+            });
+            const url = format === 'pdf' ? result?.url_pdf : result?.url_excel;
+            if (!url) {
+                closePreview();
+                this.showToast(`El backend no devolvió el ${format.toUpperCase()} de esta auditoría.`, {
+                    tone: 'error',
+                    title: 'Descarga no disponible',
+                });
+                return;
+            }
+            if (previewWindow && !previewWindow.closed) {
+                try {
+                    previewWindow.location.href = url;
+                    try {
+                        previewWindow.opener = null;
+                    } catch (_) {
+                        /* ignore */
+                    }
+                } catch (assignError) {
+                    console.warn('[audit-individual-report] no se pudo asignar url al popup', assignError);
+                    this.openInNewTab(url);
+                }
+            } else {
+                this.openInNewTab(url);
+            }
+        } catch (error) {
+            closePreview();
+            const status = Number(error?.status);
+            const code = String(this.getErrorCode?.(error) || '').toUpperCase();
+            if (status === 403 || code === 'FORBIDDEN') {
+                this.showToast('Solo puedes descargar el informe individual de tus propias auditorías.', {
+                    tone: 'warning',
+                    title: 'Auditoría de otro inspector',
+                });
+            } else if (status === 404 || code === 'AUDIT_NOT_FOUND') {
+                this.showToast('Esta auditoría ya no existe.', { tone: 'warning', title: 'Auditoría no encontrada' });
+            } else {
+                this.showToast(this.getErrorMessage(error, 'No fue posible generar el informe de la auditoría.'), {
+                    tone: 'error',
+                    title: 'Error',
+                });
+            }
+        } finally {
+            this.hideLoading();
+        }
+    },
+
     normalizeReportFilterValue(rawValue, { numeric = false } = {}) {
         const normalized = String(rawValue || '').trim();
         if (!normalized) return undefined;
@@ -5937,8 +6116,9 @@ export const supervisorMethods = {
             if (summaryCopy) {
                 summaryCopy.textContent = totalAudits === 0
                     ? 'Sin auditorías en el rango seleccionado.'
-                    : `${totalAudits} auditoría(s) con ${totalEvidences} evidencia(s). Descarga el PDF o el Excel abajo.`;
+                    : `${totalAudits} auditoría(s) con ${totalEvidences} evidencia(s). Descarga el informe del período completo o el de cada auditoría abajo.`;
             }
+            this.renderAuditReportList(rows);
         } catch (error) {
             this.showToast(this.getErrorMessage(error, 'No fue posible generar el informe de auditorías.'), {
                 tone: 'error',

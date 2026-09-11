@@ -1691,6 +1691,17 @@
                             <i class="fas fa-file-excel"></i> Descargar Excel
                         </button>
                     </div>
+
+                    <!-- Una tarjeta por auditoría con su PDF/Excel individual
+                         (reports_generate con audit_id), igual que "Visitas
+                         del período" en el informe de visitas. -->
+                    <div id="audit-report-list-wrap" class="report-day-evidence hidden" style="margin-top:16px;">
+                        <div class="report-day-evidence-header">
+                            <h4>Auditorías del período</h4>
+                            <p class="muted-copy">Cada auditoría tiene su propio informe con evidencias.</p>
+                        </div>
+                        <div id="audit-report-list" class="report-day-evidence-list"></div>
+                    </div>
                 </div>
             </div>
 
