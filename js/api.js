@@ -1,4 +1,39 @@
 // @ts-nocheck
+/**
+ * ============================================================================
+ * api.js — Cliente único del backend (apiClient)
+ * ============================================================================
+ *
+ * QUÉ ES
+ *   El ÚNICO lugar que habla con el backend. No hay servidor propio: todo son
+ *   Supabase Edge Functions en <supabaseUrl>/functions/v1/<nombre>
+ *   (configurado en public/config.js). Se usa así:
+ *     import { apiClient } from './api.js';
+ *     const data = await apiClient.operationalTasksManage('list_pending', { limit: 200 });
+ *
+ * CONVENCIÓN DE LAS EDGE FUNCTIONS
+ *   Casi todas reciben { action: 'verbo', ...datos } por POST y responden
+ *   { success, data, error, request_id }. callAction(endpoint, action, datos)
+ *   arma ese cuerpo. request() devuelve directamente `data`.
+ *
+ * QUÉ HACE request() POR VOS
+ *   - Headers: apikey (anon), Authorization Bearer, Idempotency-Key (NUEVA en
+ *     cada pedido; reusar una da 409), x-device-fingerprint y, en operaciones
+ *     con OTP (requiresOtp), x-shift-otp-token.
+ *   - Timeout (15 s por defecto, configurable por pedido con timeoutMs).
+ *   - Si responde 401 por token vencido, refresca el token y reintenta UNA vez.
+ *   - Si falla, lanza un Error con { status, code, error_code, requestId,
+ *     payload }. Para mostrarlo al usuario: app.getErrorMessage(error).
+ *
+ * LÍMITES DEL BACKEND A RECORDAR
+ *   - operational_tasks_manage valida limit <= 200 (con más responde 422).
+ *   - reports_generate con report_type 'audits' acepta audit_id para el
+ *     informe de UNA auditoría (la supervisora solo las suyas → 403).
+ *
+ * El id de dispositivo (fingerprint) se guarda en localStorage: en un
+ * dominio nuevo, cada celular aparece como dispositivo nuevo.
+ */
+
 import { STORAGE_KEYS, scopedConsole } from './constants.js';
 
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -11,6 +46,12 @@ export { STORAGE_KEYS };
 
 // Rebind local para que console.* dentro de este módulo respete el debug gate.
 const console = scopedConsole;
+
+// ==========================================================================
+// SECCIÓN: Helpers internos (storage, URLs, ids, errores)
+// --------------------------------------------------------------------------
+// buildIdempotencyKey() genera una clave nueva por pedido.
+// ==========================================================================
 
 function getStorage() {
     if (typeof window === 'undefined') {
@@ -155,6 +196,16 @@ export function getOrCreateDeviceFingerprint() {
     writeStoredValue(STORAGE_KEYS.deviceFingerprint, fingerprint);
     return fingerprint;
 }
+
+// ==========================================================================
+// SECCIÓN: Cliente (WorkTraceApiClient)
+// --------------------------------------------------------------------------
+// Adentro, en orden: configuración y token → buildHeaders/request (el
+// núcleo) → un método por Edge Function (auth, dispositivo y OTP,
+// contratista, evidencias, tareas, auditoría, admin, informes, ajustes).
+// Para agregar un endpoint nuevo: un método que llame a
+// this.callAction('/nombre_funcion', action, datos, opciones).
+// ==========================================================================
 
 export class WorkTraceApiClient {
     constructor(config = {}) {

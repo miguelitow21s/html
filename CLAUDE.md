@@ -70,7 +70,7 @@ Se sirve estático desde `public/`, editable sin rebuild. Valores actuales:
 Convención: cada endpoint recibe `{ action: 'verbo', ...payload }` y responde JSON. Cliente en `js/api.js`.
 
 - `shifts_start` — inicia visita ad-hoc (solo `restaurant_id` requerido)
-- `shifts_complete` — finaliza visita (envía evidencias fin, notas)
+- `shifts_end` — finaliza visita (`apiClient.endShift`, pide OTP). No existe `shifts_complete` en el front.
 - `shifts_upload_evidence` — sube foto (start o end), asocia a subárea
 - `operational_tasks_manage` — CRUD tareas especiales
   - actions: `list`, `list_my_open`, `create`, `update`, `complete`, `list_evidences`

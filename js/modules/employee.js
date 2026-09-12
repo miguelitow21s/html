@@ -1,4 +1,33 @@
 // @ts-nocheck
+/**
+ * ============================================================================
+ * modules/employee.js — Contratista (rol "empleado")
+ * ============================================================================
+ *
+ * QUÉ ES
+ *   Todo lo que hace el contratista en el celular. Se mezcla en el objeto
+ *   `app` de app.js con Object.assign (`this` es la app completa). Solo lo
+ *   carga el rol contratista: lo que también necesite el inspector tiene que
+ *   ir en app.js.
+ *
+ * RECORRIDO DE UNA VISITA
+ *   1. Dashboard: si el GPS lo ubica dentro de un sitio, aparece "Sitio
+ *      disponible" con el botón Iniciar (findNearbyVisitableRestaurants).
+ *   2. startAdHocVisit → apiClient.startShift (/shifts_start, pide OTP),
+ *      solo con restaurant_id.
+ *   3. Fotos iniciales: 1 por subárea. Cada foto se sube en segundo plano
+ *      apenas se toma (subida progresiva). completeShiftStartPhotos valida
+ *      slot por slot y pasa a "Servicio en Curso" (cronómetro).
+ *   4. Tareas especiales del sitio: se responden desde Servicio en Curso
+ *      (máx. 5 fotos + 2 videos de 30 s).
+ *   5. "He terminado la tarea" → fotos finales + observaciones →
+ *      finalizeShift → apiClient.endShift (/shifts_end, pide OTP).
+ *
+ * OJO
+ *   El cronómetro (startTimer, stopTimer, parseShiftTimestamp…) está
+ *   definido aquí Y en app.js; para el contratista gana esta copia.
+ */
+
 import { CACHE_TTLS, DEFAULT_SYSTEM_SETTINGS, SUPPORTED_EVIDENCE_IMAGE_ACCEPT, scopedConsole } from '../constants.js';
 
 // Rebind local: console.info/warn/log noop en prod (habilita con
@@ -30,6 +59,13 @@ import {
 } from '../utils.js';
 
 export const employeeMethods = {
+    // ==========================================================================
+    // SECCIÓN: Dashboard del contratista: carga de datos
+    // --------------------------------------------------------------------------
+    // Trae el dashboard del backend (servicio activo, tareas, sitios
+    // visitables) y lo pinta con renderEmployeeDashboard (en app.js).
+    // ==========================================================================
+
     async loadEmployeeDashboard(force = false) {
         if (
             !force &&
@@ -156,6 +192,16 @@ export const employeeMethods = {
         }
         this.updateUserUI();
     },
+
+    // ==========================================================================
+    // SECCIÓN: Visitas ad-hoc: "Sitio disponible" e iniciar visita
+    // --------------------------------------------------------------------------
+    // No hay turnos agendados: el contratista inicia una visita en el sitio
+    // donde está. findNearbyVisitableRestaurants cruza su GPS con
+    // visitable_restaurants del dashboard. La tarjeta muestra el nombre del
+    // sitio y un botón "Iniciar"; el botón lleva aria-label con el nombre para
+    // diferenciar cuando hay varios sitios cerca.
+    // ==========================================================================
 
     haversineMeters(lat1, lng1, lat2, lng2) {
         const R = 6371000; // metros
@@ -365,6 +411,15 @@ export const employeeMethods = {
         }
     },
 
+    // ==========================================================================
+    // SECCIÓN: Tareas del contratista: listado y tarea principal
+    // --------------------------------------------------------------------------
+    // filterEmployeeTasksByKnownShifts NO filtra (devuelve todo): con visitas
+    // ad-hoc el contratista puede tener tareas en cualquier sitio y el backend
+    // ya filtra por usuario. No volver a agregarle un filtro: un contratista
+    // con una tarea en un sitio nuevo dejaría de verla.
+    // ==========================================================================
+
     filterEmployeeTasksByKnownShifts(tasks = []) {
         // Post-migracion Visitas: este filtro descarta tareas cuyo
         // restaurant_id no este en el scope "conocido" (scheduled_shifts +
@@ -455,6 +510,12 @@ export const employeeMethods = {
         return shiftOnly(this.filterEmployeeTasksByKnownShifts(asArray(dashboard?.pending_tasks_preview), dashboard));
     },
 
+    // ==========================================================================
+    // SECCIÓN: Perfil del contratista
+    // --------------------------------------------------------------------------
+    // Datos del perfil y sus tareas.
+    // ==========================================================================
+
     async loadEmployeeProfile(force = false) {
         if (!this.data.employee.dashboard || force) {
             await this.loadEmployeeDashboard(force);
@@ -543,6 +604,13 @@ export const employeeMethods = {
         const visibleTasks = this.getVisibleEmployeeTasks(this.data.employee.dashboard);
         return visibleTasks[0] || null;
     },
+
+    // ==========================================================================
+    // SECCIÓN: Inicio de visita: pantalla de fotos iniciales
+    // --------------------------------------------------------------------------
+    // Prepara la grilla (1 slot por subárea del sitio) y la tarjeta de tarea
+    // especial que se muestra al finalizar.
+    // ==========================================================================
 
     async openEmployeeShiftStart() {
         this.showLoading(t('toast.verifying.service'), t('toast.verifying.service.desc'));
@@ -818,6 +886,20 @@ export const employeeMethods = {
     // Flujo: al tomar foto (processPhotoFile type='start'|'end') se dispara
     // enqueueEmployeeSlotUpload en background. completeShiftStartPhotos /
     // completeShift esperan solo las pendientes con awaitAllEmployeeUploads.
+
+    // ==========================================================================
+    // SECCIÓN: Subida progresiva de evidencias (en segundo plano)
+    // --------------------------------------------------------------------------
+    // Cada foto se sube apenas se toma, en vez de subir todas juntas al final
+    // (antes eran 60-90 s de espera con 20-50 fotos).
+    // Estado: Maps _employeeStartUploads / _employeeEndUploads / _employeeObsUploads
+    // (slot → { status, promise, path }). Se inicializan de forma perezosa en
+    // cada enqueue*: si se retoma un servicio sin pasar por resetShiftState,
+    // siguen funcionando.
+    // Si el OTP vence a mitad de camino, runWithOtpRetry → retryWithFreshOtp
+    // (app.js), que tiene un mutex para abrir un solo modal de OTP.
+    // updateEmployeeUploadBadge muestra ⏳ / ✓ / ⚠ en cada miniatura.
+    // ==========================================================================
 
     resetEmployeeProgressiveState() {
         this._employeeStartUploads = new Map();
@@ -1120,6 +1202,14 @@ export const employeeMethods = {
         } catch (_) { /* ignore */ }
     },
 
+    // ==========================================================================
+    // SECCIÓN: Completar fotos iniciales (con respaldo en lote)
+    // --------------------------------------------------------------------------
+    // completeShiftStartPhotos: valida que cada slot tenga foto, espera las
+    // subidas en segundo plano (awaitAllEmployeeUploads) y reintenta en lote
+    // (uploadShiftEvidenceBatch) solo las que fallaron.
+    // ==========================================================================
+
     async uploadShiftEvidenceBatch(type, filesMap, uploadedMap) {
         const entries = Object.entries(filesMap).filter(([area, file]) => file && !uploadedMap[area]);
         const shiftId = this.data.currentShift?.id;
@@ -1309,6 +1399,15 @@ export const employeeMethods = {
             this.hideLoading();
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Servicio en curso y finalizar visita
+    // --------------------------------------------------------------------------
+    // navigateToShiftCompletion → fotos finales y resumen (prepareShiftSummary).
+    // Observaciones: máx. 5 fotos + 2 videos de 30 s, validados al agregarlos.
+    // finalizeShift: espera las subidas, sube lo que falte y cierra la visita
+    // con apiClient.endShift (/shifts_end). showSuccessScreen al terminar.
+    // ==========================================================================
 
     updateCleaningUI() {
         const shift = this.data.currentShift || this.data.currentScheduledShift;
@@ -2000,6 +2099,13 @@ export const employeeMethods = {
         this.resetShiftState();
     },
 
+    // ==========================================================================
+    // SECCIÓN: Cronómetro del servicio (copia del contratista)
+    // --------------------------------------------------------------------------
+    // Mismas funciones que en app.js. Para el contratista gana ESTA copia; si
+    // cambias la lógica del cronómetro, cámbiala en los dos lados.
+    // ==========================================================================
+
     parseShiftTimestamp(value) {
         if (!value) {
             return Number.NaN;
@@ -2100,6 +2206,16 @@ export const employeeMethods = {
             display.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Tareas especiales del sitio (tarjetas en Servicio en Curso)
+    // --------------------------------------------------------------------------
+    // buildRestaurantTaskCardHtml pinta cada tarea (con la foto o el video de
+    // instrucciones del inspector). initRestaurantTaskDelegation maneja sus
+    // botones con data-rtask-action. Al responder: máximo 5 fotos + 2 videos de
+    // 30 s, contados contra lo que ya está adjunto. employeeCompleteRestaurantTask
+    // sube la evidencia y cierra la tarea.
+    // ==========================================================================
 
     toggleSpecialTask() {
         return null;
@@ -2536,6 +2652,15 @@ export const employeeMethods = {
         if (httpCode === 404) return 'La tarea no fue encontrada.';
         return this.getErrorMessage(error, fallback);
     },
+
+    // ==========================================================================
+    // SECCIÓN: Cambio de teléfono desde el perfil (con OTP)
+    // --------------------------------------------------------------------------
+    // profile_phone_change_request → llega un código → profile_phone_change_confirm.
+    // Usa su propio validador (_validatePhoneE164), NO normalizePhoneToE164 de
+    // utils.js: no limpia los caracteres invisibles de iOS ni acepta el número
+    // sin "+".
+    // ==========================================================================
 
     openPhoneChangeModal() {
         this._phoneChangePendingNumber = '';

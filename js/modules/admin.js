@@ -1,4 +1,22 @@
 // @ts-nocheck
+/**
+ * ============================================================================
+ * modules/admin.js — Super administrador (rol "super_admin")
+ * ============================================================================
+ *
+ * QUÉ ES
+ *   Pantallas exclusivas del super_admin. Se mezcla en el objeto `app` de
+ *   app.js con Object.assign. El super_admin también carga supervisor.js
+ *   (puede ver la app "como inspector") y adminModals.js.
+ *
+ * FUNCIONALIDADES (busca "SECCIÓN:")
+ *   - Dashboard del admin.
+ *   - Seguimiento de Inspecciones: tarjetas de "Seguimiento hoy" (auditorías,
+ *     inspectores activos, sitios visitados, evidencias) con filtro por
+ *     inspector, y el modal de evidencias de cada auditoría.
+ *   - Gestión de inspectores: crear, editar, activar/desactivar.
+ */
+
 import { apiClient } from '../api.js';
 import { CACHE_TTLS, ROLE_LABELS, scopedConsole } from '../constants.js';
 
@@ -23,6 +41,12 @@ import {
 } from '../utils.js';
 
 export const adminMethods = {
+    // ==========================================================================
+    // SECCIÓN: Dashboard del admin y métricas
+    // --------------------------------------------------------------------------
+    // Carga y pinta las métricas generales.
+    // ==========================================================================
+
     async loadAdminDashboard() {
         const restaurants = await this.ensureAdminRestaurants();
         // Guards: los containers #admin-metrics-summary y #admin-supervisions-list
@@ -142,6 +166,14 @@ export const adminMethods = {
             </div>
         `;
     },
+
+    // ==========================================================================
+    // SECCIÓN: Seguimiento de Inspecciones (auditorías de hoy)
+    // --------------------------------------------------------------------------
+    // Trae las auditorías, arma el filtro por inspector y pinta la lista y
+    // las tarjetas de "Seguimiento hoy" (renderAdminSupervisionMonitorSummary).
+    // showAdminSupervisionEvidencesModal muestra las fotos de una auditoría.
+    // ==========================================================================
 
     async fetchAdminSupervisions(restaurants, options = {}) {
         if (this.cache.adminSupervisionsUnavailable) {
@@ -814,6 +846,14 @@ export const adminMethods = {
         }
     },
 
+    // ==========================================================================
+    // SECCIÓN: Gestión de inspectores
+    // --------------------------------------------------------------------------
+    // Formulario de crear/editar inspector (submitAdminSupervisorForm), lista
+    // y activar/desactivar. El teléfono se normaliza con normalizePhoneToE164
+    // (utils.js) antes de validarlo.
+    // ==========================================================================
+
     populateAdminSupervisorRestaurantFilter() {
         const select = document.getElementById('admin-supervisor-restaurant-filter');
         if (!select) {
@@ -1193,6 +1233,12 @@ export const adminMethods = {
     // adminAction() eliminado: los 2 botones que lo usaban ahora hacen
     // data-action="navigate" directo con la ruta real (admin-supervisors,
     // admin-supervision-monitor). Sin call-sites externos.
+
+    // ==========================================================================
+    // SECCIÓN: Varios
+    // --------------------------------------------------------------------------
+    // updateDebugInfo repite la de app.js (idéntica); para el admin gana esta.
+    // ==========================================================================
 
     showNotification() {
         const backendStatus = this.backend.connected ? 'Sistema listo' : 'Sistema en revisión';

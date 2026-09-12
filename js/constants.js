@@ -1,4 +1,21 @@
 // @ts-nocheck
+/**
+ * ============================================================================
+ * constants.js — Constantes compartidas
+ * ============================================================================
+ *   STORAGE_KEYS        claves de localStorage (sesión, dispositivo, estado del servicio)
+ *   ROLE_ROUTES         rol → dashboard ('empleado' → employee-dashboard…)
+ *   ROLE_LABELS         rol → nombre visible ("Inspector de Calidad"…)
+ *   REPORT_COLUMNS      columnas del informe de visitas
+ *   AREA_META / AREA_SUBAREAS / AREA_GROUP_ALIASES  áreas de limpieza por defecto y alias
+ *   DEFAULT_SYSTEM_SETTINGS  ajustes por defecto si el backend no manda los suyos
+ *   CACHE_TTLS          cuánto dura cada dato en caché (ver isCacheFresh en app.js)
+ *   SUPPORTED_EVIDENCE_IMAGE_*  tipos de imagen aceptados como evidencia
+ *   scopedConsole       console que en producción silencia info/warn/log (error
+ *                       siempre se ve). Se activa con WORKTRACE_CONFIG.debugConsole = true
+ *                       o en localhost.
+ */
+
 
 export const STORAGE_KEYS = Object.freeze({
     // Estado de sesión / user

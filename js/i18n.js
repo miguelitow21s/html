@@ -1,4 +1,23 @@
 // @ts-nocheck
+/**
+ * ============================================================================
+ * i18n.js — Textos de la interfaz (español / inglés)
+ * ============================================================================
+ *
+ *   TRANSLATIONS.es / TRANSLATIONS.en: diccionario clave → texto.
+ *   t('clave', { nombre: 'x' }) → texto en el idioma actual; reemplaza
+ *     {nombre} por el valor. Si la clave no existe en inglés usa la de
+ *     español, y si tampoco existe devuelve la clave tal cual.
+ *   En el HTML: data-i18n="clave" (texto), data-i18n-placeholder,
+ *     data-i18n-aria-label.
+ *
+ * OJO: applyTranslations() corre al cambiar de pantalla y REEMPLAZA el
+ * texto de todo elemento con data-i18n. Si un texto se cambia por JS, no
+ * le pongas data-i18n (o se pisa).
+ * Muchos textos están escritos directo en el HTML/JS en español y no pasan
+ * por aquí; para cambiarlos hay que editarlos donde están.
+ */
+
 const STORAGE_KEY = 'worktrace_lang';
 
 export const TRANSLATIONS = {
