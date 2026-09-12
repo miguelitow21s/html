@@ -193,18 +193,6 @@ const app = {
     cleaningAreaGroups: {},
     selectedEmployeeAreas: [],
     activeEmployeeArea: '',
-    supervisorShiftMode: 'single',
-    supervisorBatchSelectedEmployees: [],
-    supervisorShiftPlanRows: [],
-    supervisorShiftPlanRowCounter: 0,
-    supervisorShiftPlanWeekStart: '',
-    supervisorCurrentWeekStart: null,
-    supervisorShiftFilters: {
-        employeeId: '',
-        date: '',
-        restaurantId: '',
-        search: '',
-    },
     supervisorEmployeesStatusFilter: 'all',
     selectedSupervisorArea: '',
     selectedSupervisorShiftId: '',
@@ -214,9 +202,6 @@ const app = {
     restaurantTaskDraftSource: '',
     restaurantTaskSubmitPending: false,
     pendingUserDeactivateId: '',
-    pendingShiftCancellationId: '',
-    pendingShiftCancellationRequest: false,
-    supervisorShiftSubmitPending: false,
     pendingRestaurantDeactivateId: '',
     supervisionRegisterIdempotencyKey: '',
     supervisionRegisterRetrySignature: '',
@@ -363,18 +348,6 @@ const app = {
     // último que se pintó: si los datos no cambiaron, no se vuelve a pintar.
     // getPageNodes() devuelve todas las pantallas <div id="page-*">.
     // ==========================================================================
-
-    getUiSignature(key) {
-        return String(this.store.ui.signatures[key] || '');
-    },
-
-    setUiSignature(key, value) {
-        this.store.ui.signatures[key] = String(value || '');
-    },
-
-    clearUiSignature(key) {
-        delete this.store.ui.signatures[key];
-    },
 
     queueUiRender(componentKey) {
         if (!componentKey) {
@@ -722,9 +695,6 @@ const app = {
             if (typeof this.renderEmployeeDashboard === 'function' && this.currentPage === 'employee-dashboard') {
                 this.renderEmployeeDashboard();
             }
-            if (typeof this.renderSupervisorDashboard === 'function' && this.currentPage === 'supervisor-dashboard') {
-                this.renderSupervisorDashboard();
-            }
         } catch {
             // noop - rerender failures should not block language switch
         }
@@ -886,8 +856,8 @@ const app = {
     //    que lee otros data-* (ej. data-restaurant-id). Se usa cuando el clic
     //    necesita varios datos del elemento.
     //
-    // handleDelegatedChange / handleDelegatedInput hacen lo mismo para los
-    // eventos change/input.
+    // Para eventos change/input no hay delegador global: se enganchan con
+    // addEventListener sobre el elemento (aquí mismo o al renderizarlo).
     // ==========================================================================
 
     bindEvents() {
@@ -979,10 +949,6 @@ const app = {
             this.closeCameraCapture();
         });
 
-        document.getElementById('camera-close-btn')?.addEventListener('click', () => {
-            this.closeCameraCapture();
-        });
-
         document.getElementById('otp-resend-btn')?.addEventListener('click', async () => {
             await this.resendOtpChallenge();
         });
@@ -990,14 +956,6 @@ const app = {
         document.getElementById('otp-cancel-btn')?.addEventListener('click', () => {
             this.cancelOtpChallenge();
         });
-
-        const shiftForm = document.getElementById('supervisor-shift-form');
-        if (shiftForm) {
-            shiftForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                await this.submitSchedShiftForm();
-            });
-        }
 
         const adminRestaurantForm = document.getElementById('admin-restaurant-form');
         if (adminRestaurantForm) {
@@ -1050,64 +1008,6 @@ const app = {
             });
         }
 
-        const schedShiftRestaurant = document.getElementById('sched-shift-restaurant');
-        if (schedShiftRestaurant) {
-            schedShiftRestaurant.addEventListener('change', async () => {
-                await this.renderSchedShiftEmployeePicker(schedShiftRestaurant.value);
-                this.updateSchedShiftTimezoneHint?.(schedShiftRestaurant.value);
-            });
-        }
-
-        const schedShiftStartDate = document.getElementById('sched-shift-start-date');
-        const schedShiftEndDate = document.getElementById('sched-shift-end-date');
-        if (schedShiftStartDate) {
-            schedShiftStartDate.addEventListener('change', () => {
-                // Auto-sincronizar fecha fin con fecha inicio para que el default
-                // sea 1 turno (que puede cruzar medianoche por hora). Si el user
-                // quiere programar varios días, cambia explícitamente la fecha fin.
-                const endInput = document.getElementById('sched-shift-end-date');
-                if (endInput && (!endInput.value || endInput.value < schedShiftStartDate.value)) {
-                    endInput.value = schedShiftStartDate.value;
-                }
-                this.onSchedShiftDatesChange();
-            });
-        }
-        if (schedShiftEndDate) schedShiftEndDate.addEventListener('change', () => this.onSchedShiftDatesChange());
-
-        const schedShiftDefaultStart = document.getElementById('sched-shift-default-start');
-        const schedShiftDefaultEnd = document.getElementById('sched-shift-default-end');
-        if (schedShiftDefaultStart)
-            schedShiftDefaultStart.addEventListener('change', () => this.onSchedShiftDefaultTimeChange());
-        if (schedShiftDefaultEnd)
-            schedShiftDefaultEnd.addEventListener('change', () => this.onSchedShiftDefaultTimeChange());
-
-        const supervisorShiftEmployeeFilter = document.getElementById('supervisor-shifts-filter-employee');
-        if (supervisorShiftEmployeeFilter) {
-            supervisorShiftEmployeeFilter.addEventListener('change', () => {
-                this.supervisorShiftFilters.employeeId = supervisorShiftEmployeeFilter.value || '';
-                this.applySupervisorShiftFilters();
-            });
-        }
-
-        const supervisorShiftRestaurantFilter = document.getElementById('supervisor-shifts-filter-restaurant');
-        if (supervisorShiftRestaurantFilter) {
-            supervisorShiftRestaurantFilter.addEventListener('change', () => {
-                this.supervisorShiftFilters.restaurantId = supervisorShiftRestaurantFilter.value || '';
-                this.applySupervisorShiftFilters();
-            });
-        }
-
-        const supervisorShiftSearchFilter = document.getElementById('supervisor-shifts-filter-search');
-        if (supervisorShiftSearchFilter) {
-            let shiftSearchDebounce;
-            supervisorShiftSearchFilter.addEventListener('input', () => {
-                clearTimeout(shiftSearchDebounce);
-                this.supervisorShiftFilters.search = supervisorShiftSearchFilter.value || '';
-                shiftSearchDebounce = setTimeout(() => {
-                    this.applySupervisorShiftFilters();
-                }, 250);
-            });
-        }
 
         const supervisionRestaurantSelect = document.getElementById('supervision-restaurant-select');
         if (supervisionRestaurantSelect) {
@@ -1228,14 +1128,6 @@ const app = {
         document.addEventListener('click', (event) => {
             void this.handleDelegatedClick(event);
         });
-
-        document.addEventListener('change', (event) => {
-            this.handleDelegatedChange(event);
-        });
-
-        document.addEventListener('input', (event) => {
-            this.handleDelegatedInput(event);
-        });
     },
 
     async handleDelegatedClick(event) {
@@ -1284,36 +1176,6 @@ const app = {
                 await this.selectPhotoArea(slot, photoType);
                 return;
             }
-            case 'shift-plan-remove': {
-                const rowId = String(source.dataset.rowId || '').trim();
-                if (!rowId) {
-                    return;
-                }
-                event.preventDefault();
-                this.removeSupervisorShiftPlanRow(rowId);
-                return;
-            }
-            case 'shift-plan-add':
-                event.preventDefault();
-                this.addSupervisorShiftPlanRow();
-                return;
-            case 'shift-week-clear': {
-                const rowId = String(source.dataset.rowId || '').trim();
-                if (!rowId) {
-                    return;
-                }
-                event.preventDefault();
-                this.clearSupervisorShiftPlanWeekRow(rowId);
-                return;
-            }
-            case 'shift-week-replicate':
-                event.preventDefault();
-                this.replicateSupervisorShiftTemplate();
-                return;
-            case 'shift-week-import':
-                event.preventDefault();
-                this.openSupervisorShiftPlanExcelPicker();
-                return;
             case 'select-admin-restaurant-search-result': {
                 const index = Number(source.dataset.resultIndex);
                 if (!Number.isFinite(index)) {
@@ -1330,15 +1192,6 @@ const app = {
                 }
                 event.preventDefault();
                 this.confirmDeactivateUser(userId);
-                return;
-            }
-            case 'clear-phone-user': {
-                const userId = String(source.dataset.userId || '').trim();
-                if (!userId) {
-                    return;
-                }
-                event.preventDefault();
-                void this.handleClearPhoneUser(userId);
                 return;
             }
             case 'revoke-device-user': {
@@ -1379,15 +1232,6 @@ const app = {
                 void this.revokeTrustedDevice(supervisorId, { subjectName: userName });
                 return;
             }
-            case 'confirm-cancel-scheduled-shift': {
-                const shiftId = String(source.dataset.shiftId || '').trim();
-                if (!shiftId) {
-                    return;
-                }
-                event.preventDefault();
-                this.confirmCancelScheduledShift(shiftId);
-                return;
-            }
             case 'confirm-deactivate-restaurant': {
                 const restaurantId = String(source.dataset.restaurantId || '').trim();
                 if (!restaurantId) {
@@ -1426,15 +1270,6 @@ const app = {
                 this.beginEditAdminSupervisor(supervisorId);
                 return;
             }
-            case 'clear-phone-supervisor': {
-                const supervisorId = String(source.dataset.supervisorId || '').trim();
-                if (!supervisorId) {
-                    return;
-                }
-                event.preventDefault();
-                void this.handleClearPhoneSupervisor(supervisorId);
-                return;
-            }
             case 'admin-toggle-supervisor-status': {
                 const supervisorId = String(source.dataset.supervisorId || '').trim();
                 const currentlyActive =
@@ -1451,77 +1286,6 @@ const app = {
             default:
                 return;
         }
-    },
-
-    handleDelegatedChange(event) {
-        const source = event.target instanceof Element ? event.target.closest('[data-action]') : null;
-        if (!source) {
-            return;
-        }
-
-        const action = String(source.dataset.action || '').trim();
-        if (!action) {
-            return;
-        }
-
-        switch (action) {
-            case 'shift-batch-toggle': {
-                const employeeId = String(source.dataset.employeeId || '').trim();
-                if (!employeeId) {
-                    return;
-                }
-                this.toggleSupervisorBatchEmployee(employeeId, { rerender: false });
-                source.closest('.shift-batch-option')?.classList.toggle('active', source.checked === true);
-                return;
-            }
-            case 'shift-plan-field': {
-                const rowId = String(source.dataset.rowId || '').trim();
-                const field = String(source.dataset.field || '').trim();
-                if (!rowId || !field) {
-                    return;
-                }
-                this.updateSupervisorShiftPlanRow(rowId, field, source.value || '');
-                return;
-            }
-            case 'shift-week-field': {
-                const rowId = String(source.dataset.rowId || '').trim();
-                const field = String(source.dataset.field || '').trim();
-                if (!rowId || !field) {
-                    return;
-                }
-
-                const value = field === 'enabled' ? source.checked === true : source.value || '';
-                this.updateSupervisorShiftPlanWeekRow(rowId, field, value);
-                return;
-            }
-            default:
-                return;
-        }
-    },
-
-    handleDelegatedInput(event) {
-        const source = event.target instanceof Element ? event.target.closest('[data-action]') : null;
-        if (!source) {
-            return;
-        }
-
-        const action = String(source.dataset.action || '').trim();
-        if (!['shift-plan-field', 'shift-week-field'].includes(action)) {
-            return;
-        }
-
-        const rowId = String(source.dataset.rowId || '').trim();
-        const field = String(source.dataset.field || '').trim();
-        if (!rowId || !field) {
-            return;
-        }
-
-        if (action === 'shift-plan-field') {
-            this.updateSupervisorShiftPlanRow(rowId, field, source.value || '');
-            return;
-        }
-
-        this.updateSupervisorShiftPlanWeekRow(rowId, field, source.value || '');
     },
 
     // ==========================================================================
@@ -1705,9 +1469,6 @@ const app = {
         }
 
         try {
-            if (modalId === 'modal-supervisor-schedule-shift') {
-                await this.prepareSupervisorShiftModal?.();
-            }
             if (modalId === 'modal-admin-restaurant') {
                 await this.prepareAdminRestaurantModal?.();
             }
@@ -1753,12 +1514,6 @@ const app = {
         if (modalBody) {
             modalBody.scrollTop = 0;
             modalBody.scrollLeft = 0;
-        }
-
-        if (modalId === 'modal-supervisor-schedule-shift') {
-            window.requestAnimationFrame(() => {
-                this.resetSupervisorShiftModalScroll({ mode: this.supervisorShiftMode, forceTop: true });
-            });
         }
 
         if (modalId === 'modal-admin-restaurant') {
@@ -2201,30 +1956,6 @@ const app = {
         return /endpoint|request_id|payload|stack|trace|\/|http|https|\bstatus\b/i.test(value) || value.length > 260;
     },
 
-    buildErrorReportBundle(error, { endpoint = '', extra = null } = {}) {
-        const status = Number(error?.status);
-        const errorCode = this.getErrorCode(error);
-        const requestId = this.getErrorRequestIds(error);
-        const message = error?.payload?.error?.message || error?.payload?.message || error?.message || '';
-        const details = error?.payload?.error?.details || error?.payload?.details || null;
-
-        const bundle = {
-            timestamp: new Date().toISOString(),
-            endpoint: endpoint || error?.endpoint || error?.payload?.endpoint || '',
-            http_status: Number.isFinite(status) ? status : null,
-            error_code: errorCode || null,
-            request_id: requestId || null,
-            message,
-            details,
-        };
-
-        if (extra && typeof extra === 'object') {
-            bundle.extra = extra;
-        }
-
-        return bundle;
-    },
-
     isOtpSessionError(error) {
         const code = this.getErrorCode(error);
         // OTP_MISSING es el error LOCAL que lanza apiClient.buildHeaders cuando
@@ -2338,36 +2069,6 @@ const app = {
         return false;
     },
 
-    async copyErrorReport(error, options = {}) {
-        const bundle = this.buildErrorReportBundle(error, options);
-        const text = JSON.stringify(bundle, null, 2);
-        try {
-            if (navigator.clipboard?.writeText) {
-                await navigator.clipboard.writeText(text);
-            } else {
-                const tmp = document.createElement('textarea');
-                tmp.value = text;
-                document.body.appendChild(tmp);
-                tmp.select();
-                document.execCommand('copy');
-                document.body.removeChild(tmp);
-            }
-            this.showToast('Detalle copiado al portapapeles. Compártelo con soporte.', {
-                tone: 'success',
-                title: 'Detalle copiado',
-                duration: 3000,
-            });
-            return true;
-        } catch (copyError) {
-            console.warn('No fue posible copiar el detalle del error.', copyError);
-            this.showToast('No fue posible copiar. Toma un screenshot y envíalo a soporte.', {
-                tone: 'error',
-                title: 'No se pudo copiar',
-            });
-            return false;
-        }
-    },
-
     getShiftFinalizeDetailedErrorMessage(error) {
         if (!error) {
             return '';
@@ -2427,194 +2128,6 @@ const app = {
         ).toLowerCase();
 
         return message.includes('salida anticipada') && message.includes('motivo');
-    },
-
-    isEmployeeUnavailableInSchedule(error) {
-        const explicitCodes = [
-            error?.code,
-            error?.payload?.error?.code,
-            error?.payload?.code,
-            error?.payload?.error?.details?.code,
-            error?.payload?.details?.code,
-            error?.payload?.diagnostic_code,
-            error?.payload?.error?.diagnostic_code,
-        ]
-            .filter(Boolean)
-            .map((value) => String(value).toLowerCase());
-
-        const hasExplicitEmployeeAvailabilityCode = explicitCodes.some(
-            (code) =>
-                code.includes('employee_not_available') ||
-                code.includes('employee_unavailable') ||
-                code.includes('employee_schedule_conflict') ||
-                code.includes('shift_overlap') ||
-                code.includes('employee_shift_overlap')
-        );
-
-        if (hasExplicitEmployeeAvailabilityCode) {
-            return true;
-        }
-
-        const source = [
-            error?.message,
-            error?.payload?.error?.message,
-            error?.payload?.message,
-            error?.payload?.error?.details?.message,
-            error?.payload?.details?.message,
-            error?.code,
-            error?.payload?.error?.code,
-            error?.payload?.code,
-        ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
-
-        if (!source) {
-            return false;
-        }
-
-        const hasEmployeeReference = [
-            'contratista',
-            'contractor',
-            'empleado',
-            'employee',
-            'assigned_employee',
-            'asignado',
-        ].some((token) => source.includes(token));
-
-        const hasAvailabilityConflictReference = [
-            'no disponible',
-            'not available',
-            'ocupado',
-            'occupied',
-            'overlap',
-            'schedule conflict',
-            'conflicto de horario',
-            'ya tiene un servicio activo',
-            'ya existe un servicio activo',
-            'ya tiene un servicio asignado',
-            'servicio asignado en ese rango',
-            'ya tiene un turno programado',
-            'tiene un turno programado',
-            'turno programado en ese rango',
-            'already assigned',
-            'already has an active service',
-            'already has a scheduled shift',
-            'employee not available',
-            'contractor not available',
-        ].some((token) => source.includes(token));
-
-        return hasEmployeeReference && hasAvailabilityConflictReference;
-    },
-
-    isShiftStartOutsideWindow(error) {
-        const explicitCodes = [
-            error?.error_code,
-            error?.payload?.error?.error_code,
-            error?.payload?.error_code,
-            error?.payload?.error?.details?.error_code,
-            error?.payload?.details?.error_code,
-            error?.payload?.error?.code,
-            error?.payload?.code,
-            error?.code,
-        ]
-            .filter(Boolean)
-            .map((value) => String(value).toLowerCase());
-
-        if (explicitCodes.some((code) => code.includes('shift_start_outside_window'))) {
-            return true;
-        }
-
-        const source = [
-            error?.message,
-            error?.payload?.error?.message,
-            error?.payload?.message,
-            error?.payload?.error?.details?.message,
-            error?.payload?.details?.message,
-        ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
-
-        return (
-            source.includes('fuera de la ventana de servicio permitida') ||
-            source.includes('fuera de la ventana permitida para iniciar el turno') ||
-            source.includes('ventana de servicio vencida')
-        );
-    },
-
-    getShiftStartWindowErrorDetails(error) {
-        const details = error?.payload?.error?.details || error?.payload?.details || {};
-        const earliest = String(details?.earliest || '').trim();
-        const latest = String(details?.latest || '').trim();
-        return { earliest, latest };
-    },
-
-    getShiftStartWindowOutsideMessage(error) {
-        const { earliest, latest } = this.getShiftStartWindowErrorDetails(error);
-        if (!earliest || !latest) {
-            return 'El servicio está fuera de la ventana de acceso autorizada.';
-        }
-
-        const earliestLabel = formatDateTime(earliest);
-        const latestLabel = formatDateTime(latest);
-        if (earliestLabel === '-' || latestLabel === '-') {
-            return 'El servicio está fuera de la ventana de acceso autorizada.';
-        }
-
-        return `Puedes iniciar este servicio entre ${earliestLabel} y ${latestLabel}.`;
-    },
-
-    isOutsideAllowedShiftArea(error) {
-        const source = [
-            error?.message,
-            error?.payload?.error?.message,
-            error?.payload?.message,
-            error?.payload?.error?.details?.message,
-            error?.payload?.details?.message,
-            error?.payload?.error?.details?.code,
-            error?.payload?.details?.code,
-            error?.code,
-            error?.payload?.error?.code,
-            error?.payload?.code,
-        ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
-
-        if (!source) {
-            return false;
-        }
-
-        return [
-            'geofence',
-            'geo_fence',
-            'out_of_bounds',
-            'outside radius',
-            'outside_allowed_area',
-            'outside_assigned_area',
-            'outside allowed area',
-            'outside assigned area',
-            'outside geofence',
-            'radius exceeded',
-            'distance to restaurant',
-            'radio permitido',
-            'fuera del radio',
-            'fuera del radio permitido',
-            'fuera de la zona',
-            'fuera de la zona permitida',
-            'fuera del area',
-            'fuera del área',
-            'fuera del area permitida',
-            'fuera del área permitida',
-            'fuera del area asignada',
-            'fuera del área asignada',
-            'ubicacion invalida',
-            'ubicación inválida',
-            'ubicacion fuera de rango',
-            'ubicación fuera de rango',
-            'location mismatch',
-        ].some((token) => source.includes(token));
     },
 
     // ==========================================================================
@@ -3827,33 +3340,6 @@ const app = {
         }
     },
 
-    getScopedCacheEntry(mapName, key, ttl) {
-        const entry = this.cache[mapName]?.[key];
-        if (!entry) {
-            return null;
-        }
-
-        if (Date.now() - entry.timestamp > ttl) {
-            delete this.cache[mapName][key];
-            return null;
-        }
-
-        return entry.value;
-    },
-
-    setScopedCacheEntry(mapName, key, value) {
-        if (!this.cache[mapName]) {
-            this.cache[mapName] = {};
-        }
-
-        this.cache[mapName][key] = {
-            value,
-            timestamp: Date.now(),
-        };
-
-        return value;
-    },
-
     invalidateScopedCache(mapName, ...keys) {
         if (!this.cache[mapName]) {
             return;
@@ -4048,10 +3534,6 @@ const app = {
         const restaurant = this.getSupervisorSelectedRestaurant();
         this.cleaningAreaGroups = this.getSupervisorCleaningAreaGroups();
         return this.resolveCleaningAreas(restaurant, restaurant?.raw?.restaurant, restaurant?.raw);
-    },
-
-    getSupervisorSelectedAreas() {
-        return this.getSupervisorAvailableAreas();
     },
 
     populateSupervisorAreaOptions() {
@@ -5424,26 +4906,6 @@ const app = {
         }
     },
 
-    getEmployeeCurrentLocationText() {
-        if (this.locationAddress) {
-            return this.locationAddress;
-        }
-
-        const lat = Number(this.location?.lat);
-        const lng = Number(this.location?.lng);
-        const accuracy = Number(this.location?.accuracy);
-
-        if (Number.isFinite(lat) && Number.isFinite(lng)) {
-            const coords = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-            if (Number.isFinite(accuracy) && accuracy > 0) {
-                return `Actual: ${coords} (±${Math.round(accuracy)} m)`;
-            }
-            return `Actual: ${coords}`;
-        }
-
-        return 'Ubicación actual pendiente de verificar';
-    },
-
     toggleHealthCert() {
         setTimeout(() => {
             const checkbox = document.getElementById('health-cert');
@@ -5504,10 +4966,6 @@ const app = {
     getPhotoSlotDefinition(slotKey, type = 'start') {
         const catalog = type === 'supervision' ? this.supervisionPhotoCatalog : this.employeePhotoSlots;
         return catalog.find((slot) => slot.key === slotKey) || null;
-    },
-
-    renderPhotoGridForType(containerId, type, slots, emptyMessage = 'No hay áreas configuradas para fotografiar.') {
-        this.renderPhotoGridForTypeNow(containerId, type, slots, emptyMessage);
     },
 
     ensurePhotoSlotPlaceholder(slotNode, slot, type) {
@@ -6727,193 +6185,6 @@ const app = {
         this.updateSpecialTaskEvidenceUI();
     },
 
-    getEmployeePendingScheduledShift(shifts = []) {
-        const now = Date.now();
-        const closedStates = new Set([
-            'cancelado',
-            'cancelled',
-            'completed',
-            'completado',
-            'finalizado',
-            'finished',
-            'closed',
-            'done',
-            // Backend v3: turno auto-cerrado por pasar de scheduled_end sin start.
-            'auto_ended',
-            'expired',
-        ]);
-
-        const candidates = asArray(shifts)
-            .filter(Boolean)
-            .map((shift) => {
-                const status = String(shift?.status || shift?.state || '').toLowerCase();
-                if (closedStates.has(status)) {
-                    return null;
-                }
-
-                const startValue = shift?.scheduled_start || shift?.start_time;
-                const endValue = shift?.scheduled_end || shift?.end_time;
-                const startDate = startValue ? new Date(startValue) : null;
-                const endDate = endValue ? new Date(endValue) : null;
-                const startMs = startDate && !Number.isNaN(startDate.getTime()) ? startDate.getTime() : Number.NaN;
-                const endMs = endDate && !Number.isNaN(endDate.getTime()) ? endDate.getTime() : Number.NaN;
-
-                if (Number.isFinite(endMs) && endMs < now) {
-                    return null;
-                }
-
-                if (!Number.isFinite(endMs) && Number.isFinite(startMs) && startMs < now - ACTIVE_SHIFT_MATCH_WINDOW_MS) {
-                    return null;
-                }
-
-                if (!(shift?.id || shift?.scheduled_shift_id || startValue || endValue)) {
-                    return null;
-                }
-
-                return {
-                    shift,
-                    startMs,
-                    endMs,
-                };
-            })
-            .filter(Boolean)
-            .sort((left, right) => {
-                const leftHasStart = Number.isFinite(left.startMs);
-                const rightHasStart = Number.isFinite(right.startMs);
-
-                if (leftHasStart && !rightHasStart) {
-                    return -1;
-                }
-
-                if (!leftHasStart && rightHasStart) {
-                    return 1;
-                }
-
-                const leftIsFuture = leftHasStart && left.startMs >= now;
-                const rightIsFuture = rightHasStart && right.startMs >= now;
-
-                if (leftIsFuture !== rightIsFuture) {
-                    return leftIsFuture ? -1 : 1;
-                }
-
-                if (leftIsFuture && rightIsFuture) {
-                    return left.startMs - right.startMs;
-                }
-
-                if (leftHasStart && rightHasStart) {
-                    return right.startMs - left.startMs;
-                }
-
-                const leftEnd = Number.isFinite(left.endMs) ? left.endMs : Number.MAX_SAFE_INTEGER;
-                const rightEnd = Number.isFinite(right.endMs) ? right.endMs : Number.MAX_SAFE_INTEGER;
-                return leftEnd - rightEnd;
-            });
-
-        return candidates[0]?.shift || null;
-    },
-
-    getEmployeeShiftStartWindowState(shift, now = Date.now()) {
-        // Backend v3: NO hay límite inferior. El contratista puede iniciar el
-        // servicio cuando quiera antes del scheduled_end. Solo rechazamos si la
-        // ventana ya expiró (SCHEDULE_WINDOW_EXPIRED del backend).
-        const startWindow = shift?.start_window || shift?.startWindow || null;
-
-        const normalizeDateValue = (value) => {
-            const candidate = value ? new Date(value) : null;
-            return candidate && !Number.isNaN(candidate.getTime()) ? candidate.getTime() : Number.NaN;
-        };
-
-        if (!startWindow || typeof startWindow !== 'object') {
-            const scheduledEndMs = shift?.scheduled_end ? new Date(shift.scheduled_end).getTime() : Number.NaN;
-            if (Number.isFinite(scheduledEndMs)) {
-                const expired = now > scheduledEndMs;
-                return {
-                    tooEarly: false,
-                    expired,
-                    withinWindow: !expired,
-                    hasWindowContract: true,
-                    earliest: '',
-                    latest: new Date(scheduledEndMs).toISOString(),
-                    serverNow: '',
-                };
-            }
-
-            return {
-                tooEarly: false,
-                expired: false,
-                withinWindow: true,
-                hasWindowContract: false,
-                earliest: '',
-                latest: '',
-                serverNow: '',
-            };
-        }
-
-        const earliest = String(startWindow.earliest || startWindow.start || '').trim();
-        const latest = String(startWindow.latest || startWindow.end || '').trim();
-        const serverNow = String(startWindow.server_now || startWindow.serverNow || '').trim();
-        const latestMs = normalizeDateValue(latest);
-        const referenceNowMs = normalizeDateValue(serverNow);
-        const nowMs = Number.isFinite(referenceNowMs) ? referenceNowMs : now;
-        const rawCanStart = startWindow.can_start_now ?? startWindow.canStartNow;
-        const hasExplicitCanStart = typeof rawCanStart === 'boolean';
-
-        // Backend v3 puede enviar can_start_now=true incluso si aún no llegó
-        // el scheduled_start. Le hacemos caso si viene explícito.
-        if (hasExplicitCanStart && rawCanStart === true) {
-            return {
-                tooEarly: false,
-                expired: false,
-                withinWindow: true,
-                hasWindowContract: true,
-                earliest,
-                latest,
-                serverNow,
-            };
-        }
-
-        if (Number.isFinite(latestMs)) {
-            const expired = nowMs > latestMs;
-            return {
-                tooEarly: false,
-                expired,
-                withinWindow: !expired,
-                hasWindowContract: true,
-                earliest,
-                latest,
-                serverNow,
-            };
-        }
-
-        if (hasExplicitCanStart) {
-            return {
-                tooEarly: false,
-                expired: !rawCanStart,
-                withinWindow: rawCanStart,
-                hasWindowContract: true,
-                earliest,
-                latest,
-                serverNow,
-            };
-        }
-
-        return {
-            tooEarly: false,
-            expired: false,
-            withinWindow: true,
-            hasWindowContract: false,
-            earliest,
-            latest,
-            serverNow,
-        };
-    },
-
-    // Post-migracion Visitas: no hay ventanas de servicio programadas.
-    // Estas funciones quedan como stubs neutros para no romper callers.
-    getShiftStartWindowCopy() {
-        return 'Inicia tu visita desde el sitio disponible en el dashboard.';
-    },
-
     canEmployeeStartScheduledShift() {
         return false;
     },
@@ -7608,56 +6879,6 @@ const app = {
         }
 
         return t('employee.schedule.window.pending');
-    },
-
-    // Igual que getEmployeeShiftScheduleText pero SIN la fecha — para lugares
-    // donde la fecha ya se muestra en una fila aparte (dashboard: fila "Fecha"
-    // + fila "Ventana de Servicio" → esta ultima solo debe mostrar la hora).
-    getEmployeeShiftScheduleTimeText(shift, { hasActiveShift = false } = {}) {
-        if (!shift) {
-            return t('employee.schedule.notrequired');
-        }
-
-        const scheduledStart = shift?.scheduled_start || null;
-        const scheduledEnd = shift?.scheduled_end || null;
-        const actualStart = shift?.start_time || shift?.started_at || null;
-
-        if (scheduledStart && scheduledEnd) {
-            const rangeText = formatShiftLocalRange(shift);
-            if (hasActiveShift && actualStart) {
-                return `${rangeText} • ${t('employee.schedule.startedat')} ${formatTime(actualStart)}`;
-            }
-            return rangeText;
-        }
-
-        if (hasActiveShift && actualStart) {
-            return `${t('employee.schedule.service.startedat')} ${formatTime(actualStart)}`;
-        }
-
-        if (scheduledStart) {
-            return `${t('employee.schedule.assignedfor')} ${formatDateTime(scheduledStart)}`;
-        }
-
-        return t('employee.schedule.window.pending');
-    },
-
-    getEmployeeShiftDateText(shift) {
-        if (!shift) {
-            return t('employee.shift.date.none');
-        }
-
-        const shiftDate = shift?.scheduled_start || shift?.start_time || shift?.started_at || null;
-        if (!shiftDate) {
-            return t('employee.shift.date.none');
-        }
-
-        // Backend v3: si viene shift.local, usarlo (día en zona del sitio, no del navegador).
-        return formatShiftLocalDate(shift, {
-            weekday: 'long',
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric',
-        });
     },
 
     // ==========================================================================

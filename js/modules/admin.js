@@ -18,7 +18,7 @@
  */
 
 import { apiClient } from '../api.js';
-import { CACHE_TTLS, ROLE_LABELS, scopedConsole } from '../constants.js';
+import { CACHE_TTLS, scopedConsole } from '../constants.js';
 
 // Rebind local: info/warn/log noop en prod (habilita con
 // WORKTRACE_CONFIG.debugConsole=true o en localhost).
@@ -1233,20 +1233,4 @@ export const adminMethods = {
     // adminAction() eliminado: los 2 botones que lo usaban ahora hacen
     // data-action="navigate" directo con la ruta real (admin-supervisors,
     // admin-supervision-monitor). Sin call-sites externos.
-
-    // ==========================================================================
-    // SECCIÓN: Varios
-    // --------------------------------------------------------------------------
-    // showNotification: aviso rápido con el estado del sistema y el rol actual.
-    // ==========================================================================
-
-    showNotification() {
-        const backendStatus = this.backend.connected ? 'Sistema listo' : 'Sistema en revisión';
-        const userRole = this.currentUser ? ROLE_LABELS[this.currentUser.role] || this.currentUser.role : 'Sin sesión';
-        this.showToast(`• ${backendStatus}\n• Rol actual: ${userRole}\n• Sesión lista para operar.`, {
-            tone: 'info',
-            title: t('toast.common.notifications'),
-        });
-    },
-
 };

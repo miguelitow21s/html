@@ -49,7 +49,7 @@ No hay `.env`: la configuración (URL de Supabase, anon key, llave de Google Map
 | `css/styles.css` | Estilos. Variables del tema en `:root`; índice al inicio. |
 | `index.html` | Todas las pantallas y modales. |
 
-Cada archivo empieza con un comentario que explica qué hace y cómo se conecta con el resto. Los bloques marcados **LEGADO** son del agendamiento de turnos, que se eliminó al pasar a visitas ad-hoc, y ya no se usan.
+Cada archivo empieza con un comentario que explica qué hace y cómo se conecta con el resto. El código del agendamiento de turnos (anterior a las visitas ad-hoc) y el de funciones que el cliente pidió quitar (cambio de teléfono desde el perfil, desvincular teléfono) se borraron en 2026-09; si hace falta consultarlos, están en el historial de git.
 
 ## Reglas que evitan los bugs que ya pasaron
 
