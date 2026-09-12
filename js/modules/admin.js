@@ -747,7 +747,7 @@ export const adminMethods = {
             </div>
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(String(uniqueRestaurants.size))}</div>
-                <div class="stat-label">Restaurantes visitados</div>
+                <div class="stat-label">Sitios visitados</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">${escapeHtml(String(totalEvidences))}</div>
