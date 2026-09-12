@@ -1237,7 +1237,7 @@ export const adminMethods = {
     // ==========================================================================
     // SECCIÓN: Varios
     // --------------------------------------------------------------------------
-    // updateDebugInfo repite la de app.js (idéntica); para el admin gana esta.
+    // showNotification: aviso rápido con el estado del sistema y el rol actual.
     // ==========================================================================
 
     showNotification() {
@@ -1249,26 +1249,4 @@ export const adminMethods = {
         });
     },
 
-    updateDebugInfo() {
-        const debugStatus = document.getElementById('debug-status');
-        const debugPage = document.getElementById('debug-page');
-        const debugUser = document.getElementById('debug-user');
-        const debugBackend = document.getElementById('debug-backend');
-
-        if (debugStatus) {
-            debugStatus.textContent = this.backend.connected ? 'OK' : 'APP';
-        }
-
-        if (debugPage) {
-            debugPage.textContent = this.currentPage;
-        }
-
-        if (debugUser) {
-            debugUser.textContent = this.currentUser?.email || 'none';
-        }
-
-        if (debugBackend) {
-            debugBackend.textContent = this.backend.statusText;
-        }
-    },
 };

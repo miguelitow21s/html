@@ -25,7 +25,7 @@ No hay `.env`: la configuración (URL de Supabase, anon key, llave de Google Map
    - super admin → `supervisor.js` + `admin.js` + `adminModals.js`
 
    Por eso todo el código usa `this.metodo()` como si fuera un solo archivo. Dos consecuencias:
-   - Si dos archivos definen un método con el mismo nombre, **gana el que se carga último**. Hoy hay funciones repetidas (equivalentes); ver el encabezado de `adminModals.js`.
+   - Si dos archivos definen un método con el mismo nombre, **gana el que se carga último** y la otra copia queda muerta sin avisar. No dupliques: lo compartido va en `app.js` (varios roles) o en `supervisor.js` (inspector y admin).
    - Lo que usan **dos roles distintos** tiene que vivir en `app.js`, porque cada rol carga solo su módulo.
 3. **Pantallas.** Todas están en `index.html` como `<div id="page-NOMBRE">`. `app.navigate('NOMBRE')` muestra una y `loadPageData('NOMBRE')` carga sus datos.
 4. **Clics.** Hay dos mecanismos:

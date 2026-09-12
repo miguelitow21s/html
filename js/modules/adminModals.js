@@ -9,16 +9,15 @@
  *   Google Maps) y el de contratista. Está separado por peso: el contratista
  *   nunca lo carga. Lo cargan el inspector y el super_admin.
  *
- * ⚠ OJO — ORDEN DE CARGA Y FUNCIONES REPETIDAS
+ * ⚠ OJO — ORDEN DE CARGA
  *   Este archivo se mezcla en `app` DESPUÉS de supervisor.js (y de admin.js):
  *     inspector   → Object.assign(app, supervisorMethods, adminModalMethods)
  *     super_admin → Object.assign(app, supervisorMethods, adminMethods, adminModalMethods)
- *   Por eso, si una función existe aquí y también en supervisor.js o app.js,
- *   para el inspector y el admin se ejecuta LA DE ESTE ARCHIVO.
- *   Hoy hay ~20 funciones repetidas (getSupervisorRestaurants,
- *   getKnownRestaurantRecord, isShiftFromToday…) y son equivalentes. Si
- *   cambias una, cambia todas las copias; lo ideal es dejar una sola en
- *   app.js y borrar el resto.
+ *   Si aquí se define un método con el mismo nombre que uno de supervisor.js
+ *   o app.js, para inspector y admin corre EL DE ESTE ARCHIVO y el otro queda
+ *   muerto sin avisar. Aquí solo va lo de los modales; lo compartido vive
+ *   en app.js (varios roles) o en supervisor.js (inspector y admin). Hubo ~20
+ *   funciones repetidas que se unificaron.
  */
 
 import { CACHE_TTLS } from '../constants.js';
@@ -27,13 +26,8 @@ import { t } from '../i18n.js';
 import {
     asArray,
     escapeHtml,
-    getRestaurantRecordId,
     formatShiftLocalRange,
     getShiftStatusLabel,
-    normalizeLinkedPhoneValue,
-    pickMeaningfulRestaurantName,
-    getShiftEmployeeName,
-    getShiftRestaurantName,
     getTodayEnd,
     getTodayStart,
     normalizeAreaToken,
@@ -951,49 +945,10 @@ export const adminModalMethods = {
     },
 
     // ==========================================================================
-    // SECCIÓN: COPIAS de funciones de supervisor.js / app.js
+    // SECCIÓN: Resolver inspectores ya cargados
     // --------------------------------------------------------------------------
-    // Ver el OJO del encabezado: para inspector y admin corren ESTAS versiones.
+    // getKnownAdminSupervisorRecord busca un inspector en la lista del admin.
     // ==========================================================================
-
-    getKnownSupervisorEmployeeRecord(employeeId) {
-        const normalizedEmployeeId = String(employeeId || '').trim();
-        if (!normalizedEmployeeId) {
-            return null;
-        }
-
-        return (
-            asArray(this.data.supervisor.employees).find(
-                (employee) => String(employee?.id || '').trim() === normalizedEmployeeId
-            ) || null
-        );
-    },
-
-    getKnownSupervisorRestaurantRecord(restaurantId) {
-        const normalizedRestaurantId = String(restaurantId || '').trim();
-        if (!normalizedRestaurantId) {
-            return null;
-        }
-
-        return (
-            asArray(this.data.supervisor.restaurants).find(
-                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
-            ) || null
-        );
-    },
-
-    getKnownAdminRestaurantRecord(restaurantId) {
-        const normalizedRestaurantId = String(restaurantId || '').trim();
-        if (!normalizedRestaurantId) {
-            return null;
-        }
-
-        return (
-            asArray(this.data.admin.restaurants).find(
-                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
-            ) || null
-        );
-    },
 
     getKnownAdminSupervisorRecord(supervisorId) {
         const normalizedSupervisorId = String(supervisorId || '').trim();
@@ -1006,24 +961,6 @@ export const adminModalMethods = {
                 (supervisor) => String(supervisor?.id || supervisor?.user_id || '').trim() === normalizedSupervisorId
             ) || null
         );
-    },
-
-    getPhoneBindingActionState(record) {
-        const userId = String(record?.id || record?.user_id || record?.raw?.id || record?.raw?.user_id || '').trim();
-        const phoneNumber = normalizeLinkedPhoneValue(
-            record?.phone_e164 ||
-                record?.phone_number ||
-                record?.raw?.phone_e164 ||
-                record?.raw?.phone_number ||
-                record?.raw?.phone
-        );
-
-        return {
-            userId,
-            phoneNumber,
-            enabled: Boolean(userId && phoneNumber),
-            visible: Boolean(userId && phoneNumber),
-        };
     },
 
     // ==========================================================================
@@ -1127,191 +1064,11 @@ export const adminModalMethods = {
     },
 
     // ==========================================================================
-    // SECCIÓN: COPIAS (continuación)
+    // SECCIÓN: LEGADO — selección de servicio del agendamiento (sin uso)
     // --------------------------------------------------------------------------
-    // Mismas funciones que en supervisor.js / app.js.
+    // populateSupervisorShiftOptions y setSupervisorSelectedShift no se llaman
+    // desde ningún lado; las otras dos solo las usan ellas.
     // ==========================================================================
-
-    getKnownEmployeeRestaurantRecord(restaurantId) {
-        const normalizedRestaurantId = String(restaurantId || '').trim();
-        if (!normalizedRestaurantId) {
-            return null;
-        }
-
-        return this.resolveEmployeeRestaurantRecord(normalizedRestaurantId, this.data.employee.dashboard || {});
-    },
-
-    getKnownRestaurantRecord(restaurantId) {
-        return (
-            this.getKnownEmployeeRestaurantRecord(restaurantId) ||
-            this.getKnownSupervisorRestaurantRecord(restaurantId) ||
-            this.getKnownAdminRestaurantRecord(restaurantId) ||
-            null
-        );
-    },
-
-    getKnownEmployeeRecord(employeeId) {
-        const normalizedEmployeeId = String(employeeId || '').trim();
-        if (!normalizedEmployeeId) {
-            return null;
-        }
-
-        if (String(this.currentUser?.id || '').trim() === normalizedEmployeeId) {
-            return this.currentUser;
-        }
-
-        const supervisorEmployee = this.getKnownSupervisorEmployeeRecord(normalizedEmployeeId);
-        if (supervisorEmployee) {
-            return supervisorEmployee;
-        }
-
-        const dashboardEmployee = asArray(this.data.employee.dashboard?.scheduled_shifts)
-            .map((item) => item?.employee || item?.user || item?.staff || item?.worker || null)
-            .find((employee) => String(employee?.id || '').trim() === normalizedEmployeeId);
-
-        if (dashboardEmployee) {
-            return dashboardEmployee;
-        }
-
-        const activeShiftEmployee = this.data.currentShift?.employee || this.data.currentShift?.user || null;
-        if (String(activeShiftEmployee?.id || '').trim() === normalizedEmployeeId) {
-            return activeShiftEmployee;
-        }
-
-        const scheduledShiftEmployee =
-            this.data.currentScheduledShift?.employee || this.data.currentScheduledShift?.user || null;
-        if (String(scheduledShiftEmployee?.id || '').trim() === normalizedEmployeeId) {
-            return scheduledShiftEmployee;
-        }
-
-        return null;
-    },
-
-    getKnownEmployeeRecordByAlias(aliasCandidates = []) {
-        const normalizedAliases = new Set(
-            asArray(aliasCandidates)
-                .map((value) =>
-                    String(value || '')
-                        .trim()
-                        .toLowerCase()
-                )
-                .filter(Boolean)
-        );
-
-        if (normalizedAliases.size === 0) {
-            return null;
-        }
-
-        const matchesAlias = (record) => {
-            if (!record || typeof record !== 'object') {
-                return false;
-            }
-
-            const candidateValues = [
-                record.id,
-                record.username,
-                record.user_name,
-                record.employee_username,
-                record.employee_code,
-                record.code,
-                record.email,
-                record.employee_email,
-                record.user?.id,
-                record.user?.username,
-                record.user?.user_name,
-                record.user?.email,
-                record.auth_user?.id,
-                record.auth_user?.email,
-                record.raw?.id,
-                record.raw?.username,
-                record.raw?.email,
-            ];
-
-            return candidateValues.some((value) =>
-                normalizedAliases.has(
-                    String(value || '')
-                        .trim()
-                        .toLowerCase()
-                )
-            );
-        };
-
-        if (matchesAlias(this.currentUser)) {
-            return this.currentUser;
-        }
-
-        const supervisorMatch = asArray(this.data.supervisor.employees).find(matchesAlias);
-        if (supervisorMatch) {
-            return supervisorMatch;
-        }
-
-        const dashboardMatch = asArray(this.data.employee.dashboard?.scheduled_shifts)
-            .map((item) => item?.employee || item?.user || item?.staff || item?.worker || null)
-            .find(matchesAlias);
-        if (dashboardMatch) {
-            return dashboardMatch;
-        }
-
-        const activeShiftEmployee = this.data.currentShift?.employee || this.data.currentShift?.user || null;
-        if (matchesAlias(activeShiftEmployee)) {
-            return activeShiftEmployee;
-        }
-
-        const scheduledShiftEmployee =
-            this.data.currentScheduledShift?.employee || this.data.currentScheduledShift?.user || null;
-        if (matchesAlias(scheduledShiftEmployee)) {
-            return scheduledShiftEmployee;
-        }
-
-        return null;
-    },
-
-    getResolvedShiftEmployeeName(shift, fallback = 'Contratista') {
-        const employeeId =
-            shift?.employee_id || shift?.assigned_employee_id || shift?.employee?.id || shift?.user_id || '';
-        const employeeAliasCandidates = [
-            shift?.employee,
-            shift?.employee_username,
-            shift?.employee_email,
-            shift?.employee_code,
-            shift?.username,
-            shift?.user_name,
-            shift?.email,
-            shift?.employee?.username,
-            shift?.employee?.email,
-            shift?.employee?.id,
-            shift?.user?.username,
-            shift?.user?.email,
-            shift?.user?.id,
-        ];
-        const employeeRecord =
-            this.getKnownEmployeeRecord(employeeId) ||
-            this.getKnownEmployeeRecordByAlias(employeeAliasCandidates) ||
-            null;
-
-        return (
-            getShiftEmployeeName(shift, {
-                employeeRecord,
-            }) || fallback
-        );
-    },
-
-    getResolvedShiftRestaurantName(shift, fallback = 'Sitio') {
-        const restaurantId =
-            shift?.restaurant_id ||
-            shift?.restaurant?.restaurant_id ||
-            shift?.restaurant?.id ||
-            shift?.location_id ||
-            shift?.location?.id ||
-            shift?.site_id ||
-            shift?.site?.id ||
-            '';
-        return (
-            getShiftRestaurantName(shift, {
-                restaurantRecord: this.getKnownRestaurantRecord(restaurantId),
-            }) || fallback
-        );
-    },
 
     getSupervisorShiftSelectionKey(shift) {
         if (!shift) {
@@ -1323,86 +1080,6 @@ export const adminModalMethods = {
                 shift?.scheduled_shift_id ||
                 `${shift?.employee_id || shift?.assigned_employee_id || 'employee'}__${shift?.restaurant_id || shift?.restaurant?.id || 'restaurant'}__${shift?.scheduled_start || shift?.start_time || shift?.created_at || 'shift'}`
         ).trim();
-    },
-
-    getSupervisorSelectedRestaurant() {
-        const selectedRestaurantId = document.getElementById('supervision-restaurant-select')?.value;
-        const restaurants = this.data.supervisor.restaurants || [];
-        return (
-            restaurants.find(
-                (restaurant) => String(getRestaurantRecordId(restaurant)) === String(selectedRestaurantId)
-            ) ||
-            restaurants[0] ||
-            null
-        );
-    },
-
-    getSupervisorRestaurantShifts() {
-        const restaurant = this.getSupervisorSelectedRestaurant();
-        const restaurantId = restaurant ? String(getRestaurantRecordId(restaurant) || '') : '';
-        if (!restaurantId) {
-            return [];
-        }
-
-        return asArray(this.data.supervisor.shifts)
-            .filter((shift) => {
-                const shiftRestaurantId = String(
-                    shift?.restaurant_id ||
-                        shift?.restaurant?.restaurant_id ||
-                        shift?.restaurant?.id ||
-                        shift?.location_id ||
-                        shift?.location?.id ||
-                        shift?.site_id ||
-                        shift?.site?.id ||
-                        ''
-                );
-                return shiftRestaurantId === restaurantId;
-            })
-            .sort((left, right) => {
-                const leftTime = new Date(
-                    left?.scheduled_start || left?.start_time || left?.created_at || ''
-                ).getTime();
-                const rightTime = new Date(
-                    right?.scheduled_start || right?.start_time || right?.created_at || ''
-                ).getTime();
-                return (
-                    (Number.isFinite(leftTime) ? leftTime : Number.MAX_SAFE_INTEGER) -
-                    (Number.isFinite(rightTime) ? rightTime : Number.MAX_SAFE_INTEGER)
-                );
-            });
-    },
-
-    getShiftReferenceDate(shift) {
-        const value = shift?.scheduled_start || shift?.start_time || shift?.scheduled_end || shift?.end_time || null;
-
-        if (!value) {
-            return null;
-        }
-
-        const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-    },
-
-    isShiftFromToday(shift, baseDate = new Date()) {
-        // Backend v3: preferir shift.local.start.local_date (día en zona del sitio)
-        // para no descartar turnos que cruzan medianoche.
-        const startDateKey = shift?.local?.start?.local_date;
-        const endDateKey = shift?.local?.end?.local_date;
-
-        if (startDateKey || endDateKey) {
-            const todayKey = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}`;
-            const startOk = !startDateKey || startDateKey <= todayKey;
-            const endOk = !endDateKey || todayKey <= endDateKey;
-            return startOk && endOk;
-        }
-
-        const shiftDate = this.getShiftReferenceDate(shift);
-        return Boolean(shiftDate && shiftDate.toDateString() === baseDate.toDateString());
-    },
-
-    getTodayShifts(shifts = []) {
-        const now = new Date();
-        return asArray(shifts).filter((shift) => this.isShiftFromToday(shift, now));
     },
 
     buildSupervisorShiftOptionLabel(shift) {
@@ -1462,98 +1139,11 @@ export const adminModalMethods = {
         this.renderSupervisorSupervisionSummary();
     },
 
-    getSupervisorCleaningAreaGroups() {
-        const restaurant = this.getSupervisorSelectedRestaurant();
-        return this.resolveCleaningAreaGroups(restaurant, restaurant?.raw?.restaurant, restaurant?.raw);
-    },
-
-    getSupervisorAvailableAreas() {
-        const restaurant = this.getSupervisorSelectedRestaurant();
-        this.cleaningAreaGroups = this.getSupervisorCleaningAreaGroups();
-        return this.resolveCleaningAreas(restaurant, restaurant?.raw?.restaurant, restaurant?.raw);
-    },
-
-    getSupervisorSelectedAreas() {
-        return this.getSupervisorAvailableAreas();
-    },
-
     // NOTA: populateSupervisorAreaOptions / setSupervisorSelectedArea /
     // resetSupervisorSupervisionState vivían acá DUPLICADAS y pisaban las de
     // app.js (mismo namespace WorkTraceApp). Eso escondía el fix del PR #16
     // (placeholder) y del PR #18 (upload progresivo + renderSupervisionAreaNav).
     // Eliminadas — la versión buena es la de app.js:3809/3840/en supervisor.js.
-
-    async getSupervisorRestaurants(force = false) {
-        if (
-            !force &&
-            this.data.supervisor.restaurants.length > 0 &&
-            this.isCacheFresh('supervisorRestaurants', CACHE_TTLS.supervisorRestaurants)
-        ) {
-            return this.data.supervisor.restaurants;
-        }
-
-        return this.runPending(
-            `supervisorRestaurants:${this.currentUser?.role || 'unknown'}:${force ? 'force' : 'default'}`,
-            async () => {
-                let restaurants;
-                const mapRestaurantList = (result) =>
-                    asArray(result)
-                        .map((item) => ({
-                            ...item,
-                            id: getRestaurantRecordId(item),
-                            restaurant_id: getRestaurantRecordId(item),
-                            is_active: item.is_active !== false,
-                            name:
-                                pickMeaningfulRestaurantName(
-                                    [
-                                        item.restaurant_name,
-                                        item.restaurant_visible_name,
-                                        item.restaurant_label,
-                                        item.restaurant?.restaurant_name,
-                                        item.restaurant?.restaurant_visible_name,
-                                        item.restaurant?.restaurant_label,
-                                        item.name,
-                                        item.display_name,
-                                        item.label,
-                                        item.title,
-                                        item.restaurant?.name,
-                                        item.restaurant?.display_name,
-                                        item.restaurant?.label,
-                                        item.restaurant?.title,
-                                    ],
-                                    item
-                                ) || '',
-                            address_line: item.address_line || item.restaurant?.address_line,
-                            city: item.city || item.restaurant?.city,
-                            state: item.state || item.restaurant?.state,
-                            country: item.country || item.restaurant?.country,
-                            cleaning_areas: item.cleaning_areas || item.restaurant?.cleaning_areas,
-                            effective_cleaning_areas:
-                                item.effective_cleaning_areas ||
-                                item.restaurant?.effective_cleaning_areas ||
-                                item.cleaning_areas ||
-                                item.restaurant?.cleaning_areas,
-                            raw: item,
-                        }))
-                        .filter((item) => item.is_active !== false && getRestaurantRecordId(item) != null);
-
-                try {
-                    const result = await apiClient.adminRestaurantsManage('list', {
-                        is_active: true,
-                        limit: 500,
-                    });
-                    restaurants = mapRestaurantList(result);
-                } catch (error) {
-                    console.warn('No fue posible cargar el listado global de sitios para supervisora.', error);
-                    restaurants = [];
-                }
-
-                this.data.supervisor.restaurants = restaurants;
-                this.touchCache('supervisorRestaurants');
-                return restaurants;
-            }
-        );
-    },
 
     // ==========================================================================
     // SECCIÓN: Catálogo de sitios del admin

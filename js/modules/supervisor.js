@@ -25,10 +25,10 @@
  *   admin_restaurants_manage (contratistas y sitios).
  *
  * OJO
- *   - Este archivo vuelve a definir algunas funciones que también existen en
- *     app.js (probeVideoDurationSeconds, formatSecondsAsMmSs,
- *     getKnownRestaurantRecord…). Para inspector y admin gana ESTA copia,
- *     porque se carga después. Si cambias una, revisa la otra.
+ *   - No redefinas aquí un método que ya exista en app.js o en adminModals.js:
+ *     como todos se mezclan en el mismo objeto, gana el que se carga último
+ *     y la otra copia queda muerta sin avisar. Lo que usan varios roles
+ *     (getKnownRestaurantRecord, probeVideoDurationSeconds…) vive en app.js.
  *   - Hay bloques marcados como LEGADO (agendamiento de turnos): quedaron de
  *     antes de la migración a visitas ad-hoc y ya no se usan.
  */
@@ -74,7 +74,6 @@ import {
     getRestaurantRecordId,
     getScheduledHours,
     getShiftEmployeeName,
-    getShiftRestaurantName,
     getShiftStatusLabel,
     getWorkedHours,
     initials,
@@ -2245,9 +2244,9 @@ export const supervisorMethods = {
     // ==========================================================================
     // SECCIÓN: Resolver contratistas y sitios ya cargados
     // --------------------------------------------------------------------------
-    // Buscan un contratista o sitio en lo que ya está en memoria para mostrar
-    // nombres sin pedirlos de nuevo al backend. Algunas pisan versiones de
-    // app.js con el mismo nombre (ver OJO del encabezado).
+    // Buscan un contratista en lo que ya está en memoria para mostrar nombres
+    // sin pedirlos de nuevo al backend. Las de sitios (getKnownRestaurantRecord
+    // y compañía) están en app.js porque también las usa el contratista.
     // ==========================================================================
 
     getKnownSupervisorEmployeeRecord(employeeId) {
@@ -2259,47 +2258,6 @@ export const supervisorMethods = {
             asArray(this.data.supervisor.employees).find(
                 (employee) => String(employee?.id || '').trim() === normalizedEmployeeId
             ) || null
-        );
-    },
-
-    getKnownSupervisorRestaurantRecord(restaurantId) {
-        const normalizedRestaurantId = String(restaurantId || '').trim();
-        if (!normalizedRestaurantId) {
-            return null;
-        }
-        return (
-            asArray(this.data.supervisor.restaurants).find(
-                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
-            ) || null
-        );
-    },
-
-    getKnownAdminRestaurantRecord(restaurantId) {
-        const normalizedRestaurantId = String(restaurantId || '').trim();
-        if (!normalizedRestaurantId) {
-            return null;
-        }
-        return (
-            asArray(this.data.admin.restaurants).find(
-                (restaurant) => String(getRestaurantRecordId(restaurant) || '').trim() === normalizedRestaurantId
-            ) || null
-        );
-    },
-
-    getKnownEmployeeRestaurantRecord(restaurantId) {
-        const normalizedRestaurantId = String(restaurantId || '').trim();
-        if (!normalizedRestaurantId) {
-            return null;
-        }
-        return this.resolveEmployeeRestaurantRecord(normalizedRestaurantId, this.data.employee.dashboard || {});
-    },
-
-    getKnownRestaurantRecord(restaurantId) {
-        return (
-            this.getKnownEmployeeRestaurantRecord(restaurantId) ||
-            this.getKnownSupervisorRestaurantRecord(restaurantId) ||
-            this.getKnownAdminRestaurantRecord(restaurantId) ||
-            null
         );
     },
 
@@ -2441,23 +2399,6 @@ export const supervisorMethods = {
         return (
             getShiftEmployeeName(shift, {
                 employeeRecord,
-            }) || fallback
-        );
-    },
-
-    getResolvedShiftRestaurantName(shift, fallback = 'Sitio') {
-        const restaurantId =
-            shift?.restaurant_id ||
-            shift?.restaurant?.restaurant_id ||
-            shift?.restaurant?.id ||
-            shift?.location_id ||
-            shift?.location?.id ||
-            shift?.site_id ||
-            shift?.site?.id ||
-            '';
-        return (
-            getShiftRestaurantName(shift, {
-                restaurantRecord: this.getKnownRestaurantRecord(restaurantId),
             }) || fallback
         );
     },
@@ -5181,59 +5122,6 @@ export const supervisorMethods = {
             text.textContent = `${kindPrefix}: ${shortName}${durationText}`;
         }
         label?.classList.add('rtask-file-label-has-file');
-    },
-
-    probeVideoDurationSeconds(objectUrl, { timeoutMs = 5000 } = {}) {
-        return new Promise((resolve, reject) => {
-            const probe = document.createElement('video');
-            probe.preload = 'metadata';
-            probe.muted = true;
-            probe.playsInline = true;
-            let settled = false;
-            const cleanup = () => {
-                probe.removeAttribute('src');
-                probe.load?.();
-            };
-            const timeoutId = setTimeout(() => {
-                if (settled) return;
-                settled = true;
-                cleanup();
-                reject(new Error('Timeout leyendo la duración del video.'));
-            }, timeoutMs);
-            const safeResolve = (value) => {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timeoutId);
-                cleanup();
-                resolve(value);
-            };
-            const safeReject = (error) => {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timeoutId);
-                cleanup();
-                reject(error);
-            };
-            probe.addEventListener('loadedmetadata', () => {
-                const seconds = Number(probe.duration);
-                if (!Number.isFinite(seconds) || seconds <= 0) {
-                    safeReject(new Error('Duración no disponible.'));
-                } else {
-                    safeResolve(seconds);
-                }
-            });
-            probe.addEventListener('error', () => {
-                safeReject(new Error('No se pudo leer el video.'));
-            });
-            probe.src = objectUrl;
-        });
-    },
-
-    formatSecondsAsMmSs(totalSeconds) {
-        const rounded = Math.max(0, Math.round(Number(totalSeconds) || 0));
-        const minutes = Math.floor(rounded / 60);
-        const seconds = rounded % 60;
-        return `${minutes}:${String(seconds).padStart(2, '0')}`;
     },
 
     /**

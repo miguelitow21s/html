@@ -23,9 +23,8 @@
  *   5. "He terminado la tarea" → fotos finales + observaciones →
  *      finalizeShift → apiClient.endShift (/shifts_end, pide OTP).
  *
- * OJO
- *   El cronómetro (startTimer, stopTimer, parseShiftTimestamp…) está
- *   definido aquí Y en app.js; para el contratista gana esta copia.
+ * El cronómetro de "Servicio en Curso" (startTimer, stopTimer…) vive en
+ * app.js, en la SECCIÓN "Depuración y cronómetro".
  */
 
 import { CACHE_TTLS, DEFAULT_SYSTEM_SETTINGS, SUPPORTED_EVIDENCE_IMAGE_ACCEPT, scopedConsole } from '../constants.js';
@@ -2097,114 +2096,6 @@ export const employeeMethods = {
         this.data.currentShift = null;
         this.data.currentScheduledShift = null;
         this.resetShiftState();
-    },
-
-    // ==========================================================================
-    // SECCIÓN: Cronómetro del servicio (copia del contratista)
-    // --------------------------------------------------------------------------
-    // Mismas funciones que en app.js. Para el contratista gana ESTA copia; si
-    // cambias la lógica del cronómetro, cámbiala en los dos lados.
-    // ==========================================================================
-
-    parseShiftTimestamp(value) {
-        if (!value) {
-            return Number.NaN;
-        }
-
-        if (value instanceof Date) {
-            const timestamp = value.getTime();
-            return Number.isFinite(timestamp) ? timestamp : Number.NaN;
-        }
-
-        if (typeof value === 'number') {
-            return Number.isFinite(value) ? value : Number.NaN;
-        }
-
-        const raw = String(value || '').trim();
-        if (!raw) {
-            return Number.NaN;
-        }
-
-        const normalized = /^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}(:\d{2})?$/.test(raw) ? raw.replace(' ', 'T') : raw;
-
-        const parsed = new Date(normalized).getTime();
-        return Number.isFinite(parsed) ? parsed : Number.NaN;
-    },
-
-    resolveShiftTimerStartTime(shift = this.data.currentShift) {
-        const now = Date.now();
-        const futureToleranceMs = 5 * 60 * 1000;
-        const scheduleAlignmentToleranceMs = 8 * 60 * 60 * 1000;
-        const recentWindowMs = 24 * 60 * 60 * 1000;
-        // Post-migracion Visitas: sin max_hours configurable. Backend cierra
-        // visitas ad-hoc a las 16h; dejamos 18h como tope local con margen.
-        const reasonableMaxHours = 18;
-        const maxElapsedMs = reasonableMaxHours * 60 * 60 * 1000;
-
-        const startMs = this.parseShiftTimestamp(shift?.start_time || shift?.started_at);
-        const scheduledStartMs = this.parseShiftTimestamp(shift?.scheduled_start);
-
-        if (Number.isFinite(startMs) && startMs > 0 && startMs <= now + futureToleranceMs) {
-            if (!Number.isFinite(scheduledStartMs) || scheduledStartMs <= 0) {
-                return startMs;
-            }
-
-            const elapsedFromStart = now - startMs;
-            const scheduleLooksCurrent = Math.abs(now - scheduledStartMs) <= recentWindowMs;
-            const startIsFarBeforeSchedule = startMs < scheduledStartMs - scheduleAlignmentToleranceMs;
-
-            if (scheduleLooksCurrent && (elapsedFromStart > maxElapsedMs || startIsFarBeforeSchedule)) {
-                return scheduledStartMs;
-            }
-
-            return startMs;
-        }
-
-        if (Number.isFinite(scheduledStartMs) && scheduledStartMs > 0 && scheduledStartMs <= now + futureToleranceMs) {
-            return scheduledStartMs;
-        }
-
-        return now;
-    },
-
-    startTimerFromCurrentShift() {
-        const shift = this.data.currentShift;
-        const startTime = this.resolveShiftTimerStartTime(shift);
-        this.timerStartTimeMs = Number.isFinite(startTime) ? startTime : Date.now();
-        this.timerSeconds = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
-        this.updateTimerDisplay();
-        this.startTimer();
-    },
-
-    startTimer() {
-        this.stopTimer();
-        this.timerInterval = setInterval(() => {
-            if (Number.isFinite(this.timerStartTimeMs)) {
-                this.timerSeconds = Math.max(0, Math.floor((Date.now() - this.timerStartTimeMs) / 1000));
-            } else {
-                this.timerSeconds += 1;
-            }
-            this.updateTimerDisplay();
-        }, 1000);
-    },
-
-    stopTimer() {
-        if (!this.timerInterval) {
-            return;
-        }
-
-        clearInterval(this.timerInterval);
-        this.timerInterval = null;
-    },
-
-    updateTimerDisplay() {
-        const hours = Math.floor(this.timerSeconds / 3600);
-        const minutes = Math.floor((this.timerSeconds % 3600) / 60);
-        const seconds = this.timerSeconds % 60;
-        const display = document.getElementById('cleaning-timer');
-        if (display) {
-            display.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        }
     },
 
     // ==========================================================================
