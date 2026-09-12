@@ -168,13 +168,6 @@ body.camera-capture-active {
     display: none !important;
 }
 
-.animate-fade {
-    animation: fadeIn 0.5s ease-out;
-}
-.animate-slide {
-    animation: slideIn 0.3s ease-out;
-}
-
 /* Login Screen */
 .login-container {
     min-height: 100dvh;
@@ -219,7 +212,6 @@ body.camera-capture-active {
     text-align: center;
     margin-bottom: 28px;
 }
-
 
 .logo h1 {
     color: var(--dark);
@@ -802,16 +794,6 @@ body.camera-capture-active {
     white-space: nowrap;
 }
 
-.header-brand-logo {
-    width: 30px;
-    height: 30px;
-    object-fit: contain;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.92);
-    padding: 3px;
-    flex-shrink: 0;
-}
-
 /* Header tri-columna: Logo cliente | Logo WorkTrace | Iniciales contratista.
    Se usa en dashboards principales (empleado, supervisor, admin).
    Los 3 elementos están justificados y con mayor tamaño para que la
@@ -1346,12 +1328,6 @@ canvas {
     position: relative;
 }
 
-.shift-info {
-    display: grid;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
 .employee-shift-helper {
     color: var(--gray);
     font-size: 14px;
@@ -1416,44 +1392,6 @@ canvas {
     overflow-wrap: anywhere;
 }
 
-/* Acción discreta al lado derecho de un info-item (ej. "Cambiar" teléfono).
-   No hereda el estilo pill que aplica a los iconos principales del info-item. */
-.info-item-action {
-    margin-left: auto;
-    background: transparent;
-    border: 1px solid rgba(var(--primary-rgb), 0.4);
-    color: var(--primary-text);
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.15s ease, border-color 0.15s ease;
-}
-.info-item-action:hover {
-    background: rgba(var(--primary-rgb), 0.12);
-    border-color: rgba(var(--primary-rgb), 0.6);
-}
-.info-item-action i {
-    font-size: 12px;
-    width: auto;
-    height: auto;
-    background: transparent;
-    border-radius: 0;
-    color: inherit;
-    margin: 0;
-    display: inline;
-}
-
-.action-buttons {
-    display: grid;
-    gap: 15px;
-}
-
 .btn-large {
     padding: 20px;
     border-radius: 16px;
@@ -1496,38 +1434,6 @@ canvas {
 .btn-danger {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: #ffffff;
-}
-
-/* Progress Bar */
-.progress-container {
-    margin: 20px 0;
-}
-
-.progress-bar {
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-}
-
-.progress-fill {
-    height: 100%;
-    background: var(--gradient-2);
-    border-radius: 4px;
-    transition: width 0.5s ease;
-    position: relative;
-}
-
-.progress-fill::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    animation: shimmer 2s infinite;
 }
 
 @keyframes shimmer {
@@ -1595,16 +1501,6 @@ canvas {
     border-radius: 18px;
     background: rgba(15, 23, 42, 0.03);
     border: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-.area-selection-panel-readonly {
-    margin-top: 10px;
-}
-
-.area-focus-panel {
-    display: grid;
-    gap: 12px;
-    padding-top: 2px;
 }
 
 .area-selection-header {
@@ -1686,12 +1582,6 @@ canvas {
 
 .area-selection-select option {
     font-weight: 600;
-}
-
-.area-selector-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
 }
 
 .area-chip {
@@ -1978,14 +1868,6 @@ canvas {
     overflow-wrap: anywhere;
 }
 
-.shift-board-card {
-    overflow: visible;
-}
-
-.shift-board-card > .supervisor-week-toolbar {
-    overflow: hidden;
-}
-
 #supervisor-shifts-filters {
     min-width: 0;
     max-width: 100%;
@@ -2038,79 +1920,11 @@ canvas {
     padding: 0;
 }
 
-.modal-content.shift-scheduler-modal-content {
-    width: min(960px, calc(100vw - 40px));
-    max-width: 960px;
-    max-height: calc(100dvh - 28px);
-    display: flex;
-    flex-direction: column;
-    overflow-x: hidden;
-    overflow-y: hidden;
-}
-
-.shift-scheduler-modal-content #supervisor-shift-form {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-}
-
-.shift-scheduler-modal-content .modal-header {
-    padding: 22px 28px;
-    background: rgba(30, 41, 59, 0.98);
-}
-
-.shift-scheduler-modal-content .modal-body {
-    display: grid;
-    gap: 20px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding: 22px 28px 40px;
-}
-
-.shift-scheduler-modal-content .modal-footer {
-    padding: 18px 28px 22px;
-    background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.96) 100%);
-    position: sticky;
-    bottom: 0;
-    z-index: 2;
-}
-
 @media (min-width: 1200px) {
     .modal {
         padding: 28px;
     }
 
-    .modal-content.shift-scheduler-modal-content {
-        width: min(1100px, calc(100vw - 64px));
-        max-width: 1100px;
-        max-height: calc(100dvh - 48px);
-    }
-
-    .shift-scheduler-modal-content .modal-header,
-    .shift-scheduler-modal-content .modal-body,
-    .shift-scheduler-modal-content .modal-footer {
-        padding-left: 34px;
-        padding-right: 34px;
-    }
-
-    .shift-scheduler-modal-content .modal-body {
-        gap: 22px;
-        padding-bottom: 48px;
-    }
-}
-
-.shift-mode-switch {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    padding: 6px;
-    border-radius: 22px;
-    background: rgba(15, 23, 42, 0.03);
-    border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .shift-mode-switch,
@@ -2127,255 +1941,6 @@ canvas {
 .checkbox-content {
     min-width: 0;
     max-width: 100%;
-}
-
-.shift-mode-btn {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 12px;
-    min-height: 72px;
-    padding: 14px 16px;
-    border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    background: rgba(15, 23, 42, 0.04);
-    color: var(--light-gray);
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition:
-        background-color 0.2s ease,
-        color 0.2s ease,
-        border-color 0.2s ease;
-    text-align: left;
-    white-space: normal;
-}
-
-.shift-mode-btn i {
-    flex-shrink: 0;
-    font-size: 18px;
-}
-
-.shift-mode-btn.active {
-    background: rgba(var(--primary-rgb), 0.14);
-    border-color: rgba(var(--primary-rgb), 0.55);
-    color: var(--text-primary);
-    box-shadow: 0 18px 34px -28px rgba(var(--primary-rgb), 0.95);
-}
-
-.shift-batch-picker {
-    display: grid;
-    gap: 10px;
-    max-height: 360px;
-    overflow-y: auto;
-    padding-right: 4px;
-}
-
-.shift-batch-picker-empty {
-    padding: 14px 16px;
-    border-radius: 14px;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px dashed rgba(148, 163, 184, 0.22);
-    color: var(--gray);
-    font-size: 14px;
-    line-height: 1.5;
-}
-
-.shift-batch-option {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 14px;
-    padding: 18px;
-    border-radius: 16px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(15, 23, 42, 0.03);
-    cursor: pointer;
-    transition:
-        border-color 0.2s ease,
-        background-color 0.2s ease;
-}
-
-.shift-batch-option:hover {
-    border-color: rgba(var(--primary-rgb), 0.45);
-    background: rgba(var(--primary-rgb), 0.08);
-}
-
-.shift-batch-option.active {
-    border-color: rgba(16, 185, 129, 0.5);
-    background: rgba(16, 185, 129, 0.1);
-}
-
-.shift-batch-option input[type='checkbox'] {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    appearance: none;
-    width: 1px;
-    height: 1px;
-    margin: 0;
-    padding: 0;
-    inset: 0;
-}
-
-.shift-batch-check {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    background: rgba(15, 23, 42, 0.55);
-    color: transparent;
-    flex-shrink: 0;
-    transition:
-        background-color 0.2s ease,
-        border-color 0.2s ease,
-        color 0.2s ease;
-}
-
-.shift-batch-option.active .shift-batch-check {
-    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.95) 0%, rgba(16, 185, 129, 0.95) 100%);
-    border-color: rgba(16, 185, 129, 0.45);
-    color: var(--text-primary);
-    box-shadow: 0 16px 28px -20px rgba(var(--primary-rgb), 0.9);
-}
-
-.shift-batch-copy {
-    display: grid;
-    gap: 4px;
-    min-width: 0;
-}
-
-.shift-batch-copy strong {
-    color: var(--text-primary);
-    font-size: 15px;
-    overflow-wrap: anywhere;
-}
-
-.shift-batch-copy span {
-    color: var(--gray);
-    font-size: 13px;
-    line-height: 1.45;
-    overflow-wrap: anywhere;
-}
-
-.shift-plan-rows {
-    display: grid;
-    gap: 14px;
-}
-
-.shift-plan-row {
-    display: grid;
-    gap: 14px;
-    padding: 16px;
-    border-radius: 18px;
-    background: rgba(15, 23, 42, 0.42);
-    border: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.shift-week-summary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 14px 16px;
-    border-radius: 16px;
-    background: rgba(15, 23, 42, 0.42);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-}
-
-.shift-week-summary-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 38px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-    color: var(--light-gray);
-    font-size: 13px;
-    line-height: 1.4;
-}
-
-.shift-week-summary-pill strong {
-    color: var(--text-primary);
-}
-
-.shift-week-row {
-    display: grid;
-    grid-template-columns: minmax(180px, 1.1fr) minmax(132px, 0.65fr) minmax(132px, 0.65fr) minmax(220px, 1.2fr) auto;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 18px;
-    background: rgba(15, 23, 42, 0.42);
-    border: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.shift-week-row.inactive {
-    opacity: 0.82;
-    background: rgba(15, 23, 42, 0.28);
-}
-
-.shift-week-day {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-}
-
-.shift-week-day input[type='checkbox'] {
-    width: 18px;
-    height: 18px;
-    margin: 0;
-    accent-color: #10b981;
-    flex-shrink: 0;
-}
-
-.shift-week-day-copy {
-    display: grid;
-    gap: 4px;
-    min-width: 0;
-}
-
-.shift-week-day-copy strong {
-    color: var(--text-primary);
-    font-size: 15px;
-    overflow-wrap: anywhere;
-}
-
-.shift-week-day-copy span {
-    color: var(--gray);
-    font-size: 13px;
-    line-height: 1.4;
-}
-
-.shift-week-field {
-    display: grid;
-    gap: 6px;
-    min-width: 0;
-}
-
-.shift-week-field label {
-    margin: 0;
-    color: var(--gray);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.3;
-}
-
-.shift-week-field textarea {
-    min-height: 46px;
-    resize: vertical;
-}
-
-.shift-plan-remove {
-    min-height: 40px;
-    padding: 10px 14px;
-    border-radius: 12px;
 }
 
 .shift-special-task-builder {
@@ -2419,16 +1984,6 @@ canvas {
 
 .shift-special-task-copy p {
     overflow-wrap: anywhere;
-}
-
-.shift-special-task-options {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.shift-special-task-options .checkbox-wrapper {
-    margin-bottom: 0;
 }
 
 .admin-employee-modal-content {
@@ -2706,24 +2261,6 @@ canvas {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-/* Forms */
-.form-row {
-    display: grid;
-    gap: 15px;
-    margin-bottom: 15px;
-    min-width: 0;
-    max-width: 100%;
-}
-
-.form-row.two-col {
-    grid-template-columns: 1fr 1fr;
-}
-
-.form-row > * {
-    min-width: 0;
-    max-width: 100%;
 }
 
 .form-group,
@@ -3123,20 +2660,6 @@ select.dark-control option:disabled {
     line-height: 1.55;
 }
 
-.supervision-task-card {
-    display: grid;
-    gap: 14px;
-}
-
-.supervision-task-card .muted-copy {
-    margin: 0;
-    line-height: 1.55;
-}
-
-.supervision-task-card .btn {
-    width: 100%;
-}
-
 .supervision-support-card {
     display: grid;
     gap: 14px;
@@ -3345,24 +2868,6 @@ select.dark-control option:disabled {
     background: rgba(245, 158, 11, 0.1);
     border: 1px solid rgba(245, 158, 11, 0.3);
     color: #b45309;
-}
-
-.alert-info {
-    background: rgba(14, 165, 233, 0.08);
-    border: 1px solid rgba(14, 165, 233, 0.25);
-    color: #0369a1;
-}
-
-.shift-window-note {
-    margin-top: 4px;
-    margin-bottom: 16px;
-}
-
-.shift-window-note small {
-    display: block;
-    color: #cbd5e1;
-    margin-top: 4px;
-    line-height: 1.4;
 }
 
 /* Success Screen */
@@ -3581,9 +3086,6 @@ select.dark-control option:disabled {
         grid-template-columns: 1fr;
     }
 
-    .form-row.two-col {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* Loading */
@@ -4139,94 +3641,6 @@ select.dark-control option:disabled {
     font-weight: 600;
 }
 
-.report-day-shift-title {
-    color: var(--text-primary);
-    font-size: 16px;
-    font-weight: 700;
-}
-
-.report-day-shift-subtitle {
-    color: var(--text-secondary);
-    font-size: 13px;
-    line-height: 1.5;
-    margin-top: 4px;
-}
-
-.report-day-shift-metrics {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.report-day-shift-metric {
-    display: grid;
-    gap: 6px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    background: rgba(15, 23, 42, 0.03);
-    border: 1px solid rgba(15, 23, 42, 0.05);
-}
-
-.report-day-shift-metric span {
-    color: var(--gray);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.report-day-shift-metric strong {
-    color: var(--text-primary);
-    font-size: 16px;
-}
-
-.report-day-phase {
-    display: grid;
-    gap: 10px;
-    min-width: 0;
-}
-
-.report-day-photo {
-    display: grid;
-    gap: 0;
-    border-radius: 14px;
-    overflow: hidden;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-.report-day-photo-thumb {
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    display: block;
-}
-
-.report-day-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.report-day-photo-copy {
-    display: grid;
-    gap: 4px;
-    padding: 10px;
-    background: rgba(15, 23, 42, 0.72);
-}
-
-.report-day-photo-label {
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.35;
-}
-
-.report-day-photo-meta {
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 11px;
-    line-height: 1.45;
-}
-
 .report-day-phase-empty {
     padding: 16px 14px;
     border-radius: 14px;
@@ -4235,33 +3649,6 @@ select.dark-control option:disabled {
     color: var(--gray);
     font-size: 13px;
     line-height: 1.5;
-}
-
-.report-day-pairs {
-    display: grid;
-    gap: 12px;
-}
-
-.report-day-pair-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    align-items: stretch;
-}
-
-.report-day-photo-phase {
-    color: #7dd3fc;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-}
-
-.report-day-photo-empty {
-    border-style: dashed;
-    border-color: rgba(148, 163, 184, 0.28);
-    align-content: center;
-    background: rgba(15, 23, 42, 0.02);
 }
 
 /* .chart-placeholder removido — el ícono de torta vacío se veía feo y
@@ -4499,11 +3886,6 @@ input[type='file'] {
     color: #ffffff;
 }
 
-.btn-warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: var(--text-primary);
-}
-
 /* Variante suave para acciones sensibles pero no destructivas
    (ej. "Desvincular dispositivo"): outline naranja en vez de fill
    agresivo. Deja claro que es una accion con consecuencias sin
@@ -4536,10 +3918,6 @@ input[type='file'] {
     display: grid;
     gap: 15px;
     margin-bottom: 15px;
-}
-
-.toolbar-row.two-col {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .toolbar-row.three-col {
@@ -4671,18 +4049,6 @@ input[type='file'] {
     font-size: 14px;
 }
 
-.admin-toggle-panel {
-    display: flex;
-    align-items: stretch;
-}
-
-.admin-toggle-panel .checkbox-wrapper {
-    width: 100%;
-    margin-bottom: 0;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(15, 23, 42, 0.04);
-}
-
 .admin-supervisor-card {
     padding: 22px 24px;
     border-radius: 22px;
@@ -4740,26 +4106,6 @@ input[type='file'] {
     align-self: center;
 }
 
-.admin-supervisor-section {
-    display: grid;
-    gap: 12px;
-}
-
-.admin-supervisor-assignment-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 14px;
-    align-items: end;
-}
-
-.admin-supervisor-select-wrap {
-    min-width: 0;
-}
-
-.admin-assign-btn {
-    min-width: 168px;
-}
-
 .admin-supervisor-actions {
     display: flex;
     flex-wrap: wrap;
@@ -4769,34 +4115,6 @@ input[type='file'] {
 
 .dark-control {
     width: 100%;
-}
-
-.assignment-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.assignment-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: rgba(var(--primary-rgb), 0.12);
-    border: 1px solid rgba(var(--primary-rgb), 0.25);
-    color: var(--text-primary);
-    font-size: 13px;
-}
-
-.assignment-chip button {
-    border: none;
-    background: transparent;
-    color: #fca5a5;
-    cursor: pointer;
-    font-size: 12px;
-    padding: 0;
 }
 
 .audit-meta {
@@ -4904,10 +4222,6 @@ input[type='file'] {
     .restaurant-map-header {
         flex-direction: column;
         align-items: flex-start;
-    }
-
-    .restaurant-location-summary-grid {
-        grid-template-columns: 1fr;
     }
 
     .content {
@@ -5020,14 +4334,6 @@ input[type='file'] {
         align-items: flex-start;
     }
 
-    .admin-supervisor-assignment-row {
-        grid-template-columns: 1fr;
-    }
-
-    .admin-assign-btn {
-        width: 100%;
-    }
-
     .admin-supervisor-actions .btn-inline {
         width: 100%;
     }
@@ -5050,11 +4356,6 @@ input[type='file'] {
         font-size: 15px;
     }
 
-    .report-visual {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
     .report-day-shift-top {
         flex-direction: column;
         align-items: flex-start;
@@ -5067,19 +4368,6 @@ input[type='file'] {
 
     .report-day-shift-statuses {
         justify-content: flex-start;
-    }
-
-    .report-day-phases {
-        grid-template-columns: 1fr;
-    }
-
-    .report-day-pair-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-    }
-
-    .report-day-photo-label {
-        font-size: 13px;
     }
 
     .report-date-row {
@@ -5130,103 +4418,6 @@ input[type='file'] {
     .compact-picker::-webkit-datetime-edit {
         font-size: 13px !important;
         line-height: 1.1 !important;
-    }
-
-    .report-helper-callout,
-    .audit-helper-callout {
-        padding: 14px 16px;
-    }
-
-    .shift-schedule-top {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .shift-schedule-top .badge {
-        align-self: flex-start;
-    }
-
-    .shift-schedule-meta {
-        grid-template-columns: 1fr;
-    }
-
-    .shift-schedule-filters {
-        grid-template-columns: 1fr;
-        width: 100%;
-    }
-
-    .shift-mode-switch {
-        grid-template-columns: 1fr;
-    }
-
-    .shift-mode-btn {
-        justify-content: flex-start;
-        text-align: left;
-        min-height: 64px;
-    }
-
-    .shift-mode-btn-copy strong {
-        font-size: 14px;
-    }
-
-    .shift-mode-btn-copy small {
-        font-size: 11px;
-    }
-
-    .shift-mode-panel .form-row.two-col,
-    .shift-plan-row .form-row.two-col {
-        grid-template-columns: 1fr;
-    }
-
-    .shift-special-task-options {
-        grid-template-columns: 1fr;
-    }
-
-    .shift-plan-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .shift-week-actions {
-        width: 100%;
-    }
-
-    .shift-plan-header .btn-inline,
-    .shift-plan-add-row .btn-inline,
-    .shift-plan-remove {
-        width: 100%;
-    }
-
-    .shift-week-row {
-        grid-template-columns: 1fr;
-    }
-
-    .shift-week-summary {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .shift-plan-row-top {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .shift-batch-option {
-        grid-template-columns: 1fr;
-    }
-
-    .shift-batch-check {
-        width: 100%;
-        min-height: 46px;
-        border-radius: 12px;
-    }
-
-    .shift-batch-picker {
-        max-height: 320px;
-    }
-
-    .supervision-target-picker {
-        margin-bottom: 20px;
     }
 
     .supervision-target-top {
@@ -5321,110 +4512,6 @@ input[type='file'] {
         margin: 0 10px;
     }
 
-    .shift-scheduler-modal-content {
-        width: 100%;
-        max-width: none;
-        height: calc(100dvh - 16px);
-        max-height: calc(100dvh - 16px);
-        margin: 0;
-        border-radius: 28px;
-        display: flex;
-        flex-direction: column;
-        overflow-y: hidden;
-        overflow-x: hidden;
-    }
-
-    .shift-scheduler-modal-content #supervisor-shift-form {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-    }
-
-    .shift-scheduler-modal-content .modal-header,
-    .shift-scheduler-modal-content .modal-body,
-    .shift-scheduler-modal-content .modal-footer {
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-
-    .shift-scheduler-modal-content .modal-header {
-        padding-top: 18px;
-        padding-bottom: 18px;
-    }
-
-    .shift-scheduler-modal-content .modal-body {
-        flex: 1;
-        padding-top: 16px;
-        padding-bottom: 22px;
-        gap: 22px;
-        overflow-y: auto;
-        overflow-x: hidden;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-    }
-
-    .shift-scheduler-modal-content .modal-footer {
-        padding-top: 8px;
-        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        position: sticky;
-        bottom: 0;
-        z-index: 2;
-    }
-
-    .shift-scheduler-modal-content .modal-footer .btn {
-        min-width: 0;
-        min-height: 54px;
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-
-    .shift-mode-switch {
-        display: grid !important;
-        grid-template-columns: 1fr !important;
-        padding: 8px;
-        gap: 10px;
-        border-radius: 22px;
-        width: 100%;
-        overflow: visible !important;
-    }
-
-    .shift-mode-btn {
-        width: 100%;
-        min-height: 74px;
-        padding: 16px 18px;
-        border-radius: 18px;
-        gap: 12px;
-    }
-
-    .shift-mode-btn i {
-        font-size: 17px;
-    }
-
-    .shift-mode-panel {
-        gap: 18px;
-        padding: 22px 18px;
-        border-radius: 22px;
-        overflow: visible;
-    }
-
-    .shift-mode-intro {
-        gap: 8px;
-        padding-bottom: 0;
-    }
-
-    .shift-mode-intro strong {
-        font-size: 18px;
-        line-height: 1.3;
-    }
-
-    .shift-mode-intro p {
-        font-size: 14px;
-        line-height: 1.5;
-    }
-
     .shift-special-task-builder {
         gap: 16px;
         padding: 22px 18px;
@@ -5449,19 +4536,6 @@ input[type='file'] {
     .shift-special-task-copy p {
         font-size: 13px;
         line-height: 1.5;
-    }
-
-    .shift-special-task-status,
-    .shift-special-task-note {
-        padding: 10px 12px;
-        border-radius: 12px;
-        font-size: 13px;
-        line-height: 1.5;
-    }
-
-    .shift-special-task-toggle {
-        padding: 18px 16px;
-        border-radius: 16px;
     }
 
     .admin-employee-modal-content {
@@ -5539,167 +4613,6 @@ input[type='file'] {
            SUPERVISOR — WEEKLY GRID VIEW
            ============================================================ */
 
-.supervisor-week-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 14px;
-}
-
-.supervisor-week-nav {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.supervisor-week-label {
-    font-weight: 600;
-    font-size: 0.95rem;
-    min-width: 200px;
-    text-align: center;
-}
-
-/* En móvil el min-width 200px forzaba overflow horizontal enmascarado
-   por overflow-x:hidden del app-container; el label quedaba cortado.
-   Colapsamos a 0 y confiamos en flex-wrap del contenedor padre. */
-@media (max-width: 480px) {
-    .supervisor-week-label {
-        min-width: 0;
-        flex: 1 1 100%;
-    }
-
-    .admin-assign-btn {
-        min-width: 0;
-        flex: 1 1 auto;
-    }
-}
-
-.supervisor-week-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.supervisor-week-filters {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.supervisor-week-filters select,
-.supervisor-week-filters input[type='text'] {
-    flex: 1;
-    min-width: 150px;
-}
-
-/* Schedule grid */
-.ssg-grid-scroll {
-    overflow-x: auto;
-    overflow-y: hidden;
-    /* Scrollbar siempre visible como indicador de que hay contenido a la
-       derecha (sábado y domingo) cuando el viewport es angosto. */
-    scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
-    scrollbar-width: thin;
-    -webkit-overflow-scrolling: touch;
-}
-
-.ssg-grid-scroll::-webkit-scrollbar {
-    height: 10px;
-}
-
-.ssg-grid-scroll::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.04);
-    border-radius: 6px;
-}
-
-.ssg-grid-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.24);
-    border-radius: 6px;
-}
-
-.ssg-grid-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.36);
-}
-
-.ssg-grid {
-    display: grid;
-    /* 140px + 7 * 80px min = 700px. Cabe en viewport tablet/desktop sin scroll;
-       en móvil el wrapper .overflow-x:auto ofrece scroll suave para ver todos
-       los días (incluyendo sábado y domingo). */
-    grid-template-columns: 140px repeat(7, minmax(80px, 1fr));
-    gap: 1px;
-    background: rgba(15, 23, 42, 0.05);
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid rgba(15, 23, 42, 0.07);
-    min-width: 720px;
-}
-
-.ssg-header-cell {
-    background: rgba(15, 23, 42, 0.04);
-    padding: 10px 8px;
-    text-align: center;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--gray);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-}
-
-.ssg-header-cell.ssg-employee-header {
-    text-align: left;
-    padding-left: 14px;
-}
-
-.ssg-header-cell.ssg-today {
-    color: var(--primary-text);
-}
-
-.ssg-date-num {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    text-transform: none;
-    letter-spacing: 0;
-}
-
-.ssg-today .ssg-date-num {
-    color: var(--primary-text);
-}
-
-.ssg-employee-cell {
-    background: var(--card-bg);
-    padding: 12px 14px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    border-top: 1px solid rgba(15, 23, 42, 0.04);
-    word-break: break-word;
-}
-
-.ssg-shift-cell {
-    background: var(--card-bg);
-    padding: 6px;
-    min-height: 70px;
-    cursor: pointer;
-    border-top: 1px solid rgba(15, 23, 42, 0.04);
-    position: relative;
-    transition: background 0.15s;
-}
-
-.ssg-shift-cell:hover {
-    background: rgba(var(--primary-rgb), 0.06);
-}
-
-.ssg-shift-cell.ssg-has-shift {
-    border-left: 2px solid var(--primary);
-}
-
 @media (hover: none) {
     .btn-primary:hover,
     .quick-action-btn:hover {
@@ -5715,67 +4628,6 @@ textarea,
 label,
 [role='button'] {
     touch-action: manipulation;
-}
-
-.ssg-shift-entry {
-    background: rgba(var(--primary-rgb), 0.1);
-    border-radius: 6px;
-    padding: 4px 6px;
-    margin-bottom: 4px;
-    position: relative;
-}
-
-.ssg-shift-rest {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--primary-text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.ssg-shift-time {
-    font-size: 0.7rem;
-    color: var(--gray);
-}
-
-.ssg-del-btn {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 28px;
-    height: 28px;
-    border-radius: 4px;
-    border: none;
-    background: rgba(239, 68, 68, 0.15);
-    color: var(--danger);
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
-    line-height: 1;
-}
-
-.ssg-shift-entry:hover .ssg-del-btn {
-    display: flex;
-}
-
-@media (hover: none) {
-    .ssg-del-btn {
-        display: flex;
-    }
-}
-
-@media (max-width: 768px) {
-    .supervisor-week-toolbar {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .supervisor-week-label {
-        min-width: 0;
-    }
 }
 
 /* Restaurant tasks — employee dashboard */
@@ -6006,71 +4858,6 @@ label,
     gap: 6px;
 }
 
-/* Schedule shift range rows */
-.shift-plan-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.shift-plan-row--disabled {
-    opacity: 0.5;
-}
-
-.shift-plan-row-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    min-width: 100px;
-    flex: 1;
-}
-
-.shift-plan-row-toggle input[type='checkbox'] {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-}
-
-.shift-plan-day-label {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.shift-plan-date {
-    font-weight: 400;
-    color: var(--text-secondary);
-    font-size: 0.82rem;
-    margin-left: 2px;
-}
-
-.shift-plan-times {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.shift-plan-times input[type='time'] {
-    width: 100px;
-    font-size: 0.875rem;
-    padding: 0.3rem 0.5rem;
-}
-
-.shift-plan-time-sep {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.shift-plan-times.opacity-50 {
-    opacity: 0.45;
-}
-
-.opacity-50 {
-    opacity: 0.5;
-}
-
 @media (max-width: 360px) {
     .header-brand span {
         font-size: 14px;
@@ -6126,7 +4913,6 @@ label,
 .task-evidence-caption i {
     font-size: 10px;
 }
-
 
 /* Switcher "Vista Admin | Vista Supervisor" grande y visible.
    Aparece al inicio del contenido de los dashboards admin/supervisor
@@ -6234,8 +5020,4 @@ label,
     color: #b91c1c;
     border-color: rgba(239, 68, 68, 0.35);
 }
-.badge.badge-info {
-    background: rgba(14, 165, 233, 0.14);
-    color: #0369a1;
-    border-color: rgba(14, 165, 233, 0.35);
-}
+

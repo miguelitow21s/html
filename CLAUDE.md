@@ -78,7 +78,7 @@ Convención: cada endpoint recibe `{ action: 'verbo', ...payload }` y responde J
   - actions: `list role=empleado|supervisora|super_admin`, `create`, `update`, `deactivate`
 - `admin_restaurants_manage` — CRUD sitios + áreas/subáreas
 - `admin_reports` / `supervisor_reports` — generación PDF/Excel (audits, visits)
-- `profile_phone_change_request` / `profile_phone_change_confirm` — flujo OTP cambio de teléfono
+- `profile_phone_change_request` / `profile_phone_change_confirm` — cambio de teléfono con OTP. Existe en el backend pero el front ya no lo usa: el botón "Cambiar" del perfil se quitó a pedido del cliente (2026-08-22) y el modal y su código se borraron en 2026-09.
 - `trusted_device_*` / `phone_otp_*` — flujos de OTP y dispositivos confiables
 
 **Deprecated (410 Gone en backend):** `scheduledShiftsManage`, `restaurantStaffManage`, `admin_supervisors_manage assign/unassign`. No usar.
@@ -166,7 +166,6 @@ Backend YA soportaba shift_id como parent. Solo se cablearon los hooks del front
 **State** (`employee.js`):
 - `_employeeStartUploads` / `_employeeEndUploads` — Map(slotKey → {status, promise, path}) por fotos de subárea
 - `_employeeObsUploads` — Map por observaciones libres al finalizar
-- `_employeeTaskUploads` — Map por evidencia de tarea especial (infra dejada, no cableada aún)
 - `_employeeLocationCache` — reusa lat/lng por 2 min para no disparar N GPS calls en ráfagas
 
 Todos los Maps se **inicializan lazy** en cada `enqueue*` (bug histórico PR #28: si el user retomaba un shift activo sin pasar por `resetShiftState`, los maps quedaban undefined y el enqueue era silent-return).

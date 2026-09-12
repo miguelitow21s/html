@@ -261,19 +261,6 @@ export class WorkTraceApiClient {
         return { ...this.config };
     }
 
-    getDebugSnapshot() {
-        return {
-            baseUrl: this.config.baseUrl,
-            anonKeyConfigured: isConfiguredAnonKey(this.config.anonKey),
-            accessTokenConfigured: Boolean(this.config.accessToken),
-            shiftOtpConfigured: Boolean(this.config.shiftOtpToken),
-            currentRole: this.config.currentRole,
-            deviceFingerprint: this.config.deviceFingerprint,
-            timeoutMs: this.config.timeoutMs,
-            lastResponseMeta: this.lastResponseMeta,
-        };
-    }
-
     hasBackendConfig() {
         return isConfiguredBaseUrl(this.config.baseUrl) && isConfiguredAnonKey(this.config.anonKey);
     }
@@ -694,46 +681,12 @@ export class WorkTraceApiClient {
         return this.employeeSelfService('my_hours_history', payload);
     }
 
-    createEmployeeObservation(payload) {
-        return this.employeeSelfService('create_observation', payload);
-    }
-
     startShift(payload) {
         return this.post('/shifts_start', payload, { requiresOtp: true });
     }
 
     endShift(payload) {
         return this.post('/shifts_end', payload, { requiresOtp: true });
-    }
-
-    shouldRequireSupervisorOtp(options = {}) {
-        if (typeof options?.requiresOtp === 'boolean') {
-            return options.requiresOtp;
-        }
-
-        return normalizeRoleToken(this.config.currentRole) !== 'super_admin';
-    }
-
-    approveShift(shiftId, options = {}) {
-        return this.post(
-            '/shifts_approve',
-            { shift_id: shiftId },
-            {
-                ...options,
-                requiresOtp: this.shouldRequireSupervisorOtp(options),
-            }
-        );
-    }
-
-    rejectShift(shiftId, options = {}) {
-        return this.post(
-            '/shifts_reject',
-            { shift_id: shiftId },
-            {
-                ...options,
-                requiresOtp: this.shouldRequireSupervisorOtp(options),
-            }
-        );
     }
 
     requestShiftEvidenceUpload(shiftId, type, mimeType = '') {
@@ -804,13 +757,6 @@ export class WorkTraceApiClient {
         }
     }
 
-    createIncident(payload, options = {}) {
-        return this.post('/incidents_create', payload, {
-            ...options,
-            requiresOtp: this.shouldRequireSupervisorOtp(options),
-        });
-    }
-
     // scheduledShiftsManage removido en el corte de migracion Visitas.
     // Backend lo dejo deprecado pero el frontend ya no lo consume.
 
@@ -838,33 +784,12 @@ export class WorkTraceApiClient {
         );
     }
 
-    suppliesDeliver(action, payload = {}) {
-        return this.callAction('/supplies_deliver', action, payload);
-    }
-
     adminUsersManage(action, payload = {}) {
         return this.callAction('/admin_users_manage', action, payload);
     }
 
-    adminUserPhoneRemove(userId, options = {}) {
-        return this.post(
-            '/admin_user_phone_remove',
-            {
-                user_id: userId,
-            },
-            {
-                ...options,
-                requiresIdempotency: false,
-            }
-        );
-    }
-
     adminRestaurantsManage(action, payload = {}) {
         return this.callAction('/admin_restaurants_manage', action, payload);
-    }
-
-    adminSupervisorsManage(action, payload = {}) {
-        return this.callAction('/admin_supervisors_manage', action, payload);
     }
 
     adminDashboardMetrics(payload, options = {}) {
@@ -887,17 +812,6 @@ export class WorkTraceApiClient {
         return this.callAction('/system_settings_manage', action, payload);
     }
 
-    emailNotificationsDispatch(payload) {
-        return this.post('/email_notifications_dispatch', payload);
-    }
-
-    profilePhoneChangeRequest(payload, options = {}) {
-        return this.post('/profile_phone_change_request', payload, options);
-    }
-
-    profilePhoneChangeConfirm(payload, options = {}) {
-        return this.post('/profile_phone_change_confirm', payload, options);
-    }
 }
 
 export const apiClient = new WorkTraceApiClient();

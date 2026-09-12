@@ -162,20 +162,6 @@ export function buildJwtDebugSummary(token = '') {
 // que manda el backend (shift.local.*), no la del celular.
 // ==========================================================================
 
-export function toDateTimeLocalInput(value) {
-    if (!value) {
-        return '';
-    }
-
-    const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        return '';
-    }
-
-    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 16);
-}
-
 export function formatDate(value, options = {}, locale = 'es-CO') {
     if (!value) {
         return '-';
@@ -1090,10 +1076,6 @@ export function initials(value) {
         .join('');
 }
 
-export function delay(ms) {
-    return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
 export function isGenericNamedPlaceholder(value, type = 'text') {
     const normalized = String(value || '')
         .trim()
@@ -1209,15 +1191,6 @@ export function asArray(value, keys = ['items']) {
 // --------------------------------------------------------------------------
 // normalizePhoneToE164: ver su comentario. Lo usan los formularios de crear usuario.
 // ==========================================================================
-
-export function normalizeLinkedPhoneValue(value) {
-    const phone = String(value || '').trim();
-    if (!phone || phone === '-' || phone.toLowerCase() === 'null' || phone.toLowerCase() === 'undefined') {
-        return '';
-    }
-
-    return phone;
-}
 
 /**
  * Normaliza un teléfono escrito a mano a E.164 (+<código país><número>).
