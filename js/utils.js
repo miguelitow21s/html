@@ -1,5 +1,32 @@
 // @ts-nocheck
+/**
+ * ============================================================================
+ * utils.js — Funciones puras reutilizables
+ * ============================================================================
+ *
+ * Sin estado ni acceso al DOM: reciben datos y devuelven datos. Se importan
+ * donde hagan falta. Antes de escribir un helper nuevo, busca aquí: casi
+ * todo lo común ya existe (fechas, nombres a mostrar, escapeHtml, asArray…).
+ *
+ * REGLAS QUE EVITAN BUGS
+ *   - Texto del backend dentro de innerHTML → SIEMPRE escapeHtml(texto).
+ *   - URL del backend en src/href → sanitizeUrl(url).
+ *   - Respuestas del backend que "deberían" ser listas → asArray(x).
+ *   - Fecha para un calendario → toInputDate / toLocalDateKey (fecha LOCAL).
+ *   - Id de un sitio → getRestaurantRecordId(registro) (el campo cambia
+ *     según el endpoint: restaurant_id, id, restaurant.id…).
+ */
+
 import { AREA_META, AREA_GROUP_ALIASES, scopedConsole as console } from './constants.js';
+
+// ==========================================================================
+// SECCIÓN: Fechas
+// --------------------------------------------------------------------------
+// toInputDate / toLocalDateKey → 'YYYY-MM-DD' con la fecha LOCAL del
+// celular. No usar toISOString().slice(0, 10): es la fecha UTC y en
+// Colombia da "mañana" desde las 7 p. m. toIsoDate → instante completo
+// en ISO (UTC), para mandar fechas y horas exactas al backend.
+// ==========================================================================
 
 export function getMonthStart(date = new Date()) {
     return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -57,6 +84,12 @@ export function toIsoDate(value) {
 
     return date.toISOString();
 }
+
+// ==========================================================================
+// SECCIÓN: JWT (solo para diagnóstico)
+// --------------------------------------------------------------------------
+// Decodifican el token para mostrarlo en las tarjetas de soporte. No validan firmas.
+// ==========================================================================
 
 export function decodeJwtPart(token = '', index = 1) {
     if (!token || typeof token !== 'string') {
@@ -121,6 +154,13 @@ export function buildJwtDebugSummary(token = '') {
         aal: payload.aal || null,
     };
 }
+
+// ==========================================================================
+// SECCIÓN: Formato de fechas, horas y duraciones para mostrar
+// --------------------------------------------------------------------------
+// formatShiftLocalDate / formatShiftLocalRange usan la hora local del SITIO
+// que manda el backend (shift.local.*), no la del celular.
+// ==========================================================================
 
 export function toDateTimeLocalInput(value) {
     if (!value) {
@@ -265,6 +305,12 @@ export function formatHours(value) {
     return `${numericValue.toFixed(1).replace(/\.0$/, '')}h`;
 }
 
+// ==========================================================================
+// SECCIÓN: URLs, HTML seguro y errores
+// --------------------------------------------------------------------------
+// escapeHtml, sanitizeUrl, collectEvidenceUrls y extractErrorInfo.
+// ==========================================================================
+
 export function isHttpUrl(value) {
     return typeof value === 'string' && /^(https?:)?\/\//i.test(value.trim());
 }
@@ -362,6 +408,12 @@ export function sanitizeUrl(value) {
     if (/^data:image\//i.test(raw)) return raw;
     return '';
 }
+
+// ==========================================================================
+// SECCIÓN: Áreas y subáreas de limpieza (lectura desde el backend)
+// --------------------------------------------------------------------------
+// Convierte las distintas formas en que llegan las áreas a una estructura común.
+// ==========================================================================
 
 export function normalizeAreaToken(value) {
     return String(value || '')
@@ -499,6 +551,14 @@ export function buildAreaMeta(areaLabel) {
         }
     );
 }
+
+// ==========================================================================
+// SECCIÓN: Nombres a mostrar (sitios y contratistas)
+// --------------------------------------------------------------------------
+// El backend manda los nombres en campos distintos según el endpoint. Estas
+// funciones eligen el primero que tenga sentido y evitan mostrar un id o
+// una dirección como si fuera el nombre.
+// ==========================================================================
 
 export function formatEntityReference(prefix, id) {
     const normalizedId = String(id || '').trim();
@@ -928,6 +988,12 @@ export function getShiftRestaurantName(shift, options = {}) {
     );
 }
 
+// ==========================================================================
+// SECCIÓN: Claves e ids
+// --------------------------------------------------------------------------
+// buildPhotoSlotKey (clave de cada slot de foto), getRestaurantRecordId y normalizeRestaurantId.
+// ==========================================================================
+
 export function normalizeAreaGroupLabel(areaLabel) {
     const normalized = normalizeAreaToken(areaLabel);
     return AREA_GROUP_ALIASES[normalized] || areaLabel;
@@ -980,6 +1046,13 @@ export function normalizeRestaurantId(value) {
     const numericValue = Number(normalized);
     return Number.isFinite(numericValue) ? numericValue : normalized;
 }
+
+// ==========================================================================
+// SECCIÓN: Varios
+// --------------------------------------------------------------------------
+// asArray(x) acepta un array o un objeto con items/data/… y siempre devuelve
+// un array. getBadgeClass(estado) → clase de color del badge.
+// ==========================================================================
 
 export function deepMergeSettings(base, override) {
     const result = Array.isArray(base) ? [...base] : { ...(base || {}) };
@@ -1131,6 +1204,12 @@ export function asArray(value, keys = ['items']) {
     return [];
 }
 
+// ==========================================================================
+// SECCIÓN: Teléfonos
+// --------------------------------------------------------------------------
+// normalizePhoneToE164: ver su comentario. Lo usan los formularios de crear usuario.
+// ==========================================================================
+
 export function normalizeLinkedPhoneValue(value) {
     const phone = String(value || '').trim();
     if (!phone || phone === '-' || phone.toLowerCase() === 'null' || phone.toLowerCase() === 'undefined') {
@@ -1176,6 +1255,12 @@ export function normalizePhoneToE164(value) {
         needsCountryCode: !hasPlus && /^\d{10}$/.test(phone),
     };
 }
+
+// ==========================================================================
+// SECCIÓN: Horas y estados de servicios (informes)
+// --------------------------------------------------------------------------
+// Sumas de horas y resumen de estados para el "Resumen del período".
+// ==========================================================================
 
 export function getHoursFromRange(startValue, endValue) {
     if (!startValue || !endValue) {

@@ -1,4 +1,26 @@
 // @ts-nocheck
+/**
+ * ============================================================================
+ * modules/adminModals.js — Modales "pesados" de sitios y contratistas
+ * ============================================================================
+ *
+ * QUÉ ES
+ *   El modal de crear/editar sitio (con mapa y búsqueda de direcciones de
+ *   Google Maps) y el de contratista. Está separado por peso: el contratista
+ *   nunca lo carga. Lo cargan el inspector y el super_admin.
+ *
+ * ⚠ OJO — ORDEN DE CARGA Y FUNCIONES REPETIDAS
+ *   Este archivo se mezcla en `app` DESPUÉS de supervisor.js (y de admin.js):
+ *     inspector   → Object.assign(app, supervisorMethods, adminModalMethods)
+ *     super_admin → Object.assign(app, supervisorMethods, adminMethods, adminModalMethods)
+ *   Por eso, si una función existe aquí y también en supervisor.js o app.js,
+ *   para el inspector y el admin se ejecuta LA DE ESTE ARCHIVO.
+ *   Hoy hay ~20 funciones repetidas (getSupervisorRestaurants,
+ *   getKnownRestaurantRecord, isShiftFromToday…) y son equivalentes. Si
+ *   cambias una, cambia todas las copias; lo ideal es dejar una sola en
+ *   app.js y borrar el resto.
+ */
+
 import { CACHE_TTLS } from '../constants.js';
 import { apiClient } from '../api.js';
 import { t } from '../i18n.js';
@@ -19,6 +41,16 @@ import {
 } from '../utils.js';
 
 export const adminModalMethods = {
+    // ==========================================================================
+    // SECCIÓN: Modal de sitio: ubicación con Google Maps
+    // --------------------------------------------------------------------------
+    // Buscar la dirección (autocompletado + geocoding), elegir un resultado,
+    // mover el marcador en el mapa o "usar mi ubicación". Al final quedan lat,
+    // lng y dirección en campos ocultos del formulario, que envía
+    // submitAdminRestaurantForm (supervisor.js). La API key de Maps sale de
+    // public/config.js (googleMapsApiKey).
+    // ==========================================================================
+
     prepareAdminRestaurantModal() {
         const form = document.getElementById('admin-restaurant-form');
         form?.reset();
@@ -907,10 +939,22 @@ export const adminModalMethods = {
         return this.restaurantLocationDraft;
     },
 
+    // ==========================================================================
+    // SECCIÓN: Modal de contratista
+    // --------------------------------------------------------------------------
+    // Prepara el formulario (lo envía submitAdminEmployeeForm en supervisor.js).
+    // ==========================================================================
+
     prepareAdminEmployeeModal() {
         const form = document.getElementById('admin-employee-form');
         form?.reset();
     },
+
+    // ==========================================================================
+    // SECCIÓN: COPIAS de funciones de supervisor.js / app.js
+    // --------------------------------------------------------------------------
+    // Ver el OJO del encabezado: para inspector y admin corren ESTAS versiones.
+    // ==========================================================================
 
     getKnownSupervisorEmployeeRecord(employeeId) {
         const normalizedEmployeeId = String(employeeId || '').trim();
@@ -981,6 +1025,14 @@ export const adminModalMethods = {
             visible: Boolean(userId && phoneNumber),
         };
     },
+
+    // ==========================================================================
+    // SECCIÓN: Desvincular el teléfono de un usuario
+    // --------------------------------------------------------------------------
+    // Quita el teléfono registrado de un contratista o inspector
+    // (apiClient.adminUserPhoneRemove), para poder registrarle un número nuevo
+    // (por ejemplo, si cambió de celular).
+    // ==========================================================================
 
     async clearPhoneBindingRecord(record, options = {}) {
         const {
@@ -1073,6 +1125,12 @@ export const adminModalMethods = {
             },
         });
     },
+
+    // ==========================================================================
+    // SECCIÓN: COPIAS (continuación)
+    // --------------------------------------------------------------------------
+    // Mismas funciones que en supervisor.js / app.js.
+    // ==========================================================================
 
     getKnownEmployeeRestaurantRecord(restaurantId) {
         const normalizedRestaurantId = String(restaurantId || '').trim();
@@ -1496,6 +1554,12 @@ export const adminModalMethods = {
             }
         );
     },
+
+    // ==========================================================================
+    // SECCIÓN: Catálogo de sitios del admin
+    // --------------------------------------------------------------------------
+    // Carga (con caché) la lista de sitios para las pantallas del admin.
+    // ==========================================================================
 
     async ensureAdminRestaurants(force = false) {
         if (force) {

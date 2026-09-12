@@ -1,4 +1,53 @@
 // @ts-nocheck
+/**
+ * ============================================================================
+ * app.js — Controlador central de WorkTrace (objeto `app`)
+ * ============================================================================
+ *
+ * QUÉ ES
+ *   Toda la SPA vive en UN solo objeto `app` (se expone como window.app para
+ *   depurar desde la consola). Este archivo trae lo común a todos los roles:
+ *   arranque, sesión, login/OTP, navegación, avisos, errores, caché, GPS,
+ *   cámara y fotos.
+ *
+ * CÓMO SE ARMA (importante para entender el resto)
+ *   Los módulos de cada rol se cargan DESPUÉS del login, según el rol
+ *   (ver loadRoleModule), y se "pegan" a este mismo objeto con Object.assign:
+ *     - empleado (contratista)  → modules/employee.js
+ *     - supervisora (inspector) → modules/supervisor.js + modules/adminModals.js
+ *     - super_admin             → supervisor.js + admin.js + adminModals.js
+ *   Por eso todos los archivos usan `this.algo()` como si fueran uno solo.
+ *   OJO: si dos archivos definen un método con el mismo nombre, el que se
+ *   carga último lo pisa (fue la causa de varios bugs). Y lo que necesiten
+ *   DOS roles distintos tiene que vivir aquí, en app.js (un inspector nunca
+ *   carga employee.js).
+ *
+ * PANTALLAS
+ *   index.html tiene todas las pantallas como <div id="page-XXX">.
+ *   navigate('XXX') muestra una y oculta las demás; loadPageData('XXX')
+ *   carga sus datos.
+ *
+ * CLICS (dos mecanismos, ver SECCIÓN "Eventos globales")
+ *   - data-action="nombreDeMetodo" data-args="a|b" → llama this.nombreDeMetodo(a, b)
+ *   - data-action="accion-con-guiones"            → switch en handleDelegatedClick
+ *
+ * BACKEND
+ *   Todo va por js/api.js (apiClient) a Supabase Edge Functions. Antes de
+ *   llamar, pedir el token con this.getValidAccessToken().
+ *
+ * CÓMO NAVEGAR ESTE ARCHIVO
+ *   Busca "SECCIÓN:" para saltar entre bloques. En orden:
+ *     UI: cola de render · Depuración y cronómetro · PIN inicial y dispositivos
+ *     · Arranque · Eventos globales · Sesión · UI común · Avisos · Errores y OTP
+ *     · Login y acceso · Navegación y roles · Caché · Áreas de limpieza
+ *     · Persistencia local del servicio · Selección de áreas del contratista
+ *     · Fechas · Permisos y GPS · Grilla de fotos · Cámara · Procesamiento de
+ *     fotos · Utilidades compartidas entre roles · Estado del servicio
+ *     · Sitio del servicio · Dashboard del contratista
+ *
+ * Más contexto (flujos, gotchas, historial): CLAUDE.md y docs/.
+ */
+
 // Antes: `@supabase/supabase-js` completo (~194 kB min) para usar solo el
 // módulo auth. Ahora instanciamos AuthClient directamente desde auth-js.
 // storage/functions/postgrest/realtime nunca se usaron (todo pasa por el
@@ -84,6 +133,20 @@ if (typeof window !== 'undefined') {
         ? window.__worktraceSupervisionDebug
         : [];
 }
+
+// ==========================================================================
+// SECCIÓN: Estado de la aplicación
+// --------------------------------------------------------------------------
+// Todo el estado vive en este objeto. Lo más usado:
+//   - session / currentUser: sesión de Supabase y perfil normalizado (id, role, full_name…).
+//   - currentPage: pantalla visible (ver navigate).
+//   - photos / photoFiles / endPhotos…: fotos del inicio y fin de visita, por slot de subárea.
+//   - supervisionPhotos…: fotos de la auditoría del inspector.
+//   - location: última ubicación GPS {lat, lng, accuracy}.
+//   - data.employee / data.supervisor / data.admin: datos traídos del backend por rol.
+//   - cache: marcas de tiempo para no repetir pedidos (ver SECCIÓN "Caché").
+//   - store.ui: firmas para no re-pintar si nada cambió (ver "UI: cola de render").
+// ==========================================================================
 
 const app = {
     supabase: null,
@@ -292,6 +355,15 @@ const app = {
         message: 'Un momento por favor.',
     },
 
+    // ==========================================================================
+    // SECCIÓN: UI: cola de render y firmas
+    // --------------------------------------------------------------------------
+    // queueUiRender(clave) junta varios pedidos de re-pintado en un solo
+    // requestAnimationFrame. Las "firmas" (signature) guardan un resumen de lo
+    // último que se pintó: si los datos no cambiaron, no se vuelve a pintar.
+    // getPageNodes() devuelve todas las pantallas <div id="page-*">.
+    // ==========================================================================
+
     getUiSignature(key) {
         return String(this.store.ui.signatures[key] || '');
     },
@@ -358,6 +430,14 @@ const app = {
         this.store.ui.pageNodes = Array.from(document.querySelectorAll('[id^="page-"]'));
         return this.store.ui.pageNodes;
     },
+
+    // ==========================================================================
+    // SECCIÓN: Depuración y cronómetro del servicio en curso
+    // --------------------------------------------------------------------------
+    // El cronómetro de "Servicio en Curso" arranca desde la hora de inicio
+    // REAL del servicio (resolveShiftTimerStartTime), no desde que se abrió la
+    // app: si el contratista recarga la página, el tiempo sigue correcto.
+    // ==========================================================================
 
     updateDebugInfo() {
         const debugStatus = document.getElementById('debug-status');
@@ -483,6 +563,14 @@ const app = {
             display.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: PIN inicial y dispositivos de confianza (acciones sobre usuarios)
+    // --------------------------------------------------------------------------
+    // Modal que muestra el PIN generado al crear un usuario, reseteo de PIN y
+    // revocación del dispositivo de confianza. Lo usan admin e inspector desde
+    // la gestión de usuarios.
+    // ==========================================================================
 
     showInitialPinModal({ pin, email = '', emailSent = false } = {}) {
         if (!pin) return;
@@ -611,6 +699,19 @@ const app = {
             this.hideLoading();
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Arranque de la app
+    // --------------------------------------------------------------------------
+    // init() corre al cargar la página (ver el final del archivo):
+    //   configureBackend()  → lee public/config.js (URL de Supabase, anon key…)
+    //   initSupabase()      → crea el cliente de Supabase Auth
+    //   bindEvents()        → engancha formularios y los delegadores de clics
+    //   restoreAuthSession()→ si ya había sesión, entra directo sin login
+    // Idioma: hay botones ES/EN (setLanguage + js/i18n.js), pero solo cambian
+    // los textos que pasan por t('clave') o data-i18n; muchos otros están
+    // escritos directo en español en el HTML/JS.
+    // ==========================================================================
 
     setLanguage(lang) {
         setLang(lang);
@@ -770,6 +871,24 @@ const app = {
             }
         });
     },
+
+    // ==========================================================================
+    // SECCIÓN: Eventos globales y delegación de clics
+    // --------------------------------------------------------------------------
+    // bindEvents() engancha los formularios (por id) y DOS delegadores globales:
+    //
+    // 1) data-action en camelCase = nombre de un método de app:
+    //      <button data-action="openModal" data-args="modal-x">
+    //    llama this.openModal('modal-x'). Varios args van separados por "|" y los
+    //    números se convierten solos. Es la forma recomendada para botones nuevos.
+    //
+    // 2) data-action con guiones (kebab-case) → switch en handleDelegatedClick,
+    //    que lee otros data-* (ej. data-restaurant-id). Se usa cuando el clic
+    //    necesita varios datos del elemento.
+    //
+    // handleDelegatedChange / handleDelegatedInput hacen lo mismo para los
+    // eventos change/input.
+    // ==========================================================================
 
     bindEvents() {
         // Delegador global de acciones — reemplaza los antiguos `onclick="app.xxx(...)"`
@@ -1405,6 +1524,14 @@ const app = {
         this.updateSupervisorShiftPlanWeekRow(rowId, field, source.value || '');
     },
 
+    // ==========================================================================
+    // SECCIÓN: Sesión y token
+    // --------------------------------------------------------------------------
+    // getValidAccessToken() devuelve un token de Supabase vigente (lo refresca
+    // si está por vencer). SIEMPRE usarlo antes de llamar al backend: con un
+    // token vencido las Edge Functions responden 401.
+    // ==========================================================================
+
     async restoreAuthSession() {
         if (!this.supabase) {
             return false;
@@ -1517,6 +1644,15 @@ const app = {
 
         this.updateDebugInfo();
     },
+
+    // ==========================================================================
+    // SECCIÓN: UI común: carga, modales y mensajes de login
+    // --------------------------------------------------------------------------
+    // showLoading/hideLoading: overlay de "Procesando…".
+    // openModal(id): antes de mostrar ciertos modales llama a su prepare*()
+    // (ej. prepareSupervisorRestaurantTaskModal) para cargar selects y limpiar
+    // el formulario. closeModal(id) los cierra.
+    // ==========================================================================
 
     showLoading(title = 'Procesando...', message = 'Un momento por favor.') {
         const overlay = document.getElementById('loading-overlay');
@@ -1741,6 +1877,13 @@ const app = {
         }
     },
 
+    // ==========================================================================
+    // SECCIÓN: Avisos (toasts) y portapapeles
+    // --------------------------------------------------------------------------
+    // showToast(mensaje, { tone: 'success'|'error'|'warning'|'info', title, duration }).
+    // Cada tono tiene una duración por defecto. Los avisos se apilan arriba.
+    // ==========================================================================
+
     showToast(message, { tone = 'info', title = '', duration, keepLoginMessages = false, action = null } = {}) {
         const toastStack = document.getElementById('app-toast-stack');
         if (!toastStack || !message) {
@@ -1868,6 +2011,23 @@ const app = {
             return false;
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Errores del backend y reintento con OTP
+    // --------------------------------------------------------------------------
+    // getErrorMessage(error, textoPorDefecto) convierte un error del backend
+    // en un mensaje entendible (oculta mensajes técnicos). getErrorCode(error)
+    // saca el error_code.
+    //
+    // OTP: algunas operaciones (subir evidencias) exigen una sesión OTP vigente.
+    // Si vence a mitad de camino, isOtpSessionError() lo detecta y
+    // retryWithFreshOtp() pide un OTP nuevo y reintenta. Tiene un MUTEX
+    // (_otpRefreshInFlight): con varias subidas en paralelo se abre UN solo
+    // modal de OTP y las demás esperan. No quitarlo.
+    //
+    // Las funciones de "ventana de turno" vienen del agendamiento viejo; hoy
+    // las visitas son ad-hoc y casi no aplican.
+    // ==========================================================================
 
     extractRequestId(...sources) {
         const candidates = [];
@@ -2457,6 +2617,21 @@ const app = {
         ].some((token) => source.includes(token));
     },
 
+    // ==========================================================================
+    // SECCIÓN: Login y control de acceso
+    // --------------------------------------------------------------------------
+    // Flujo al entrar (login con email + PIN de 6 dígitos):
+    //   handleLogin → signInWithPassword → bootstrapAuthenticatedUser:
+    //     1. token vigente y perfil del usuario (normalizeCurrentUser)
+    //     2. loadRoleModule(rol)        → carga los módulos de su rol
+    //     3. ensurePinChangeIfRequired  → obliga a cambiar el PIN inicial
+    //     4. ensureLegalConsent         → consentimiento informado
+    //     5. ensureTrustedDevice + ensureOtpVerification → dispositivo / código OTP
+    //     6. navigateToRoleDashboard()
+    // Al recargar la página, restoreAuthSession hace lo mismo sin pedir login.
+    // logout/performLogout cierran sesión y limpian el estado.
+    // ==========================================================================
+
     async handleLogin() {
         if (!this.supabase) {
             this.setLoginError('Supabase no está configurado correctamente.');
@@ -2518,6 +2693,11 @@ const app = {
         }
     },
 
+    /**
+     * Carga (una sola vez) los módulos del rol y los mezcla en `this`.
+     * Después de esto están disponibles los métodos de employee.js,
+     * supervisor.js, admin.js o adminModals.js según corresponda.
+     */
     async loadRoleModule(role) {
         const route = ROLE_ROUTES[role] || '';
         if (!route || this._loadedModuleRole === role) return;
@@ -3308,6 +3488,16 @@ const app = {
         this.updateDebugInfo();
     },
 
+    // ==========================================================================
+    // SECCIÓN: Navegación entre pantallas y roles
+    // --------------------------------------------------------------------------
+    // navigate('pagina') muestra #page-pagina y oculta el resto (limpia la
+    // auditoría si se sale de ella). loadPageData('pagina') carga los datos de
+    // cada pantalla (un case por pantalla). Los roles se consultan con
+    // isAdminRole()/isSupervisorRole(); nunca comparar el texto del rol a mano.
+    // updateAdminViewSwitcher: el super_admin puede ver la app "como inspector".
+    // ==========================================================================
+
     navigate(page) {
         const previousPage = this.currentPage;
 
@@ -3383,6 +3573,11 @@ const app = {
         this.navigate(page);
     },
 
+    /**
+     * Carga los datos de una pantalla. Para agregar una pantalla nueva:
+     * crear <div id="page-nueva"> en index.html, un case aquí y navegar con
+     * this.navigate('nueva').
+     */
     async loadPageData(page) {
         if (!this.currentUser) {
             return;
@@ -3601,6 +3796,17 @@ const app = {
         container.insertBefore(switcher, container.firstChild);
     },
 
+    // ==========================================================================
+    // SECCIÓN: Caché de datos y ajustes del sistema
+    // --------------------------------------------------------------------------
+    // isCacheFresh(clave, ttl) / touchCache(clave) / invalidateCache(...claves):
+    // evitan repetir pedidos al backend. Los TTL están en CACHE_TTLS
+    // (constants.js). Después de crear/editar/borrar algo, invalidar la clave
+    // correspondiente para que la próxima carga traiga datos frescos.
+    // runPending(clave, fn): si ya hay un pedido igual en curso, reutiliza su
+    // promesa en vez de lanzar otro.
+    // ==========================================================================
+
     getCacheAge(key) {
         const timestamp = this.cache.timestamps[key];
         return timestamp ? Date.now() - timestamp : Number.POSITIVE_INFINITY;
@@ -3758,6 +3964,15 @@ const app = {
             return this.data.systemSettings;
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Áreas y subáreas de limpieza (auditoría e inicio de visita)
+    // --------------------------------------------------------------------------
+    // Cada sitio tiene áreas (ej. "Cocina") y cada área subáreas (ej. "Frente
+    // de neveras"). Se usan para armar los slots de fotos: 1 slot por subárea.
+    // Aquí está la selección de área del inspector en la auditoría y la
+    // navegación "Anterior / Siguiente" entre áreas.
+    // ==========================================================================
 
     resolveCleaningAreas(...sources) {
         const candidates = [];
@@ -4089,6 +4304,15 @@ const app = {
             this.persistCurrentShiftAreaSelection();
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Persistencia local del servicio en curso (localStorage)
+    // --------------------------------------------------------------------------
+    // Guarda en el celular datos del servicio en curso (nombre del sitio,
+    // áreas elegidas, trazas de pedidos) para que, si el contratista recarga o
+    // se le cierra la app, pueda retomar donde estaba. Las claves están en
+    // STORAGE_KEYS (constants.js).
+    // ==========================================================================
 
     getCurrentShiftPersistenceKeys() {
         const candidates = [
@@ -4518,6 +4742,12 @@ const app = {
         }
     },
 
+    // ==========================================================================
+    // SECCIÓN: Selección de áreas del contratista (chips y navegación)
+    // --------------------------------------------------------------------------
+    // Chips de áreas en el inicio/fin de visita y navegación entre ellas.
+    // ==========================================================================
+
     setEmployeeActiveArea(areaLabel) {
         const selectedAreas = this.getEmployeeSelectedAreas();
         const normalizedArea = normalizeAreaToken(areaLabel);
@@ -4781,6 +5011,14 @@ const app = {
         });
     },
 
+    // ==========================================================================
+    // SECCIÓN: Fechas: encabezado y calendarios de informes
+    // --------------------------------------------------------------------------
+    // Los calendarios usan la fecha LOCAL del celular (toInputDate /
+    // toLocalDateKey). No usar toISOString().slice(0, 10): es la fecha UTC y en
+    // Colombia (UTC-5) da "mañana" desde las 7 p. m.
+    // ==========================================================================
+
     updateDate() {
         const dateElement = document.getElementById('current-date');
         if (!dateElement) {
@@ -4836,6 +5074,16 @@ const app = {
         // se entere del nuevo valor (ej. sched-shift-*).
         input.dispatchEvent(new Event('change', { bubbles: true }));
     },
+
+    // ==========================================================================
+    // SECCIÓN: Permisos de cámara/ubicación y GPS
+    // --------------------------------------------------------------------------
+    // captureLocation({ highAccuracy }) pide el GPS. Para verificaciones
+    // críticas (geocerca, iniciar/terminar servicio, auditoría) pasar
+    // highAccuracy: true, si no, el navegador puede devolver una ubicación vieja
+    // o de WiFi. La dirección legible se busca con Google y, si falla, con
+    // Nominatim. También: certificado de salud y botón "Continuar" del inicio.
+    // ==========================================================================
 
     async primeEmployeeWorkspacePermissions() {
         if (!this.currentUser || !ROLE_ROUTES[this.currentUser.role]?.startsWith('employee')) {
@@ -5215,6 +5463,14 @@ const app = {
         }
     },
 
+    // ==========================================================================
+    // SECCIÓN: Grilla de fotos por subárea
+    // --------------------------------------------------------------------------
+    // buildPhotoSlotDefinitions arma 1 slot por subárea. renderPhotoGrids pinta
+    // las grillas de inicio y fin de visita. La validación de "faltan fotos" se
+    // hace slot por slot (no por cantidad total).
+    // ==========================================================================
+
     getAreaSubareas(areaLabel) {
         const normalizedLabel = normalizeAreaGroupLabel(areaLabel);
         const groupKey = normalizeAreaToken(normalizedLabel || areaLabel);
@@ -5468,6 +5724,13 @@ const app = {
         }
     },
 
+    // ==========================================================================
+    // SECCIÓN: Cámara integrada
+    // --------------------------------------------------------------------------
+    // Cámara propia en pantalla completa (getUserMedia) para tomar la foto de
+    // cada slot sin salir de la app.
+    // ==========================================================================
+
     async selectPhotoArea(slot, type) {
         this.currentPhotoArea = slot?.key || null;
         this.currentPhotoContext = slot || null;
@@ -5683,6 +5946,18 @@ const app = {
             button.disabled = false;
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Procesamiento de fotos y evidencias
+    // --------------------------------------------------------------------------
+    // processPhotoFile(file, tipo) es la puerta de entrada de TODA foto
+    // ('start' | 'end' | 'supervision'):
+    //   1. compressImage → JPEG 0.85, máx. 2560 px (los videos no se comprimen)
+    //   2. guarda la miniatura en el slot (updatePhotoSlot, con badge de estado)
+    //   3. encola la subida en segundo plano (upload progresivo): así al
+    //      finalizar no hay que esperar a que suban 30 fotos juntas.
+    // También: evidencia de la tarea especial y grilla de la auditoría.
+    // ==========================================================================
 
     getEvidenceFileContentType(file) {
         const rawType = String(file?.type || '')
@@ -6106,6 +6381,14 @@ const app = {
         this.queueUiRender('employee-photo-progress');
     },
 
+    // ==========================================================================
+    // SECCIÓN: Utilidades compartidas entre roles
+    // --------------------------------------------------------------------------
+    // Estas funciones las usan el contratista Y el inspector. Tienen que vivir
+    // en app.js porque cada rol carga solo su módulo: si estuvieran en
+    // employee.js, el inspector no las tendría (pasó con "Ver evidencias").
+    // ==========================================================================
+
     // Modal "Ver evidencias" de tarea especial. Vive en el core porque lo
     // consumen DOS roles: el contratista desde la card de su tarea completada
     // y el inspector desde las alertas de tareas completadas del dashboard.
@@ -6291,6 +6574,15 @@ const app = {
         const seconds = rounded % 60;
         return `${minutes}:${String(seconds).padStart(2, '0')}`;
     },
+
+    // ==========================================================================
+    // SECCIÓN: Estado del servicio del contratista
+    // --------------------------------------------------------------------------
+    // resetShiftState limpia todo al terminar o salir. refreshCurrentActiveShift
+    // trae el servicio activo del backend. El progreso de evidencias usa
+    // Math.max(existente, nuevo) — no suma — para no contar dos veces al
+    // retomar una sesión.
+    // ==========================================================================
 
     updateProgressNow() {
         const progress = this.getStartEvidenceProgressSnapshot();
@@ -6897,6 +7189,14 @@ const app = {
         };
     },
 
+    // ==========================================================================
+    // SECCIÓN: Sitio del servicio: resolver nombre y datos
+    // --------------------------------------------------------------------------
+    // El backend no siempre manda el sitio completo en cada respuesta: estas
+    // funciones buscan el registro del sitio en lo que ya se cargó (contratista,
+    // inspector o admin) y resuelven el nombre a mostrar.
+    // ==========================================================================
+
     getEmployeeAssignedRestaurants(dashboard = this.data.employee.dashboard || {}) {
         const restaurantsById = new Map();
         const addRestaurant = (restaurant, source = '') => {
@@ -7360,6 +7660,13 @@ const app = {
         });
     },
 
+    // ==========================================================================
+    // SECCIÓN: Dashboard del contratista
+    // --------------------------------------------------------------------------
+    // Pinta la pantalla de inicio del contratista: servicio activo, tarea
+    // principal y tareas especiales del sitio.
+    // ==========================================================================
+
     renderEmployeeDashboard() {
         const dashboard = this.data.employee.dashboard || {};
         const shift = this.data.currentShift || this.data.currentScheduledShift;
@@ -7455,6 +7762,11 @@ const app = {
         this.updateUserUI();
     },
 };
+
+// ==========================================================================
+// ARRANQUE: se crea una sola instancia (app) y se inicia cuando el HTML
+// está listo. window.app permite inspeccionar el estado desde la consola.
+// ==========================================================================
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {

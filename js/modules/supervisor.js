@@ -1,4 +1,38 @@
 // @ts-nocheck
+/**
+ * ============================================================================
+ * modules/supervisor.js — Inspector de calidad (rol "supervisora")
+ * ============================================================================
+ *
+ * QUÉ ES
+ *   Todo lo que hace el inspector. También lo carga el super_admin, que
+ *   puede ver la app "como inspector". Se mezcla en el objeto `app` de
+ *   app.js con Object.assign, así que `this` es la app completa.
+ *
+ * FUNCIONALIDADES (busca "SECCIÓN:" para saltar)
+ *   - Auditoría en sitio: detectar el sitio por GPS, verificar la geocerca,
+ *     tomar fotos por subárea y observaciones (5 fotos + 2 videos de 30 s)
+ *     con subida progresiva, y guardar (saveSupervision).
+ *   - Gestión de Sitios: tarjetas con tareas pendientes, eliminar sitio.
+ *   - Gestión de contratistas: lista, filtros, crear/editar/eliminar.
+ *   - Tareas especiales: crear (con foto/video de instrucciones), ver las
+ *     pendientes de un sitio, alertas de tareas completadas.
+ *   - Informes: visitas y auditorías (PDF/Excel del período e individual).
+ *
+ * BACKEND (Edge Functions vía apiClient)
+ *   supervisor_presence_manage (auditoría) · operational_tasks_manage
+ *   (tareas) · reports_generate (informes) · admin_users_manage /
+ *   admin_restaurants_manage (contratistas y sitios).
+ *
+ * OJO
+ *   - Este archivo vuelve a definir algunas funciones que también existen en
+ *     app.js (probeVideoDurationSeconds, formatSecondsAsMmSs,
+ *     getKnownRestaurantRecord…). Para inspector y admin gana ESTA copia,
+ *     porque se carga después. Si cambias una, revisa la otra.
+ *   - Hay bloques marcados como LEGADO (agendamiento de turnos): quedaron de
+ *     antes de la migración a visitas ad-hoc y ya no se usan.
+ */
+
 let _XLSX = null;
 async function loadXLSX() {
     if (!_XLSX) {
@@ -71,6 +105,13 @@ const SUPERVISOR_SHIFT_WEEK_DAYS = Object.freeze([
     { index: 5, label: 'Sábado', aliases: ['sabado', 'sáb', 'sab', 'saturday', 'sat'] },
     { index: 6, label: 'Domingo', aliases: ['domingo', 'dom', 'sunday', 'sun'] },
 ]);
+
+// ==========================================================================
+// SECCIÓN: LEGADO — helpers de importación de Excel del plan semanal
+// --------------------------------------------------------------------------
+// Servían para importar turnos programados desde Excel. El agendamiento
+// se eliminó en la migración a visitas ad-hoc; estas funciones ya no se usan.
+// ==========================================================================
 
 function normalizeSpreadsheetKey(value = '') {
     return String(value || '')
@@ -303,6 +344,15 @@ function getImportedDayIndex(value) {
     return dayEntry ? dayEntry.index : null;
 }
 
+// ==========================================================================
+// SECCIÓN: Helpers de datos y distancia GPS
+// --------------------------------------------------------------------------
+// resolveRecordNumber lee un número probando varias rutas del objeto (el
+// backend no siempre usa el mismo nombre de campo). calculateDistanceMeters
+// es la distancia en metros entre dos coordenadas (fórmula de Haversine):
+// la usan las geocercas de la auditoría y de las tareas especiales.
+// ==========================================================================
+
 function toFiniteNumber(value) {
     const numericValue = Number(value);
     return Number.isFinite(numericValue) ? numericValue : null;
@@ -355,6 +405,13 @@ function calculateDistanceMeters(from, to) {
 }
 
 export const supervisorMethods = {
+    // ==========================================================================
+    // SECCIÓN: Selects de sitios y normalización de contratistas
+    // --------------------------------------------------------------------------
+    // Llenan los <select> de sitios de las distintas pantallas y unifican el
+    // formato de los contratistas que llegan del backend.
+    // ==========================================================================
+
     populateSupervisorRestaurantOptions(selectId, includePlaceholder = true) {
         const select = document.getElementById(selectId);
         if (!select) {
@@ -416,6 +473,15 @@ export const supervisorMethods = {
         };
     },
 
+
+    // ==========================================================================
+    // SECCIÓN: LEGADO — agendamiento de turnos (sin uso)
+    // --------------------------------------------------------------------------
+    // Modal para programar turnos, plan semanal, plantillas e importación desde
+    // Excel. Su modal (modal-supervisor-schedule-shift) ya no existe en
+    // index.html desde la migración a visitas ad-hoc, así que nada de esto se
+    // ejecuta. Se puede borrar con cuidado.
+    // ==========================================================================
 
     async prepareSupervisorShiftModal() {
         if (this.data.supervisor.restaurants.length === 0) {
@@ -1485,6 +1551,13 @@ export const supervisorMethods = {
         return directCandidates;
     },
 
+    // ==========================================================================
+    // SECCIÓN: Tareas: normalizar valores del payload
+    // --------------------------------------------------------------------------
+    // normalizeTaskCreatePayloadValue convierte ids numéricos en número (el
+    // backend valida tipos) y deja los UUID como texto.
+    // ==========================================================================
+
     normalizeTaskCreatePayloadValue(value) {
         if (value == null || value === '') {
             return undefined;
@@ -1506,6 +1579,14 @@ export const supervisorMethods = {
 
         return date.toISOString();
     },
+
+    // ==========================================================================
+    // SECCIÓN: Diagnóstico y tarjetas de soporte
+    // --------------------------------------------------------------------------
+    // Guardan en window.__worktrace*Debug el detalle de los últimos pedidos que
+    // fallaron (crear tarea, informe, auditoría) y permiten copiarlo para
+    // mandárselo a soporte o al backend.
+    // ==========================================================================
 
     summarizeJwtTokenForDebug(token = '') {
         const normalizedToken = String(token || '').trim();
@@ -1847,6 +1928,14 @@ export const supervisorMethods = {
         return debugEntry;
     },
 
+    // ==========================================================================
+    // SECCIÓN: Crear tareas: diagnóstico de errores y reintento con token nuevo
+    // --------------------------------------------------------------------------
+    // createOperationalTaskWithFreshToken reintenta una vez con un token recién
+    // refrescado si el backend responde "JWT inválido". Lo de "scheduled
+    // shifts" es LEGADO del agendamiento.
+    // ==========================================================================
+
     getTaskCreateBackendFailure(error) {
         return {
             code: String(
@@ -2153,6 +2242,14 @@ export const supervisorMethods = {
         return { created, failed, errors };
     },
 
+    // ==========================================================================
+    // SECCIÓN: Resolver contratistas y sitios ya cargados
+    // --------------------------------------------------------------------------
+    // Buscan un contratista o sitio en lo que ya está en memoria para mostrar
+    // nombres sin pedirlos de nuevo al backend. Algunas pisan versiones de
+    // app.js con el mismo nombre (ver OJO del encabezado).
+    // ==========================================================================
+
     getKnownSupervisorEmployeeRecord(employeeId) {
         const normalizedEmployeeId = String(employeeId || '').trim();
         if (!normalizedEmployeeId) {
@@ -2432,6 +2529,18 @@ export const supervisorMethods = {
     //   _supervisionObsUploads      → Map(index    → { status, promise, evidence_id, path, error })
     // status ∈ 'uploading' | 'done' | 'error'
 
+    // ==========================================================================
+    // SECCIÓN: Auditoría: subida progresiva de evidencias (borradores)
+    // --------------------------------------------------------------------------
+    // Al verificar la ubicación se crea (o se retoma) un BORRADOR de auditoría
+    // en el backend (ensureSupervisionDraft / resumeSupervisionDraftIfAny →
+    // supervisor_presence_manage 'start' / 'get_active_draft'). Cada foto se
+    // sube en segundo plano apenas se toma (enqueueSupervisionSlotUpload →
+    // 'attach_evidence'), y al guardar solo se espera a que terminen
+    // (awaitAllSupervisionUploads) y se hace 'finalize' con las observaciones.
+    // updateSupervisionUploadBadge muestra ⏳ / ✓ / ⚠ en cada miniatura.
+    // ==========================================================================
+
     resetSupervisionProgressiveState() {
         this.supervisionDraftId = null;
         this.supervisionDraftPromise = null;
@@ -2653,6 +2762,14 @@ export const supervisorMethods = {
             }
         } catch (_) { /* ignore DOM issues */ }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Auditoría: estado de la pantalla y adjuntos de observaciones
+    // --------------------------------------------------------------------------
+    // resetSupervisorSupervisionState limpia fotos, observaciones y selección.
+    // Los adjuntos de observaciones se validan AL AGREGARLOS: máximo 5 fotos y
+    // 2 videos de hasta 30 segundos (mismo límite que el contratista).
+    // ==========================================================================
 
     resetSupervisorSupervisionState() {
         // Al resetear estado, revertimos también el chip auto-lock para
@@ -2885,6 +3002,15 @@ export const supervisorMethods = {
         );
         return results;
     },
+
+    // ==========================================================================
+    // SECCIÓN: Dashboard del inspector y alertas de tareas completadas
+    // --------------------------------------------------------------------------
+    // getSupervisorRestaurants trae el catálogo de sitios (con caché).
+    // loadSupervisorCompletedTasks arma las alertas de "tareas especiales
+    // completadas hoy" con su botón "Ver evidencias".
+    // getSupervisorShiftList quedó como no-op: sin agendamiento no hay lista.
+    // ==========================================================================
 
     getShiftReferenceDate(shift) {
         const value = shift?.scheduled_start || shift?.start_time || shift?.scheduled_end || shift?.end_time || null;
@@ -3123,6 +3249,16 @@ export const supervisorMethods = {
             // Solo dejamos el placeholder del HTML; no mostramos toast para no ser ruidosos.
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Gestión de Sitios (tarjetas, tareas pendientes, eliminar)
+    // --------------------------------------------------------------------------
+    // Pinta una tarjeta por sitio. El conteo de pendientes viene de
+    // operational_tasks_manage 'list_pending' (el backend acepta limit <= 200;
+    // con más responde 422). Si hay pendientes, la línea es tocable y abre la
+    // lista del sitio. Si la carga falla, la tarjeta dice "No se pudieron
+    // cargar" en lugar de "Sin tareas".
+    // ==========================================================================
 
     async loadSupervisorRestaurants(force = false) {
         if (force) {
@@ -3427,6 +3563,12 @@ export const supervisorMethods = {
             this.hideLoading();
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Gestión de contratistas (lista, filtros, eliminar)
+    // --------------------------------------------------------------------------
+    // Lista de contratistas con filtro por estado y baja (deactivate).
+    // ==========================================================================
 
     async loadSupervisorEmployees(force = false) {
         if (force) {
@@ -3799,6 +3941,13 @@ export const supervisorMethods = {
         }
     },
 
+    // ==========================================================================
+    // SECCIÓN: Informes: preparar las pantallas (visitas y auditorías)
+    // --------------------------------------------------------------------------
+    // Al entrar a informes se ponen las fechas de hoy (fecha LOCAL) y se
+    // llenan los selects de sitio, contratista e inspector.
+    // ==========================================================================
+
     getSupervisorWeekStart(date = new Date()) {
         const d = new Date(date);
         const day = d.getDay();
@@ -3971,6 +4120,18 @@ export const supervisorMethods = {
         }
         this.openInNewTab(url);
     },
+
+    // ==========================================================================
+    // SECCIÓN: Auditoría: entrar, detectar el sitio y verificar la geocerca
+    // --------------------------------------------------------------------------
+    // Al entrar se detecta el sitio más cercano por GPS
+    // (autoDetectSupervisorSupervisionSite) y se verifica que el inspector
+    // esté dentro (verifySupervisorSupervisionLocation).
+    // getSupervisionEffectiveRadius es la ÚNICA fuente de tolerancia GPS de la
+    // auditoría (radio mínimo 50 m + precisión del GPS, con tope de 150 m): la
+    // usan el auto-detect y el botón "Verificar". No crear un segundo cálculo,
+    // porque si difieren el sitio aparece detectado y después "fuera de rango".
+    // ==========================================================================
 
     async prepareSupervisorSupervisionPage() {
         // Bug reportado: al reabrir "Auditoría" quedaban fotos y notas
@@ -4700,6 +4861,18 @@ export const supervisorMethods = {
         this.updateSupervisorSupervisionLocationUi();
     },
 
+    // ==========================================================================
+    // SECCIÓN: Tareas especiales: crear, archivo de instrucciones y pendientes por sitio
+    // --------------------------------------------------------------------------
+    // El modal de crear tarea acepta una foto o un video de instrucciones
+    // (el video, máx. 1 minuto). validateRestaurantTaskFileByGeofence: si el
+    // inspector está FUERA del sitio, rechaza fotos recién tomadas con la
+    // cámara (heurística lastModified < 60 s); las de galería se aceptan. El
+    // chequeo de GPS tiene tope de 8 s para no dejar colgada la pantalla.
+    // openSupervisorRestaurantPendingTasksModal muestra las pendientes de un
+    // sitio (list_pending filtrado por restaurant_id).
+    // ==========================================================================
+
     openSupervisorRestaurantTaskModalFromSupervision() {
         const restaurant = this.getSupervisorSelectedRestaurant();
         const restaurantId = restaurant ? String(getRestaurantRecordId(restaurant) || '') : '';
@@ -5352,6 +5525,17 @@ export const supervisorMethods = {
         }
     },
 
+    // ==========================================================================
+    // SECCIÓN: Informes: tarjetas por visita / por auditoría y descarga individual
+    // --------------------------------------------------------------------------
+    // Cada visita y cada auditoría del período tiene su tarjeta con PDF/Excel
+    // propio (reports_generate con shift_id o audit_id). Para que Safari en
+    // iPhone no bloquee la pestaña, se abre SINCRÓNICAMENTE con
+    // window.open('about:blank') ANTES de cualquier await, y cuando llega la URL
+    // se asigna a esa pestaña. El inspector solo puede bajar el informe
+    // individual de SUS auditorías (el backend responde 403 en las ajenas).
+    // ==========================================================================
+
     getShiftEvidenceDisplayTitle(item = {}) {
         return String(item.photo_label || item.subarea_label || item.area_label || 'Foto').trim();
     },
@@ -5827,6 +6011,14 @@ export const supervisorMethods = {
             this.hideLoading();
         }
     },
+
+    // ==========================================================================
+    // SECCIÓN: Informes: generar el informe del período
+    // --------------------------------------------------------------------------
+    // generateReport (visitas) y generateAuditsReport (auditorías) llaman a
+    // reports_generate con el rango y los filtros. El backend devuelve url_pdf,
+    // url_excel y las filas (rows) que se muestran como tarjetas.
+    // ==========================================================================
 
     normalizeReportFilterValue(rawValue, { numeric = false } = {}) {
         const normalized = String(rawValue || '').trim();
@@ -6682,6 +6874,12 @@ export const supervisorMethods = {
 </html>`;
     },
 
+    // ==========================================================================
+    // SECCIÓN: LEGADO — subida de evidencia de auditoría en lote (sin llamadas)
+    // --------------------------------------------------------------------------
+    // Reemplazada por la subida progresiva (ver "Auditoría: subida progresiva").
+    // ==========================================================================
+
     async uploadSupervisorSupervisionEvidence() {
         const evidences = [];
 
@@ -6722,6 +6920,15 @@ export const supervisorMethods = {
         return evidences;
     },
 
+
+    // ==========================================================================
+    // SECCIÓN: Formularios de crear/editar sitio y contratista
+    // --------------------------------------------------------------------------
+    // Los usa el inspector desde "Nuevo Sitio" / "Nuevo Contratista" (y el
+    // admin). El teléfono se normaliza con normalizePhoneToE164 (utils.js)
+    // antes de validarlo: acepta el número sin "+" y limpia los caracteres
+    // invisibles que iOS mete al autocompletar.
+    // ==========================================================================
 
     async submitAdminRestaurantForm() {
         const name = document.getElementById('admin-restaurant-name')?.value?.trim();
@@ -6941,6 +7148,15 @@ export const supervisorMethods = {
         if (credentialNote) credentialNote.classList.add('hidden');
         this.openModal('modal-admin-employee');
     },
+
+    // ==========================================================================
+    // SECCIÓN: Auditoría: guardar
+    // --------------------------------------------------------------------------
+    // Exige que la ubicación ya esté verificada (no vuelve a pedir el GPS; si
+    // no se verificó, avisa y corta). Espera las subidas pendientes y cierra el
+    // borrador ('finalize') con las observaciones. Toast final: "Auditoría
+    // registrada correctamente."
+    // ==========================================================================
 
     async saveSupervision() {
         if (this.supervisionSavePending) {

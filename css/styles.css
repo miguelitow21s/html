@@ -1,3 +1,35 @@
+/* ============================================================================
+   styles.css — Estilos de toda la app (un solo archivo, tema claro)
+   ============================================================================
+
+   TEMA
+     Colores y medidas en variables de :root (justo abajo): --primary,
+     --bg-app, --card-bg, --input-bg, --text-primary, --text-secondary,
+     --border-color… Usar SIEMPRE las variables en lugar de colores fijos.
+     Para texto normal: var(--text-primary). No hay modo oscuro.
+     Colores de aviso: #047857 (éxito), #b45309 (advertencia), #0369a1 (info).
+
+   CÓMO ENCONTRAR ALGO
+     Busca estos títulos (comentarios de sección), en este orden:
+       Animations · Login Screen · App Container · Header · Navigation
+       · Content Area · Cards · Employee Dashboard · Progress Bar
+       · Photo Upload · Profile Page · Supervisor Dashboard · Modals · Forms
+       · Alerts · Success Screen · GPS Verification · Responsive · Loading
+       · Special Tasks · Reports · Timer · Supervisor specific
+       · Schedule grid (legado del agendamiento) · Restaurant tasks
+       · Galería de evidencias de tareas especiales · Badges genéricos
+     O busca directamente la clase que viste en el HTML/JS.
+
+   OJO
+     - Una regla con display (flex/inline-flex/block) le gana al atributo
+       [hidden]: por eso algunos componentes se ocultan con clases o con
+       data-status en vez de hidden (ver .supervision-upload-badge).
+     - En iPhone, un input con font-size < 16px hace zoom al tocarlo; los
+       inputs ya tienen 16px por eso (ver "iOS Safari hace zoom-in").
+     - Un contenedor display:flex convierte cada tramo de texto en una
+       columna aparte: para textos con <strong> adentro, usar display:block.
+   ============================================================================ */
+
 * {
     margin: 0;
     padding: 0;
